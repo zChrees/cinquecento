@@ -40,7 +40,7 @@ Una web-app per giocare online a **Cinquecento**, variante siciliana, con le car
 - [ ] P7 (Fase 1): log ed errori di base — `app/logging_config.py`, `app/errors.py`, `app/templates/errors/`
 - [ ] P8 (Fase 1): contratto tra server e pagine — `docs/CONTRATTO-SOCKET.md`, `app/static/dev/*.json`
 - [ ] P9 (Fase 1): guida di installazione verificata — `README.md`
-- [ ] P52 (Fase 1, C): prototipo della home (Stitch) come riferimento — `docs/prototipo/`
+- [ ] P52 (Fase 1, C): prototipo statico della home, scritto da Claude — `docs/prototipo/`
 
 ### Fase 2 — Funzioni essenziali
 - [ ] P10 (Fase 2, A): carte, mazzo, parametri delle regole — `app/game/engine/cards.py`, `deck.py`, `rules.py`, `errors.py`
@@ -209,11 +209,21 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 - *Fatto quando*: un compagno, seguendo solo il README su un altro PC, avvia il gioco e fa passare i test.
 - *Dipende da*: P4, P5, P6.
 
-**P52 — Prototipo della home (Stitch)** · piccolo · decisione: no
-- *Cosa e perché*: la home è già stata disegnata con Stitch (uno strumento di design con intelligenza artificiale): è un unico file HTML con CSS e JS scritti dentro, e comprende navbar, bottom navbar e contenuto della home. Si mette nel repository **così com'è**, come **riferimento grafico**: il server non lo usa e **nessuno lo modifica**. P19, P40 e P22 ne prendono ciascuno la propria parte e la riscrivono nei file modulari. `LEGGIMI.md` annota da dove viene il file e quali **risorse esterne** carica (per esempio librerie CSS da CDN, font o icone da Google): le pagine vere possono continuare a caricarle da internet (tutti i dispositivi della demo sono collegati), ma devono essere elencate, così nessuno le duplica o ne aggiunge altre per sbaglio.
-- *File* — crea: `docs/prototipo/home.html` (il file di Stitch, rinominato), `docs/prototipo/LEGGIMI.md`, ed eventuali immagini del prototipo in `docs/prototipo/`. Certezza: **sicuro** per la cartella; i nomi delle immagini dipendono dal prototipo.
-- *Fatto quando*: `home.html` si apre nel browser e mostra la home; `LEGGIMI.md` elenca le risorse esterne e dice quale punto riprende ciascuna parte del prototipo (P19 per colori, font e icone; P40 per navbar e bottom navbar; P22 per la home).
-- *Dipende da*: P1 (così il file entra in git con il fine riga giusto).
+**P52 — Prototipo statico della home (scritto da Claude)** · medio · decisione: no (specifiche approvate il 26/09/2026, vedi `DECISIONI.md`, sezione Interfaccia)
+- *Cosa e perché*: la home si disegna **prima di tutto il resto** come prototipo statico, che si apre con un doppio clic nel browser, senza Flask né database. È il **riferimento grafico** di tutte le pagine: il server non lo usa. È scritto **già diviso nelle parti** che poi diventano file separati (navbar, bottom navbar, contenuto della home, finestre), con colori, font e spazi come variabili CSS: P19, P40 e P22 spostano ciascuno la propria parte nei file modulari, con gli stessi nomi di classe, senza ridisegnarla. `LEGGIMI.md` elenca le **risorse esterne** caricate da CDN (font, icone): le pagine vere possono caricare solo quelle.
+- *Specifiche* (decise dall'utente il 26/09/2026):
+  - **stile siciliano**: colori caldi (giallo e rosso della Trinacria, richiami alle maioliche). Se non convince, si passa al tavolo classico (verde panno, oro e crema): basta cambiare le variabili CSS;
+  - **tema chiaro e scuro automatico**, secondo l'impostazione del telefono o del computer (`prefers-color-scheme`);
+  - **colori, font e logo** li sceglie Claude: font da titoli con carattere più font leggibile per il testo, da Google Fonts; logo "500" come testo stilizzato (il file SVG vero arriva in P42);
+  - **niente emoji**: icone da una libreria (Material Symbols, da CDN), uguali su tutti i dispositivi. Le voci della bottom navbar e il loro ordine restano quelli decisi;
+  - **home**: saluto "Ciao, *username*"; il numero di utenti online; due pulsanti grandi **1v1** e **2v2**, ciascuno con icona, **sottotitolo** (per esempio "Sfida un avversario" / "Gioca in coppia") e **il proprio rating** scritto sul pulsante; l'avviso "Hai una partita in corso: rientra" quando serve;
+  - **senza login**: al posto del rating "Accedi per avere un rating"; i pulsanti restano visibili e aprono la finestra "Accedi o registrati per giocare"; in più un link "Nuovo? Leggi le regole";
+  - **decorazioni** con i semi siciliani (denari, coppe, spade, bastoni), **discrete**;
+  - **computer**: layout **diverso** da quello del telefono, che occupa lo spazio **in orizzontale** (non la colonna del telefono allargata). La bottom navbar resta in basso e centrata, come già deciso;
+  - **stati mostrati**: home con login, home senza login, menu del profilo aperto, finestra "Accedi o registrati per giocare", schermata di attesa in coda a tutto schermo (tempo trascorso, intervallo di rating, "Annulla"), avviso di rientro. Si passa da uno stato all'altro con una **barra presente solo nel prototipo**, che le pagine vere non riprendono.
+- *File* — crea: `docs/prototipo/home.html`, `docs/prototipo/prototipo.css`, `docs/prototipo/prototipo.js` (solo per aprire menu, finestre e schermata di coda, e per la barra degli stati), `docs/prototipo/LEGGIMI.md`. Certezza: **sicuro**.
+- *Fatto quando*: `home.html` si apre con un doppio clic e mostra tutti gli stati; a 360 px non c'è scorrimento orizzontale; su computer il layout occupa la larghezza; cambiando il tema del sistema la pagina passa da chiaro a scuro; nessuna emoji; `LEGGIMI.md` elenca le risorse esterne e dice quale punto riprende ciascuna parte (P19 per colori, font e icone; P40 per navbar, bottom navbar, menu e finestra di accesso; P22 per la home, la coda e l'avviso di rientro).
+- *Dipende da*: P1 (così i file entrano in git con il fine riga giusto).
 
 ### Fase 2 — Funzioni essenziali (giorni 2–6)
 
@@ -292,16 +302,16 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 #### Interfaccia (C)
 
 **P19 — Base grafica mobile-first** · medio · decisione: **D18** (solo per il tavolo di gioco)
-- *Cosa e perché*: struttura comune delle pagine con gli spazi riservati alla navbar e alla bottom navbar (riempiti da P40), variabili CSS (colori, spazi, font), messaggi, finestra di conferma riutilizzabile. Si progetta per **360 px di larghezza** e poi si allarga. **Colori, font e spazi si prendono dal prototipo di P52** e si riscrivono come variabili CSS nei nostri file. Le risorse esterne del prototipo (font, icone, librerie CSS da CDN) si caricano **una volta sola in `base.html`**, così valgono per tutte le pagine.
+- *Cosa e perché*: struttura comune delle pagine con gli spazi riservati alla navbar e alla bottom navbar (riempiti da P40), variabili CSS (colori, spazi, font), messaggi, finestra di conferma riutilizzabile. Si progetta per **360 px di larghezza** e poi si allarga. **Colori, font e spazi si prendono dal prototipo di P52** e si riscrivono come variabili CSS nei nostri file, con i valori del **tema chiaro e del tema scuro** (automatico, secondo l'impostazione del dispositivo). Le risorse esterne del prototipo (font, icone, librerie CSS da CDN) si caricano **una volta sola in `base.html`**, così valgono per tutte le pagine.
 - *File* — crea: `app/templates/base.html`, `app/templates/partials/flash.html`, `app/static/css/base/reset.css`, `variables.css`, `typography.css`, `layout.css`, `app/static/css/components/button.css`, `form.css`, `modal.css`, `app/static/css/pages/auth.css`, `app/static/js/components/Modal.js`, `app/static/js/utils/dom.js`, `tests/frontend/test_base.py`. Modifica: `app/templates/main/index.html` (P4), `app/templates/errors/404.html`, `500.html` (P7). Certezza: **sicuro**.
-- *Fatto quando*: a 360 px le pagine sono leggibili senza scorrimento orizzontale; i colori coincidono con quelli del prototipo; il test controlla che ogni pagina abbia il `meta viewport`, carichi un solo script di pagina, e che le risorse esterne siano solo quelle elencate in `docs/prototipo/LEGGIMI.md`.
+- *Fatto quando*: a 360 px le pagine sono leggibili senza scorrimento orizzontale; i colori coincidono con quelli del prototipo, in tema chiaro e in tema scuro; il test controlla che ogni pagina abbia il `meta viewport`, carichi un solo script di pagina, e che le risorse esterne siano solo quelle elencate in `docs/prototipo/LEGGIMI.md`.
 - *Dipende da*: P4, P7, P52.
 
 **P40 — Navbar, bottom navbar, menu profilo, finestra "Accedi o registrati"** · medio · decisione: no
 - *Cosa e perché*: si parte da navbar e bottom navbar del **prototipo di P52**. Il loro HTML va in due file separati (`partials/navbar.html`, `partials/bottom_nav.html`), inclusi da `base.html` con `{% include %}`: così compaiono in ogni pagina senza essere ricopiati. Lo stile va nei CSS dei componenti e il comportamento in `layout.js`. Dove il prototipo e le decisioni non coincidono, valgono le decisioni (`DECISIONI.md`, sezione Interfaccia).
   - **navbar in alto**: avatar a sinistra (per ora iniziali su un cerchio colorato, o un'icona generica con "Accedi"), logo "500" al centro (per ora testo, il logo vero arriva in P42; il tocco porta alla home), pulsante amici a destra con il contatore (il pannello arriva in P46);
   - **menu del profilo**: *Statistiche · Impostazioni · Esci*, oppure *Accedi · Registrati* per chi non ha fatto il login;
-  - **bottom navbar**: 🏆 Classifica · 🔑 Privata · 🏠 Gioca · 📜 Partite · 📖 Regole, con icona ed etichetta, voce attiva evidenziata, e un blocco del template che le pagine possono **nascondere** (il tavolo lo fa in P21);
+  - **bottom navbar**: 🏆 Classifica · 🔑 Privata · 🏠 Gioca · 📜 Partite · 📖 Regole, con icona ed etichetta (le emoji qui indicano solo il soggetto: nelle pagine si usano le icone scelte in P52, mai emoji), voce attiva evidenziata, e un blocco del template che le pagine possono **nascondere** (il tavolo lo fa in P21);
   - **finestra "Accedi o registrati per giocare"**, riutilizzabile dalle altre pagine;
   - `core/layout.js`: il modulo che **ogni pagina importa** per far funzionare navbar, menu e, più avanti, il pannello amici.
 - *File* — crea: `app/templates/partials/navbar.html`, `app/templates/partials/bottom_nav.html`, `app/static/css/components/navbar.css`, `bottom-nav.css`, `profile-menu.css`, `app/static/js/core/layout.js`, `app/static/js/components/ProfileMenu.js`, `app/static/js/components/LoginPrompt.js`, `tests/frontend/test_navbar.py`. Modifica: `app/templates/base.html` (P19). Certezza: **sicuro**.
@@ -322,10 +332,10 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 - *Dipende da*: P8, P20, P40.
 
 **P22 — Home con dati finti** · medio · decisione: no
-- *Cosa e perché*: i **due pulsanti grandi 1v1 e 2v2**; il proprio rating; il numero di utenti online; l'avviso "Hai una partita in corso: rientra" (visibile solo quando serve). Per chi non ha fatto il login, il tocco su 1v1 o 2v2 apre la finestra "Accedi o registrati" (P40). La **schermata di attesa in coda** è a tutto schermo, con il tempo trascorso, l'intervallo di rating che si allarga e un pulsante "Annulla" ben visibile. Tutto funziona con `app/static/dev/home_esempio.json`.
+- *Cosa e perché*: il saluto "Ciao, *username*"; i **due pulsanti grandi 1v1 e 2v2**, con icona, sottotitolo e il rating della modalità scritto sul pulsante (senza login: "Accedi per avere un rating" e il link "Nuovo? Leggi le regole"); il numero di utenti online; le decorazioni discrete con i semi; l'avviso "Hai una partita in corso: rientra" (visibile solo quando serve). Per chi non ha fatto il login, il tocco su 1v1 o 2v2 apre la finestra "Accedi o registrati" (P40). La **schermata di attesa in coda** è a tutto schermo, con il tempo trascorso, l'intervallo di rating che si allarga e un pulsante "Annulla" ben visibile. Tutto funziona con `app/static/dev/home_esempio.json`.
 - *Dal prototipo*: il contenuto della home viene dal **prototipo di P52**. In `index.html` resta **solo il markup della home**, che estende `base.html` (navbar e bottom navbar arrivano da lì). Nella pagina non si scrivono blocchi `<style>` né codice JS: lo stile va in `home.css` e nei CSS dei componenti, il codice in `home.js` e nei componenti. Così `index.html` resta corto e leggibile.
 - *File* — crea: `app/static/js/pages/home.js`, `app/static/css/pages/home.css`, `app/static/js/components/QueueOverlay.js`, `app/static/css/components/queue-overlay.css`, `app/static/js/components/ResumeBanner.js`, `tests/api/test_pagina_home.py`. Modifica: `app/templates/main/index.html` (P19), `app/blueprints/main/routes.py` (P4). Certezza: **sicuro**.
-- *Fatto quando*: a 360 px i due pulsanti si raggiungono col pollice; senza login il tocco apre la finestra di accesso; la schermata di coda si apre e si annulla; l'avviso di rientro compare solo se i dati finti lo prevedono; la home ha l'aspetto del prototipo; il test controlla che `index.html` non contenga blocchi `<style>` né script scritti nella pagina.
+- *Fatto quando*: a 360 px i due pulsanti si raggiungono col pollice; senza login il tocco apre la finestra di accesso; la schermata di coda si apre e si annulla; l'avviso di rientro compare solo se i dati finti lo prevedono; su computer la home occupa la larghezza come nel prototipo; la home ha l'aspetto del prototipo, in tema chiaro e scuro; il test controlla che `index.html` non contenga blocchi `<style>` né script scritti nella pagina.
 - *Dipende da*: P8, P40, P52.
 
 **P41 — Pagina stanza privata con dati finti** · piccolo · decisione: no
@@ -441,9 +451,9 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 - *Fatto quando*: le 40 carte si vedono con le immagini scelte, la licenza è annotata, e il peso totale è sotto 1 MB.
 - *Dipende da*: P20.
 
-**P42 — Logo vero** · piccolo · **decisione: sì** (D30) — **file non tutti sicuri, vedi sezione 9.2**
-- *Cosa e perché*: il logo "500" al centro della navbar, leggibile a 40 px di altezza, più l'icona della scheda del browser (favicon).
-- *Fatto quando*: il logo si vede nitido a 40 px su telefono e computer, in tema chiaro; il tocco porta alla home.
+**P42 — Logo vero** · piccolo · decisione: no (il logo lo disegna Claude in SVG, vedi `DECISIONI.md`) — **file non tutti sicuri, vedi sezione 9.2**
+- *Cosa e perché*: il logo "500" al centro della navbar, leggibile a 40 px di altezza, più l'icona della scheda del browser (favicon). Parte dal logo testuale del prototipo di P52.
+- *Fatto quando*: il logo si vede nitido a 40 px su telefono e computer, in tema chiaro e scuro; il tocco porta alla home.
 - *Dipende da*: P40.
 
 **P43 — Immagini degli avatar** · piccolo · **decisione: sì** (D29) — **file non tutti sicuri, vedi sezione 9.2**
@@ -559,7 +569,7 @@ Chi crea ogni file. I file creati da P4 come segnaposto e poi riempiti da altri 
 | **I test cancellano dati veri** | Runner con controllo `PRODUZIONE` e del nome del database (P6); cartella demo separata (P38) |
 | **Demo che non parte il giorno della consegna** (firewall, rete) | Prova generale con lista di controllo (P39) e backup pronto (P18, P38) |
 | **Perdita di dati** | Backup giornaliero con prova di ripristino (P18, P38) |
-| **Prototipo Stitch non modulare** (tutto in un file, con CSS e JS dentro la pagina) | Il prototipo resta solo un riferimento (P52), con le risorse esterne elencate in `LEGGIMI.md`; P19, P40 e P22 lo riscrivono in file modulari, e i test controllano che `index.html` non abbia CSS o JS scritti dentro |
+| **Pagine vere diverse dal prototipo**, o prototipo da rifare se lo stile non convince | Il prototipo (P52) è già diviso nelle parti che diventano file separati, con gli stessi nomi di classe e colori e font come variabili CSS; P19, P40 e P22 spostano i pezzi senza ridisegnarli, e i test controllano che `index.html` non abbia CSS o JS scritti dentro. Passare dallo stile siciliano a quello classico cambia solo le variabili |
 | **Risorse caricate da CDN** (font, icone, librerie CSS): se internet o il CDN non rispondono, le pagine perdono lo stile | Ammesse per scelta dell'utente (tutti hanno internet); caricate solo da `base.html` e solo quelle elencate in `LEGGIMI.md` |
 
 ## 8. Fuori dalla prima versione
@@ -670,7 +680,7 @@ Per questi punti non posso dire adesso con certezza quali file verranno toccati.
 **P42 — Logo vero** · proposto: Studente 3
 - *Sicuri*: modifica `app/templates/partials/navbar.html`, `app/static/css/components/navbar.css` (P40, sempre Studente 3).
 - *Probabili*: `app/static/img/logo.svg` (oppure `.png`), `app/static/img/favicon.ico`; forse `app/templates/base.html` per la favicon.
-- *Perché non sono sicuro*: non so se il logo esiste già e in che formato (D30). La favicon può servire o no, in base a come la inserite.
+- *Perché non sono sicuro*: il logo è un SVG disegnato da Claude, ma la favicon può servire in più formati o no, in base a come la inserite.
 
 **P43 — Immagini degli avatar** · proposto: Studente 3
 - *Sicuri*: crea la cartella `app/static/img/avatars/`.

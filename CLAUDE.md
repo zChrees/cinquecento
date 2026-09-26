@@ -12,7 +12,7 @@
 
 6. Il regolamento del gioco è in **`docs/REGOLE-GIOCO.md`**: è il riferimento unico per il motore di gioco.
 
-**Stato (26/09/2026):** scritti `SCALETTA.md`, `DECISIONI.md`, `DA-DECIDERE.md` e `docs/REGOLE-GIOCO.md` (branch `docs/scaletta`, in attesa di ok). Aggiunti la regola "con 500 esatti si vince" e il punto P52 (prototipo Stitch della home come riferimento). Prossimo passo: P1–P3 (`.gitattributes`, `.gitignore`, riga Stato), poi P52 e P4 (scheletro del progetto).
+**Stato (26/09/2026):** scaletta, decisioni, domande aperte e regolamento sono in `dev`. Su `docs/spec-home` (in attesa di ok): niente più Stitch, il prototipo statico della home lo scrive Claude (P52) con le specifiche decise dall'utente (stile siciliano, tema automatico, niente emoji, layout orizzontale su computer: vedi P52 in `SCALETTA.md` e `DECISIONI.md`, sezione Interfaccia). Prossimo passo: P1 e P2 (`.gitattributes`, `.gitignore`), poi P52 (prototipo della home), poi P4 (scheletro del progetto).
 
 ## File e cartelle da ignorare
 

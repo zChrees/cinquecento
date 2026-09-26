@@ -44,11 +44,10 @@ I punti di `SCALETTA.md` che dipendono da una domanda la richiamano con il suo c
 
 ## Interfaccia
 
-- [ ] **D18 — Colore del tavolo di gioco**: colori e stile delle pagine vengono dal prototipo Stitch (P52). Resta da decidere il tavolo, che il prototipo non comprende: consigliato il verde classico, accostato alla palette del prototipo. Per il logo vedi D30.
+- [ ] **D18 — Colore del tavolo di gioco**: colori e stile delle pagine vengono dal prototipo scritto da Claude (P52, stile siciliano, tema chiaro e scuro). Resta da decidere il tavolo, che il prototipo non comprende: consigliato il verde classico, accostato alla palette del prototipo, con una versione per il tema scuro.
 - [ ] **D19 — Immagini delle carte**: da dove vengono le vostre immagini e con che licenza? Serve saperlo per usarle nella versione finale (punto P35).
 - [ ] **D28 — Classifica**: consigliata la top 50, separata 1v1 e 2v2, per chi ha giocato **almeno 10 partite** dalla coda, con la propria posizione sempre visibile.
 - [ ] **D29 — Set di avatar**: quanti e con che soggetti? Consigliati 12 (i 4 semi e le 8 figure siciliane: Re, Cavallo e Fante di alcuni semi), in formato SVG. Chi li disegna, o da dove si prendono, e con che licenza?
-- [ ] **D30 — Logo "500"**: avete già il file? Consigliato il formato SVG (resta nitido a qualunque dimensione), più una versione piccola per la scheda del browser (favicon).
 - [ ] **D32 — Mini-tutorial nella pagina Regole**: consigliato **testo con esempi illustrati** usando le carte CSS; oppure un tutorial interattivo (molto più lavoro, da rimandare).
 
 ## Tempi

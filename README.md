@@ -72,7 +72,7 @@ cinquecento/
 │   ├── REGOLE-GIOCO.md        regolamento del gioco (riferimento unico)
 │   ├── CONTRATTO-SOCKET.md    eventi scambiati tra pagine e server, formato della "vista"
 │   ├── DEMO.md                lista di controllo per il giorno della demo
-│   ├── prototipo/             prototipo grafico della home (Stitch), solo riferimento
+│   ├── prototipo/             prototipo statico della home, solo riferimento
 │   └── archivio/              tracker chiusi (non più aggiornati)
 │
 ├── migrations/
