@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Briscola · Prototipo della home</title>
+
+  <!-- Risorse esterne (elenco in LEGGIMI.md) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block">
+
+  <link rel="stylesheet" href="prototipo.css">
+  <!-- Script classico: i moduli ES non partono aprendo il file con un doppio clic -->
+  <script src="prototipo.js" defer></script>
+</head>
+<body>
+
+<!--
+  Sfondo: carte siciliane sparse su tutta la pagina, senza sovrapporsi.
+  Lo script le dispone in una griglia di caselle invisibili (una carta o una coppia
+  Cavallo + Re per casella). Solo Cavallo e Re si sovrappongono, fra loro.
+-->
+<div class="bg-deco" aria-hidden="true" data-bg-cards></div>
+
+<!-- ===== Navbar ===== -->
+<header class="navbar" data-part="navbar">
+  <div class="navbar__inner">
+    <button class="navbar__account" type="button" data-open="stats" aria-haspopup="dialog">
+      <span class="avatar" aria-hidden="true">M</span>
+      <span class="navbar__label">Mario</span>
+      <span class="visually-hidden">: apri le tue statistiche</span>
+    </button>
+
+    <a class="logo" href="#" aria-label="Briscola, torna alla home">
+      <img class="logo__suit" src="img/seme-denari.svg" alt="">
+      <span class="logo__text">Briscola</span>
+    </a>
+
+    <button class="navbar__friends" type="button" data-open="friends" aria-haspopup="dialog" aria-label="Amici: 1 richiesta di amicizia">
+      <span class="icon" aria-hidden="true">group</span>
+      <span class="navbar__label" aria-hidden="true">Amici</span>
+      <span class="badge" aria-hidden="true" data-friends-badge>1</span>
+    </button>
+  </div>
+</header>
+
+<!-- ===== Home ===== -->
+<main class="home" data-part="home">
+  <p class="online" data-part="online-count">
+    <span class="online__dot" aria-hidden="true"></span>
+    <span><strong>24</strong> giocatori online</span>
+  </p>
+
+  <div class="home__sections">
+    <section class="mode-section" aria-labelledby="titolo-veloce">
+      <h2 class="mode-section__title" id="titolo-veloce">
+        <span class="icon" aria-hidden="true">bolt</span>Partita Veloce
+      </h2>
+      <div class="mode-section__tiles">
+        <button class="mode-tile mode-tile--red" type="button" data-kind="veloce" data-mode="1v1">
+          <span class="icon mode-tile__icon" aria-hidden="true">person</span>
+          <span class="mode-tile__label">1v1</span>
+          <span class="mode-tile__sub">Uno contro uno</span>
+        </button>
+        <button class="mode-tile mode-tile--green" type="button" data-kind="veloce" data-mode="2v2">
+          <span class="icon mode-tile__icon" aria-hidden="true">groups</span>
+          <span class="mode-tile__label">2v2</span>
+          <span class="mode-tile__sub">A coppie</span>
+        </button>
+      </div>
+    </section>
+
+    <section class="mode-section" aria-labelledby="titolo-amico">
+      <h2 class="mode-section__title" id="titolo-amico">
+        <span class="icon" aria-hidden="true">favorite</span>Gioca con un amico
+      </h2>
+      <div class="mode-section__tiles">
+        <button class="mode-tile mode-tile--yellow" type="button" data-kind="amico" data-mode="1v1">
+          <span class="icon mode-tile__icon" aria-hidden="true">person</span>
+          <span class="mode-tile__label">1v1</span>
+          <span class="mode-tile__sub">Sfida un amico</span>
+        </button>
+        <button class="mode-tile mode-tile--blue" type="button" data-kind="amico" data-mode="2v2">
+          <span class="icon mode-tile__icon" aria-hidden="true">groups</span>
+          <span class="mode-tile__label">2v2</span>
+          <span class="mode-tile__sub">Fai squadra</span>
+        </button>
+      </div>
+    </section>
+  </div>
+</main>
+
+<!-- ===== Pannello statistiche (tocco sull'avatar) ===== -->
+<dialog class="sheet sheet--stats" id="stats" aria-labelledby="stats-title">
+  <div class="sheet__head">
+    <span class="avatar avatar--big" aria-hidden="true">M</span>
+    <div>
+      <h2 class="sheet__title" id="stats-title">Mario</h2>
+      <p class="sheet__subtitle">Le tue statistiche</p>
+    </div>
+    <button class="icon-btn" type="button" data-close aria-label="Chiudi">
+      <span class="icon" aria-hidden="true">close</span>
+    </button>
+  </div>
+  <dl class="stats-grid">
+    <div class="stat"><dt>Partite</dt><dd>128</dd></div>
+    <div class="stat stat--win"><dt>Vinte</dt><dd>71</dd></div>
+    <div class="stat stat--lose"><dt>Perse</dt><dd>57</dd></div>
+    <div class="stat"><dt>Vittorie</dt><dd>55%</dd></div>
+    <div class="stat"><dt>Rating 1v1</dt><dd>1540</dd></div>
+    <div class="stat"><dt>Rating 2v2</dt><dd>1482</dd></div>
+  </dl>
+  <div class="sheet__links">
+    <a href="#" class="sheet__link"><span class="icon" aria-hidden="true">settings</span>Impostazioni</a>
+    <a href="#" class="sheet__link"><span class="icon" aria-hidden="true">logout</span>Esci</a>
+  </div>
+</dialog>
+
+<!-- ===== Pannello amici (tocco sull'icona amici) ===== -->
+<dialog class="drawer" id="friends" aria-labelledby="friends-title">
+  <!-- Vista: elenco amici -->
+  <div class="drawer__view" data-view="list">
+    <div class="drawer__head">
+      <h2 class="drawer__title" id="friends-title">Amici</h2>
+      <button class="icon-btn" type="button" data-close aria-label="Chiudi">
+        <span class="icon" aria-hidden="true">close</span>
+      </button>
+    </div>
+
+    <form class="add-friend" data-add-friend novalidate>
+      <label class="visually-hidden" for="add-friend-input">Username dell'amico da aggiungere</label>
+      <input class="input" id="add-friend-input" name="username" type="text" placeholder="Cerca uno username" autocomplete="off" maxlength="20">
+      <button class="btn btn--primary btn--small" type="submit">
+        <span class="icon" aria-hidden="true">person_add</span>Invia
+      </button>
+      <p class="add-friend__error" data-add-friend-error role="alert" hidden>Scrivi uno username.</p>
+    </form>
+
+    <section class="friends-group" data-requests-section>
+      <h3 class="friends-group__title">Richieste di amicizia</h3>
+      <ul class="friends-list" data-requests-list></ul>
+    </section>
+
+    <section class="friends-group">
+      <h3 class="friends-group__title">Online <span data-online-count></span></h3>
+      <ul class="friends-list" data-friends-online></ul>
+    </section>
+
+    <section class="friends-group">
+      <h3 class="friends-group__title">Offline <span data-offline-count></span></h3>
+      <ul class="friends-list" data-friends-offline></ul>
+    </section>
+  </div>
+
+  <!-- Vista: chat con un amico -->
+  <div class="drawer__view chat" data-view="chat" hidden>
+    <div class="drawer__head">
+      <button class="icon-btn" type="button" data-chat-back aria-label="Torna agli amici">
+        <span class="icon" aria-hidden="true">arrow_back</span>
+      </button>
+      <h2 class="drawer__title" data-chat-name>Chat</h2>
+      <button class="icon-btn" type="button" data-close aria-label="Chiudi">
+        <span class="icon" aria-hidden="true">close</span>
+      </button>
+    </div>
+    <ol class="chat__messages" data-chat-messages aria-live="polite"></ol>
+    <form class="chat__form" data-chat-form>
+      <label class="visually-hidden" for="chat-input">Scrivi un messaggio</label>
+      <input class="input" id="chat-input" name="text" type="text" placeholder="Scrivi un messaggio" autocomplete="off" maxlength="300">
+      <button class="icon-btn icon-btn--filled" type="submit" aria-label="Invia messaggio">
+        <span class="icon" aria-hidden="true">send</span>
+      </button>
+    </form>
+  </div>
+</dialog>
+
+<!-- ===== Modal della modalità ===== -->
+<dialog class="modal" id="mode-modal" aria-labelledby="mode-title">
+  <div class="modal__head">
+    <div>
+      <p class="modal__kicker" data-modal-kicker>Partita Veloce</p>
+      <h2 class="modal__title" id="mode-title" data-modal-title>1v1</h2>
+    </div>
+    <button class="icon-btn" type="button" data-close aria-label="Chiudi">
+      <span class="icon" aria-hidden="true">close</span>
+    </button>
+  </div>
+
+  <fieldset class="target">
+    <legend class="target__legend">Punti per vincere</legend>
+    <div class="target__options">
+      <label class="target__option"><input type="radio" name="target" value="150"><span>150</span></label>
+      <label class="target__option"><input type="radio" name="target" value="300"><span>300</span></label>
+      <label class="target__option"><input type="radio" name="target" value="500" checked><span>500</span></label>
+    </div>
+  </fieldset>
+
+  <section class="invite" data-invite-section hidden>
+    <h3 class="invite__title" data-invite-title>Invita un amico</h3>
+    <ul class="invite__list" data-invite-list></ul>
+    <p class="invite__hint" data-invite-hint>Potrai giocare quando l'amico avrà accettato.</p>
+  </section>
+
+  <button class="btn btn--primary btn--big" type="button" data-play>
+    <span class="icon" aria-hidden="true">play_arrow</span>Gioca
+  </button>
+</dialog>
+
+<!-- Messaggi brevi (es. "Richiesta inviata") -->
+<div class="toast" role="status" aria-live="polite" data-toast hidden></div>
+
+</body>
+</html>

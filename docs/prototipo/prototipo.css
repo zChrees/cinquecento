@@ -1,0 +1,1296 @@
+/*
+ * Briscola · prototipo della home (P52)
+ * Palette "Carretto siciliano". Mobile-first: le regole di base sono per
+ * il telefono, i @media allargano.
+ */
+
+/* ============================================================
+   Palette "Carretto siciliano"
+   ============================================================ */
+:root {
+  --bg: #fff8ec;
+  --surface: #ffffff;
+  --surface-2: #fdefd6;
+  --border: #f1dfc2;
+  --text: #2b1b12;
+  --muted: #76604f;
+
+  --red: #d93636;
+  --red-strong: #b02525;
+  --green: #1b8a4f;
+  --yellow: #ffc21a;          /* giallo vivo per dettagli e contatori */
+  --yellow-card: #e9a000;     /* giallo più carico per la carta, sotto il testo bianco */
+  --blue: #1f6fe0;
+  --card-face: #fffaf0;       /* carta color crema */
+  --card-edge: #e6d5b8;       /* bordo e spessore della carta */
+
+  /* Ruoli usati dai componenti */
+  --primary: var(--red);
+  --primary-strong: var(--red-strong);
+  --on-primary: #ffffff;
+  --online: var(--green);
+
+  --font-title: "Fredoka", "Nunito", system-ui, sans-serif;
+  --font-text: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --radius-s: 10px;
+  --radius-m: 16px;
+  --radius-l: 22px;
+  --radius-pill: 999px;
+  --shadow-1: 0 1px 2px rgb(60 30 10 / 0.06), 0 6px 16px rgb(60 30 10 / 0.08);
+  --shadow-2: 0 16px 40px rgb(60 30 10 / 0.2);
+  --navbar-h: 64px;
+  --content-max: 1180px;
+  --card-ratio: 0.61;         /* larghezza / altezza di una carta siciliana */
+}
+
+/* ============================================================
+   Base
+   ============================================================ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body,
+h1,
+h2,
+h3,
+p,
+ul,
+ol,
+dl,
+dd,
+fieldset {
+  margin: 0;
+}
+
+ul,
+ol {
+  padding: 0;
+  list-style: none;
+}
+
+fieldset {
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+img,
+svg {
+  display: block;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* La home entra sempre nello schermo: niente scorrimento, su telefono come su computer */
+html,
+body {
+  height: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  font-family: var(--font-text);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-title);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.icon {
+  font-family: "Material Symbols Rounded";
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  direction: ltr;
+  font-feature-settings: "liga";
+  -webkit-font-smoothing: antialiased;
+  font-variation-settings: "FILL" 1, "wght" 500, "GRAD" 0, "opsz" 24;
+  user-select: none;
+}
+
+/* ============================================================
+   Sfondo: carte siciliane sparse su tutta la pagina
+   Cavallo e Re di tutti e quattro i semi (cantare 40), Assi e Tre (i carichi).
+   Lo script le mette in una griglia di caselle invisibili sfalsate a mattoncini:
+   ogni casella è più grande del suo gruppo anche ruotato, quindi i gruppi non si
+   toccano mai. Solo Cavallo e Re di una coppia si sovrappongono fra loro.
+   ============================================================ */
+
+.bg-deco {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  --bg-card-w: 60px;
+}
+
+.bg-card,
+.bg-pair {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  opacity: 0.6;
+  transform: translate(-50%, -50%) rotate(var(--r, 0deg));
+}
+
+.bg-card,
+.bg-pair img {
+  width: var(--bg-card-w);
+  aspect-ratio: var(--card-ratio);
+  border-radius: 6px;
+  object-fit: cover;
+  box-shadow: 0 3px 10px rgb(60 30 10 / 0.22);
+}
+
+/* Cavallo e Re appena sovrapposti, a ventaglio, come in mano a chi canta */
+.bg-pair {
+  display: flex;
+}
+
+.bg-pair img:first-child {
+  transform: rotate(-7deg);
+}
+
+.bg-pair img:last-child {
+  margin-left: calc(var(--bg-card-w) * -0.45);
+  transform: rotate(7deg) translateY(2px);
+}
+
+/* ============================================================
+   Pulsanti e campi
+   ============================================================ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 48px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.btn--primary {
+  background: var(--primary);
+  color: var(--on-primary);
+  box-shadow: 0 4px 0 var(--primary-strong);
+}
+
+.btn--primary:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+.btn--small {
+  min-height: 44px;
+  padding: 0 16px;
+}
+
+.btn--small .icon {
+  font-size: 20px;
+}
+
+.btn--big {
+  width: 100%;
+  min-height: 56px;
+  font-size: 1.15rem;
+}
+
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.icon-btn:hover {
+  background: var(--surface-2);
+}
+
+.icon-btn--filled {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.icon-btn--filled:hover {
+  background: var(--primary-strong);
+}
+
+.input {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+}
+
+.input:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+/* ============================================================
+   Navbar
+   ============================================================ */
+/* Navbar trasparente: le carte dello sfondo si vedono sfocate dietro */
+.navbar {
+  position: relative;
+  z-index: 10;
+  flex: none;
+  background: rgb(255 248 236 / 0.55);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  backdrop-filter: blur(14px) saturate(1.4);
+  box-shadow: 0 1px 0 rgb(60 30 10 / 0.08), 0 6px 20px rgb(60 30 10 / 0.06);
+}
+
+.navbar__inner {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  height: var(--navbar-h);
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 0 12px;
+}
+
+.navbar__account,
+.navbar__friends {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 2px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  cursor: pointer;
+}
+
+.navbar__account {
+  justify-self: start;
+}
+
+.navbar__friends {
+  justify-self: end;
+  justify-content: center;
+  min-width: 44px;
+}
+
+.navbar__friends:hover,
+.navbar__account:hover {
+  background: var(--surface-2);
+}
+
+/* Su telefono le scritte accanto alle icone non ci stanno */
+.navbar__label {
+  display: none;
+  font-weight: 800;
+}
+
+.avatar {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--red);
+  color: #ffffff;
+  font-family: var(--font-title);
+  font-weight: 600;
+  font-size: 1.15rem;
+  box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--yellow);
+}
+
+.avatar--big {
+  width: 56px;
+  height: 56px;
+  font-size: 1.5rem;
+}
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  text-decoration: none;
+  border-radius: var(--radius-s);
+}
+
+.logo__suit {
+  width: 28px;
+  height: 28px;
+}
+
+.logo__text {
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: 1.6rem;
+  letter-spacing: -0.01em;
+  color: var(--red);
+}
+
+.badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border: 2px solid var(--surface);
+  border-radius: var(--radius-pill);
+  background: var(--blue);
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  line-height: 16px;
+  text-align: center;
+}
+
+/* ============================================================
+   Home
+   ============================================================ */
+/*
+ * --tile-h è l'altezza massima di una carta-pulsante: lo schermo meno tutto il resto
+ * (navbar, giocatori online, titoli, spazi). Così le carte si rimpiccioliscono
+ * sugli schermi bassi e la pagina non scorre mai.
+ */
+.home {
+  --tile-h: calc((100vh - 262px) / 2);
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 12px 16px;
+}
+
+@supports (height: 100dvh) {
+  .home {
+    --tile-h: calc((100dvh - 262px) / 2);
+  }
+}
+
+/* Giocatori online: centrato su telefono e su computer */
+.online {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  margin: 0 auto;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+  font-size: 0.92rem;
+}
+
+.online__dot {
+  position: relative;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--online);
+}
+
+.online__dot::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border: 2px solid var(--online);
+  border-radius: 50%;
+  animation: pulse 2.2s ease-out infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.6); opacity: 0.8; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+.home__sections {
+  display: grid;
+  gap: 16px;
+  margin-top: 14px;
+}
+
+/* Titolo su una pillola color crema: resta leggibile anche con una carta dello sfondo dietro */
+.mode-section__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  margin-bottom: 10px;
+  padding: 3px 14px 3px 3px;
+  border-radius: var(--radius-pill);
+  background: rgb(255 248 236 / 0.92);
+  box-shadow: 0 0 0 1px var(--border);
+  font-size: 1.35rem;
+}
+
+.mode-section__title .icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--yellow);
+  color: var(--text);
+  font-size: 20px;
+}
+
+.mode-section__tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  justify-items: center;
+  gap: 14px;
+}
+
+/*
+ * Pulsante modalità disegnato come una carta da gioco: carta colorata con le
+ * proporzioni di una carta siciliana, cornice interna, seme negli angoli
+ * (in basso a destra capovolto) e scritte bianche uguali su tutte e quattro.
+ */
+.mode-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: min(100%, var(--tile-h) * 0.61);
+  aspect-ratio: var(--card-ratio);
+  padding: 12px 8px;
+  border: 0;
+  border-radius: var(--radius-l);
+  color: #ffffff;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-1), inset 0 -5px 0 rgb(0 0 0 / 0.12);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Cornice interna, come il bordo stampato di una carta */
+.mode-tile::before {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border: 2px solid currentColor;
+  border-radius: calc(var(--radius-l) - 6px);
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.mode-tile:hover {
+  transform: translateY(-3px) rotate(-0.6deg);
+  box-shadow: var(--shadow-2), inset 0 -5px 0 rgb(0 0 0 / 0.12);
+}
+
+.mode-tile:active {
+  transform: scale(0.97);
+}
+
+.mode-tile--red { background: var(--red); }
+.mode-tile--green { background: var(--green); }
+.mode-tile--yellow { background: var(--yellow-card); }
+.mode-tile--blue { background: var(--blue); }
+
+.mode-tile__icon {
+  font-size: 34px;
+}
+
+.mode-tile__label,
+.mode-tile__sub,
+.mode-tile__icon {
+  text-shadow: 0 2px 0 rgb(0 0 0 / 0.2);
+}
+
+.mode-tile__label {
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: 2.4rem;
+  line-height: 1.05;
+}
+
+.mode-tile__sub {
+  font-weight: 800;
+  font-size: 0.9rem;
+  line-height: 1.25;
+}
+
+/* Tablet: carte di larghezza massima 220 px, sezioni centrate */
+@media (min-width: 640px) {
+  .home {
+    --tile-h: calc((100vh - 292px) / 2);
+    max-width: 720px;
+    padding: 16px 24px;
+  }
+
+  @supports (height: 100dvh) {
+    .home {
+      --tile-h: calc((100dvh - 292px) / 2);
+    }
+  }
+
+  .home__sections {
+    gap: 28px;
+    margin-top: 20px;
+  }
+
+  .mode-section {
+    width: fit-content;
+    margin: 0 auto;
+  }
+
+  .bg-deco {
+    --bg-card-w: 84px;
+  }
+
+  .mode-section__tiles {
+    grid-template-columns: repeat(2, 220px);
+    gap: 20px;
+  }
+}
+
+/* Tablet largo: le due sezioni affiancate, come su computer */
+@media (min-width: 900px) {
+  .home {
+    --tile-h: calc(100vh - 270px);
+    max-width: var(--content-max);
+  }
+
+  @supports (height: 100dvh) {
+    .home {
+      --tile-h: calc(100dvh - 270px);
+    }
+  }
+
+  .home__sections {
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+  }
+
+  .mode-section {
+    width: auto;
+    margin: 0;
+  }
+
+  .mode-section__tiles {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Computer: navbar distesa, carte più grandi e più distanziate */
+@media (min-width: 1024px) {
+  .navbar__inner {
+    padding: 0 32px;
+  }
+
+  .navbar__label {
+    display: inline;
+  }
+
+  .navbar__account {
+    padding-right: 16px;
+  }
+
+  .navbar__friends {
+    padding: 0 18px 0 12px;
+  }
+
+  .badge {
+    position: static;
+    margin-left: 2px;
+  }
+
+  .logo__text {
+    font-size: 1.9rem;
+  }
+
+  .logo__suit {
+    width: 32px;
+    height: 32px;
+  }
+
+  .home {
+    padding: 24px 32px;
+  }
+
+  .home__sections {
+    gap: 64px;
+    margin-top: 36px;
+  }
+
+  .mode-section__title {
+    font-size: 1.7rem;
+    margin-bottom: 20px;
+  }
+
+  .mode-section__tiles {
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+  }
+
+  .mode-tile {
+    gap: 6px;
+  }
+
+  .mode-tile__icon {
+    font-size: 48px;
+  }
+
+  .mode-tile__label {
+    font-size: 3.6rem;
+  }
+
+  .mode-tile__sub {
+    font-size: 1.05rem;
+  }
+
+
+  /* Carte dello sfondo più grandi */
+  .bg-deco {
+    --bg-card-w: 104px;
+  }
+
+  .bg-card,
+  .bg-pair img {
+    border-radius: 9px;
+  }
+}
+
+/* Telefono in orizzontale: schermo basso, quindi le quattro carte su una sola fila */
+@media (orientation: landscape) and (max-height: 520px) {
+  .home {
+    --tile-h: calc(100vh - 190px);
+    max-width: none;
+    padding: 8px 16px;
+  }
+
+  @supports (height: 100dvh) {
+    .home {
+      --tile-h: calc(100dvh - 190px);
+    }
+  }
+
+  .home__sections {
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 8px;
+  }
+
+  .mode-section {
+    width: auto;
+    margin: 0;
+  }
+
+  .mode-section__title {
+    margin-bottom: 6px;
+    font-size: 1.1rem;
+  }
+
+  .mode-section__tiles {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .mode-tile__icon {
+    font-size: 26px;
+  }
+
+  .mode-tile__label {
+    font-size: 1.8rem;
+  }
+
+  .mode-tile__sub {
+    font-size: 0.8rem;
+  }
+}
+
+/* ============================================================
+   Finestre: base comune (dialog)
+   ============================================================ */
+dialog {
+  padding: 0;
+  border: 0;
+  color: var(--text);
+  background: var(--surface);
+}
+
+dialog::backdrop {
+  background: rgb(35 20 10 / 0.45);
+}
+
+/* Modal della modalità: dal basso su telefono, centrato su computer */
+.modal {
+  width: 100%;
+  max-width: 100%;
+  margin: auto 0 0;
+  padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
+  border-radius: var(--radius-l) var(--radius-l) 0 0;
+  box-shadow: var(--shadow-2);
+}
+
+.modal__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.modal__kicker {
+  color: var(--muted);
+  font-weight: 800;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.modal__title {
+  font-size: 2rem;
+  color: var(--primary);
+}
+
+.target {
+  margin-bottom: 20px;
+}
+
+.target__legend {
+  margin-bottom: 8px;
+  font-weight: 800;
+}
+
+.target__options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding: 5px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+}
+
+.target__option {
+  position: relative;
+}
+
+.target__option input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.target__option span {
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-title);
+  font-weight: 600;
+  font-size: 1.2rem;
+  color: var(--muted);
+  transition: background-color 0.12s ease;
+}
+
+.target__option input:checked + span {
+  background: var(--yellow);
+  color: var(--text);
+  box-shadow: var(--shadow-1);
+}
+
+.target__option input:focus-visible + span {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.invite {
+  margin-bottom: 20px;
+}
+
+.invite__title {
+  margin-bottom: 8px;
+  font-family: var(--font-text);
+  font-weight: 800;
+  font-size: 1rem;
+}
+
+.invite__list {
+  display: grid;
+  gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.invite__hint {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.invite__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 8px 8px 10px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-m);
+}
+
+.invite__item[data-state="accepted"] {
+  border-color: var(--online);
+}
+
+.invite__name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.invite__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--primary);
+  color: var(--on-primary);
+  font-weight: 800;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.invite__btn .icon {
+  font-size: 18px;
+}
+
+.invite__btn:disabled {
+  cursor: default;
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+.invite__btn[data-state="pending"] .icon {
+  animation: spin 1s linear infinite;
+}
+
+.invite__btn[data-state="accepted"] {
+  background: var(--online);
+  color: #ffffff;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Avatar piccoli negli elenchi, colori a rotazione */
+.mini-avatar {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.mini-avatar--0 { background: var(--red); }
+.mini-avatar--1 { background: var(--green); }
+.mini-avatar--2 { background: var(--yellow); color: var(--text); }
+.mini-avatar--3 { background: var(--blue); }
+
+.mini-avatar__wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.mini-avatar__status {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  background: #a3acb9;
+}
+
+.mini-avatar__status--online {
+  background: var(--online);
+}
+
+/* Pannello statistiche: in alto a sinistra, sotto l'avatar */
+.sheet {
+  width: calc(100% - 24px);
+  max-width: 380px;
+  margin: calc(var(--navbar-h) + 10px) auto auto 12px;
+  padding: 18px;
+  border-radius: var(--radius-l);
+  box-shadow: var(--shadow-2);
+}
+
+.sheet__head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.sheet__head > div {
+  flex: 1;
+}
+
+.sheet__title {
+  font-size: 1.4rem;
+}
+
+.sheet__subtitle {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.stat {
+  padding: 10px 8px;
+  border-radius: var(--radius-m);
+  background: var(--surface-2);
+  text-align: center;
+}
+
+.stat dt {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.stat dd {
+  font-family: var(--font-title);
+  font-weight: 600;
+  font-size: 1.4rem;
+}
+
+.stat--win dd { color: var(--green); }
+.stat--lose dd { color: var(--red-strong); }
+
+.sheet__links {
+  display: grid;
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.sheet__link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 8px;
+  border-radius: var(--radius-s);
+  color: var(--text);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.sheet__link:hover {
+  background: var(--surface-2);
+}
+
+.sheet__link .icon {
+  color: var(--muted);
+}
+
+/* Pannello amici: a tutto schermo su telefono, laterale su computer */
+.drawer {
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  max-height: 100%;
+  margin: 0;
+}
+
+.drawer[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.drawer__view {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding: 12px 16px 16px;
+  overflow-y: auto;
+}
+
+.drawer__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 52px;
+  margin-bottom: 8px;
+}
+
+.drawer__title {
+  flex: 1;
+  font-size: 1.5rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.add-friend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.add-friend .input {
+  flex: 1;
+}
+
+.add-friend__error {
+  width: 100%;
+  color: var(--red-strong);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.friends-group {
+  margin-bottom: 16px;
+}
+
+.friends-group__title {
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-family: var(--font-text);
+  font-weight: 800;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.friends-list {
+  display: grid;
+  gap: 4px;
+}
+
+.friend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 6px 6px 6px 8px;
+  border-radius: var(--radius-m);
+}
+
+.friend:hover {
+  background: var(--surface-2);
+}
+
+.friend__text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.friend__name {
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.friend__status {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.friend--offline .friend__name {
+  color: var(--muted);
+}
+
+.friend__actions {
+  display: flex;
+  gap: 4px;
+}
+
+.friend__actions .icon-btn {
+  color: var(--blue);
+}
+
+.friend__actions .icon-btn--ok {
+  background: var(--green);
+  color: #ffffff;
+}
+
+.friend__actions .icon-btn--no {
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+/* Chat */
+.chat__messages {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  padding: 8px 0;
+  overflow-y: auto;
+}
+
+.chat__msg {
+  max-width: 80%;
+  padding: 8px 12px;
+  border-radius: 18px 18px 18px 6px;
+  background: var(--surface-2);
+  overflow-wrap: anywhere;
+}
+
+.chat__msg--mine {
+  align-self: flex-end;
+  border-radius: 18px 18px 6px 18px;
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.chat__form {
+  display: flex;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+@media (min-width: 640px) {
+  .modal {
+    width: min(460px, calc(100% - 32px));
+    margin: auto;
+    padding: 24px;
+    border-radius: var(--radius-l);
+  }
+
+  .drawer {
+    width: 400px;
+    margin: 0 0 0 auto;
+    border-radius: var(--radius-l) 0 0 var(--radius-l);
+    box-shadow: var(--shadow-2);
+  }
+}
+
+@media (min-width: 1024px) {
+  .sheet {
+    margin-left: max(12px, calc((100% - var(--content-max)) / 2 + 24px));
+  }
+}
+
+/* Messaggio breve in basso */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  z-index: 50;
+  max-width: calc(100% - 32px);
+  padding: 12px 18px;
+  border-radius: var(--radius-pill);
+  background: var(--text);
+  color: var(--bg);
+  font-weight: 700;
+  box-shadow: var(--shadow-2);
+  transform: translateX(-50%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
