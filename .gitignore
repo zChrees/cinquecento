@@ -216,3 +216,28 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# --- Cinquecento (P2) ---
+
+# Segreti: solo .env resta fuori; .env.example è il modello e va tracciato
+.env
+.env.*
+!.env.example
+
+# Installazione con dati veri (la cartella della demo)
+PRODUZIONE
+
+# Backup, dump del database e log
+backups/
+logs/
+*.sql.gz
+*.dump
+
+# File di sistema
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
