@@ -31,8 +31,8 @@ Una web-app per giocare online a **Cinquecento**, variante siciliana, con le car
 ## 2. Tracker
 
 ### Fase 1 — Fondamenta
-- [ ] P1 (Fase 1): fine riga fissati — `.gitattributes`
-- [ ] P2 (Fase 1): `.gitignore` completo — `.gitignore`
+- [x] P1 (Fase 1): fine riga fissati — `.gitattributes` — *26/09: creato; i file tracciati sono `i/lf w/crlf`, un `.sh` nuovo resta LF; marcati binari anche jpeg, gif, font, gz e zip*
+- [x] P2 (Fase 1): `.gitignore` completo — `.gitignore` — *26/09: aggiunti segreti (`.env`, `.env.*` tranne `.env.example`), `PRODUZIONE`, `backups/`, `logs/`, `*.sql.gz`, `*.dump`, file di sistema ed editor; provato con file finti*
 - [ ] P3 (Fase 1): riga "Stato" e regola di consegna — `CLAUDE.md`
 - [ ] P4 (Fase 1): scheletro del progetto con tutti i file "segnaposto" — `run.py`, `config.py`, `app/`, `requirements*.txt`, `.env.example`
 - [ ] P5 (Fase 1): database e prima migrazione — `scripts/setup_db.sql`, `migrations/001_init.sql`, `scripts/migrate.py`, `app/models/`
