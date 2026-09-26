@@ -1,0 +1,18 @@
+# Fine riga fissati per tutti, indipendentemente da core.autocrlf (P1).
+# Nel repository i file di testo sono salvati con LF; sul disco diventano CRLF.
+* text=auto eol=crlf
+
+# Gli script della shell restano LF, altrimenti non partono.
+*.sh text eol=lf
+
+# File binari: git non tocca mai il loro contenuto.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.gz binary
+*.zip binary
