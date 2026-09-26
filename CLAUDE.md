@@ -12,7 +12,7 @@
 
 6. Il regolamento del gioco è in **`docs/REGOLE-GIOCO.md`**: è il riferimento unico per il motore di gioco.
 
-**Stato (26/09/2026):** in `dev` ci sono scaletta, decisioni, domande aperte, regolamento e le specifiche del prototipo della home (P52, scritto da Claude al posto di Stitch). Fatti P1 (`.gitattributes`) e P2 (`.gitignore` completo). Prossimo passo: P52 (prototipo della home), poi P4 (scheletro del progetto).
+**Stato (27/09/2026):** fatti P1 (`.gitattributes`) e P2 (`.gitignore`). Il primo prototipo della home è stato scartato; il nuovo prototipo, approvato dall'utente, è in `dev` in `docs/prototipo/` (`index.html`, palette "Carretto siciliano" scelta dall'utente, pulsanti a forma di carta colorata, navbar trasparente sfocata, pagina senza scorrimento, sullo sfondo carte siciliane vere da Wikimedia messe da uno script solo negli spazi vuoti e senza sovrapposizioni: coppie Cavallo + Re dei quattro semi, Assi e Tre). Le specifiche di P52 in `SCALETTA.md` e `DECISIONI.md` (e la bottom navbar nel `README.md`) sono ancora quelle vecchie e vanno aggiornate: niente bottom navbar, nome "Briscola", punti 150/300/500, modal, immagini CC BY-SA. P52 non è ancora spuntato. Prossimo passo: aggiornamento dei documenti e tema scuro del prototipo, poi P4.
 
 ## File e cartelle da ignorare
 
