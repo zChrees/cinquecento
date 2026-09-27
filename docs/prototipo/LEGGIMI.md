@@ -69,7 +69,7 @@ Carte della cascata, contate il 27/09/2026: a 360×640 8 carte (3 dorsi, 2 coppi
 - **Tablet** (da 640 px): carte larghe al massimo 220 px, sezioni centrate. Da 900 px le due sezioni sono affiancate.
 - **Computer** (da 1024 px): navbar con le scritte "Mario" e "Amici", carte più grandi e più distanziate.
 
-La **navbar è completamente trasparente**: niente fondo, sfocatura né ombra sotto tutta la barra. Avatar e amici stanno su una **pillola di vetro chiaro in rilievo** (luce sul bordo alto, ombra sotto) e il nome ha uno spessore e un'ombra che lo staccano dal panno; con scritte e icone color crema (`--on-navbar`). Un'ombra leggera sotto le scritte le tiene leggibili quando dietro passa una carta.
+La **navbar è completamente trasparente**: niente fondo, sfocatura né ombra sotto tutta la barra. Avatar e amici stanno su una **pillola di vetro liquido** ("liquid glass"): le carte della cascata che passano dietro si vedono sfocate e scurite da una tinta verde (`backdrop-filter`), così icone e scritte bianche restano leggibili su qualunque carta; in più un riflesso chiaro in alto a sinistra, un bordo sottile di luce, un'ombra interna in basso per lo spessore del vetro e un'ombra sotto e il nome ha uno spessore e un'ombra che lo staccano dal panno; con scritte e icone color crema (`--on-navbar`). Un'ombra leggera sotto le scritte le tiene leggibili quando dietro passa una carta.
 
 **Passandoci sopra** (o arrivandoci con la tastiera) la pillola si alza un po'; l'**avatar** si ingrandisce, si inclina e il suo anello giallo si illumina; l'**icona degli amici** oscilla come un saluto e il contatore rimbalza.
 

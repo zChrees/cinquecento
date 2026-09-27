@@ -33,7 +33,6 @@
 
   /* Navbar: completamente trasparente sul panno, scritte color crema */
   --on-navbar: #fff8ec;
-  --navbar-hover: rgb(255 255 255 / 0.12);
 
   /* Ruoli usati dai componenti */
   --primary: var(--red);
@@ -373,8 +372,11 @@ h3 {
 }
 
 /*
- * Avatar e amici su una pillola di vetro chiaro, sollevata dal panno: luce sul
- * bordo alto e ombra sotto. Passandoci sopra si alza un po' di più.
+ * Avatar e amici su una pillola di "vetro liquido": quello che passa dietro
+ * (le carte della cascata) si vede sfocato e un po' scurito da una tinta verde,
+ * così icone e scritte bianche restano leggibili su qualunque carta. Riflesso chiaro in alto a sinistra, bordo sottile
+ * di luce, un'ombra interna in basso per lo spessore del vetro e un'ombra sotto.
+ * Passandoci sopra si alza un po' di più.
  */
 .navbar__account,
 .navbar__friends {
@@ -386,11 +388,16 @@ h3 {
   padding: 2px;
   border: 0;
   border-radius: var(--radius-pill);
-  background: rgb(255 255 255 / 0.1);
+  background:
+    radial-gradient(120% 90% at 20% 0%, rgb(255 255 255 / 0.26), transparent 55%),
+    linear-gradient(180deg, rgb(255 255 255 / 0.06), rgb(8 40 24 / 0.42));
+  -webkit-backdrop-filter: blur(12px) saturate(1.5) brightness(0.8);
+  backdrop-filter: blur(12px) saturate(1.5) brightness(0.8);
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.28),
-    inset 0 0 0 1px rgb(255 255 255 / 0.12),
-    0 4px 12px rgb(0 0 0 / 0.3);
+    inset 0 1px 0.5px rgb(255 255 255 / 0.55),
+    inset 0 0 0 1px rgb(255 255 255 / 0.22),
+    inset 0 -3px 6px rgb(0 0 0 / 0.12),
+    0 4px 14px rgb(0 0 0 / 0.3);
   cursor: pointer;
   transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -409,12 +416,15 @@ h3 {
 .navbar__friends:focus-visible,
 .navbar__account:hover,
 .navbar__account:focus-visible {
-  background: var(--navbar-hover);
+  background:
+    radial-gradient(120% 90% at 20% 0%, rgb(255 255 255 / 0.34), transparent 55%),
+    linear-gradient(180deg, rgb(255 255 255 / 0.1), rgb(8 40 24 / 0.36));
   transform: translateY(-2px);
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.35),
-    inset 0 0 0 1px rgb(255 255 255 / 0.18),
-    0 8px 18px rgb(0 0 0 / 0.35);
+    inset 0 1px 0.5px rgb(255 255 255 / 0.65),
+    inset 0 0 0 1px rgb(255 255 255 / 0.3),
+    inset 0 -3px 6px rgb(0 0 0 / 0.12),
+    0 8px 20px rgb(0 0 0 / 0.35);
 }
 
 /* Avatar: si ingrandisce, si inclina e l'anello giallo si illumina */
