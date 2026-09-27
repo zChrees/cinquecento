@@ -32,6 +32,9 @@ I punti di `SCALETTA.md` che dipendono da una domanda la richiamano con il suo c
 - [ ] **D15 — Per quanto tempo si mostrano le carte del canto** agli avversari: consigliati 3 secondi, più un'icona fissa accanto al giocatore per tutta la mano.
 - [ ] **D16 — Tolleranza del matchmaking**: consigliato di partire con ±100 punti di rating, allargare di +50 ogni 10 secondi, fino a ±400. Dopo 2 minuti si accetta qualunque avversario.
 - [ ] **D17 — Formazione delle squadre nella coda 2v2**: consigliato di unire i 4 giocatori in modo che le medie delle due squadre siano il più vicine possibile.
+- [ ] **D34 — Nome mostrato nell'interfaccia**: nel prototipo approvato la navbar dice **"Briscola"** (richiesta dell'utente), ma il gioco e il regolamento sono quelli del **Cinquecento**. Quale nome va nelle pagine vere, nel titolo della scheda del browser e nel logo (P42)? Consigliato: il nome del gioco che si gioca davvero.
+- [ ] **D35 — Punteggio per vincere e matchmaking**: con la scelta 150 / 300 / 500 nel modal, la coda va divisa per modalità **e** per punteggio (chi sceglie 150 incontra solo chi ha scelto 150) *(consigliato)*, oppure il punteggio lo sceglie il server? E il rating conta allo stesso modo per una partita a 150 e una a 500? Consigliato: code separate per punteggio, rating uguale per tutti i punteggi.
+- [ ] **D36 — Il 2v2 con un amico conta per il rating?** L'amico è il compagno e gli avversari arrivano dal matchmaking. Oggi vale la decisione "le partite nate da un invito non contano". Consigliato: **sì, conta**, perché gli avversari sono sconosciuti trovati dalla coda; il 1v1 contro un amico invece non conta.
 
 ## Amici e chat
 
@@ -39,20 +42,19 @@ I punti di `SCALETTA.md` che dipendono da una domanda la richiamano con il suo c
 - [ ] **D24 — Per quanto tempo si conservano i messaggi della chat**: consigliati 30 giorni. Si cancellano comunque con l'account. Serve **prima di P5**.
 - [ ] **D25 — Con chi si chatta**: consigliato **solo tra amici**, uno a uno, senza chat durante la partita.
 - [ ] **D26 — Limiti**: consigliati al massimo 100 amici, messaggi di 300 caratteri al massimo, non più di 1 messaggio al secondo.
-- [ ] **D27 — Inviti a partita**: consigliata una scadenza di 60 secondi. Nel 2v2 chi invita sceglie il compagno e i due avversari tra i suoi amici; se qualcuno rifiuta, il posto resta libero e si può invitare un altro amico o condividere il codice della stanza.
+- [ ] **D27 — Inviti a partita**: consigliata una scadenza di 60 secondi. Dal prototipo approvato il 27/09/2026: nel 1v1 l'amico invitato è l'avversario; nel 2v2 è il **compagno di squadra** e gli avversari arrivano dal matchmaking. Si invita un amico alla volta. Resta da decidere cosa succede se l'amico rifiuta o non risponde (consigliato: l'invito scade, compare un avviso e si può invitare un altro amico).
 - [ ] **D33 — Ricerca di un utente per mandargli la richiesta**: consigliato **username esatto** (protegge la privacy ed evita lo spam); oppure ricerca per parte del nome.
 
 ## Interfaccia
 
 - [ ] **D18 — Colore del tavolo di gioco**: colori e stile delle pagine vengono dal prototipo scritto da Claude (P52, stile siciliano, tema chiaro e scuro). Resta da decidere il tavolo, che il prototipo non comprende: consigliato il verde classico, accostato alla palette del prototipo, con una versione per il tema scuro.
 - [ ] **D19 — Immagini delle carte**: da dove vengono le vostre immagini e con che licenza? Serve saperlo per usarle nella versione finale (punto P35).
-- [ ] **D28 — Classifica**: consigliata la top 50, separata 1v1 e 2v2, per chi ha giocato **almeno 10 partite** dalla coda, con la propria posizione sempre visibile.
 - [ ] **D29 — Set di avatar**: quanti e con che soggetti? Consigliati 12 (i 4 semi e le 8 figure siciliane: Re, Cavallo e Fante di alcuni semi), in formato SVG. Chi li disegna, o da dove si prendono, e con che licenza?
-- [ ] **D32 — Mini-tutorial nella pagina Regole**: consigliato **testo con esempi illustrati** usando le carte CSS; oppure un tutorial interattivo (molto più lavoro, da rimandare).
+- [ ] **D37 — Dove mostrare i crediti delle immagini delle carte**: le carte dello sfondo (scansioni di Matsoftware su Wikimedia) hanno licenza **CC BY-SA 3.0**, che obbliga a citare autore e licenza in modo visibile. Prima era prevista la pagina Regole, che non c'è più. Opzioni: a) una riga piccola in fondo al pannello statistiche, sotto Impostazioni ed Esci *(consigliata)*; b) una pagina "Crediti" raggiungibile dalle impostazioni; c) sostituire le immagini con altre di pubblico dominio.
 
 ## Tempi
 
-- [ ] **D31 — Ordine di taglio se il tempo non basta**: proposto in `SCALETTA.md`, sezione 5 (avatar e logo → carte vere → storico → tutorial → classifica → chat → matchmaking 2v2 → rifinitura mobile). Va bene, o preferite un altro ordine? Per esempio, se la chat è più importante della classifica, si scambiano.
+- [ ] **D31 — Ordine di taglio se il tempo non basta**: proposto in `SCALETTA.md`, sezione 5 (avatar e logo → carte vere → chat → matchmaking 2v2 → rifinitura mobile). Va bene, o preferite un altro ordine?
 
 ## Messa in servizio
 

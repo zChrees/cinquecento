@@ -2,37 +2,39 @@
 
 Web-app per giocare online a **Cinquecento**, il gioco di carte siciliano simile alla briscola (variante siciliana, detta anche Marianna), con le **carte siciliane**.
 
-- Partite **1v1** e **2v2**, da **stanza privata** (con un codice da condividere) o dalla **coda di matchmaking**, che abbina giocatori di livello simile in base al rating.
-- **Account personali**: registrazione, login, scelta di un avatar, cancellazione dell'account.
+- Partite **1v1** e **2v2** a **150, 300 o 500 punti**, dalla home:
+  - **Partita Veloce**: la **coda di matchmaking** abbina giocatori di livello simile in base al rating;
+  - **Gioca con un amico**: si invita un amico online; nel 1v1 è l'avversario, nel 2v2 il compagno di squadra (gli avversari arrivano dal matchmaking).
+- **Account personali**: registrazione, login, scelta di un avatar, cancellazione dell'account, **statistiche**.
 - **Amici**: richieste di amicizia, chi è online, **chat** e **inviti** a una 1v1 o 2v2.
-- **Statistiche** del proprio account, **classifica**, storico delle **partite** e pagina delle **regole**.
-- Pensata prima per lo **smartphone** (mobile-first), funziona anche da computer.
+- Pensata prima per lo **smartphone** (mobile-first), funziona anche da computer. La home non scorre mai.
 
 ### Com'è fatta l'interfaccia
 
 ```
 ┌──────────────────────────────────┐
-│ (👤)          [ 500 ]        👥•2 │  avatar e menu · logo · amici e chat
-├──────────────────────────────────┤
-│   Rating 1v1: 1540  ·  12 online │
-│      ┌────────────────────┐      │
-│      │       1 v 1        │      │
-│      └────────────────────┘      │
-│      ┌────────────────────┐      │
-│      │       2 v 2        │      │
-│      └────────────────────┘      │
-│   Hai una partita in corso →     │  solo se c'è da rientrare
-├──────────────────────────────────┤
-│  🏆      🔑      🏠      📜     📖  │
-│Classif. Privata Gioca Partite Regole│  bottom navbar (nascosta durante la partita)
+│ (M)         Briscola          [A]│  avatar (statistiche) · nome · amici e chat
+├──────────────────────────────────┤  navbar trasparente e sfocata
+│        o 24 giocatori online     │
+│  Partita Veloce                  │
+│  ┌─────────┐    ┌─────────┐      │
+│  │   1v1   │    │   2v2   │      │  carte-pulsante: si apre il modal
+│  └─────────┘    └─────────┘      │  con i punti (150 / 300 / 500) e "Gioca"
+│  Gioca con un amico              │
+│  ┌─────────┐    ┌─────────┐      │
+│  │   1v1   │    │   2v2   │      │  + la lista degli amici da invitare
+│  └─────────┘    └─────────┘      │
 └──────────────────────────────────┘
+   sullo sfondo: carte siciliane sparse negli spazi vuoti
 ```
+
+Il riferimento grafico è il prototipo in [docs/prototipo/](docs/prototipo/): si apre con un doppio clic su `index.html`.
 
 > **Stato del progetto:** in preparazione. Il codice non è ancora stato scritto. Le istruzioni di installazione qui sotto descrivono come funzionerà il progetto quando saranno fatti i punti P4–P6 della [scaletta](SCALETTA.md).
 
 ## Il gioco in breve
 
-Si gioca con 40 carte siciliane, con 5 carte in mano. All'inizio non c'è briscola: chi ha in mano **Re e Cavallo dello stesso seme** può **cantare 40**, e quel seme diventa briscola. I canti successivi valgono 20 (**cantare 20**). Non c'è obbligo di rispondere al seme. Vince chi, a fine mano, arriva ad almeno **500 punti**.
+Si gioca con 40 carte siciliane, con 5 carte in mano. All'inizio non c'è briscola: chi ha in mano **Re e Cavallo dello stesso seme** può **cantare 40**, e quel seme diventa briscola. I canti successivi valgono 20 (**cantare 20**). Non c'è obbligo di rispondere al seme. Vince chi, a fine mano, arriva ad almeno il punteggio scelto per la partita: **150, 300 o 500 punti**.
 
 Il regolamento completo è in [docs/REGOLE-GIOCO.md](docs/REGOLE-GIOCO.md).
 
@@ -72,7 +74,7 @@ cinquecento/
 │   ├── REGOLE-GIOCO.md        regolamento del gioco (riferimento unico)
 │   ├── CONTRATTO-SOCKET.md    eventi scambiati tra pagine e server, formato della "vista"
 │   ├── DEMO.md                lista di controllo per il giorno della demo
-│   ├── prototipo/             prototipo statico della home, solo riferimento
+│   ├── prototipo/             prototipo approvato della home (P52), riferimento grafico
 │   └── archivio/              tracker chiusi (non più aggiornati)
 │
 ├── migrations/
@@ -94,7 +96,7 @@ cinquecento/
 │   ├── game/engine/           MOTORE DI GIOCO (Python puro)
 │   │   ├── cards.py           carte, semi, valori, forza
 │   │   ├── deck.py            mazzo e mescolata
-│   │   ├── rules.py           parametri della variante (5 carte, 500 punti, 40/20…)
+│   │   ├── rules.py           parametri della variante (5 carte, 150/300/500 punti, 40/20…)
 │   │   ├── errors.py          errori delle mosse non valide
 │   │   ├── trick.py           chi vince la presa
 │   │   ├── singing.py         cantare 40 e 20
@@ -107,30 +109,27 @@ cinquecento/
 │   ├── realtime/              PARTITE E PRESENZA IN CORSO (in memoria)
 │   │   ├── events.py          nomi degli eventi socket
 │   │   ├── room.py            una stanza: giocatori, timer, lock, riconnessione
-│   │   ├── room_manager.py    elenco delle stanze attive, codici delle stanze private
-│   │   ├── matchmaking.py     code 1v1 e 2v2
+│   │   ├── room_manager.py    elenco delle stanze attive, creazione delle stanze
+│   │   ├── matchmaking.py     code 1v1 e 2v2, per punteggio
 │   │   ├── presence.py        chi è online
 │   │   └── invites.py         inviti a partita tra amici
 │   │
 │   ├── sockets/               ingressi in tempo reale (sottili)
 │   │   ├── __init__.py        registra i gestori degli eventi
 │   │   ├── connection_events.py   collegamento, scollegamento, controllo del login
-│   │   ├── home_events.py     dati della home (utenti online, rating, rientro)
-│   │   ├── lobby_events.py    code e stanze private
+│   │   ├── home_events.py     dati della home (utenti online, rientro in partita)
+│   │   ├── lobby_events.py    entrata e uscita dalle code
 │   │   ├── game_events.py     gioca carta, canta, riconnessione
 │   │   ├── friends_events.py  amici online, inviti
 │   │   └── chat_events.py     messaggi della chat
 │   │
 │   ├── blueprints/            ingressi delle pagine (sottili), uno per argomento
-│   │   ├── main/              home e regole
+│   │   ├── main/              home
 │   │   ├── auth/              registrazione, login, logout
 │   │   ├── profile/           impostazioni: avatar e cancellazione dell'account
-│   │   ├── lobby/             stanza privata
 │   │   ├── game/              tavolo di gioco
-│   │   ├── stats/             statistiche
-│   │   ├── friends/           richieste di amicizia e lista amici
-│   │   ├── leaderboard/       classifica
-│   │   └── history/           storico delle partite
+│   │   ├── stats/             dati del pannello statistiche
+│   │   └── friends/           richieste di amicizia e lista amici
 │   │
 │   ├── services/              logica applicativa
 │   │   ├── auth_service.py
@@ -140,8 +139,7 @@ cinquecento/
 │   │   ├── match_service.py   salvataggio delle partite
 │   │   ├── glicko2.py         calcolo del rating (algoritmo)
 │   │   ├── rating_service.py  aggiornamento del rating dopo una partita
-│   │   ├── stats_service.py
-│   │   └── leaderboard_service.py
+│   │   └── stats_service.py
 │   │
 │   ├── repositories/          unico accesso a MySQL
 │   │   ├── user_repo.py
@@ -149,9 +147,7 @@ cinquecento/
 │   │   ├── chat_repo.py
 │   │   ├── match_repo.py
 │   │   ├── rating_repo.py
-│   │   ├── stats_repo.py
-│   │   ├── leaderboard_repo.py
-│   │   └── history_repo.py
+│   │   └── stats_repo.py
 │   │
 │   ├── models/                tabelle del database viste da Python
 │   │   ├── user.py
@@ -162,10 +158,10 @@ cinquecento/
 │   │
 │   ├── templates/             pagine HTML (Jinja2)
 │   │   ├── base.html          struttura comune a tutte le pagine
-│   │   ├── partials/          navbar, bottom navbar, messaggi
+│   │   ├── partials/          navbar, messaggi
 │   │   ├── errors/            404, 500
-│   │   ├── main/              home (index.html), regole (rules.html)
-│   │   ├── auth/  profile/  lobby/  game/  stats/  leaderboard/  history/
+│   │   ├── main/              home (index.html)
+│   │   ├── auth/  profile/  game/
 │   │
 │   └── static/
 │       ├── css/
@@ -173,7 +169,7 @@ cinquecento/
 │       │   ├── components/    un file per componente (carta, navbar, chat…)
 │       │   └── pages/         un file per pagina
 │       ├── js/
-│       │   ├── core/          layout comune (navbar, menu, pannello amici), socket, nomi degli eventi
+│       │   ├── core/          layout comune (navbar, pannelli statistiche e amici), socket, nomi degli eventi
 │       │   ├── components/    un file per componente (Card.js, FriendsPanel.js, ChatWindow.js…)
 │       │   ├── pages/         un file per pagina (è l'unico script caricato dalla pagina)
 │       │   ├── utils/         funzioni di utilità per il DOM
@@ -181,8 +177,9 @@ cinquecento/
 │       ├── dev/               dati di esempio e pagina di prova delle carte (solo sviluppo)
 │       └── img/
 │           ├── cards/         immagini delle 40 carte, con la loro licenza
+│           ├── cards-bg/      carte siciliane dello sfondo della home (CC BY-SA 3.0)
 │           ├── avatars/       set di avatar predefiniti
-│           └── logo.*         logo "500"
+│           └── logo.*         logo (nome da decidere, D34)
 │
 └── tests/
     ├── esegui_tutti.py        runner: lancia tutte le suite in sicurezza

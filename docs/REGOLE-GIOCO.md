@@ -58,8 +58,9 @@ Ogni mano vale 120 punti di carte, più i canti.
 
 - A fine mano si sommano i punti delle carte prese e i punti dei canti. **L'ultima presa non dà bonus.**
 - Il punteggio si accumula mano dopo mano.
-- Il raggiungimento dei 500 punti si controlla **solo a fine mano**, anche se un canto li fa raggiungere prima.
-- Vince chi a fine mano **arriva ad almeno 500** (500 esatti bastano).
+- **Punteggio per vincere**: si sceglie all'inizio della partita tra **150, 300 e 500** (deciso il 27/09/2026). Qui sotto è indicato con N.
+- Il raggiungimento degli N punti si controlla **solo a fine mano**, anche se un canto li fa raggiungere prima.
+- Vince chi a fine mano **arriva ad almeno N** (N esatti bastano: con 500 esatti si vince una partita a 500).
 - Se ci arrivano entrambi, vince chi ha il punteggio più alto. **A parità è pareggio.**
 
 ## Punti ancora aperti

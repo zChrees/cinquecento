@@ -4,24 +4,24 @@
 >
 > **Regola sui file:** chi lavora a un punto crea e modifica **solo i file elencati in quel punto**. Se serve toccarne un altro, ci si ferma e lo si concorda: è così che si evitano i conflitti tra i lavori dei tre membri. Dove l'elenco dei file **non è sicuro** lo dice il punto stesso.
 >
-> **Numerazione:** i numeri dei punti non cambiano mai, così i riferimenti restano validi. I punti aggiunti il 26/09/2026 (P40–P52) sono inseriti nella fase giusta, anche se il numero è più alto.
+> **Numerazione:** i numeri dei punti non cambiano mai, così i riferimenti restano validi. I punti aggiunti il 26/09/2026 (P40–P52) sono inseriti nella fase giusta, anche se il numero è più alto. I punti tolti il 27/09/2026 (P41, P49, P50, P51) restano nell'elenco, barrati.
 
 ## 1. Obiettivo
 
-Una web-app per giocare online a **Cinquecento**, variante siciliana, con le carte siciliane. Si può giocare 1v1 o 2v2, con un matchmaking basato sul rating, account personali, statistiche, classifica, amici con chat e inviti a partita. Per ora è pensata per amici e compagni (meno di 50 persone connesse insieme). In futuro deve poter crescere fino a un gioco pubblico. Scadenza: circa una settimana (03/10/2026, vedi D1), con 3 persone.
+Una web-app per giocare online a **Cinquecento**, variante siciliana, con le carte siciliane. Si può giocare 1v1 o 2v2, a 150, 300 o 500 punti, con un matchmaking basato sul rating, account personali, statistiche, amici con chat e inviti a partita. Per ora è pensata per amici e compagni (meno di 50 persone connesse insieme). In futuro deve poter crescere fino a un gioco pubblico. Scadenza: circa una settimana (03/10/2026, vedi D1), con 3 persone.
 
 **Prima versione usabile** = sul PC della demo, raggiungibile dagli altri dispositivi della stessa rete:
 - ci si registra, si entra e si esce, si sceglie un avatar, si cancella il proprio account;
-- dalla home si gioca 1v1 o 2v2 dalla **coda di matchmaking**, oppure da una **stanza privata con codice**, con partite **complete fino a 500** e tutte le regole di `docs/REGOLE-GIOCO.md`;
+- dalla home si gioca 1v1 o 2v2 con **Partita Veloce** (coda di matchmaking) o **Gioca con un amico** (invito), con partite **complete fino al punteggio scelto** (150, 300 o 500) e tutte le regole di `docs/REGOLE-GIOCO.md`;
 - si mandano e si accettano **richieste di amicizia**, si vede chi è online, si **chatta** con gli amici e li si **invita** a una 1v1 o 2v2;
-- il rating si aggiorna solo per le partite dalla coda; ci sono statistiche, classifica, storico delle partite e regole;
+- il rating si aggiorna per le partite dalla coda (per il 2v2 con un amico vedi D36); le statistiche si vedono nel pannello dell'avatar;
 - funziona bene da smartphone;
 - tutte le suite di test passano, e c'è un backup ripristinabile.
 
-**Com'è fatta l'interfaccia** (decisa il 26/09/2026, vedi `DECISIONI.md`):
-- **navbar in alto**: a sinistra l'avatar, con un menu *Statistiche · Impostazioni · Esci* (per chi non ha fatto il login: *Accedi · Registrati*); al centro il logo "500", che riporta alla home; a destra gli amici, con un contatore delle notifiche;
-- **bottom navbar**, in quest'ordine: 🏆 Classifica · 🔑 Privata · 🏠 Gioca · 📜 Partite · 📖 Regole. È nascosta durante la partita;
-- **home**: due pulsanti grandi 1v1 e 2v2, il proprio rating, il numero di utenti online, e l'avviso "rientra in partita" quando serve.
+**Com'è fatta l'interfaccia** (prototipo approvato il 27/09/2026 in `docs/prototipo/`, vedi `DECISIONI.md`, Interfaccia):
+- **una sola pagina, la home, che non scorre mai**; niente bottom navbar, classifica, stanza privata, storico né pagina delle regole;
+- **navbar trasparente e sfocata**: a sinistra l'avatar, che apre il pannello statistiche (con Impostazioni ed Esci); al centro il nome del gioco (D34); a destra gli amici con il contatore, che aprono il pannello amici con la chat;
+- **home**: "giocatori online" al centro; sezioni **Partita Veloce** e **Gioca con un amico**, ciascuna con due carte-pulsante 1v1 e 2v2; il modal chiede i punti (150, 300, 500) e, con un amico, chi invitare; sullo sfondo carte siciliane sparse; l'avviso "rientra in partita" quando serve.
 
 **Legenda**
 - *Filone*: A = motore di gioco, B = account e dati, C = interfaccia, I = integrazione (tempo reale).
@@ -40,40 +40,40 @@ Una web-app per giocare online a **Cinquecento**, variante siciliana, con le car
 - [ ] P7 (Fase 1): log ed errori di base — `app/logging_config.py`, `app/errors.py`, `app/templates/errors/`
 - [ ] P8 (Fase 1): contratto tra server e pagine — `docs/CONTRATTO-SOCKET.md`, `app/static/dev/*.json`
 - [ ] P9 (Fase 1): guida di installazione verificata — `README.md`
-- [ ] P52 (Fase 1, C): prototipo statico della home, scritto da Claude — `docs/prototipo/`
+- [x] P52 (Fase 1, C): prototipo della home — `docs/prototipo/` — *27/09: approvato dopo varie prove: `index.html`, `prototipo.css`, `prototipo.js`, `LEGGIMI.md`, `img/` (carte siciliane da Wikimedia)*
 
 ### Fase 2 — Funzioni essenziali
 - [ ] P10 (Fase 2, A): carte, mazzo, parametri delle regole — `app/game/engine/cards.py`, `deck.py`, `rules.py`, `errors.py`
 - [ ] P11 (Fase 2, A): chi vince la presa — `app/game/engine/trick.py`
 - [ ] P12 (Fase 2, A): cantare 40 e 20 — `app/game/engine/singing.py`
 - [ ] P13 (Fase 2, A): svolgimento di una mano, 1v1 e 2v2 — `app/game/engine/state.py`, `actions.py`, `game.py`
-- [ ] P14 (Fase 2, A): partita fino a 500, pareggio, mazziere — `app/game/engine/game.py`, `state.py`
+- [ ] P14 (Fase 2, A): partita fino al punteggio scelto (150, 300, 500), pareggio, mazziere — `app/game/engine/game.py`, `state.py`
 - [ ] P15 (Fase 2, A): vista per giocatore, mosse legali, mossa automatica — `app/game/engine/views.py`, `auto_move.py`
 - [ ] P16 (Fase 2, B): registrazione, login, logout — `app/blueprints/auth/`, `auth_service.py`, `user_repo.py`, `app/templates/auth/`
 - [ ] P17 (Fase 2, B): impostazioni: avatar e cancellazione dell'account — `app/blueprints/profile/`, `app/templates/profile/`, `app/services/avatars.py`
 - [ ] P18 (Fase 2, B): backup e ripristino — `scripts/backup.py`, `scripts/ripristina.py`
 - [ ] P19 (Fase 2, C): base grafica mobile-first — `app/templates/base.html`, `app/static/css/base/`
-- [ ] P40 (Fase 2, C): navbar, bottom navbar, menu profilo, finestra "Accedi o registrati" — `partials/navbar.html`, `bottom_nav.html`, `app/static/js/core/layout.js`
+- [ ] P40 (Fase 2, C): navbar, pannello statistiche con dati finti, finestra "Accedi o registrati" — `partials/navbar.html`, `app/static/js/core/layout.js`, `StatsPanel.js`
 - [ ] P20 (Fase 2, C): componenti carta e mano — `app/static/js/components/Card.js`, `Hand.js`
 - [ ] P21 (Fase 2, C): tavolo di gioco con dati finti — `app/templates/game/table.html`, `app/static/js/pages/game.js`
-- [ ] P22 (Fase 2, C): home con dati finti (1v1/2v2, coda, rientro, online) — `app/templates/main/index.html`, `app/static/js/pages/home.js`
-- [ ] P41 (Fase 2, C): pagina stanza privata con dati finti — `app/templates/lobby/index.html`, `app/static/js/pages/lobby.js`
+- [ ] P22 (Fase 2, C): home con dati finti (carte-pulsante, modal, coda, rientro, online, sfondo) — `app/templates/main/index.html`, `app/static/js/pages/home.js`, `ModeModal.js`, `CardBackground.js`
+- [ ] ~~P41 (Fase 2, C): pagina stanza privata con dati finti~~ — **tolto il 27/09/2026** per decisione dell'utente (vedi `DECISIONI.md`, Progetto e tempi)
 - [ ] P45 (Fase 2, B): amicizie (richieste, accetta, rifiuta, rimuovi, lista) — `app/blueprints/friends/`, `friend_service.py`, `friend_repo.py`
 - [ ] P46 (Fase 2, C): pannello amici e finestra chat con dati finti — `FriendsPanel.js`, `ChatWindow.js`
 - [ ] P23 (Fase 2, I): collegamento in tempo reale, stanze, lock — `app/realtime/`, `app/sockets/connection_events.py`, `app/static/js/core/socket.js`
-- [ ] P24 (Fase 2, I): stanze private, partita completa — `app/sockets/lobby_events.py`, `game_events.py`, `app/realtime/room.py`
+- [ ] P24 (Fase 2, I): stanze e partita completa — `app/realtime/room.py`, `room_manager.py`, `app/sockets/game_events.py`
 - [ ] P25 (Fase 2, I): timer, riconnessione, abbandono — `app/realtime/room.py`, `app/sockets/game_events.py`
 - [ ] P26 (Fase 2, B): salvataggio delle partite — `match_service.py`, `match_repo.py`
 - [ ] P27 (Fase 2, B): rating Glicko-2 — `glicko2.py`, `rating_service.py`, `rating_repo.py`
-- [ ] P28 (Fase 2, I): matchmaking 1v1 — `app/realtime/matchmaking.py`, `app/sockets/lobby_events.py`, `pages/home.js`
-- [ ] P29 (Fase 2, I): matchmaking 2v2 — `app/realtime/matchmaking.py`, `pages/home.js`
-- [ ] P44 (Fase 2, I): home con dati reali (online, rating, rientro in partita) — `app/realtime/presence.py`, `app/sockets/home_events.py`
-- [ ] P47 (Fase 2, I): amici online e inviti a partita — `app/realtime/invites.py`, `app/sockets/friends_events.py`
+- [ ] P28 (Fase 2, I): matchmaking 1v1, code per punteggio — `app/realtime/matchmaking.py`, `app/sockets/lobby_events.py`, `pages/home.js`, `ModeModal.js`
+- [ ] P29 (Fase 2, I): matchmaking 2v2, anche con una coppia già formata — `app/realtime/matchmaking.py`, `pages/home.js`
+- [ ] P44 (Fase 2, I): home con dati reali (online, rientro in partita) — `app/realtime/presence.py`, `app/sockets/home_events.py`
+- [ ] P47 (Fase 2, I): amici online e inviti a partita — `app/realtime/invites.py`, `app/sockets/friends_events.py`, `ModeModal.js`
 - [ ] P48 (Fase 2, B+I): chat tra amici — `chat_service.py`, `chat_repo.py`, `app/sockets/chat_events.py`
-- [ ] P30 (Fase 2, B+C): pagina statistiche — `stats_service.py`, `stats_repo.py`, `app/templates/stats/`
-- [ ] P49 (Fase 2, B+C): classifica — `leaderboard_service.py`, `leaderboard_repo.py`, `app/templates/leaderboard/`
-- [ ] P50 (Fase 2, B+C): pagina "Partite" (storico) — `history_repo.py`, `app/templates/history/`
-- [ ] P51 (Fase 2, C): pagina "Regole" con mini-tutorial — `app/templates/main/rules.html`
+- [ ] P30 (Fase 2, B+C): pannello statistiche con dati reali — `stats_service.py`, `stats_repo.py`, `StatsPanel.js`
+- [ ] ~~P49 (Fase 2, B+C): classifica~~ — **tolto il 27/09/2026** per decisione dell'utente (vedi `DECISIONI.md`, Progetto e tempi)
+- [ ] ~~P50 (Fase 2, B+C): pagina "Partite" (storico)~~ — **tolto il 27/09/2026** per decisione dell'utente (vedi `DECISIONI.md`, Progetto e tempi)
+- [ ] ~~P51 (Fase 2, C): pagina "Regole" con mini-tutorial~~ — **tolto il 27/09/2026** per decisione dell'utente (vedi `DECISIONI.md`, Progetto e tempi)
 
 ### Fase 3 — Robustezza
 - [ ] P31 (Fase 3): test end-to-end con client simulati — `tests/e2e/`
@@ -83,7 +83,7 @@ Una web-app per giocare online a **Cinquecento**, variante siciliana, con le car
 ### Fase 4 — Rifiniture e revisione
 - [ ] P34 (Fase 4): rifinitura mobile e accessibilità — `app/static/css/`, `app/templates/` (**file precisi da definire**)
 - [ ] P35 (Fase 4): carte vere — `app/static/img/cards/`, `Card.js`, `card.css`
-- [ ] P42 (Fase 4): logo vero — `app/static/img/logo.*` (**formato da definire**), `partials/navbar.html`
+- [ ] P42 (Fase 4): logo vero — `app/static/img/logo.*` (**formato e nome da definire**, D34), `partials/navbar.html`
 - [ ] P43 (Fase 4): immagini degli avatar — `app/static/img/avatars/` (**file da definire**)
 - [ ] P36 (Fase 4): code review indipendente — `REVIEW.md`
 - [ ] P37 (Fase 4): chiusura e archiviazione della scaletta — `docs/archivio/`, `REVIEW.md`, `CLAUDE.md`
@@ -105,15 +105,16 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 | `requirements.txt`, `requirements-dev.txt`, `.env.example`, `app/extensions.py` | P4 | Una libreria o una chiave nuova richiede di fermarsi e concordarla |
 | `app/sockets/__init__.py` | P4 → P23 → P28 → P44 | Studente 1 → Studente 2 → Studente 1, ciascuno dopo che il punto precedente è in `dev` |
 | `app/realtime/room.py` | P23 → P24 → P25 → P26 | Studente 1; P26 (Studente 2) aggiunge solo la chiamata al salvataggio, dopo che P25 è in `dev` |
-| `app/realtime/room_manager.py` | P23 → P24 | Studente 1. P44 e P47 **usano** le funzioni che P24 espone, senza modificare il file |
+| `app/realtime/room_manager.py` | P23 → P24 | Studente 1. P28, P29, P44 e P47 **usano** le funzioni che P24 espone, senza modificare il file |
 | `app/sockets/connection_events.py` | P4 → P23 → P25 → P44 | Studente 1 |
-| `app/sockets/lobby_events.py` | P4 → P24 → P28 → P29 | Studente 1, poi Studente 2 dopo che P24 è in `dev` |
+| `app/sockets/lobby_events.py` | P4 → P28 → P29 | Studente 2 (da P24 non la tocca più nessun altro: niente stanze private) |
 | `app/sockets/game_events.py` | P4 → P24 → P25 | Studente 1 |
 | `app/sockets/friends_events.py` | P4 → P47 | Studente 1 |
 | `app/sockets/chat_events.py` | P4 → P48 | Studente 2 |
 | `app/static/js/pages/game.js` | P21 → P24 → P25 | Studente 3, poi Studente 1 dopo che P21 è in `dev` |
-| `app/static/js/pages/lobby.js` | P41 → P24 | Studente 3, poi Studente 1 dopo che P41 è in `dev` |
 | `app/static/js/pages/home.js` | P22 → P28 → P29 → P44 | Studente 3 → Studente 2 → Studente 1, ciascuno dopo che il punto precedente è in `dev` |
+| `app/static/js/components/ModeModal.js` | P22 → P28 → P47 | Studente 3 → Studente 2 (collega "Gioca" alla coda) → Studente 1 (lista amici e inviti), ciascuno dopo che il punto precedente è in `dev` |
+| `app/static/js/components/StatsPanel.js` | P40 → P30 | Studente 3 (dati finti, poi dati veri) |
 | `app/static/js/components/FriendsPanel.js` | P46 → P47 | Studente 3, poi Studente 1 dopo che P46 è in `dev` |
 | `app/static/js/components/ChatWindow.js` | P46 → P48 | Studente 3, poi Studente 2 dopo che P46 è in `dev` |
 | `app/static/js/core/layout.js` | P40 → P46 | Studente 3 |
@@ -121,7 +122,7 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 | `app/game/engine/game.py`, `state.py` | P13 → P14 | Studente 1 |
 | `app/services/auth_service.py`, `app/repositories/user_repo.py` | P16 → P17 | Studente 2 |
 | `app/services/match_service.py` | P26 → P27 | Studente 2 |
-| `app/blueprints/*/routes.py` e `__init__.py` | P4 (segnaposto) → un solo punto per blueprint | `main/routes.py`: P22 → P51, entrambi dello Studente 3 |
+| `app/blueprints/*/routes.py` e `__init__.py` | P4 (segnaposto) → un solo punto per blueprint | `main/routes.py`: solo P22 (Studente 3) |
 | `app/templates/base.html` | P19 → P40 → P33 | — |
 | `app/templates/partials/navbar.html`, `app/static/css/components/navbar.css` | P40 → P42 → P43 | Studente 3 |
 | `app/templates/main/index.html` | P4 → P19 → P22 | Studente 3 dopo P4 |
@@ -165,7 +166,7 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
   - segnaposto: `app/logging_config.py`, `app/errors.py`
   - pacchetti vuoti: `app/game/__init__.py`, `app/game/engine/__init__.py`, `app/realtime/__init__.py`, `app/services/__init__.py`, `app/repositories/__init__.py`, `app/models/__init__.py`
   - segnaposto socket: `app/sockets/__init__.py`, `connection_events.py`, `lobby_events.py`, `game_events.py`, `friends_events.py`, `chat_events.py`
-  - segnaposto blueprint: `__init__.py` e `routes.py` in `app/blueprints/main/`, `auth/`, `profile/`, `lobby/`, `game/`, `stats/`, `friends/`, `leaderboard/`, `history/`
+  - segnaposto blueprint: `__init__.py` e `routes.py` in `app/blueprints/main/`, `auth/`, `profile/`, `game/`, `stats/`, `friends/`
   - `app/templates/main/index.html` (pagina "ok" provvisoria)
   - `tests/api/test_avvio.py`
 - Certezza: **sicuro** per l'elenco. Le versioni esatte delle librerie si fissano durante il punto.
@@ -173,7 +174,7 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 - *Dipende da*: P1, P2.
 
 **P5 — Database** · medio · decisione: **D6, D23, D24** (servono per scrivere le tabelle)
-- *Cosa e perché*: `setup_db.sql` crea i database `cinquecento_dev` e `cinquecento_test` con un utente MySQL dedicato, in `utf8mb4`/InnoDB. `001_init.sql` crea **tutte** le tabelle della prima versione: `users` (con l'avatar scelto), `ratings`, `matches`, `match_players`, `match_events`, `friendships` (richieste e amicizie, con lo stato), `user_blocks` (solo se D23 = sì), `chat_messages`, `schema_version`. Il comportamento alla cancellazione di un utente (D6) si decide qui, con le chiavi esterne. `migrate.py` applica le migrazioni mancanti. I modelli Python rispecchiano le tabelle.
+- *Cosa e perché*: `setup_db.sql` crea i database `cinquecento_dev` e `cinquecento_test` con un utente MySQL dedicato, in `utf8mb4`/InnoDB. `001_init.sql` crea **tutte** le tabelle della prima versione: `users` (con l'avatar scelto), `ratings`, `matches` (con il punteggio per vincere: 150, 300 o 500), `match_players`, `match_events`, `friendships` (richieste e amicizie, con lo stato), `user_blocks` (solo se D23 = sì), `chat_messages`, `schema_version`. Il comportamento alla cancellazione di un utente (D6) si decide qui, con le chiavi esterne. `migrate.py` applica le migrazioni mancanti. I modelli Python rispecchiano le tabelle.
 - *File* — crea: `scripts/setup_db.sql`, `migrations/001_init.sql`, `scripts/migrate.py`, `app/models/user.py`, `app/models/rating.py`, `app/models/match.py`, `app/models/friendship.py`, `app/models/chat_message.py`, `tests/db/test_migrate.py`. Certezza: **sicuro**. Se D23 = sì, il modello dei blocchi va in `app/models/friendship.py`.
 - *Nota*: nella prima versione nessun altro punto aggiunge migrazioni. Se ne serve una, è un punto nuovo da concordare.
 - *Fatto quando*: su un database vuoto `migrate.py` crea tutte le tabelle; rilanciato non fa niente [T].
@@ -198,7 +199,7 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 - *Dipende da*: P4, P6.
 
 **P8 — Contratto tra server e pagine** · piccolo · **decisione: sì** (approvare il contratto)
-- *Cosa e perché*: un documento che fissa i **nomi degli eventi socket** e i dati di ciascuno per: partita (`game:play_card`, `game:sing`, …), coda e stanze private, home (utenti online, rientro in partita), amici (presenza, richieste, inviti) e chat. Fissa anche il **formato della vista di gioco** (la tua mano, il numero di carte degli altri, il tavolo, la briscola, i punteggi, le mosse legali, il timer) e il formato dei dati di home e amici. Serve a far lavorare **in parallelo** i filoni.
+- *Cosa e perché*: un documento che fissa i **nomi degli eventi socket** e i dati di ciascuno per: partita (`game:play_card`, `game:sing`, …), code di matchmaking (con modalità e punteggio), home (utenti online, rientro in partita), amici (presenza, richieste, inviti) e chat. Fissa anche il **formato della vista di gioco** (la tua mano, il numero di carte degli altri, il tavolo, la briscola, i punteggi, il punteggio per vincere, le mosse legali, il timer) e il formato dei dati di home, pannello statistiche e amici. Serve a far lavorare **in parallelo** i filoni.
 - *File* — crea: `docs/CONTRATTO-SOCKET.md`, `app/static/dev/vista_1v1.json`, `app/static/dev/vista_2v2.json`, `app/static/dev/home_esempio.json`, `app/static/dev/amici_esempio.json`. Certezza: **sicuro**. Gli esempi stanno in `static/dev/` perché li usano sia le pagine (dati finti) sia i test.
 - *Fatto quando*: l'utente ha approvato il contratto e i file di esempio lo rispettano.
 - *Dipende da*: nessuno.
@@ -209,28 +210,18 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 - *Fatto quando*: un compagno, seguendo solo il README su un altro PC, avvia il gioco e fa passare i test.
 - *Dipende da*: P4, P5, P6.
 
-**P52 — Prototipo statico della home (scritto da Claude)** · medio · decisione: no (specifiche approvate il 26/09/2026, vedi `DECISIONI.md`, sezione Interfaccia)
-- *Cosa e perché*: la home si disegna **prima di tutto il resto** come prototipo statico, che si apre con un doppio clic nel browser, senza Flask né database. È il **riferimento grafico** di tutte le pagine: il server non lo usa. È scritto **già diviso nelle parti** che poi diventano file separati (navbar, bottom navbar, contenuto della home, finestre), con colori, font e spazi come variabili CSS: P19, P40 e P22 spostano ciascuno la propria parte nei file modulari, con gli stessi nomi di classe, senza ridisegnarla. `LEGGIMI.md` elenca le **risorse esterne** caricate da CDN (font, icone): le pagine vere possono caricare solo quelle.
-- *Specifiche* (decise dall'utente il 26/09/2026):
-  - **stile siciliano**: colori caldi (giallo e rosso della Trinacria, richiami alle maioliche). Se non convince, si passa al tavolo classico (verde panno, oro e crema): basta cambiare le variabili CSS;
-  - **tema chiaro e scuro automatico**, secondo l'impostazione del telefono o del computer (`prefers-color-scheme`);
-  - **colori, font e logo** li sceglie Claude: font da titoli con carattere più font leggibile per il testo, da Google Fonts; logo "500" come testo stilizzato (il file SVG vero arriva in P42);
-  - **niente emoji**: icone da una libreria (Material Symbols, da CDN), uguali su tutti i dispositivi. Le voci della bottom navbar e il loro ordine restano quelli decisi;
-  - **home**: saluto "Ciao, *username*"; il numero di utenti online; due pulsanti grandi **1v1** e **2v2**, ciascuno con icona, **sottotitolo** (per esempio "Sfida un avversario" / "Gioca in coppia") e **il proprio rating** scritto sul pulsante; l'avviso "Hai una partita in corso: rientra" quando serve;
-  - **senza login**: al posto del rating "Accedi per avere un rating"; i pulsanti restano visibili e aprono la finestra "Accedi o registrati per giocare"; in più un link "Nuovo? Leggi le regole";
-  - **decorazioni** con i semi siciliani (denari, coppe, spade, bastoni), **discrete**;
-  - **computer**: layout **diverso** da quello del telefono, che occupa lo spazio **in orizzontale** (non la colonna del telefono allargata). La bottom navbar resta in basso e centrata, come già deciso;
-  - **stati mostrati**: home con login, home senza login, menu del profilo aperto, finestra "Accedi o registrati per giocare", schermata di attesa in coda a tutto schermo (tempo trascorso, intervallo di rating, "Annulla"), avviso di rientro. Si passa da uno stato all'altro con una **barra presente solo nel prototipo**, che le pagine vere non riprendono.
-- *File* — crea: `docs/prototipo/home.html`, `docs/prototipo/prototipo.css`, `docs/prototipo/prototipo.js` (solo per aprire menu, finestre e schermata di coda, e per la barra degli stati), `docs/prototipo/LEGGIMI.md`. Certezza: **sicuro**.
-- *Fatto quando*: `home.html` si apre con un doppio clic e mostra tutti gli stati; a 360 px non c'è scorrimento orizzontale; su computer il layout occupa la larghezza; cambiando il tema del sistema la pagina passa da chiaro a scuro; nessuna emoji; `LEGGIMI.md` elenca le risorse esterne e dice quale punto riprende ciascuna parte (P19 per colori, font e icone; P40 per navbar, bottom navbar, menu e finestra di accesso; P22 per la home, la coda e l'avviso di rientro).
-- *Dipende da*: P1 (così i file entrano in git con il fine riga giusto).
+**P52 — Prototipo della home** · medio · decisione: no — **fatto il 27/09/2026**
+- *Cosa e perché*: la home disegnata **prima di tutto il resto** come prototipo statico, che si apre con un doppio clic nel browser, senza Flask né database. È il **riferimento grafico** di P19, P40 e P22: il server non lo usa e **nessuno lo modifica**. Dopo alcune prove (un primo prototipo scartato, quattro palette a confronto) l'utente ha approvato la versione descritta in `DECISIONI.md`, sezione Interfaccia (27/09/2026): palette "Carretto siciliano", navbar trasparente e sfocata, home senza scorrimento con le carte-pulsante di Partita Veloce e Gioca con un amico, modal dei punti e degli inviti, pannelli statistiche e amici, sfondo di carte siciliane messe da uno script negli spazi vuoti.
+- *File* — creati: `docs/prototipo/index.html`, `prototipo.css`, `prototipo.js`, `LEGGIMI.md`, `docs/prototipo/img/` (16 carte siciliane da Wikimedia, CC BY-SA 3.0, e il seme di denari, pubblico dominio).
+- *Fatto quando*: `index.html` si apre con un doppio clic e mostra tutti gli stati (anche con `?apri=`); la pagina non scorre alle misure elencate in `LEGGIMI.md`; `LEGGIMI.md` elenca risorse esterne, font, licenze e quale punto riprende ciascuna parte. **Fatto** [T]: controlli con screenshot e misure a 9 dimensioni di schermo.
+- *Dipende da*: P1.
 
 ### Fase 2 — Funzioni essenziali (giorni 2–6)
 
 #### Motore di gioco (A)
 
 **P10 — Carte, mazzo, parametri delle regole** · piccolo · decisione: no
-- *Cosa e perché*: classi per carta, seme e valore; forza nella presa e punti; mazzo da 40 mescolato con un generatore casuale sicuro (`secrets.SystemRandom`), con un seme fisso nei test; `RuleSet` con i parametri della variante; errori delle mosse non valide.
+- *Cosa e perché*: classi per carta, seme e valore; forza nella presa e punti; mazzo da 40 mescolato con un generatore casuale sicuro (`secrets.SystemRandom`), con un seme fisso nei test; `RuleSet` con i parametri della variante (tra cui i punteggi per vincere ammessi: 150, 300, 500); errori delle mosse non valide.
 - *File* — crea: `app/game/engine/cards.py`, `deck.py`, `rules.py`, `errors.py`, `tests/engine/test_carte_mazzo.py`. Certezza: **sicuro**.
 - *Fatto quando*: il mazzo ha 40 carte tutte diverse; la somma dei punti è 120; l'ordine di forza è A > 3 > R > C > F > 7 > 6 > 5 > 4 > 2.
 - *Dipende da*: P4. I test del motore si possono lanciare con `pytest tests/engine` anche prima che il runner P6 sia pronto.
@@ -251,9 +242,10 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 - *Fatto quando*: una mano 1v1 e una 2v2 giocate con seme fisso finiscono con 120 punti di carte in totale; l'ordine di pesca è corretto; una mossa non valida viene **rifiutata con un errore chiaro** e lo stato non cambia.
 - *Dipende da*: P11, P12.
 
-**P14 — Partita fino a 500** · piccolo · decisione: **D11**
+**P14 — Partita fino al punteggio scelto** · piccolo · decisione: **D11**
+- *Cosa e perché*: la partita finisce quando qualcuno arriva al punteggio scelto all'inizio (150, 300 o 500, dal modal della home). Un punteggio diverso da questi tre viene rifiutato.
 - *File* — modifica: `app/game/engine/game.py`, `app/game/engine/state.py` (P13). Crea: `tests/engine/test_partita.py`. Certezza: **sicuro**.
-- *Fatto quando*: la partita finisce solo a fine mano; vince chi arriva ad almeno 500 (con 500 esatti si vince); se ci arrivano entrambi vince il più alto; a parità è pareggio; arrivare a 500 durante la mano con un canto non chiude la partita.
+- *Fatto quando*: per ognuno dei tre punteggi, la partita finisce solo a fine mano; vince chi arriva ad almeno N (con N esatti si vince); se ci arrivano entrambi vince il più alto; a parità è pareggio; arrivare a N durante la mano con un canto non chiude la partita; un punteggio fuori elenco viene rifiutato.
 - *Dipende da*: P13.
 
 **P15 — Vista per giocatore, mosse legali, mossa automatica** · medio · decisione: **D12**
@@ -271,7 +263,7 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 - *Dipende da*: P5, P7, P19.
 
 **P17 — Impostazioni: avatar e cancellazione dell'account** · piccolo · decisione: **D6** (già applicata in P5), **D29**
-- *Cosa e perché*: la pagina "Impostazioni" (dal menu del profilo) permette di **scegliere un avatar** da un set predefinito e di **cancellare l'account**. `avatars.py` contiene l'elenco degli avatar ammessi: il server rifiuta qualunque valore fuori elenco. Finché le immagini non ci sono (P43), la pagina mostra il nome o il numero di ogni avatar.
+- *Cosa e perché*: la pagina "Impostazioni" (dal link nel pannello statistiche dell'avatar) permette di **scegliere un avatar** da un set predefinito e di **cancellare l'account**. `avatars.py` contiene l'elenco degli avatar ammessi: il server rifiuta qualunque valore fuori elenco. Finché le immagini non ci sono (P43), la pagina mostra il nome o il numero di ogni avatar.
 - *File* — modifica: `app/blueprints/profile/routes.py` (P4), `app/services/auth_service.py`, `app/repositories/user_repo.py` (P16). Crea: `app/services/avatars.py`, `app/templates/profile/settings.html`, `app/static/js/pages/profile.js`, `app/static/css/pages/profile.css`, `tests/api/test_impostazioni.py`. Certezza: **sicuro**.
 - *Fatto quando*: l'avatar scelto viene salvato; un avatar fuori elenco viene rifiutato; dopo la conferma (con la finestra nella pagina di P19, non `confirm()`) l'utente non esiste più, il login fallisce, e le partite restano come deciso in D6.
 - *Dipende da*: P16, P40.
@@ -294,29 +286,27 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 - *Fatto quando*: dopo una partita simulata, nel database di test ci sono partita, giocatori ed eventi in ordine; un errore a metà salvataggio non lascia dati parziali.
 - *Dipende da*: P5 per service, repository e test; P25 solo per la modifica a `room.py`, che si fa per ultima.
 
-**P27 — Rating Glicko-2** · medio · decisione: **D9**
+**P27 — Rating Glicko-2** · medio · decisione: **D9, D35, D36**
 - *File* — crea: `app/services/glicko2.py`, `app/services/rating_service.py`, `app/repositories/rating_repo.py`, `tests/services/test_glicko2.py`, `tests/services/test_rating_service.py`. Modifica: `app/services/match_service.py` (P26). Certezza: **sicuro**.
-- *Fatto quando*: test contro l'esempio numerico ufficiale di Glicko-2 (documento di Glickman) [T]; il pareggio conta 0.5; le partite private e quelle da invito non cambiano il rating; 1v1 e 2v2 separati; aggiornamento nella stessa transazione del salvataggio.
+- *Fatto quando*: test contro l'esempio numerico ufficiale di Glicko-2 (documento di Glickman) [T]; il pareggio conta 0.5; il 1v1 contro un amico non cambia il rating (il 2v2 con un amico come compagno segue D36; i punteggi 150/300/500 seguono D35); 1v1 e 2v2 separati; aggiornamento nella stessa transazione del salvataggio.
 - *Dipende da*: P26 (service e repository).
 
 #### Interfaccia (C)
 
 **P19 — Base grafica mobile-first** · medio · decisione: **D18** (solo per il tavolo di gioco)
-- *Cosa e perché*: struttura comune delle pagine con gli spazi riservati alla navbar e alla bottom navbar (riempiti da P40), variabili CSS (colori, spazi, font), messaggi, finestra di conferma riutilizzabile. Si progetta per **360 px di larghezza** e poi si allarga. **Colori, font e spazi si prendono dal prototipo di P52** e si riscrivono come variabili CSS nei nostri file, con i valori del **tema chiaro e del tema scuro** (automatico, secondo l'impostazione del dispositivo). Le risorse esterne del prototipo (font, icone, librerie CSS da CDN) si caricano **una volta sola in `base.html`**, così valgono per tutte le pagine.
+- *Cosa e perché*: struttura comune delle pagine con lo spazio per la navbar (riempito da P40) e la pagina alta quanto lo schermo, senza scorrimento, variabili CSS (colori, spazi, font), messaggi, finestra di conferma riutilizzabile. Si progetta per **360 px di larghezza** e poi si allarga. **Colori (palette "Carretto siciliano"), font (Fredoka, Nunito) e spazi si prendono dal prototipo di P52** e si riscrivono come variabili CSS nei nostri file, con i valori del **tema chiaro e del tema scuro** (automatico, secondo l'impostazione del dispositivo). Il prototipo ha solo il tema chiaro: i colori scuri si disegnano qui. Le risorse esterne del prototipo (font, icone, librerie CSS da CDN) si caricano **una volta sola in `base.html`**, così valgono per tutte le pagine.
 - *File* — crea: `app/templates/base.html`, `app/templates/partials/flash.html`, `app/static/css/base/reset.css`, `variables.css`, `typography.css`, `layout.css`, `app/static/css/components/button.css`, `form.css`, `modal.css`, `app/static/css/pages/auth.css`, `app/static/js/components/Modal.js`, `app/static/js/utils/dom.js`, `tests/frontend/test_base.py`. Modifica: `app/templates/main/index.html` (P4), `app/templates/errors/404.html`, `500.html` (P7). Certezza: **sicuro**.
 - *Fatto quando*: a 360 px le pagine sono leggibili senza scorrimento orizzontale; i colori coincidono con quelli del prototipo, in tema chiaro e in tema scuro; il test controlla che ogni pagina abbia il `meta viewport`, carichi un solo script di pagina, e che le risorse esterne siano solo quelle elencate in `docs/prototipo/LEGGIMI.md`.
 - *Dipende da*: P4, P7, P52.
 
-**P40 — Navbar, bottom navbar, menu profilo, finestra "Accedi o registrati"** · medio · decisione: no
-- *Cosa e perché*: si parte da navbar e bottom navbar del **prototipo di P52**. Il loro HTML va in due file separati (`partials/navbar.html`, `partials/bottom_nav.html`), inclusi da `base.html` con `{% include %}`: così compaiono in ogni pagina senza essere ricopiati. Lo stile va nei CSS dei componenti e il comportamento in `layout.js`. Dove il prototipo e le decisioni non coincidono, valgono le decisioni (`DECISIONI.md`, sezione Interfaccia).
-  - **navbar in alto**: avatar a sinistra (per ora iniziali su un cerchio colorato, o un'icona generica con "Accedi"), logo "500" al centro (per ora testo, il logo vero arriva in P42; il tocco porta alla home), pulsante amici a destra con il contatore (il pannello arriva in P46);
-  - **menu del profilo**: *Statistiche · Impostazioni · Esci*, oppure *Accedi · Registrati* per chi non ha fatto il login;
-  - **bottom navbar**: 🏆 Classifica · 🔑 Privata · 🏠 Gioca · 📜 Partite · 📖 Regole, con icona ed etichetta (le emoji qui indicano solo il soggetto: nelle pagine si usano le icone scelte in P52, mai emoji), voce attiva evidenziata, e un blocco del template che le pagine possono **nascondere** (il tavolo lo fa in P21);
+**P40 — Navbar, pannello statistiche, finestra "Accedi o registrati"** · medio · decisione: no
+- *Cosa e perché*: si parte dalla navbar del **prototipo di P52**. Il suo HTML va in `partials/navbar.html`, incluso da `base.html` con `{% include %}`: così compare in ogni pagina senza essere ricopiato. Lo stile va nei CSS dei componenti e il comportamento in `layout.js`. Dove il prototipo e le decisioni non coincidono, valgono le decisioni (`DECISIONI.md`, sezione Interfaccia).
+  - **navbar trasparente e sfocata**: avatar a sinistra (per ora iniziali su un cerchio colorato), nome del gioco al centro con il seme di denari (il logo vero arriva in P42; il nome è la domanda D34), pulsante amici a destra con il contatore (il pannello arriva in P46); su computer, accanto all'avatar e all'icona, il nome e la scritta "Amici";
+  - **pannello statistiche**: si apre toccando l'avatar; mostra partite, vinte, perse, percentuale e rating 1v1 e 2v2 (per ora con i dati finti di `app/static/dev/home_esempio.json`, quelli veri arrivano in P30) e i link **Impostazioni** ed **Esci**;
   - **finestra "Accedi o registrati per giocare"**, riutilizzabile dalle altre pagine;
-  - `core/layout.js`: il modulo che **ogni pagina importa** per far funzionare navbar, menu e, più avanti, il pannello amici.
-- *File* — crea: `app/templates/partials/navbar.html`, `app/templates/partials/bottom_nav.html`, `app/static/css/components/navbar.css`, `bottom-nav.css`, `profile-menu.css`, `app/static/js/core/layout.js`, `app/static/js/components/ProfileMenu.js`, `app/static/js/components/LoginPrompt.js`, `tests/frontend/test_navbar.py`. Modifica: `app/templates/base.html` (P19). Certezza: **sicuro**.
-- *Nota*: i link a Classifica, Partite e Regole restituiscono 404 finché non sono fatti P49, P50 e P51. È normale.
-- *Fatto quando*: a 360 px navbar e bottom navbar stanno sullo schermo senza sovrapporsi al contenuto e hanno l'aspetto del prototipo; il menu si apre e si chiude anche con la tastiera; ogni pulsante con sola icona ha un'etichetta accessibile; il test controlla che i 5 link della bottom navbar siano presenti nell'ordine deciso.
+  - `core/layout.js`: il modulo che **ogni pagina importa** per far funzionare navbar, pannello statistiche e, più avanti, il pannello amici.
+- *File* — crea: `app/templates/partials/navbar.html`, `app/static/css/components/navbar.css`, `stats-panel.css`, `app/static/js/core/layout.js`, `app/static/js/components/StatsPanel.js`, `app/static/js/components/LoginPrompt.js`, `app/static/img/seme-denari.svg` (dal prototipo), `tests/frontend/test_navbar.py`. Modifica: `app/templates/base.html` (P19). Certezza: **sicuro**.
+- *Fatto quando*: a 360 px la navbar sta sullo schermo senza sovrapporsi al contenuto e ha l'aspetto del prototipo; il pannello statistiche si apre e si chiude anche con la tastiera e con Esc; ogni pulsante con sola icona ha un'etichetta accessibile; il test controlla che la navbar abbia avatar, nome del gioco e pulsante amici.
 - *Dipende da*: P19.
 
 **P20 — Componenti carta e mano** · medio · decisione: no
@@ -326,35 +316,35 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 - *Dipende da*: P19.
 
 **P21 — Tavolo di gioco con dati finti** · medio · decisione: **D15**
-- *Cosa e perché*: il tavolo (la tua mano, gli avversari coperti, la presa in corso, la briscola, i punteggi, il timer, i pulsanti "Canta 40/20"), disegnato da un'**unica funzione `render(vista)`** a partire da `app/static/dev/vista_*.json`. La bottom navbar è nascosta; al suo posto c'è un pulsante "esci" con conferma.
+- *Cosa e perché*: il tavolo (la tua mano, gli avversari coperti, la presa in corso, la briscola, i punteggi, il timer, i pulsanti "Canta 40/20"), disegnato da un'**unica funzione `render(vista)`** a partire da `app/static/dev/vista_*.json`. C'è un pulsante "esci" con conferma.
 - *File* — crea: `app/templates/game/table.html`, `app/static/js/pages/game.js`, `app/static/js/components/Table.js`, `Trick.js`, `Scoreboard.js`, `Timer.js`, `SingButtons.js`, `app/static/css/components/table.css`, `trick.css`, `scoreboard.css`, `timer.css`, `app/static/css/pages/game.css`, `tests/api/test_pagina_tavolo.py`. Modifica: `app/blueprints/game/routes.py` (P4). Certezza: **sicuro**.
-- *Fatto quando*: con `?demo=1v1` e `?demo=2v2` il tavolo si vede correttamente; i pulsanti delle mosse non legali sono disattivati; la bottom navbar non c'è; il test verifica che la pagina risponda e contenga i marcatori `data-*`.
+- *Fatto quando*: con `?demo=1v1` e `?demo=2v2` il tavolo si vede correttamente; i pulsanti delle mosse non legali sono disattivati; il test verifica che la pagina risponda e contenga i marcatori `data-*`.
 - *Dipende da*: P8, P20, P40.
 
-**P22 — Home con dati finti** · medio · decisione: no
-- *Cosa e perché*: il saluto "Ciao, *username*"; i **due pulsanti grandi 1v1 e 2v2**, con icona, sottotitolo e il rating della modalità scritto sul pulsante (senza login: "Accedi per avere un rating" e il link "Nuovo? Leggi le regole"); il numero di utenti online; le decorazioni discrete con i semi; l'avviso "Hai una partita in corso: rientra" (visibile solo quando serve). Per chi non ha fatto il login, il tocco su 1v1 o 2v2 apre la finestra "Accedi o registrati" (P40). La **schermata di attesa in coda** è a tutto schermo, con il tempo trascorso, l'intervallo di rating che si allarga e un pulsante "Annulla" ben visibile. Tutto funziona con `app/static/dev/home_esempio.json`.
-- *Dal prototipo*: il contenuto della home viene dal **prototipo di P52**. In `index.html` resta **solo il markup della home**, che estende `base.html` (navbar e bottom navbar arrivano da lì). Nella pagina non si scrivono blocchi `<style>` né codice JS: lo stile va in `home.css` e nei CSS dei componenti, il codice in `home.js` e nei componenti. Così `index.html` resta corto e leggibile.
-- *File* — crea: `app/static/js/pages/home.js`, `app/static/css/pages/home.css`, `app/static/js/components/QueueOverlay.js`, `app/static/css/components/queue-overlay.css`, `app/static/js/components/ResumeBanner.js`, `tests/api/test_pagina_home.py`. Modifica: `app/templates/main/index.html` (P19), `app/blueprints/main/routes.py` (P4). Certezza: **sicuro**.
-- *Fatto quando*: a 360 px i due pulsanti si raggiungono col pollice; senza login il tocco apre la finestra di accesso; la schermata di coda si apre e si annulla; l'avviso di rientro compare solo se i dati finti lo prevedono; su computer la home occupa la larghezza come nel prototipo; la home ha l'aspetto del prototipo, in tema chiaro e scuro; il test controlla che `index.html` non contenga blocchi `<style>` né script scritti nella pagina.
+**P22 — Home con dati finti** · medio · decisione: no (specifiche dal prototipo approvato)
+- *Cosa e perché*: la home del **prototipo di P52**, riscritta nei file del progetto:
+  - "**giocatori online**" al centro, sotto la navbar;
+  - sezioni **Partita Veloce** e **Gioca con un amico**, ciascuna con due **carte-pulsante 1v1 e 2v2** (rosso, verde, giallo, blu; icona, modalità e sottotitolo in bianco; forma di carta siciliana); su telefono una sotto l'altra, da 900 px affiancate; su telefono in orizzontale le quattro carte su una fila;
+  - la pagina **non scorre mai**: le carte si rimpiccioliscono sugli schermi bassi (`--tile-h` del prototipo);
+  - **modal della modalità**: punti per vincere (150, 300, 500) e "Gioca"; in "Gioca con un amico" anche la lista degli amici online con "Invita", e "Gioca" si attiva solo dopo che l'amico ha accettato (dati finti; la coda arriva in P28, gli inviti veri in P47);
+  - **sfondo**: carte siciliane (coppie Cavallo + Re, Assi, Tre) messe negli spazi vuoti dallo script del prototipo, riscritto come componente;
+  - la **schermata di attesa in coda** a tutto schermo (tempo trascorso, intervallo di rating, "Annulla") e l'avviso "**Hai una partita in corso: rientra**" (solo quando serve);
+  - per chi non ha fatto il login, il tocco su una carta-pulsante apre la finestra "Accedi o registrati" (P40).
+
+  Tutto funziona con `app/static/dev/home_esempio.json`. In `index.html` resta **solo il markup della home**, che estende `base.html`; niente blocchi `<style>` né codice JS nella pagina. Le immagini dello sfondo hanno licenza CC BY-SA 3.0: la riga di crediti va dove decide D37.
+- *File* — crea: `app/static/js/pages/home.js`, `app/static/css/pages/home.css`, `app/static/js/components/ModeModal.js`, `app/static/css/components/mode-modal.css`, `app/static/js/components/CardBackground.js`, `app/static/css/components/card-background.css`, `app/static/img/cards-bg/` (le 16 carte del prototipo, con `LICENZA.md`), `app/static/js/components/QueueOverlay.js`, `app/static/css/components/queue-overlay.css`, `app/static/js/components/ResumeBanner.js`, `tests/api/test_pagina_home.py`. Modifica: `app/templates/main/index.html` (P19), `app/blueprints/main/routes.py` (P4). Certezza: **sicuro**.
+- *Fatto quando*: la home ha l'aspetto del prototipo a 360 px, su tablet e su computer; la pagina non scorre a nessuna misura (stesse misure controllate in `docs/prototipo/LEGGIMI.md`); il modal si apre da ogni carta-pulsante e "Gioca" con un amico resta disattivato finché l'invito finto non è accettato; senza login il tocco apre la finestra di accesso; la schermata di coda si apre e si annulla; l'avviso di rientro compare solo se i dati finti lo prevedono; le carte dello sfondo non si sovrappongono e non coprono titoli e "giocatori online"; il test controlla che `index.html` non contenga blocchi `<style>` né script scritti nella pagina.
 - *Dipende da*: P8, P40, P52.
 
-**P41 — Pagina stanza privata con dati finti** · piccolo · decisione: no
-- *Cosa e perché*: la pagina della voce "Privata" della bottom navbar: **creare** una stanza 1v1 o 2v2 e ottenere un codice da condividere, oppure **entrare** con un codice. Nella stanza 2v2 si vede chi è seduto dove.
-- *File* — crea: `app/templates/lobby/index.html`, `app/static/js/pages/lobby.js`, `app/static/css/pages/lobby.css`, `tests/api/test_pagina_privata.py`. Modifica: `app/blueprints/lobby/routes.py` (P4). Certezza: **sicuro**.
-- *Fatto quando*: con dati finti si crea una stanza (compare il codice, con un pulsante "copia") e si entra con un codice; un codice non valido mostra un messaggio chiaro.
-- *Dipende da*: P40.
+**P41 — Pagina stanza privata con dati finti** · **tolto il 27/09/2026** per decisione dell'utente (vedi `DECISIONI.md`, Progetto e tempi). Le partite tra amici passano dagli inviti (P47).
 
 **P46 — Pannello amici e finestra chat con dati finti** · medio · decisione: **D25**
-- *Cosa e perché*: al tocco sull'icona amici (in alto a destra) si apre un **pannello laterale** con: campo per cercare uno username e mandare una richiesta, richieste in arrivo (accetta o rifiuta), lista amici con il pallino online o offline, e per ogni amico i pulsanti **Chatta**, **Invita 1v1** e **Invita 2v2**. "Chatta" apre la **finestra chat**, che su telefono occupa tutto lo schermo. Tutto con `app/static/dev/amici_esempio.json`. Il testo dei messaggi è sempre inserito con `textContent`.
+- *Cosa e perché*: dal **prototipo di P52**. Al tocco sull'icona amici (in alto a destra) si apre un **pannello laterale** (a tutto schermo su telefono) con: campo per cercare uno username e mandare una richiesta, richieste in arrivo (accetta o rifiuta), lista amici con il pallino online o offline, e per ogni amico i pulsanti **Chatta**, **Invita 1v1** e **Invita 2v2**. "Chatta" apre la **finestra chat**, che su telefono occupa tutto lo schermo. Tutto con `app/static/dev/amici_esempio.json`. Il testo dei messaggi è sempre inserito con `textContent`.
 - *File* — crea: `app/static/js/components/FriendsPanel.js`, `ChatWindow.js`, `app/static/css/components/friends-panel.css`, `chat.css`, `tests/frontend/test_pannello_amici.py`. Modifica: `app/static/js/core/layout.js` (P40). Certezza: **sicuro**.
 - *Fatto quando*: il pannello si apre da qualsiasi pagina (tranne il tavolo, dove resta chiuso) e si chiude con "indietro" o con Esc; a 360 px la chat è leggibile e il campo di scrittura resta visibile; il test controlla che i componenti non usino `innerHTML` con dati esterni.
 - *Dipende da*: P8, P40.
 
-**P51 — Pagina "Regole" con mini-tutorial** · piccolo · decisione: **D32**
-- *Cosa e perché*: il regolamento di `docs/REGOLE-GIOCO.md` in una pagina leggibile da telefono, con esempi illustrati con le carte CSS: chi vince la presa, cos'è cantare 40 e cantare 20, cosa succede a mazzo finito, come si arriva a 500.
-- *File* — crea: `app/templates/main/rules.html`, `app/static/css/pages/rules.css`, `tests/api/test_pagina_regole.py`. Modifica: `app/blueprints/main/routes.py` (P22). Certezza: **sicuro**.
-- *Fatto quando*: `/regole` risponde; il contenuto coincide con `docs/REGOLE-GIOCO.md` (controllo a mano da parte dell'utente); a 360 px si legge senza scorrimento orizzontale.
-- *Dipende da*: P20 (carte per gli esempi), P22.
+**P51 — Pagina "Regole" con mini-tutorial** · **tolto il 27/09/2026** per decisione dell'utente (vedi `DECISIONI.md`, Progetto e tempi).
 
 #### Tempo reale e integrazione (I)
 
@@ -364,38 +354,44 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 - *Fatto quando*: test con client simulati: un utente senza login viene rifiutato; due utenti nella stessa stanza ricevono gli eventi; 50 azioni inviate insieme vengono elaborate una alla volta senza errori.
 - *Dipende da*: P16, P8.
 
-**P24 — Stanze private e partita completa** · medio · decisione: no
-- *Cosa e perché*: il primo momento in cui **si gioca davvero**: si crea una stanza con un codice di 6 caratteri, gli altri entrano, la partita parte e il server applica il motore. Ognuno riceve **solo la propria vista**. `room_manager.py` **espone** due funzioni che poi usano altri punti senza modificare il file: `create_private_room(...)`, per gli inviti di P47, e `find_room_of_user(...)`, per il rientro in partita di P44.
-- *File* — modifica: `app/realtime/room.py`, `room_manager.py` (P23), `app/sockets/lobby_events.py`, `game_events.py` (P4), `app/static/js/pages/game.js` (P21), `app/static/js/pages/lobby.js` (P41). Crea: `tests/sockets/test_stanze_private.py`, `tests/sockets/test_partita_privata.py`. Certezza: **sicuro**.
-- *Fatto quando*: test con client simulati: una partita 1v1 e una 2v2 fino a 500; una mossa illegale riceve un errore e non cambia niente; codice sbagliato o stanza piena → messaggio chiaro; le due funzioni esposte hanno un test. Prova a mano con due browser.
-- *Dipende da*: P15, P21, P41, P23.
+**P24 — Stanze e partita completa** · medio · decisione: no
+- *Cosa e perché*: il primo momento in cui **si gioca davvero**: il server crea una stanza con i giocatori, la modalità e il punteggio scelto, la partita parte e il server applica il motore. Ognuno riceve **solo la propria vista**. Non esistono più le stanze private con codice: le stanze le crea solo il server. `room_manager.py` **espone** due funzioni che poi usano altri punti senza modificare il file: `create_room(giocatori, modalità, punteggio)`, per la coda (P28, P29) e per gli inviti (P47), e `find_room_of_user(...)`, per il rientro in partita (P44).
+- *File* — modifica: `app/realtime/room.py`, `room_manager.py` (P23), `app/sockets/game_events.py` (P4), `app/static/js/pages/game.js` (P21). Crea: `tests/sockets/test_partita.py`. Certezza: **sicuro**.
+- *Fatto quando*: test con client simulati: una partita 1v1 e una 2v2 fino al punteggio (a 150 per fare prima), con la stanza creata da `create_room`; una mossa illegale riceve un errore e non cambia niente; le due funzioni esposte hanno un test. La prova a mano con due browser si fa da P28, quando c'è la coda.
+- *Dipende da*: P15, P21, P23.
 
 **P25 — Timer, riconnessione, abbandono** · medio · decisione: **D12, D13**
 - *File* — modifica: `app/realtime/room.py` (P24), `app/sockets/game_events.py` (P24), `app/sockets/connection_events.py` (P23), `app/static/js/pages/game.js` (P24). Crea: `tests/sockets/test_timer_riconnessione.py`. Certezza: **sicuro**.
 - *Fatto quando*: con i tempi ridotti dalla configurazione di test: a turno scaduto il server gioca la mossa automatica; chi si riconnette in tempo riceve di nuovo la sua vista; oltre il tempo la partita finisce per abbandono.
 - *Dipende da*: P24.
 
-**P28 — Matchmaking 1v1** · medio · decisione: **D16**
-- *File* — crea: `app/realtime/matchmaking.py`, `tests/sockets/test_matchmaking_1v1.py`. Modifica: `app/sockets/lobby_events.py` (P24), `app/sockets/__init__.py` (P23, per avviare il controllo periodico delle code), `app/static/js/pages/home.js` (P22, per collegare pulsanti e schermata di coda). Certezza: **sicuro**.
-- *Fatto quando*: due giocatori con rating vicino vengono abbinati subito; con rating lontani solo dopo che la tolleranza si è allargata; chi annulla esce dalla coda; lo stesso utente non può stare due volte in coda (doppio clic, due schede).
+**P28 — Matchmaking 1v1** · medio · decisione: **D16, D35**
+- *Cosa e perché*: "Gioca" nel modal di Partita Veloce mette il giocatore in coda per la modalità **e il punteggio** scelti (D35); quando trova un avversario il server crea la stanza con `create_room` (P24) e porta entrambi al tavolo.
+- *File* — crea: `app/realtime/matchmaking.py`, `tests/sockets/test_matchmaking_1v1.py`. Modifica: `app/sockets/lobby_events.py` (P4), `app/sockets/__init__.py` (P23, per avviare il controllo periodico delle code), `app/static/js/pages/home.js` e `app/static/js/components/ModeModal.js` (P22, per collegare "Gioca" e la schermata di coda). Certezza: **sicuro**.
+- *Fatto quando*: due giocatori con rating vicino e stesso punteggio vengono abbinati subito; con punteggi diversi no; con rating lontani solo dopo che la tolleranza si è allargata; chi annulla esce dalla coda; lo stesso utente non può stare due volte in coda (doppio clic, due schede).
 - *Dipende da*: P22, P24, P27.
 
-**P29 — Matchmaking 2v2** · medio · decisione: **D17**
+**P29 — Matchmaking 2v2** · medio · decisione: **D17, D35**
+- *Cosa e perché*: la coda 2v2 accetta sia **giocatori singoli** sia **coppie già formate** (l'amico compagno invitato con "Gioca con un amico", P47). Una coppia resta sempre nella stessa squadra.
 - *File* — modifica: `app/realtime/matchmaking.py`, `app/sockets/lobby_events.py`, `app/static/js/pages/home.js` (P28). Crea: `tests/sockets/test_matchmaking_2v2.py`. Certezza: **sicuro**.
-- *Fatto quando*: 4 giocatori in coda formano una partita con squadre bilanciate; chi esce dalla coda prima dell'abbinamento non blocca gli altri.
+- *Fatto quando*: 4 giocatori singoli formano una partita con squadre bilanciate; una coppia già formata viene abbinata a due avversari (singoli o un'altra coppia) e resta unita; chi esce dalla coda prima dell'abbinamento non blocca gli altri (se esce uno della coppia, esce tutta la coppia).
 - *Dipende da*: P28.
 
 **P44 — Home con dati reali** · piccolo · decisione: no
-- *Cosa e perché*: la home riceve dal server, appena la pagina si collega, **quanti utenti sono online**, **il proprio rating** e l'eventuale **partita in corso** da cui rientrare (tramite `find_room_of_user` di P24). `presence.py` tiene l'elenco di chi è online: lo usa anche P47 per il pallino degli amici.
+- *Cosa e perché*: la home riceve dal server, appena la pagina si collega, **quanti utenti sono online** e l'eventuale **partita in corso** da cui rientrare (tramite `find_room_of_user` di P24). `presence.py` tiene l'elenco di chi è online: lo usa anche P47 per il pallino degli amici.
 - *File* — crea: `app/realtime/presence.py`, `app/sockets/home_events.py`, `tests/sockets/test_home_stato.py`. Modifica: `app/sockets/__init__.py` (P28, per registrare `home_events`), `app/sockets/connection_events.py` (P25, per segnare chi entra ed esce), `app/static/js/pages/home.js` (P29). Certezza: **sicuro**.
-- *Fatto quando*: test con client simulati: il numero di utenti online sale e scende con le connessioni (lo stesso utente con due schede conta una volta sola); un utente con una partita in corso riceve il link per rientrare; il rating mostrato coincide con quello del database di test.
-- *Dipende da*: P25, P27, P29.
+- *Fatto quando*: test con client simulati: il numero di utenti online sale e scende con le connessioni (lo stesso utente con due schede conta una volta sola); un utente con una partita in corso riceve il link per rientrare.
+- *Dipende da*: P25, P29.
 
-**P47 — Amici online e inviti a partita** · medio · decisione: **D27**
-- *Cosa e perché*: il pannello amici mostra **chi è online** in tempo reale e riceve le richieste di amicizia senza ricaricare la pagina. **Invita 1v1 / Invita 2v2**: l'invitato riceve l'invito con un conto alla rovescia; se accetta, il server crea una stanza privata (`create_private_room` di P24) e manda tutti al tavolo. Nel 2v2 chi invita sceglie il compagno e gli avversari (D27). Le partite da invito **non contano per il rating**, come le private. Il pannello passa dai dati finti a quelli veri (API di P45 ed eventi socket).
-- *File* — crea: `app/realtime/invites.py`, `tests/sockets/test_inviti.py`. Modifica: `app/sockets/friends_events.py` (P4), `app/static/js/components/FriendsPanel.js` (P46). Certezza: **sicuro**.
-- *Fatto quando*: test con client simulati: un amico che si collega appare online agli altri; un invito accettato porta tutti nella stessa stanza; un invito scaduto o rifiutato avvisa chi l'ha mandato; non si può invitare chi non è amico o chi è già in partita.
-- *Dipende da*: P24, P44, P45, P46.
+**P47 — Amici online e inviti a partita** · medio · decisione: **D27, D36**
+- *Cosa e perché*: il pannello amici mostra **chi è online** in tempo reale e riceve le richieste di amicizia senza ricaricare la pagina. Nel modal di **Gioca con un amico** la lista degli amici online diventa vera: "Invita" manda l'invito, l'amico lo riceve con un conto alla rovescia, e **"Gioca" si attiva solo quando ha accettato**. Poi:
+  - **1v1**: il server crea subito la stanza con i due amici (`create_room` di P24);
+  - **2v2**: i due amici entrano **insieme** nella coda 2v2 come coppia (P29), e gli avversari arrivano dal matchmaking.
+
+  Il 1v1 contro un amico **non conta per il rating**; per il 2v2 vale D36. Il pannello passa dai dati finti a quelli veri (API di P45 ed eventi socket).
+- *File* — crea: `app/realtime/invites.py`, `tests/sockets/test_inviti.py`. Modifica: `app/sockets/friends_events.py` (P4), `app/static/js/components/FriendsPanel.js` (P46), `app/static/js/components/ModeModal.js` (P28). Certezza: **sicuro**.
+- *Fatto quando*: test con client simulati: un amico che si collega appare online agli altri; un invito 1v1 accettato porta i due nella stessa stanza; un invito 2v2 accettato mette la coppia in coda; un invito scaduto o rifiutato avvisa chi l'ha mandato; non si può invitare chi non è amico o chi è già in partita.
+- *Dipende da*: P24, P29, P44, P45, P46.
 
 **P48 — Chat tra amici** · medio · decisione: **D24, D25, D26**
 - *Cosa e perché*: messaggi in tempo reale **solo tra amici**, salvati nel database, con la cronologia che si carica all'apertura della chat e un contatore dei messaggi non letti. Protezioni: lunghezza massima e limite di frequenza (D26), testo sempre mostrato come testo, mai nei log; i messaggi più vecchi di D24 giorni vengono cancellati.
@@ -405,23 +401,15 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 
 #### Pagine con i dati (B + C)
 
-**P30 — Pagina statistiche** · medio · decisione: no
-- *Cosa e perché*: dal menu del profilo: partite giocate, vinte, perse e pareggiate, percentuale di vittorie, rating attuale 1v1 e 2v2, andamento del rating, numero di canti 40/20. L'elenco delle partite sta nella pagina "Partite" (P50).
-- *File* — crea: `app/services/stats_service.py`, `app/repositories/stats_repo.py`, `app/templates/stats/profile.html`, `app/static/js/pages/stats.js`, `app/static/js/components/RatingChart.js`, `app/static/css/pages/stats.css`, `tests/api/test_statistiche.py`. Modifica: `app/blueprints/stats/routes.py` (P4). Certezza: **sicuro**.
-- *Fatto quando*: dopo partite simulate note, le cifre della pagina coincidono con quelle attese; la pagina si legge bene a 360 px.
+**P30 — Pannello statistiche con dati reali** · medio · decisione: no
+- *Cosa e perché*: il pannello che si apre dall'avatar (P40) mostra i dati veri: partite giocate, vinte, perse, percentuale di vittorie, rating attuale 1v1 e 2v2. I dati arrivano da una richiesta JSON al server.
+- *File* — crea: `app/services/stats_service.py`, `app/repositories/stats_repo.py`, `tests/api/test_statistiche.py`. Modifica: `app/blueprints/stats/routes.py` (P4), `app/static/js/components/StatsPanel.js` (P40). Certezza: **sicuro**.
+- *Fatto quando*: dopo partite simulate note, le cifre del pannello coincidono con quelle attese; un utente vede solo le proprie statistiche; il pannello si legge bene a 360 px.
 - *Dipende da*: P26, P27, P40.
 
-**P49 — Classifica** · medio · decisione: **D28**
-- *Cosa e perché*: classifica per rating, separata 1v1 e 2v2 (con due schede), con posizione, avatar, username e rating; la propria riga è evidenziata anche se non è tra i primi. Chi ha meno partite del minimo (D28) non compare.
-- *File* — crea: `app/services/leaderboard_service.py`, `app/repositories/leaderboard_repo.py`, `app/templates/leaderboard/index.html`, `app/static/js/pages/leaderboard.js`, `app/static/css/pages/leaderboard.css`, `tests/api/test_classifica.py`. Modifica: `app/blueprints/leaderboard/routes.py` (P4). Certezza: **sicuro**.
-- *Fatto quando*: con dati di test noti, ordine e posizioni sono corretti; chi ha troppe poche partite non compare; la propria posizione è mostrata; a 360 px la tabella si legge.
-- *Dipende da*: P27, P40.
+**P49 — Classifica** · **tolto il 27/09/2026** per decisione dell'utente (vedi `DECISIONI.md`, Progetto e tempi).
 
-**P50 — Pagina "Partite" (storico)** · piccolo · decisione: no
-- *Cosa e perché*: le proprie ultime partite: data, modalità, compagno e avversari, punteggio finale, esito, variazione del rating (+/-). Le partite private e da invito sono indicate come tali.
-- *File* — crea: `app/repositories/history_repo.py`, `app/templates/history/index.html`, `app/static/js/pages/history.js`, `app/static/css/pages/history.css`, `tests/api/test_storico.py`. Modifica: `app/blueprints/history/routes.py` (P4). Certezza: **sicuro**.
-- *Fatto quando*: con partite di test note l'elenco è corretto e in ordine dal più recente; un utente vede solo le proprie partite; gli avversari cancellati compaiono come deciso in D6.
-- *Dipende da*: P26, P27, P40.
+**P50 — Pagina "Partite" (storico)** · **tolto il 27/09/2026** per decisione dell'utente (vedi `DECISIONI.md`, Progetto e tempi). Le partite si salvano comunque (P26) per statistiche e rating.
 
 ### Fase 3 — Robustezza (giorno 6)
 
@@ -444,22 +432,22 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 
 **P34 — Rifinitura mobile e accessibilità** · piccolo · decisione: no — **file da definire, vedi sezione 9.2**
 - *Fatto quando*: tutte le pagine si usano a 360 px e su un telefono vero; i pulsanti con sola icona hanno un'etichetta accessibile (`aria-label`); il contrasto è sufficiente; si gioca anche con la tastiera.
-- *Dipende da*: P30, P33, P49, P50, P51.
+- *Dipende da*: P30, P33.
 
 **P35 — Carte vere** · piccolo · **decisione: sì** (D19) — **file non tutti sicuri, vedi sezione 9.2**
 - *Cosa e perché*: come deciso, prima si prova un **set con licenza libera**, poi lo si confronta con le vostre immagini.
 - *Fatto quando*: le 40 carte si vedono con le immagini scelte, la licenza è annotata, e il peso totale è sotto 1 MB.
 - *Dipende da*: P20.
 
-**P42 — Logo vero** · piccolo · decisione: no (il logo lo disegna Claude in SVG, vedi `DECISIONI.md`) — **file non tutti sicuri, vedi sezione 9.2**
-- *Cosa e perché*: il logo "500" al centro della navbar, leggibile a 40 px di altezza, più l'icona della scheda del browser (favicon). Parte dal logo testuale del prototipo di P52.
+**P42 — Logo vero** · piccolo · decisione: **D34** (il logo lo disegna Claude in SVG, vedi `DECISIONI.md`) — **file non tutti sicuri, vedi sezione 9.2**
+- *Cosa e perché*: il logo con il nome del gioco al centro della navbar (il nome è la domanda D34), leggibile a 40 px di altezza, più l'icona della scheda del browser (favicon). Parte dal nome con il seme di denari del prototipo di P52.
 - *Fatto quando*: il logo si vede nitido a 40 px su telefono e computer, in tema chiaro e scuro; il tocco porta alla home.
 - *Dipende da*: P40.
 
 **P43 — Immagini degli avatar** · piccolo · **decisione: sì** (D29) — **file non tutti sicuri, vedi sezione 9.2**
-- *Cosa e perché*: le immagini del set di avatar scelto in D29, mostrate nella navbar, nel menu del profilo, nelle impostazioni, nella lista amici e in classifica.
+- *Cosa e perché*: le immagini del set di avatar scelto in D29, mostrate nella navbar, nel pannello statistiche, nelle impostazioni e nella lista amici.
 - *Fatto quando*: ogni avatar di `avatars.py` ha la sua immagine; chi non ne ha scelto uno vede le iniziali; il peso totale è contenuto (sotto 300 KB).
-- *Dipende da*: P17, P40, P46, P49.
+- *Dipende da*: P17, P40, P46.
 
 **P36 — Code review indipendente** · medio · decisione: no
 - *Cosa e perché*: una revisione di tutto il progetto **prima della messa in servizio**, fatta "a occhi freschi". Prima si scrive la bozza dei finding **senza leggere `DECISIONI.md`**, per non farsi condizionare; poi si confronta con le decisioni. Un finding che contraddice una decisione non si scarta: si segna come "rischio residuo". Il risultato va in `REVIEW.md`, che **diventa il nuovo tracker attivo**.
@@ -494,21 +482,21 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 
 ## 5. Calendario indicativo (3 persone)
 
-Segue la divisione della sezione 9. **Attenzione**: con amici, chat, classifica, storico, regole e prototipo, i punti sono passati da 39 a 52. Una settimana è **molto stretta** (vedi rischi e ordine di taglio).
+Segue la divisione della sezione 9. **Attenzione**: con amici, chat e prototipo i punti sono passati da 39 a 52; il 27/09/2026 ne sono stati tolti 4 (P41, P49, P50, P51), quindi ne restano 48. Una settimana resta **stretta** (vedi rischi e ordine di taglio).
 
 | Giorno | Studente 1: motore e tempo reale | Studente 2: account, dati, amici, pagine dati | Studente 3: interfaccia e documenti |
 |---|---|---|---|
 | 1 — 27/09 | P1, P2, P4 | P5 (i file SQL subito, il resto dopo P4) | P3, P52 (dopo P1), P8 (il contratto si approva insieme) |
 | 2 — 28/09 | P6, P10, P11, P12 | P7 (dopo P6), P18 | P19, P40 |
 | 3 — 29/09 | P13, P14, P15 | P16, P17 (dopo P40) | P20, P22, P9 |
-| 4 — 30/09 | P23 | P45, P26 (service, repository e test), P27 | P21, P41, P46 |
-| 5 — 01/10 | P24, P25 | P28 (dopo P24), chiamata di P26 in `room.py` (dopo P25) | P51, P30 |
-| 6 — 02/10 | P44 (dopo P29), P47 | P29, P48, P49 | P33, P34, P35 |
-| 7 — 03/10 | P31, P32 | P50, P38, P39 | P42, P43, P36, P37 |
+| 4 — 30/09 | P23 | P45, P26 (service, repository e test), P27 | P21, P46 |
+| 5 — 01/10 | P24, P25 | P28 (dopo P24), chiamata di P26 in `room.py` (dopo P25) | P30 |
+| 6 — 02/10 | P44 (dopo P29), P47 | P29, P48 | P33, P34, P35 |
+| 7 — 03/10 | P31, P32 | P38, P39 | P42, P43, P36, P37 |
 
 I giorni sono indicativi. La regola che conta è quella delle dipendenze: un punto inizia solo quando i punti da cui dipende sono già in `dev`.
 
-**Se il tempo stringe**, ordine di taglio proposto (da confermare, D31): P43 e P42 (restano iniziali e logo testuale) → P35 (restano le carte CSS) → P50 (storico) → mini-tutorial di P51 (resta il regolamento in testo) → P49 (classifica) → P48 (chat) → P29 (il 2v2 resta giocabile da stanza privata e da invito) → P34. **Non si tagliano mai** P6, P15, P24, P31 e P32.
+**Se il tempo stringe**, ordine di taglio proposto (da confermare, D31): P43 e P42 (restano iniziali e nome testuale) → P35 (restano le carte CSS) → P48 (chat) → P29 (niente 2v2: senza la coda 2v2 non si può giocare nemmeno in coppia con un amico) → P34. **Non si tagliano mai** P6, P15, P24, P31 e P32.
 
 ## 6. Mappa dei file
 
@@ -528,14 +516,12 @@ Chi crea ogni file. I file creati da P4 come segnaposto e poi riempiti da altri 
 | `app/services/avatars.py`, `app/templates/profile/*`, `pages/profile.js`, `pages/profile.css` | P17 |
 | `scripts/backup.py`, `scripts/ripristina.py` | P18 |
 | `base.html`, `partials/flash.html`, `css/base/*`, `button/form/modal.css`, `Modal.js`, `utils/dom.js` | P19 |
-| `partials/navbar.html`, `partials/bottom_nav.html`, `navbar/bottom-nav/profile-menu.css`, `core/layout.js`, `ProfileMenu.js`, `LoginPrompt.js` | P40 |
+| `partials/navbar.html`, `navbar.css`, `stats-panel.css`, `core/layout.js`, `StatsPanel.js`, `LoginPrompt.js`, `img/seme-denari.svg` | P40 |
 | `Card.js`, `Hand.js`, `card.css`, `hand.css`, `static/dev/carte.*` | P20 |
 | `game/table.html`, `pages/game.js`, `Table/Trick/Scoreboard/Timer/SingButtons.js` e relativi CSS | P21 |
-| `pages/home.js`, `pages/home.css`, `QueueOverlay.js`, `queue-overlay.css`, `ResumeBanner.js` | P22 |
-| `lobby/index.html`, `pages/lobby.js`, `pages/lobby.css` | P41 |
+| `pages/home.js`, `pages/home.css`, `ModeModal.js`, `mode-modal.css`, `CardBackground.js`, `card-background.css`, `img/cards-bg/*`, `QueueOverlay.js`, `queue-overlay.css`, `ResumeBanner.js` | P22 |
 | `friend_service.py`, `friend_repo.py` | P45 |
 | `FriendsPanel.js`, `ChatWindow.js`, `friends-panel.css`, `chat.css` | P46 |
-| `main/rules.html`, `pages/rules.css` | P51 |
 | `app/realtime/events.py`, `room.py`, `room_manager.py`, `js/core/socket.js`, `js/core/events.js`, `js/vendor/*` | P23 |
 | `match_service.py`, `match_repo.py` | P26 |
 | `glicko2.py`, `rating_service.py`, `rating_repo.py` | P27 |
@@ -543,9 +529,7 @@ Chi crea ogni file. I file creati da P4 come segnaposto e poi riempiti da altri 
 | `app/realtime/presence.py`, `app/sockets/home_events.py` | P44 |
 | `app/realtime/invites.py` | P47 |
 | `chat_service.py`, `chat_repo.py` | P48 |
-| `stats_service.py`, `stats_repo.py`, `stats/*`, `pages/stats.js`, `RatingChart.js`, `pages/stats.css` | P30 |
-| `leaderboard_service.py`, `leaderboard_repo.py`, `leaderboard/*`, `pages/leaderboard.js`, `pages/leaderboard.css` | P49 |
-| `history_repo.py`, `history/*`, `pages/history.js`, `pages/history.css` | P50 |
+| `stats_service.py`, `stats_repo.py` | P30 |
 | `tests/e2e/*` | P31 |
 | `Banner.js`, `banner.css` | P33 |
 | `app/static/img/cards/*` | P35 |
@@ -559,7 +543,7 @@ Chi crea ogni file. I file creati da P4 come segnaposto e poi riempiti da altri 
 
 | Rischio | Come lo affrontiamo |
 |---|---|
-| **Tempo**: 52 punti in una settimana per tre persone sono molti, e amici e chat sono il blocco più grosso aggiunto | Filoni paralleli grazie al contratto P8 e ai dati finti (P21, P22, P41, P46); ordine di taglio proposto (D31); punti piccoli |
+| **Tempo**: 48 punti in una settimana per tre persone sono molti, e amici e chat sono il blocco più grosso aggiunto | Filoni paralleli grazie al contratto P8 e ai dati finti (P21, P22, P46); tolti classifica, stanza privata, storico e regole (27/09); ordine di taglio proposto (D31); punti piccoli |
 | **Conflitti git tra i tre** | Ogni punto elenca i suoi file; P4 prepara i segnaposto; file condivisi in sequenza (sezione 3 e colonna "Attende" della sezione 9); documenti condivisi da regolare (D22) |
 | **Regole implementate male** | `docs/REGOLE-GIOCO.md` come riferimento unico; un test per ogni regola (P11–P14); controllo delle regole nella code review (P36) |
 | **Carte avversarie visibili dal browser** | Vista per giocatore (P15), controllata in tutte le posizioni e poi end-to-end (P31) |
@@ -581,13 +565,16 @@ Chi crea ogni file. I file creati da P4 come segnaposto e poi riempiti da altri 
 | Caricamento di una foto profilo | Servono spazio per i file, controllo dei contenuti e privacy: si usa un set di avatar predefiniti |
 | Più processi server e Redis (gioco pubblico) | Con meno di 50 utenti basta un processo; l'architettura non lo impedisce |
 | Bot che sostituisce chi abbandona, partite contro il computer | Utile quando ci sono pochi giocatori, ma non necessario per la consegna |
-| Coda 2v2 di matchmaking insieme a un amico | Con un amico si gioca da invito o da stanza privata |
 | Chat di gruppo e chat durante la partita | Per ora la chat è solo tra due amici (D25) |
 | Segnalazione di utenti e moderazione | Con un gruppo di amici basta il blocco (D23) |
 | Replay delle partite | Gli eventi vengono già salvati (P26): si potrà aggiungere dopo |
 | Notifiche push sul telefono | Richiedono configurazione in più; per ora bastano i contatori nella pagina |
 | Salvataggio delle partite in corso (per non perderle se il server si riavvia) | Con la demo locale il rischio è basso |
 | Docker, `uv` | Scartati per ora per semplicità (vedi `DECISIONI.md`) |
+| Classifica (ex P49) | Tolta il 27/09/2026 per scelta dell'utente |
+| Stanza privata con codice (ex P41) | Tolta il 27/09/2026: tra amici si gioca con "Gioca con un amico" |
+| Storico delle partite, pagina "Partite" (ex P50) | Tolto il 27/09/2026; le partite si salvano comunque per statistiche e rating |
+| Pagina delle regole con mini-tutorial (ex P51) | Tolta il 27/09/2026; il regolamento resta in `docs/REGOLE-GIOCO.md` |
 
 ## 9. Divisione del lavoro tra i tre studenti
 
@@ -603,9 +590,9 @@ Due studenti che lavorano in parallelo non toccano mai gli stessi file, con un'u
 
 **Studente 1 — motore di gioco e tempo reale:** P1, P2, P4, P6, P10, P11, P12, P13, P14, P15, P23, P24, P25, P44, P47, P31
 
-**Studente 2 — account, dati, amici, pagine con i dati:** P5, P7, P16, P17, P18, P45, P26, P27, P28, P29, P48, P49, P50, P39
+**Studente 2 — account, dati, amici:** P5, P7, P16, P17, P18, P45, P26, P27, P28, P29, P48, P39
 
-**Studente 3 — interfaccia e documenti:** P3, P52, P8, P9, P19, P40, P20, P21, P22, P41, P46, P51, P30, P36, P37
+**Studente 3 — interfaccia e documenti:** P3, P52, P8, P9, P19, P40, P20, P21, P22, P46, P30, P36, P37
 
 | Punto | Studente | File condivisi con punti di altri studenti | Attende (già in `dev`) |
 |---|---|---|---|
@@ -626,24 +613,20 @@ Due studenti che lavorano in parallelo non toccano mai gli stessi file, con un'u
 | P40 | 3 | nessuno di altri studenti (`base.html` è dello Studente 3) | P19 |
 | P20 | 3 | nessuno | P19 |
 | P21 | 3 | `blueprints/game/routes.py` (P4); crea `pages/game.js` che poi modifica P24 | P8, P20, P40 |
-| P22 | 3 | `blueprints/main/routes.py` (P4); crea `pages/home.js` che poi modificano P28, P29, P44 | P8, P40, P52 |
-| P41 | 3 | `blueprints/lobby/routes.py` (P4); crea `pages/lobby.js` che poi modifica P24 | P40 |
+| P22 | 3 | `blueprints/main/routes.py` (P4); crea `pages/home.js` (poi P28, P29, P44) e `ModeModal.js` (poi P28, P47) | P8, P40, P52 |
 | P45 | 2 | `blueprints/friends/*` (segnaposto di P4) | P5, P16 |
 | P46 | 3 | crea `FriendsPanel.js` (poi P47) e `ChatWindow.js` (poi P48) | P8, P40 |
-| P51 | 3 | nessuno di altri studenti (`main/routes.py` è dello Studente 3 dopo P4) | P20, P22 |
 | P23 | 1 | `sockets/__init__.py`, `connection_events.py` (P4) | P8, P16 |
-| P24 | 1 | `pages/game.js` (P21), `pages/lobby.js` (P41), `lobby_events.py`, `game_events.py` (P4) | P15, P21, P41, P23 |
+| P24 | 1 | `pages/game.js` (P21), `game_events.py` (P4) | P15, P21, P23 |
 | P25 | 1 | nessuno di altri studenti in parallelo | P24 |
 | P26 | 2 | `realtime/room.py` (solo la chiamata al salvataggio) | P5; **P25** per la modifica a `room.py` |
 | P27 | 2 | nessuno | P26 (service e repository) |
-| P28 | 2 | `lobby_events.py`, `sockets/__init__.py` (dopo lo Studente 1), `pages/home.js` (dopo lo Studente 3) | P22, P24, P27 |
+| P28 | 2 | `lobby_events.py`, `sockets/__init__.py` (dopo lo Studente 1), `pages/home.js` e `ModeModal.js` (dopo lo Studente 3) | P22, P24, P27 |
 | P29 | 2 | nessuno di altri studenti in parallelo | P28 |
-| P44 | 1 | `sockets/__init__.py` e `pages/home.js` (dopo lo Studente 2) | P25, P27, P29 |
-| P47 | 1 | `FriendsPanel.js` (dopo lo Studente 3), `friends_events.py` (P4) | P24, P44, P45, P46 |
+| P44 | 1 | `sockets/__init__.py` e `pages/home.js` (dopo lo Studente 2) | P25, P29 |
+| P47 | 1 | `FriendsPanel.js` (dopo lo Studente 3), `ModeModal.js` (dopo lo Studente 2), `friends_events.py` (P4) | P24, P29, P44, P45, P46 |
 | P48 | 2 | `ChatWindow.js` (dopo lo Studente 3), `chat_events.py` (P4) | P23, P45, P46 |
-| P30 | 3 | `blueprints/stats/routes.py` (segnaposto di P4) | P26, P27, P40 |
-| P49 | 2 | `blueprints/leaderboard/routes.py` (segnaposto di P4) | P27, P40 |
-| P50 | 2 | `blueprints/history/routes.py` (segnaposto di P4) | P26, P27, P40 |
+| P30 | 3 | `blueprints/stats/routes.py` (segnaposto di P4), `StatsPanel.js` (P40, sempre Studente 3) | P26, P27, P40 |
 | P31 | 1 | nessuno (crea solo `tests/e2e/*`) | P25, P29, P47, P48 |
 | P36 | 3 | nessuno (crea solo `REVIEW.md`) | P31, P32, P33 |
 | P37 | 3 | `CLAUDE.md`, `README.md` (P3 e P9, sempre Studente 3) | P36 |
@@ -652,7 +635,7 @@ Due studenti che lavorano in parallelo non toccano mai gli stessi file, con un'u
 **Controlli di parallelismo** [D]: questi punti avvengono negli stessi giorni ma toccano file diversi. La verifica vale finché ognuno resta nei file elencati nel suo punto.
 - P25 (Studente 1) ∥ P28 (Studente 2): `room.py`, `game_events.py`, `connection_events.py`, `game.js` contro `matchmaking.py`, `lobby_events.py`, `sockets/__init__.py`, `home.js`.
 - P47 (Studente 1) ∥ P48 (Studente 2): `invites.py`, `friends_events.py`, `FriendsPanel.js` contro `chat_service.py`, `chat_repo.py`, `chat_events.py`, `ChatWindow.js`.
-- P44 (Studente 1) ∥ P49 (Studente 2) ∥ P33 (Studente 3): P33 può toccare `home.js` (vedi 9.2), quindi **P33 attende che P44 sia in `dev`**.
+- P44 (Studente 1) ∥ P33 (Studente 3): P33 può toccare `home.js` (vedi 9.2), quindi **P33 attende che P44 sia in `dev`**.
 
 ### 9.2 Punti con file NON sicuri
 
@@ -665,7 +648,7 @@ Per questi punti non posso dire adesso con certezza quali file verranno toccati.
 
 **P33 — Errori e connessione nell'interfaccia** · proposto: Studente 3 (giorno 6)
 - *Sicuri*: crea `app/static/js/components/Banner.js`, `app/static/css/components/banner.css`, `tests/frontend/test_niente_alert.py`; modifica `app/static/js/core/socket.js` (P23), `app/templates/base.html` (P40).
-- *Probabili*: `app/static/js/pages/game.js`, `home.js`, `lobby.js`, `app/static/js/components/FriendsPanel.js`, `ChatWindow.js`.
+- *Probabili*: `app/static/js/pages/game.js`, `home.js`, `app/static/js/components/ModeModal.js`, `FriendsPanel.js`, `ChatWindow.js`.
 - *Perché non sono sicuro*: bisogna disattivare i pulsanti quando la connessione cade. Se le pagine usano già un'unica funzione `render(vista)` che legge lo stato della connessione, basta toccare `socket.js`; altrimenti vanno modificate anche le pagine e i componenti. Quei file sono stati modificati da Studente 1 e Studente 2: si inizia solo dopo che P25, P44, P47 e P48 sono in `dev`.
 
 **P34 — Rifinitura mobile e accessibilità** · proposto: Studente 3 (giorno 6–7)
@@ -684,8 +667,8 @@ Per questi punti non posso dire adesso con certezza quali file verranno toccati.
 
 **P43 — Immagini degli avatar** · proposto: Studente 3
 - *Sicuri*: crea la cartella `app/static/img/avatars/`.
-- *Probabili*: un file per avatar (nomi e formato da D29); modifica `app/templates/partials/navbar.html`, `app/static/js/components/ProfileMenu.js` (P40), `FriendsPanel.js` (P47), `app/templates/profile/settings.html` (P17), `app/templates/leaderboard/index.html` (P49).
-- *Perché non sono sicuro*: dipende da **quanti** avatar e **che formato** (D29), e da come le altre pagine hanno già previsto lo spazio per l'avatar: se usano un unico componente o una macro del template, basta modificare quello. `settings.html`, `FriendsPanel.js` e `leaderboard/index.html` sono di altri studenti: si inizia solo dopo che P17, P47 e P49 sono in `dev`.
+- *Probabili*: un file per avatar (nomi e formato da D29); modifica `app/templates/partials/navbar.html`, `app/static/js/components/StatsPanel.js` (P30), `FriendsPanel.js` (P47), `app/templates/profile/settings.html` (P17).
+- *Perché non sono sicuro*: dipende da **quanti** avatar e **che formato** (D29), e da come le altre pagine hanno già previsto lo spazio per l'avatar: se usano un unico componente o una macro del template, basta modificare quello. `settings.html` e `FriendsPanel.js` sono di altri studenti: si inizia solo dopo che P17 e P47 sono in `dev`.
 
 **P38 — Installazione demo separata** · proposto: Studente 2 (giorno 7)
 - *Sicuri*: crea `docs/DEMO.md`.

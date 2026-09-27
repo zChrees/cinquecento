@@ -74,7 +74,7 @@ Controllato il 27/09/2026 a 360×640, 375×667, 390×844, 412×915, 768×1024, 8
 | `img/seme-denari.svg` | Seme di denari, accanto al nome "Briscola" | Wikimedia Commons, file `Seme_denari_carte_siciliane.svg`, autore Florixc | **Pubblico dominio** |
 | `img/cavallo-*.webp`, `img/re-*.webp`, `img/asso-*.webp`, `img/tre-*.webp` (4 semi ciascuno) | Carte dello sfondo, ritagliate dalle scansioni e portate a 200 × 326 px | Wikimedia Commons, file `Carte_da_gioco_siciliane_-_<seme>.jpg`, autore Matsoftware | **CC BY-SA 3.0**: si possono usare citando l'autore e la licenza; i ritagli restano sotto la stessa licenza |
 
-Da ricordare per le pagine vere: le immagini CC BY-SA richiedono una **riga di crediti** visibile nel sito (per esempio nella pagina delle regole o in fondo alla pagina).
+Da ricordare per le pagine vere: le immagini CC BY-SA richiedono una **riga di crediti** visibile nel sito; dove metterla è la domanda D37 di `DA-DECIDERE.md`.
 
 ## Risorse esterne
 
@@ -95,6 +95,6 @@ Da ricordare per le pagine vere: le immagini CC BY-SA richiedono una **riga di c
 ## Cose che le pagine vere NON riprendono
 
 - I parametri `?apri=` e l'accettazione automatica dell'invito dopo 2 secondi.
-- Da decidere in P19/P22: il codice dello sfondo va in un componente a parte (per esempio `js/components/CardBackground.js`), che oggi nessun punto della scaletta elenca.
+- Il codice dello sfondo, che nelle pagine vere va nel componente `js/components/CardBackground.js` e le immagini in `app/static/img/cards-bg/` (P22).
 - I dati finti (Mario, 24 online, amici, messaggi): nelle pagine vere arrivano dal server.
 - Lo script classico: le pagine vere usano moduli ES, che però non partono aprendo un file con un doppio clic.
