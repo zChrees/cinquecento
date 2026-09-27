@@ -64,7 +64,9 @@ Carte della cascata, contate il 27/09/2026: a 360×640 8 carte (3 dorsi, 2 coppi
 
 **La pagina non scorre mai**, né su telefono né su computer: è alta esattamente quanto lo schermo. Le carte-pulsante si rimpiccioliscono sugli schermi bassi: la loro altezza massima (`--tile-h` in `prototipo.css`) è lo schermo meno navbar, "giocatori online", titoli e spazi.
 
-- **Telefono** (fino a 639 px): navbar con avatar, "Cinquecento" e amici (icona degli amici più grande, 30 px); le due sezioni una sotto l'altra, con il titolo centrato e due carte affiancate; "giocatori online" **in fondo alla pagina**, centrato.
+- **Telefono** (fino a 639 px): navbar con avatar, "Cinquecento" e amici (icona degli amici più grande, 30 px); le due sezioni una sotto l'altra, ciascuna con due carte affiancate; "giocatori online" **in fondo alla pagina**, centrato.
+- **A tutte le misure** i titoli "Partita Veloce" e "Gioca con un amico" sono **centrati sopra le loro due carte**.
+- **Vetro liquido**: "giocatori online" e i due titoli sono sulla stessa pillola di vetro di avatar e amici (variabili `--glass-*` in `prototipo.css`), con il testo color crema e, nei titoli, l'icona (fulmine e cuore) bianca sul vetro come l'icona degli amici, senza più il cerchio giallo; il puntino "online" è un verde più chiaro (`--online-glass`) per staccarsi dal vetro.
 - **Telefono in orizzontale** (altezza fino a 520 px): le quattro carte su una sola fila.
 - **Tablet** (da 640 px): carte larghe al massimo 220 px, sezioni centrate. Da 900 px le due sezioni sono affiancate.
 - **Computer** (da 1024 px): navbar con le scritte "Mario" e "Amici", carte più grandi e più distanziate.
