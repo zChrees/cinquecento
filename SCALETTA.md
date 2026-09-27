@@ -174,7 +174,7 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 - *Fatto quando*: `python run.py` mostra la pagina "ok" su `http://localhost:5000` [T]; con una versione di Python diversa dalla 3.14 l'avvio si rifiuta; `pytest tests/api/test_avvio.py` passa.
 - *Dipende da*: P1, P2.
 
-**P5 — Database** · medio · decisione: **D6, D23, D24** (servono per scrivere le tabelle)
+**P5 — Database** · medio · decisione: **D6, D7, D23, D24, D38** (servono per scrivere le tabelle; la proposta completa delle tabelle è D38 in `DA-DECIDERE.md`)
 - *Cosa e perché*: `setup_db.sql` crea i database `cinquecento_dev` e `cinquecento_test` con un utente MySQL dedicato, in `utf8mb4`/InnoDB. `001_init.sql` crea **tutte** le tabelle della prima versione: `users` (con l'avatar scelto), `ratings`, `matches` (con il punteggio per vincere: 150, 300 o 500), `match_players`, `match_events`, `friendships` (richieste e amicizie, con lo stato), `user_blocks` (solo se D23 = sì), `chat_messages`, `schema_version`. Il comportamento alla cancellazione di un utente (D6) si decide qui, con le chiavi esterne. `migrate.py` applica le migrazioni mancanti. I modelli Python rispecchiano le tabelle.
 - *File* — crea: `scripts/setup_db.sql`, `migrations/001_init.sql`, `scripts/migrate.py`, `app/models/user.py`, `app/models/rating.py`, `app/models/match.py`, `app/models/friendship.py`, `app/models/chat_message.py`, `tests/db/test_migrate.py`. Certezza: **sicuro**. Se D23 = sì, il modello dei blocchi va in `app/models/friendship.py`.
 - *Nota*: nella prima versione nessun altro punto aggiunge migrazioni. Se ne serve una, è un punto nuovo da concordare.

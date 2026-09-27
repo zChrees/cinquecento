@@ -17,11 +17,30 @@ Per D7, D8, D9, D10, D16, D24, D26 e D27, `config.py` (P4) usa già il valore co
 
 ## Dati
 
-- [ ] **D6 — Cosa succede alle partite quando un utente cancella l'account**: a) si **anonimizzano** (la partita resta per le statistiche degli altri, il nome diventa "utente eliminato") *(consigliata)*; b) si cancellano anche le sue righe nelle partite.
-- [ ] **D7 — Regole per lo username**: consigliato da 3 a 20 caratteri, solo lettere, numeri e `_`, e senza distinzione tra maiuscole e minuscole (`Mario` e `mario` sono lo stesso utente).
+- [ ] **D6 — Cosa succede alle partite quando un utente cancella l'account**: a) si **anonimizzano** (la partita resta per le statistiche degli altri, il nome diventa "utente eliminato") *(consigliata)*; b) si cancellano anche le sue righe nelle partite. → **Proposta di Christian (27/09/2026): a), da confermare con il gruppo.**
+- [ ] **D7 — Regole per lo username**: consigliato da 3 a 20 caratteri, solo lettere, numeri e `_`, e senza distinzione tra maiuscole e minuscole (`Mario` e `mario` sono lo stesso utente). → **Proposta di Christian (27/09/2026): come consigliato, da confermare con il gruppo.** Serve per la colonna `username` di P5 (vedi D38).
 - [ ] **D8 — Regole per la password**: consigliato almeno 8 caratteri, senza altri obblighi.
 - [ ] **D9 — Rating iniziale e visibilità**: consigliato 1500, mostrato come "provvisorio" per le prime 10 partite.
 - [ ] **D10 — Per quanti giorni tenere i backup**: consigliato 14 giorni.
+- [ ] **D38 — Tabelle del database (P5) e creazione dell'utente MySQL**: proposta di Claude del 27/09/2026, **non ancora approvata** (Christian ne parla con il gruppo). Vale se D6, D7, D23 e D24 restano come proposto sopra.
+  - Tutte le tabelle in `utf8mb4`, InnoDB, collation `utf8mb4_0900_ai_ci`, che non distingue maiuscole e minuscole: `Mario` e `mario` sono lo stesso username, garantito dal database (D7).
+
+    | Tabella | Colonne principali | Se l'utente cancella l'account |
+    |---|---|---|
+    | `users` | `id`, `username` VARCHAR(20) unico, `email` VARCHAR(254) unica, `password_hash`, `avatar` (facoltativo), `created_at` | — |
+    | `ratings` | `user_id`, `mode` (`1v1`/`2v2`), `rating`, `rd`, `volatility`, `updated_at`; chiave (`user_id`, `mode`) | si cancella |
+    | `matches` | `id`, `mode`, `target_score` (il database accetta solo 150, 300, 500), `rated` (sì/no), `started_at`, `ended_at`, `end_reason` (`score`/`abandon`), `winner_team` (vuoto = pareggio), `team0_score`, `team1_score` | resta |
+    | `match_players` | `match_id`, `seat` (0–3), `team` (0/1), `user_id`, `result` (`win`/`loss`/`draw`), `abandoned` | resta, con `user_id` vuoto → "utente eliminato" (D6) |
+    | `match_events` | `match_id`, `seq`, `hand_no`, `seat`, `type`, `data` (JSON), `created_at` | resta (contiene solo i posti, non gli utenti) |
+    | `friendships` | `requester_id`, `addressee_id`, `status` (`pending`/`accepted`), `created_at`, `responded_at`; una sola riga per coppia, in qualunque direzione | si cancella |
+    | `user_blocks` | `blocker_id`, `blocked_id`, `created_at` (D23) | si cancella |
+    | `chat_messages` | `id`, `sender_id`, `recipient_id`, `body` VARCHAR(300), `created_at`, `read_at` | si cancella (D24) |
+    | `schema_version` | `version`, `filename`, `applied_at` | — |
+
+  - **Niente stato duplicato**: le statistiche (partite, vinte, perse) e il numero di partite del rating provvisorio (D9) si calcolano da `match_players`, senza contatori; il rating iniziale sta solo in `config.py`. Una richiesta di amicizia rifiutata si cancella (così si può rimandare). La pulizia dei messaggi più vecchi di 30 giorni la fa P48.
+  - **`setup_db.sql`** (lanciato come root, una volta sola) crea `cinquecento_dev`, `cinquecento_test` e l'utente MySQL `cinquecento` con i permessi solo su quei due database. La password **non sta nel file**: `IDENTIFIED BY RANDOM PASSWORD` di MySQL 8.0 la genera e la mostra una volta sola, e ognuno la copia nel proprio `.env`; rilanciando il file non viene rigenerata. Un commento spiega come crearne una nuova se si perde.
+  - **`migrate.py`** applica in ordine le migrazioni non ancora registrate in `schema_version`; `--test` lavora su `cinquecento_test`. Le istruzioni che creano tabelle, in MySQL, non si annullano in blocco: se un file si ferma a metà, lo script si ferma con un messaggio chiaro e non segna la versione.
+  - **Chi lancia `setup_db.sql`** sul PC di Christian: a) lui stesso, con `mysql -u root -p < scripts/setup_db.sql` *(consigliato)*; b) Claude, con le credenziali di root del `.env`, senza stamparle.
 
 ## Gioco
 
@@ -35,8 +54,8 @@ Per D7, D8, D9, D10, D16, D24, D26 e D27, `config.py` (P4) usa già il valore co
 
 ## Amici e chat
 
-- [ ] **D23 — Blocco degli utenti**: consigliato **sì**. Un utente bloccato non può mandarti richieste né messaggi, e il blocco rimuove l'amicizia. Serve saperlo **prima di P5**, perché cambia le tabelle.
-- [ ] **D24 — Per quanto tempo si conservano i messaggi della chat**: consigliati 30 giorni. Si cancellano comunque con l'account. Serve **prima di P5**.
+- [ ] **D23 — Blocco degli utenti**: consigliato **sì**. Un utente bloccato non può mandarti richieste né messaggi, e il blocco rimuove l'amicizia. Serve saperlo **prima di P5**, perché cambia le tabelle. → **Proposta di Christian (27/09/2026): sì, da confermare con il gruppo.**
+- [ ] **D24 — Per quanto tempo si conservano i messaggi della chat**: consigliati 30 giorni. Si cancellano comunque con l'account. Serve **prima di P5**. → **Proposta di Christian (27/09/2026): 30 giorni, da confermare con il gruppo.**
 - [ ] **D25 — Con chi si chatta**: consigliato **solo tra amici**, uno a uno, senza chat durante la partita.
 - [ ] **D26 — Limiti**: consigliati al massimo 100 amici, messaggi di 300 caratteri al massimo, non più di 1 messaggio al secondo.
 - [ ] **D27 — Inviti a partita**: consigliata una scadenza di 60 secondi. Dal prototipo approvato il 27/09/2026: nel 1v1 l'amico invitato è l'avversario; nel 2v2 è il **compagno di squadra** e gli avversari arrivano dal matchmaking. Si invita un amico alla volta. Resta da decidere cosa succede se l'amico rifiuta o non risponde (consigliato: l'invito scade, compare un avviso e si può invitare un altro amico).

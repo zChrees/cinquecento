@@ -30,7 +30,10 @@ Web-app per giocare online a **Cinquecento**, il gioco di carte siciliano simile
 
 Il riferimento grafico è il prototipo in [docs/prototipo/](docs/prototipo/): si apre con un doppio clic su `index.html`.
 
-> **Stato del progetto:** in preparazione. Il codice non è ancora stato scritto. Le istruzioni di installazione qui sotto descrivono come funzionerà il progetto quando saranno fatti i punti P4–P6 della [scaletta](SCALETTA.md).
+> **Stato del progetto (27/09/2026):** c'è lo **scheletro** (P4): `python run.py` mostra una pagina "ok" su `http://localhost:5000`. Il database (P5) e il runner dei test (P6) non ci sono ancora, quindi per ora:
+> - fai i passi 1–5 dell'installazione qui sotto (il passo 6 arriva con P5);
+> - nel tuo `.env`, finché P5 non crea l'utente `cinquecento`, metti `DB_USER=root` e la tua password di root: all'avvio il programma controlla solo che MySQL 8.0 risponda;
+> - i test si lanciano con `python -m pytest tests` e il controllo del codice con `ruff check .`, dentro la `.venv`.
 
 ## Il gioco in breve
 
