@@ -76,7 +76,7 @@ class BaseConfig:
 
     # Amici, chat e inviti (provvisorio, D24, D26, D27)
     FRIENDS_MAX = 100
-    CHAT_MAX_LENGTH = 300
+    CHAT_MAX_LENGTH = 1000
     CHAT_MIN_INTERVAL_SECONDS = 1
     CHAT_RETENTION_DAYS = 30
     INVITE_SECONDS = 60
