@@ -11,8 +11,9 @@ D4# Cinquecento — istruzioni per Claude Code
 5. Questo file è la guida di processo: niente cronologia dei lotti qui dentro (va nel tracker e poi nell'archivio).
 
 6. Il regolamento del gioco è in **`docs/REGOLE-GIOCO.md`**: è il riferimento unico per il motore di gioco.
+7. **Chi lavora**: il progetto è diviso tra **Giuseppe** (Studente 1: motore e tempo reale), **Antonio** (Studente 2: account, dati, amici) e **Christian** (Studente 3: interfaccia e documenti); i punti di ciascuno e l'ordine sono nella sezione 9 di `SCALETTA.md`. A inizio sessione, se non sai chi è l'utente, chiediglielo. Lavora solo sui punti assegnati a lui: se chiede un punto di un altro, faglielo notare e aspetta conferma.
 
-**Stato (27/09/2026):** in `dev` ci sono P1, P2, **P52** (prototipo della home approvato, in `docs/prototipo/`) e i documenti aggiornati: niente classifica, stanza privata, storico né pagina delle regole (P41, P49, P50, P51 tolti), niente bottom navbar, punteggio 150/300/500; decise D34 (nome "Cinquecento"), D35 (code separate per punteggio, rating uguale per tutti), D36 (il 2v2 con un amico conta per il rating), D37 (crediti delle immagini in fondo al pannello statistiche); tema scuro rimandato al nuovo punto P53 (Fase 4). In `dev` c'è anche **P4** (scheletro: `run.py`, `config.py`, segnaposto di `app/`, 31 test PASS, `ruff check .` pulito); decise D4 (ruff), python-dotenv e cryptography, SQLAlchemy 2.0. Per P5 (database) c'è una **proposta non ancora approvata**: le risposte di Christian a D6, D7, D23 e D24 e lo schema delle tabelle (D38) sono in `DA-DECIDERE.md`, da confermare con il gruppo. Chi fa il pull deve rifare la `.venv` con i nuovi `requirements*.txt` e creare il proprio `.env` (README, "Installazione"). **Versione finale del prototipo** in **`dev`** (portata dal branch `christian` con un commit di merge il 27/09/2026; poi `christian` è stato allineato a `dev`, così i due coincidono; tutto pushato): panno verde con la cascata di carte, logo con le carte che si girano, scritte sul panno come il logo (niente vetro liquido), su computer navbar larga con avatar e amici più grandi, carte-pulsante con l'Asso a sagoma e lo spessore crema solo in basso, modal a forma di carta che vola al centro e si gira (X in alto a destra, descrizione, punti, "In breve" e "Lo sapevi?" nella veloce, lista da invitare con un amico; cosa entra dipende dall'altezza della carta, verificato a 17 misure di schermo), niente scorrimento tranne la lista degli amici da invitare (`DECISIONI.md`, "Versione finale del prototipo"; dettagli in `docs/prototipo/LEGGIMI.md`). Il dorso resta com'è (rosso su crema). `SCALETTA.md` è allineata al prototipo finale (riassunto, P52, P40, P22, P42); le immagini del prototipo entrano nel progetto con P40 (`app/static/img/cards-bg/`). Prossimo passo: il gruppo decide D6, D7, D23, D24 e D38 → poi **P5** (l'utente dirà quando).
+**Stato (27/09/2026):** in `dev` ci sono P1, P2, **P4** (scheletro: `run.py`, `config.py`, segnaposto di `app/`, 31 test PASS, `ruff check .` pulito) e **P52** (versione finale del prototipo della home, in `docs/prototipo/`: dettagli in `DECISIONI.md`, "Versione finale del prototipo", e in `docs/prototipo/LEGGIMI.md`). Si lavora **in tre in parallelo** (D3): **Giuseppe** (Studente 1: motore e tempo reale), **Antonio** (Studente 2: account, dati, amici), **Christian** (Studente 3: interfaccia e documenti); i documenti condivisi li aggiorna solo Christian (D22); push di `dev` subito dopo ogni merge (D2); se il fast-forward non riesce si fa il rebase ("Regole git"). Decise il 27/09/2026: D6 (partite anonimizzate), D7 (username con maiuscole distinte), D11 (mazziere), D12 (mossa automatica), D23 (blocco), D24 (chat tra amici a testo libero, mai cancellata; frasi pronte **solo al tavolo, mai salvate**), D26 in parte (messaggi fino a 1000 caratteri) e **D38: tabelle approvate in `docs/proposta-tabelle.sql`**, con i nomi in italiano (non ancora provate su MySQL: lo fa P5). Scaletta: **P19 prima di P7**; nuovi **P55** (Giuseppe) e **P56** (Christian) per le frasi del tavolo, P54 tolto; le immagini del prototipo entrano con P40. Chi non ha ancora P4 deve creare la `.venv` e il proprio `.env` (README, "Installazione"). Prossimo passo: tutti e tre partono ("Da dove si parte", sezione 9 di `SCALETTA.md`): Giuseppe P10 → P13, Antonio **P5** dalla proposta approvata, Christian P8 → P19 → P40.
 
 ## File e cartelle da ignorare
 
@@ -40,6 +41,7 @@ Web-app per giocare online a **Cinquecento**, variante siciliana (Marianna), con
 
 - Lavora **a lotti piccoli**: un punto del tracker o un gruppo di punti strettamente legati.
 - **Tocca solo i file elencati nel punto** della scaletta: il progetto è diviso tra tre persone, e ogni file fuori elenco è un possibile conflitto git. Se serve un file non elencato, o se il punto dice che l'elenco "non è sicuro", fermati, proponi la lista e aspetta conferma.
+- **Documenti condivisi** (`SCALETTA.md`, `CLAUDE.md`, `DECISIONI.md`, `DA-DECIDERE.md`): li aggiorna **solo Christian**, su un branch `docs/…` creato da `dev` (D22). Nei branch dei punti (`feature/…`, `fix/…`) non si toccano mai, nemmeno per spuntare il punto. Giuseppe e Antonio, a fine punto, mandano a Christian il riepilogo (vedi "Consegna").
 - Prima di modificare il codice, controlla nel tracker e in `DECISIONI.md` se esiste già uno spec concordato.
 - Se una modifica cambia il comportamento visibile agli utenti, o richiede una scelta di design, **spiega le opzioni (con una raccomandazione) e aspetta conferma**, salvo quando lo spec è già approvato.
 - Non aggiungere tabelle, colonne, stato duplicato o strutture non necessarie senza discuterne prima.
@@ -52,11 +54,14 @@ Web-app per giocare online a **Cinquecento**, variante siciliana (Marianna), con
 ## Regole git
 
 - Branch permanenti: `main` (rilasci, non si tocca) e `dev` (lavoro e integrazione del gruppo). Portare `dev` in `main` è una decisione dell'utente: non proporla. Il branch `christian` non è più il branch di partenza.
-- Per ogni lotto: **branch nuovo da `dev` aggiornato** (es. `feature/p10-carte`, `docs/...`, `fix/...`). Prima di crearlo, controlla che i punti da cui dipende siano già in `dev` (colonna "Attende" della sezione 9 di `SCALETTA.md`).
+- Per ogni lotto: **branch nuovo da `dev` aggiornato** (es. `feature/p10-carte`, `docs/...`, `fix/...`): prima `git switch dev` e `git pull`, poi il branch. Prima di crearlo, controlla che i punti da cui dipende siano già in `dev` **su GitHub** (colonna "Attende" della sezione 9 di `SCALETTA.md`): se non ci sono, fermati e dillo.
+- Mai modifiche o commit direttamente su `dev`, e mai sui branch degli altri due.
 - Lascia le modifiche **senza commit**: l'utente le prova.
-- Solo dopo l'**ok esplicito** dell'utente: commit sul branch (separati se il lotto mescola cose diverse), merge fast-forward in `dev`. Se il fast-forward non è possibile, perché nel frattempo `dev` è andato avanti con i lavori degli altri, fermati e chiedi come procedere.
+- Solo dopo l'**ok esplicito** dell'utente: commit sul branch (separati se il lotto mescola cose diverse); poi `git switch dev`, `git pull` e merge **fast-forward** (`git merge --ff-only <branch>`).
+- Se il fast-forward non è possibile, perché nel frattempo un altro ha portato il suo punto in `dev`: torna sul branch del lotto, `git rebase dev`, rilancia **tutte** le suite e ripeti il merge. Il rebase si fa solo su un branch mai pushato. Se il rebase dà un conflitto, `git rebase --abort`, fermati e spiegalo all'utente: vuol dire che due persone hanno toccato lo stesso file, e va chiarito tra loro.
+- Mai `push --force` su `dev` o `main`.
 - Mai tracciare dipendenze, dati reali, segreti, backup, log (controlla `.gitignore` prima del primo commit di un file nuovo).
-- Remote `origin` su GitHub (`zChrees/cinquecento`): **push solo su richiesta** dell'utente.
+- Remote `origin` su GitHub (`zChrees/cinquecento`): **subito dopo ogni merge in `dev`, fai il push di `dev`** (D2), poi ricorda all'utente di avvisare gli altri due, così fanno il pull prima del loro prossimo punto. Gli altri branch si pushano solo su richiesta dell'utente.
 
 ## Convenzioni del codice
 
@@ -73,7 +78,7 @@ Il perché di ciascuna va in `DECISIONI.md`. Adatta l'elenco allo stack; togli q
 - **Server autoritativo**: il client invia solo azioni; ogni giocatore riceve solo la propria vista (mai carte altrui né ordine del mazzo). Le regole stanno solo nel server: il client usa le mosse legali ricevute.
 - **Stanze di gioco**: ogni evento di una stanza si elabora sotto il **lock di quella stanza**; timer e mosse passano dalla stessa via.
 - **Pagine**: un'unica funzione `render(vista)` per pagina che ridisegna dallo stato ricevuto; componenti come funzioni che restituiscono elementi DOM; attributi `data-*` stabili per i test.
-- **Nomi e lingua**: codice in inglese (`sing_40`, `sing_20`, `can_sing`), interfaccia e documenti in italiano.
+- **Nomi e lingua**: codice in inglese (`sing_40`, `sing_20`, `can_sing`), interfaccia e documenti in italiano. **Eccezione**: i nomi di tabelle e colonne del database sono in italiano (`utenti`, `partite`: D38).
 
 ## Punti delicati
 
@@ -85,7 +90,7 @@ Da riempire man mano: le parti del codice che hanno già avuto bug o che hanno r
 ## Testing
 
 - Le suite stanno in `tests/` e provano il programma vero dall'esterno quando possibile (server avviato, client simulati), non solo funzioni isolate.
-- Comando per tutte le suite (da P6): `python tests/esegui_tutti.py`. Una sola suite: `python tests/esegui_tutti.py engine` (le suite sono le cartelle di `tests/`). Numero di controlli attuale: 31 PASS (aggiornalo a ogni lotto). Finché P6 non c'è: `python -m pytest tests`.
+- Comando per tutte le suite (da P6): `python tests/esegui_tutti.py`. Una sola suite: `python tests/esegui_tutti.py engine` (le suite sono le cartelle di `tests/`). Numero di controlli attuale: 31 PASS (lo aggiorna Christian; Giuseppe e Antonio lo scrivono nel riepilogo). Finché P6 non c'è: `python -m pytest tests`.
 - **I test non toccano mai dati reali**: usano solo il database `cinquecento_test` e la porta 5099, e si rifiutano di partire se trovano il file `PRODUZIONE` nella cartella del progetto o un database che non finisce con `_test`. Mai lanciarli nella cartella della demo.
 - File che i test devono modificare (configurazioni, dati di esempio): copia fuori dal progetto, ripristino identico verificato con un hash, copia cancellata alla fine.
 - Prima di avviare un server di test controlla che la porta sia libera: se è occupata, fermati e chiedi (l'utente può avere il suo server acceso). Ricorda all'utente di chiudere le schede del browser collegate prima di un giro completo.
@@ -102,8 +107,9 @@ Quando l'utente chiede un lotto:
 3. implementa solo il lotto richiesto;
 4. testa;
 5. indica cosa è stato modificato, cosa è stato verificato, come provarlo a mano e cosa resta da fare;
-6. aggiorna il tracker (spunta e breve nota del lotto), `DECISIONI.md` se l'utente ha deciso qualcosa di nuovo (con data e motivo), `DA-DECIDERE.md` se emerge una domanda;
-7. **aggiorna la riga "Stato"** in cima a questo file: data, cosa è fatto, prossimo passo. Ogni sessione riparte da lì.
+6. **se l'utente è Christian**, su un branch `docs/…`: aggiorna il tracker (spunta e breve nota del lotto), `DECISIONI.md` se qualcuno ha deciso qualcosa di nuovo (con data e motivo), `DA-DECIDERE.md` se emerge una domanda;
+7. **se l'utente è Christian**, **aggiorna la riga "Stato"** in cima a questo file: data, cosa è fatto, prossimo passo. Ogni sessione riparte da lì;
+8. **se l'utente è Giuseppe o Antonio**, non toccare i documenti condivisi: scrivi un **riepilogo da mandare a Christian**, breve e pronto da copiare: punto fatto, commit, file toccati, controlli PASS, decisioni prese, domande nuove, punti delicati scoperti.
 
 Per modifiche mirate l'utente preferisce diff o snippet piccoli con la posizione precisa; il file completo solo se lo chiede.
 

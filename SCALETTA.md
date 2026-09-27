@@ -1,6 +1,6 @@
 # Scaletta — Cinquecento
 
-> **Tracker attivo.** Ogni punto si fa su un **branch nuovo creato da `dev`**. Si spunta solo dopo l'ok dell'utente, il commit e il merge in `dev`. Chi spunta e aggiorna i documenti condivisi è ancora da decidere (D22). Accanto al punto si aggiunge una breve nota del lotto (data e cosa è stato fatto). **Chi fa cosa** è nella sezione 9.
+> **Tracker attivo.** Ogni punto si fa su un **branch nuovo creato da `dev`**. Si spunta solo dopo l'ok dell'utente, il commit e il merge in `dev`. I documenti condivisi (questo file, la riga "Stato" di `CLAUDE.md`, `DECISIONI.md`, `DA-DECIDERE.md`) li aggiorna **solo Christian**, su un branch `docs/…` (D22): Giuseppe e Antonio, finito un punto, gli mandano un breve riepilogo. Accanto al punto si aggiunge una breve nota del lotto (data e cosa è stato fatto). **Chi fa cosa** è nella sezione 9.
 >
 > **Regola sui file:** chi lavora a un punto crea e modifica **solo i file elencati in quel punto**. Se serve toccarne un altro, ci si ferma e lo si concorda: è così che si evitano i conflitti tra i lavori dei tre membri. Dove l'elenco dei file **non è sicuro** lo dice il punto stesso.
 >
@@ -70,6 +70,9 @@ Una web-app per giocare online a **Cinquecento**, variante siciliana, con le car
 - [ ] P44 (Fase 2, I): home con dati reali (online, rientro in partita) — `app/realtime/presence.py`, `app/sockets/home_events.py`
 - [ ] P47 (Fase 2, I): amici online e inviti a partita — `app/realtime/invites.py`, `app/sockets/friends_events.py`, `ModeModal.js`
 - [ ] P48 (Fase 2, B+I): chat tra amici — `chat_service.py`, `chat_repo.py`, `app/sockets/chat_events.py`
+- [ ] ~~P54 (Fase 2, B): frasi del tavolo: elenco e salvataggio~~ — **tolto il 27/09/2026**: le frasi del tavolo non si salvano (D24)
+- [ ] P55 (Fase 2, I): frasi del tavolo in tempo reale — `app/realtime/table_phrases.py`, `app/sockets/game_events.py`, `config.py`
+- [ ] P56 (Fase 2, C): frasi del tavolo nella pagina — `TablePhrases.js`, `table-phrases.css`, `pages/game.js`
 - [ ] P30 (Fase 2, B+C): pannello statistiche con dati reali — `stats_service.py`, `stats_repo.py`, `StatsPanel.js`
 - [ ] ~~P49 (Fase 2, B+C): classifica~~ — **tolto il 27/09/2026** per decisione dell'utente (vedi `DECISIONI.md`, Progetto e tempi)
 - [ ] ~~P50 (Fase 2, B+C): pagina "Partite" (storico)~~ — **tolto il 27/09/2026** per decisione dell'utente (vedi `DECISIONI.md`, Progetto e tempi)
@@ -102,38 +105,38 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 
 | File | Punti che lo toccano (in ordine) | Nota |
 |---|---|---|
-| `app/__init__.py`, `config.py` | P4 → P32 | Dopo P4 li tocca solo P32 |
+| `app/__init__.py`, `config.py` | P4 → P55 → P32 | Dopo P4: P55 (Giuseppe) cambia due chiavi di `config.py`, concordate nel punto; poi solo P32 |
 | `requirements.txt`, `requirements-dev.txt`, `.env.example`, `app/extensions.py` | P4 | Una libreria o una chiave nuova richiede di fermarsi e concordarla |
-| `app/sockets/__init__.py` | P4 → P23 → P28 → P44 | Studente 1 → Studente 2 → Studente 1, ciascuno dopo che il punto precedente è in `dev` |
-| `app/realtime/room.py` | P23 → P24 → P25 → P26 | Studente 1; P26 (Studente 2) aggiunge solo la chiamata al salvataggio, dopo che P25 è in `dev` |
-| `app/realtime/room_manager.py` | P23 → P24 | Studente 1. P28, P29, P44 e P47 **usano** le funzioni che P24 espone, senza modificare il file |
-| `app/sockets/connection_events.py` | P4 → P23 → P25 → P44 | Studente 1 |
-| `app/sockets/lobby_events.py` | P4 → P28 → P29 | Studente 2 (da P24 non la tocca più nessun altro: niente stanze private) |
-| `app/sockets/game_events.py` | P4 → P24 → P25 | Studente 1 |
-| `app/sockets/friends_events.py` | P4 → P47 | Studente 1 |
-| `app/sockets/chat_events.py` | P4 → P48 | Studente 2 |
-| `app/static/js/pages/game.js` | P21 → P24 → P25 | Studente 3, poi Studente 1 dopo che P21 è in `dev` |
-| `app/static/js/pages/home.js` | P22 → P28 → P29 → P44 | Studente 3 → Studente 2 → Studente 1, ciascuno dopo che il punto precedente è in `dev` |
-| `app/static/js/components/ModeModal.js` | P22 → P28 → P47 | Studente 3 → Studente 2 (collega "Gioca" alla coda) → Studente 1 (lista amici e inviti), ciascuno dopo che il punto precedente è in `dev` |
-| `app/static/js/components/StatsPanel.js` | P40 → P30 | Studente 3 (dati finti, poi dati veri) |
-| `app/static/js/components/FriendsPanel.js` | P46 → P47 | Studente 3, poi Studente 1 dopo che P46 è in `dev` |
-| `app/static/js/components/ChatWindow.js` | P46 → P48 | Studente 3, poi Studente 2 dopo che P46 è in `dev` |
-| `app/static/js/core/layout.js` | P40 → P46 | Studente 3 |
+| `app/sockets/__init__.py` | P4 → P23 → P28 → P44 | Giuseppe → Antonio → Giuseppe, ciascuno dopo che il punto precedente è in `dev` |
+| `app/realtime/room.py` | P23 → P24 → P25 → P26 | Giuseppe; P26 (Antonio) aggiunge solo la chiamata al salvataggio, dopo che P25 è in `dev` |
+| `app/realtime/room_manager.py` | P23 → P24 | Giuseppe. P28, P29, P44 e P47 **usano** le funzioni che P24 espone, senza modificare il file |
+| `app/sockets/connection_events.py` | P4 → P23 → P25 → P44 | Giuseppe |
+| `app/sockets/lobby_events.py` | P4 → P28 → P29 | Antonio (da P24 non la tocca più nessun altro: niente stanze private) |
+| `app/sockets/game_events.py` | P4 → P24 → P25 → P55 | Giuseppe |
+| `app/sockets/friends_events.py` | P4 → P47 | Giuseppe |
+| `app/sockets/chat_events.py` | P4 → P48 | Antonio |
+| `app/static/js/pages/game.js` | P21 → P24 → P25 → P56 | Christian, poi Giuseppe dopo che P21 è in `dev`, poi Christian (P56) dopo che P55 è in `dev` |
+| `app/static/js/pages/home.js` | P22 → P28 → P29 → P44 | Christian → Antonio → Giuseppe, ciascuno dopo che il punto precedente è in `dev` |
+| `app/static/js/components/ModeModal.js` | P22 → P28 → P47 | Christian → Antonio (collega "Gioca" alla coda) → Giuseppe (lista amici e inviti), ciascuno dopo che il punto precedente è in `dev` |
+| `app/static/js/components/StatsPanel.js` | P40 → P30 | Christian (dati finti, poi dati veri) |
+| `app/static/js/components/FriendsPanel.js` | P46 → P47 | Christian, poi Giuseppe dopo che P46 è in `dev` |
+| `app/static/js/components/ChatWindow.js` | P46 → P48 | Christian, poi Antonio dopo che P46 è in `dev` |
+| `app/static/js/core/layout.js` | P40 → P46 | Christian |
 | `app/static/js/core/socket.js` | P23 → P33 | — |
-| `app/game/engine/game.py`, `state.py` | P13 → P14 | Studente 1 |
-| `app/services/auth_service.py`, `app/repositories/user_repo.py` | P16 → P17 | Studente 2 |
-| `app/services/match_service.py` | P26 → P27 | Studente 2 |
-| `app/blueprints/*/routes.py` e `__init__.py` | P4 (segnaposto) → un solo punto per blueprint | `main/routes.py`: solo P22 (Studente 3) |
+| `app/game/engine/game.py`, `state.py` | P13 → P14 | Giuseppe |
+| `app/services/auth_service.py`, `app/repositories/user_repo.py` | P16 → P17 | Antonio |
+| `app/services/match_service.py` | P26 → P27 | Antonio |
+| `app/blueprints/*/routes.py` e `__init__.py` | P4 (segnaposto) → un solo punto per blueprint | `main/routes.py`: solo P22 (Christian) |
 | `app/templates/base.html` | P19 → P40 → P33 | — |
-| `app/templates/partials/navbar.html`, `app/static/css/components/navbar.css` | P40 → P42 → P43 | Studente 3 |
-| `app/templates/main/index.html` | P4 → P19 → P22 | Studente 3 dopo P4 |
-| `app/templates/errors/*.html` | P7 → P19 | — |
-| `app/templates/profile/settings.html` | P17 → P43 | Studente 2, poi Studente 3 dopo che P17 è in `dev` |
-| `app/static/js/components/Card.js`, `app/static/css/components/card.css` | P20 → P35 | Studente 3 |
-| `docs/DEMO.md` | P38 → P39 | Studente 2 |
-| `README.md` | P9 → P37 | Studente 3 |
+| `app/templates/partials/navbar.html`, `app/static/css/components/navbar.css` | P40 → P42 → P43 | Christian |
+| `app/templates/main/index.html` | P4 → P19 → P22 | Christian dopo P4 |
+| `app/templates/errors/*.html` | P7 | Creati da P7 già basati su `base.html` (P19 viene prima di P7) |
+| `app/templates/profile/settings.html` | P17 → P43 | Antonio, poi Christian dopo che P17 è in `dev` |
+| `app/static/js/components/Card.js`, `app/static/css/components/card.css` | P20 → P35 | Christian |
+| `docs/DEMO.md` | P38 → P39 | Antonio |
+| `README.md` | P9 → P37 | Christian |
 | `docs/prototipo/*` | P52 | Dopo P52 nessuno lo modifica: P19, P40 e P22 lo **leggono** soltanto |
-| `SCALETTA.md`, `CLAUDE.md` (riga Stato), `DECISIONI.md`, `DA-DECIDERE.md` | tutti | **Punto aperto (D22)**: con tre persone che li aggiornano, i conflitti sono quasi certi |
+| `SCALETTA.md`, `CLAUDE.md` (riga Stato), `DECISIONI.md`, `DA-DECIDERE.md` | Christian | **Solo Christian** li aggiorna, su un branch `docs/…` da `dev` (D22). Nei branch dei punti non si toccano; Giuseppe e Antonio gli mandano un riepilogo di ogni punto |
 
 ## 4. Fasi e dettaglio dei punti
 
@@ -155,7 +158,7 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 
 **P3 — Riga "Stato" e regola di consegna** · piccolo · decisione: no
 - *Cosa e perché*: ogni sessione riparte dalla riga "Stato" (data, cosa è fatto, prossimo passo), da aggiornare **alla fine di ogni lotto**. La regola è scritta anche nella sezione "Consegna".
-- *File*: modifica `CLAUDE.md`. Certezza: **sicuro**. *Preparato nel lotto della scaletta*: si spunta con l'ok. Come si gestisce la riga Stato con tre persone è la domanda D22.
+- *File*: modifica `CLAUDE.md`. Certezza: **sicuro**. *Preparato nel lotto della scaletta*: si spunta con l'ok. La riga Stato la aggiorna solo Christian (D22).
 - *Fatto quando*: `CLAUDE.md` ha la riga compilata e il passo 7 in "Consegna".
 - *Dipende da*: nessuno.
 
@@ -174,8 +177,8 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 - *Fatto quando*: `python run.py` mostra la pagina "ok" su `http://localhost:5000` [T]; con una versione di Python diversa dalla 3.14 l'avvio si rifiuta; `pytest tests/api/test_avvio.py` passa.
 - *Dipende da*: P1, P2.
 
-**P5 — Database** · medio · decisione: **D6, D7, D23, D24, D38** (servono per scrivere le tabelle; la proposta completa delle tabelle è D38 in `DA-DECIDERE.md`)
-- *Cosa e perché*: `setup_db.sql` crea i database `cinquecento_dev` e `cinquecento_test` con un utente MySQL dedicato, in `utf8mb4`/InnoDB. `001_init.sql` crea **tutte** le tabelle della prima versione: `users` (con l'avatar scelto), `ratings`, `matches` (con il punteggio per vincere: 150, 300 o 500), `match_players`, `match_events`, `friendships` (richieste e amicizie, con lo stato), `user_blocks` (solo se D23 = sì), `chat_messages`, `schema_version`. Il comportamento alla cancellazione di un utente (D6) si decide qui, con le chiavi esterne. `migrate.py` applica le migrazioni mancanti. I modelli Python rispecchiano le tabelle.
+**P5 — Database** · medio · decisione: **D6, D7, D23, D24, D26, D38 prese il 27/09/2026** (le tabelle approvate sono in `docs/proposta-tabelle.sql`)
+- *Cosa e perché*: `setup_db.sql` crea i database `cinquecento_dev` e `cinquecento_test` con un utente MySQL dedicato, in `utf8mb4`/InnoDB. `001_init.sql` crea **tutte** le tabelle della prima versione, con i nomi in italiano (D38): `utenti`, `rating`, `partite`, `giocatori_partita`, `mosse_partita`, `amicizie`, `blocchi`, `messaggi`, `versione_schema`. **Parte da `docs/proposta-tabelle.sql`** (27/09/2026), una volta approvata, e la cancella. Il comportamento alla cancellazione di un utente (D6) si decide qui, con le chiavi esterne. `migrate.py` applica le migrazioni mancanti. I modelli Python rispecchiano le tabelle.
 - *File* — crea: `scripts/setup_db.sql`, `migrations/001_init.sql`, `scripts/migrate.py`, `app/models/user.py`, `app/models/rating.py`, `app/models/match.py`, `app/models/friendship.py`, `app/models/chat_message.py`, `tests/db/test_migrate.py`. Certezza: **sicuro**. Se D23 = sì, il modello dei blocchi va in `app/models/friendship.py`.
 - *Nota*: nella prima versione nessun altro punto aggiunge migrazioni. Se ne serve una, è un punto nuovo da concordare.
 - *Fatto quando*: su un database vuoto `migrate.py` crea tutte le tabelle; rilanciato non fa niente [T].
@@ -194,13 +197,13 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 - *Dipende da*: P4, P5.
 
 **P7 — Log ed errori** · piccolo · decisione: no
-- *Cosa e perché*: i log (il registro di cosa succede nel server) vanno in `logs/` con rotazione, cioè i file vecchi vengono sostituiti. Livelli distinti: INFO per gli eventi normali, WARNING/ERROR per le anomalie. **Mai** dati personali, password, token o **testo dei messaggi della chat** nei log. Pagine 404 e 500 in italiano; gli errori degli eventi socket vanno solo a chi li ha causati.
+- *Cosa e perché*: i log (il registro di cosa succede nel server) vanno in `logs/` con rotazione, cioè i file vecchi vengono sostituiti. Livelli distinti: INFO per gli eventi normali, WARNING/ERROR per le anomalie. **Mai** dati personali, password, token o **testo dei messaggi della chat** nei log. Pagine 404 e 500 in italiano, **già basate su `base.html`** (P19: dal 27/09/2026 P19 viene prima di P7, vedi `DECISIONI.md`); gli errori degli eventi socket vanno solo a chi li ha causati.
 - *File* — modifica: `app/logging_config.py`, `app/errors.py` (segnaposto di P4). Crea: `app/templates/errors/404.html`, `app/templates/errors/500.html`, `tests/api/test_errori.py`. Certezza: **sicuro**.
-- *Fatto quando*: pagina inesistente → 404; errore forzato → pagina 500 senza dettagli tecnici e riga ERROR nel log [T]; la password usata in un login di prova non compare nel log.
-- *Dipende da*: P4, P6.
+- *Fatto quando*: pagina inesistente → 404; errore forzato → pagina 500 senza dettagli tecnici e riga ERROR nel log [T]; la password usata in un login di prova non compare nel log; le due pagine estendono `base.html`.
+- *Dipende da*: P4, P6, P19.
 
 **P8 — Contratto tra server e pagine** · piccolo · **decisione: sì** (approvare il contratto)
-- *Cosa e perché*: un documento che fissa i **nomi degli eventi socket** e i dati di ciascuno per: partita (`game:play_card`, `game:sing`, …), code di matchmaking (con modalità e punteggio), home (utenti online, rientro in partita), amici (presenza, richieste, inviti) e chat. Fissa anche il **formato della vista di gioco** (la tua mano, il numero di carte degli altri, il tavolo, la briscola, i punteggi, il punteggio per vincere, le mosse legali, il timer) e il formato dei dati di home, pannello statistiche e amici. Serve a far lavorare **in parallelo** i filoni.
+- *Cosa e perché*: un documento che fissa i **nomi degli eventi socket** e i dati di ciascuno per: partita (`game:play_card`, `game:sing`, …, e le **frasi del tavolo**: l'invio di una frase, la frase che arriva a tutti, l'elenco delle frasi con codice e testo all'ingresso nella stanza, D24), code di matchmaking (con modalità e punteggio), home (utenti online, rientro in partita), amici (presenza, richieste, inviti) e chat. Fissa anche il **formato della vista di gioco** (la tua mano, il numero di carte degli altri, il tavolo, la briscola, i punteggi, il punteggio per vincere, le mosse legali, il timer) e il formato dei dati di home, pannello statistiche e amici. Serve a far lavorare **in parallelo** i filoni.
 - *File* — crea: `docs/CONTRATTO-SOCKET.md`, `app/static/dev/vista_1v1.json`, `app/static/dev/vista_2v2.json`, `app/static/dev/home_esempio.json`, `app/static/dev/amici_esempio.json`. Certezza: **sicuro**. Gli esempi stanno in `static/dev/` perché li usano sia le pagine (dati finti) sia i test.
 - *Fatto quando*: l'utente ha approvato il contratto e i file di esempio lo rispettano.
 - *Dipende da*: nessuno.
@@ -296,9 +299,9 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 
 **P19 — Base grafica mobile-first** · medio · decisione: **D18** (solo per il tavolo di gioco)
 - *Cosa e perché*: struttura comune delle pagine con lo spazio per la navbar (riempito da P40) e la pagina alta quanto lo schermo, senza scorrimento, variabili CSS (colori, spazi, font), messaggi, finestra di conferma riutilizzabile. Si progetta per **360 px di larghezza** e poi si allarga. **Colori (palette "Carretto siciliano"), font (Fredoka, Nunito) e spazi si prendono dal prototipo di P52** e si riscrivono come variabili CSS nei nostri file, per il **solo tema chiaro**: il tema scuro è rimandato alla fine (P53), ma i colori vanno usati **sempre tramite le variabili**, così P53 dovrà solo aggiungere i valori scuri. Le risorse esterne del prototipo (font, icone, librerie CSS da CDN) si caricano **una volta sola in `base.html`**, così valgono per tutte le pagine.
-- *File* — crea: `app/templates/base.html`, `app/templates/partials/flash.html`, `app/static/css/base/reset.css`, `variables.css`, `typography.css`, `layout.css`, `app/static/css/components/button.css`, `form.css`, `modal.css`, `app/static/css/pages/auth.css`, `app/static/js/components/Modal.js`, `app/static/js/utils/dom.js`, `tests/frontend/test_base.py`. Modifica: `app/templates/main/index.html` (P4), `app/templates/errors/404.html`, `500.html` (P7). Certezza: **sicuro**.
+- *File* — crea: `app/templates/base.html`, `app/templates/partials/flash.html`, `app/static/css/base/reset.css`, `variables.css`, `typography.css`, `layout.css`, `app/static/css/components/button.css`, `form.css`, `modal.css`, `app/static/css/pages/auth.css`, `app/static/js/components/Modal.js`, `app/static/js/utils/dom.js`, `tests/frontend/test_base.py`. Modifica: `app/templates/main/index.html` (P4). Le pagine di errore non le tocca: le crea P7, dopo, già basate su `base.html`. Certezza: **sicuro**.
 - *Fatto quando*: a 360 px le pagine sono leggibili senza scorrimento orizzontale; i colori coincidono con quelli del prototipo; nei CSS non ci sono colori scritti a mano fuori da `variables.css`; il test controlla che ogni pagina abbia il `meta viewport`, carichi un solo script di pagina, e che le risorse esterne siano solo quelle elencate in `docs/prototipo/LEGGIMI.md`.
-- *Dipende da*: P4, P7, P52.
+- *Dipende da*: P4, P52.
 
 **P40 — Navbar, pannello statistiche, finestra "Accedi o registrati"** · medio · decisione: no
 - *Cosa e perché*: si parte dalla navbar del **prototipo di P52**. Il suo HTML va in `partials/navbar.html`, incluso da `base.html` con `{% include %}`: così compare in ogni pagina senza essere ricopiato. Lo stile va nei CSS dei componenti e il comportamento in `layout.js`. Dove il prototipo e le decisioni non coincidono, valgono le decisioni (`DECISIONI.md`, sezione Interfaccia).
@@ -399,10 +402,24 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 - *Dipende da*: P24, P29, P44, P45, P46.
 
 **P48 — Chat tra amici** · medio · decisione: **D24, D25, D26**
-- *Cosa e perché*: messaggi in tempo reale **solo tra amici**, salvati nel database, con la cronologia che si carica all'apertura della chat e un contatore dei messaggi non letti. Protezioni: lunghezza massima e limite di frequenza (D26), testo sempre mostrato come testo, mai nei log; i messaggi più vecchi di D24 giorni vengono cancellati.
+- *Cosa e perché*: messaggi in tempo reale **solo tra amici**, salvati nel database, con la cronologia che si carica all'apertura della chat e un contatore dei messaggi non letti. Protezioni: lunghezza massima e limite di frequenza (D26), testo sempre mostrato come testo, mai nei log. I messaggi **non si cancellano mai** (D24): spariscono solo con l'account di uno dei due (lo fa il database, P5). Se l'amicizia finisce o c'è un blocco, la conversazione resta visibile ma non si può più scrivere.
 - *File* — crea: `app/services/chat_service.py`, `app/repositories/chat_repo.py`, `tests/sockets/test_chat.py`. Modifica: `app/sockets/chat_events.py` (P4), `app/static/js/components/ChatWindow.js` (P46). Certezza: **sicuro**.
-- *Fatto quando*: test con client simulati: un messaggio arriva solo al destinatario; a chi non è amico il messaggio viene rifiutato; un messaggio troppo lungo o troppo frequente viene rifiutato con un avviso; un messaggio con `<script>` viene mostrato come testo; la cronologia si carica in ordine; la cancellazione dei messaggi vecchi funziona sul database di test.
+- *Fatto quando*: test con client simulati: un messaggio arriva solo al destinatario; a chi non è amico il messaggio viene rifiutato; un messaggio troppo lungo o troppo frequente viene rifiutato con un avviso; un messaggio con `<script>` viene mostrato come testo; la cronologia si carica in ordine; dopo la fine dell'amicizia o un blocco la cronologia si legge ma un messaggio nuovo viene rifiutato.
 - *Dipende da*: P23, P45, P46.
+
+**P54 — Frasi del tavolo: elenco e salvataggio** · **tolto il 27/09/2026**, lo stesso giorno in cui era stato aggiunto: le frasi del tavolo non si salvano (D24), quindi non c'è niente da fare nel database. L'elenco delle frasi passa a P55.
+
+**P55 — Frasi del tavolo in tempo reale** · piccolo · decisione: no (D24 decisa)
+- *Cosa e perché*: al tavolo i giocatori si mandano solo **frasi pronte** (D24), in italiano e in siciliano. Questo punto fissa l'**elenco unico** delle frasi (codice e testo, per esempio `amuni` → "Amunì!"; l'elenco approvato è in `DECISIONI.md`, D24) e l'evento con cui un giocatore ne manda una (nomi e dati da P8). Sotto il lock della stanza il server controlla che chi manda sia seduto a quel tavolo, che il codice sia nell'elenco e che sia passato il tempo minimo (**una frase ogni 3 secondi** per giocatore); poi la manda a **tutti i giocatori della partita**, anche agli avversari nel 2v2, e **non la salva da nessuna parte**. In memoria, nella stanza, resta solo l'ora dell'ultima frase di ogni giocatore, che sparisce con la stanza. All'ingresso nella stanza manda l'elenco delle frasi, così la pagina non ne ha una copia sua. In `config.py` aggiunge `TABLE_PHRASE_MIN_INTERVAL_SECONDS = 3` e toglie `CHAT_RETENTION_DAYS`, che non serve più.
+- *File* — crea: `app/realtime/table_phrases.py`, `tests/sockets/test_frasi_tavolo.py`. Modifica: `app/sockets/game_events.py` (P25), `config.py` (P4). Certezza: **sicuro**.
+- *Fatto quando*: test con client simulati: la frase arriva a tutti e 2 (1v1) o tutti e 4 (2v2) i giocatori; chi non è al tavolo viene rifiutato; un codice sconosciuto viene rifiutato; una seconda frase prima di 3 secondi viene rifiutata con un avviso (con i tempi ridotti della configurazione di test); nessuna frase finisce nel database né nei log.
+- *Dipende da*: P8, P25.
+
+**P56 — Frasi del tavolo nella pagina** · piccolo · decisione: no (D24 decisa)
+- *Cosa e perché*: al tavolo un pulsante apre l'elenco delle frasi (quello ricevuto dal server); toccandone una, la frase compare per qualche secondo in un fumetto vicino al posto di chi l'ha mandata, per tutti. Dopo l'invio il pulsante resta disattivato per 3 secondi. Il testo si inserisce sempre con `textContent`; senza connessione non parte niente. Lo stile segue il prototipo (P52).
+- *File* — crea: `app/static/js/components/TablePhrases.js`, `app/static/css/components/table-phrases.css`, `tests/frontend/test_frasi_tavolo.py`. Modifica: `app/static/js/pages/game.js` (P25), `app/templates/game/table.html` (P21). Certezza: **sicuro**.
+- *Fatto quando*: a 360 px l'elenco delle frasi sta sullo schermo e il fumetto non copre le carte in mano; il pulsante con sola icona ha un'etichetta accessibile; il test controlla che il componente non usi `innerHTML` con dati esterni.
+- *Dipende da*: P55.
 
 #### Pagine con i dati (B + C)
 
@@ -492,21 +509,21 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 
 ## 5. Calendario indicativo (3 persone)
 
-Segue la divisione della sezione 9. **Attenzione**: con amici, chat e prototipo i punti sono passati da 39 a 52; il 27/09/2026 ne sono stati tolti 4 (P41, P49, P50, P51), quindi ne restano 48. Una settimana resta **stretta** (vedi rischi e ordine di taglio).
+Segue la divisione della sezione 9. **Attenzione**: con amici, chat e prototipo i punti sono passati da 39 a 52; il 27/09/2026 ne sono stati tolti 4 (P41, P49, P50, P51) e aggiunti 2 (P55, P56: frasi del tavolo; P54 è stato aggiunto e tolto lo stesso giorno), quindi ne restano 50. Una settimana resta **stretta** (vedi rischi e ordine di taglio).
 
-| Giorno | Studente 1: motore e tempo reale | Studente 2: account, dati, amici, pagine dati | Studente 3: interfaccia e documenti |
+| Giorno | Giuseppe: motore e tempo reale | Antonio: account, dati, amici, pagine dati | Christian: interfaccia e documenti |
 |---|---|---|---|
 | 1 — 27/09 | P1, P2, P4 | P5 (i file SQL subito, il resto dopo P4) | P3, P52 (dopo P1), P8 (il contratto si approva insieme) |
-| 2 — 28/09 | P6, P10, P11, P12 | P7 (dopo P6), P18 | P19, P40 |
+| 2 — 28/09 | P6, P10, P11, P12 | P7 (dopo P6 e P19), P18 | P19, P40 |
 | 3 — 29/09 | P13, P14, P15 | P16, P17 (dopo P40) | P20, P22, P9 |
 | 4 — 30/09 | P23 | P45, P26 (service, repository e test), P27 | P21, P46 |
 | 5 — 01/10 | P24, P25 | P28 (dopo P24), chiamata di P26 in `room.py` (dopo P25) | P30 |
-| 6 — 02/10 | P44 (dopo P29), P47 | P29, P48 | P33, P34, P35 |
+| 6 — 02/10 | P44 (dopo P29), P47, P55 | P29, P48 | P56 (dopo P55), P33, P34, P35 |
 | 7 — 03/10 | P31, P32 | P38, P39 | P42, P43, P53 (se c'è tempo), P36, P37 |
 
 I giorni sono indicativi. La regola che conta è quella delle dipendenze: un punto inizia solo quando i punti da cui dipende sono già in `dev`.
 
-**Se il tempo stringe**, ordine di taglio proposto (da confermare, D31): P53 (resta solo il tema chiaro) → P43 e P42 (restano iniziali e nome testuale) → P35 (restano le carte CSS) → P48 (chat) → P29 (niente 2v2: senza la coda 2v2 non si può giocare nemmeno in coppia con un amico) → P34. **Non si tagliano mai** P6, P15, P24, P31 e P32.
+**Se il tempo stringe**, ordine di taglio proposto (da confermare, D31): P53 (resta solo il tema chiaro) → P56 e P55 (niente frasi al tavolo) → P43 e P42 (restano iniziali e nome testuale) → P35 (restano le carte CSS) → P48 (chat) → P29 (niente 2v2: senza la coda 2v2 non si può giocare nemmeno in coppia con un amico) → P34. **Non si tagliano mai** P6, P15, P24, P31 e P32.
 
 ## 6. Mappa dei file
 
@@ -539,6 +556,8 @@ Chi crea ogni file. I file creati da P4 come segnaposto e poi riempiti da altri 
 | `app/realtime/presence.py`, `app/sockets/home_events.py` | P44 |
 | `app/realtime/invites.py` | P47 |
 | `chat_service.py`, `chat_repo.py` | P48 |
+| `app/realtime/table_phrases.py` | P55 |
+| `TablePhrases.js`, `table-phrases.css` | P56 |
 | `stats_service.py`, `stats_repo.py` | P30 |
 | `tests/e2e/*` | P31 |
 | `Banner.js`, `banner.css` | P33 |
@@ -554,7 +573,7 @@ Chi crea ogni file. I file creati da P4 come segnaposto e poi riempiti da altri 
 | Rischio | Come lo affrontiamo |
 |---|---|
 | **Tempo**: 48 punti in una settimana per tre persone sono molti, e amici e chat sono il blocco più grosso aggiunto | Filoni paralleli grazie al contratto P8 e ai dati finti (P21, P22, P46); tolti classifica, stanza privata, storico e regole (27/09); ordine di taglio proposto (D31); punti piccoli |
-| **Conflitti git tra i tre** | Ogni punto elenca i suoi file; P4 prepara i segnaposto; file condivisi in sequenza (sezione 3 e colonna "Attende" della sezione 9); documenti condivisi da regolare (D22) |
+| **Conflitti git tra i tre** | Ogni punto elenca i suoi file; P4 prepara i segnaposto; file condivisi in sequenza (sezione 3 e colonna "Attende" della sezione 9); documenti condivisi aggiornati solo da Christian (D22) |
 | **Regole implementate male** | `docs/REGOLE-GIOCO.md` come riferimento unico; un test per ogni regola (P11–P14); controllo delle regole nella code review (P36) |
 | **Carte avversarie visibili dal browser** | Vista per giocatore (P15), controllata in tutte le posizioni e poi end-to-end (P31) |
 | **Chat: messaggi dannosi, spam, contenuti offensivi** | Solo tra amici (D25), testo mai come HTML, limiti di lunghezza e frequenza (P48), blocco utente (D23), messaggi fuori dai log (P7) |
@@ -588,7 +607,7 @@ Chi crea ogni file. I file creati da P4 come segnaposto e poi riempiti da altri 
 
 ## 9. Divisione del lavoro tra i tre studenti
 
-Chi è lo Studente 1, 2 o 3 lo decidete voi (D3).
+Chi fa cosa (D3, deciso il 27/09/2026): **Studente 1 = Giuseppe**, **Studente 2 = Antonio**, **Studente 3 = Christian**. Nel resto della scaletta si usano i nomi.
 
 ### 9.1 Punti con file sicuri
 
@@ -596,98 +615,105 @@ Qui ci sono solo i punti di cui conosco **con certezza** tutti i file. Sono divi
 - i punti che toccano **gli stessi file nello stesso periodo** vadano allo **stesso studente**;
 - quando due studenti toccano lo stesso file, lo fanno **uno dopo l'altro**: nella colonna "Attende" c'è il punto che deve essere **già in `dev`** prima di iniziare. Rispettando quella colonna non nascono conflitti.
 
-Due studenti che lavorano in parallelo non toccano mai gli stessi file, con un'unica eccezione: i documenti condivisi (`SCALETTA.md`, riga Stato di `CLAUDE.md`, `DECISIONI.md`, `DA-DECIDERE.md`), che dipendono dalla domanda D22.
+Due studenti che lavorano in parallelo non toccano mai gli stessi file. Vale anche per i documenti condivisi (`SCALETTA.md`, riga Stato di `CLAUDE.md`, `DECISIONI.md`, `DA-DECIDERE.md`): li aggiorna solo Christian, su un branch `docs/…` (D22).
 
-**Studente 1 — motore di gioco e tempo reale:** P1, P2, P4, P6, P10, P11, P12, P13, P14, P15, P23, P24, P25, P44, P47, P31
+**Giuseppe (Studente 1) — motore di gioco e tempo reale:** P1, P2, P4, P6, P10, P11, P12, P13, P14, P15, P23, P24, P25, P44, P47, P55, P31
 
-**Studente 2 — account, dati, amici:** P5, P7, P16, P17, P18, P45, P26, P27, P28, P29, P48, P39
+**Antonio (Studente 2) — account, dati, amici:** P5, P7, P16, P17, P18, P45, P26, P27, P28, P29, P48, P39
 
-**Studente 3 — interfaccia e documenti:** P3, P52, P8, P9, P19, P40, P20, P21, P22, P46, P30, P36, P37 (più P53 in 9.2)
+**Christian (Studente 3) — interfaccia e documenti:** P3, P52, P8, P9, P19, P40, P20, P21, P22, P46, P56, P30, P36, P37 (più P53 in 9.2)
 
-| Punto | Studente | File condivisi con punti di altri studenti | Attende (già in `dev`) |
+**Da dove si parte** (27/09/2026, con P1, P2, P4 e P52 già in `dev`) [L]:
+- **Giuseppe**: P10 → P11 → P12 → P13 subito; P14 (D11 decisa); **P6 appena P5 è in `dev`** (è piccolo e sblocca Antonio: conviene interrompere il motore); P15 quando P8 è in `dev` (D12 è decisa).
+- **Antonio**: **P5 subito**, partendo dalle tabelle approvate in `docs/proposta-tabelle.sql` (D38): per prima cosa verifica su MySQL il punto incerto delle amicizie (commento nel file); P7 quando P6 e P19 sono in `dev`; P18 quando P5 e P6 sono in `dev`.
+- **Christian**: P8 (il contratto si approva in tre prima del merge: lo usano P15, P21, P22, P23 e P46), poi P19, poi P40.
+
+| Punto | Chi | File condivisi con punti di altri studenti | Attende (già in `dev`) |
 |---|---|---|---|
-| P1, P2 | 1 | nessuno | — |
-| P3 | 3 | `CLAUDE.md` (poi P37, sempre Studente 3) | — |
-| P4 | 1 | crea i segnaposto che altri riempiranno | P1, P2 |
-| P5 | 2 | nessuno | P4 (solo per `migrate.py` e i modelli) |
-| P6 | 1 | nessuno | P4, P5 |
-| P7 | 2 | `logging_config.py`, `errors.py` (segnaposto di P4); crea `templates/errors/*` che poi modifica P19 | P4, P6 |
-| P8 | 3 | nessuno | — |
-| P9 | 3 | `README.md` (poi P37, sempre Studente 3) | P4, P5, P6 |
-| P52 | 3 | nessuno (crea solo `docs/prototipo/*`) | P1 |
-| P10–P15 | 1 | nessuno (tutto in `app/game/engine/`) | P4; P15 attende anche P8 |
-| P16 | 2 | `blueprints/auth/*` (segnaposto di P4) | P5, P7, P19 |
-| P17 | 2 | `blueprints/profile/routes.py` (segnaposto di P4); crea `profile/settings.html` che poi modifica P43 | P16, P40 |
-| P18 | 2 | nessuno | P5, P6 |
-| P19 | 3 | `templates/main/index.html` (P4), `templates/errors/*` (P7) | P4, P7, P52 |
-| P40 | 3 | nessuno di altri studenti (`base.html` è dello Studente 3) | P19 |
-| P20 | 3 | nessuno | P19 |
-| P21 | 3 | `blueprints/game/routes.py` (P4); crea `pages/game.js` che poi modifica P24 | P8, P20, P40 |
-| P22 | 3 | `blueprints/main/routes.py` (P4); crea `pages/home.js` (poi P28, P29, P44) e `ModeModal.js` (poi P28, P47) | P8, P40, P52 |
-| P45 | 2 | `blueprints/friends/*` (segnaposto di P4) | P5, P16 |
-| P46 | 3 | crea `FriendsPanel.js` (poi P47) e `ChatWindow.js` (poi P48) | P8, P40 |
-| P23 | 1 | `sockets/__init__.py`, `connection_events.py` (P4) | P8, P16 |
-| P24 | 1 | `pages/game.js` (P21), `game_events.py` (P4) | P15, P21, P23 |
-| P25 | 1 | nessuno di altri studenti in parallelo | P24 |
-| P26 | 2 | `realtime/room.py` (solo la chiamata al salvataggio) | P5; **P25** per la modifica a `room.py` |
-| P27 | 2 | nessuno | P26 (service e repository) |
-| P28 | 2 | `lobby_events.py`, `sockets/__init__.py` (dopo lo Studente 1), `pages/home.js` e `ModeModal.js` (dopo lo Studente 3) | P22, P24, P27 |
-| P29 | 2 | nessuno di altri studenti in parallelo | P28 |
-| P44 | 1 | `sockets/__init__.py` e `pages/home.js` (dopo lo Studente 2) | P25, P29 |
-| P47 | 1 | `FriendsPanel.js` (dopo lo Studente 3), `ModeModal.js` (dopo lo Studente 2), `friends_events.py` (P4) | P24, P29, P44, P45, P46 |
-| P48 | 2 | `ChatWindow.js` (dopo lo Studente 3), `chat_events.py` (P4) | P23, P45, P46 |
-| P30 | 3 | `blueprints/stats/routes.py` (segnaposto di P4), `StatsPanel.js` (P40, sempre Studente 3) | P26, P27, P40 |
-| P31 | 1 | nessuno (crea solo `tests/e2e/*`) | P25, P29, P47, P48 |
-| P36 | 3 | nessuno (crea solo `REVIEW.md`) | P31, P32, P33 |
-| P37 | 3 | `CLAUDE.md`, `README.md` (P3 e P9, sempre Studente 3) | P36 |
-| P39 | 2 | `docs/DEMO.md` (creato da P38, sempre Studente 2) | P38 |
+| P1, P2 | Giuseppe | nessuno | — |
+| P3 | Christian | `CLAUDE.md` (poi P37, sempre Christian) | — |
+| P4 | Giuseppe | crea i segnaposto che altri riempiranno | P1, P2 |
+| P5 | Antonio | nessuno | P4 (solo per `migrate.py` e i modelli) |
+| P6 | Giuseppe | nessuno | P4, P5 |
+| P7 | Antonio | `logging_config.py`, `errors.py` (segnaposto di P4); crea `templates/errors/*` basati su `base.html` (P19) | P4, P6, P19 |
+| P8 | Christian | nessuno | — |
+| P9 | Christian | `README.md` (poi P37, sempre Christian) | P4, P5, P6 |
+| P52 | Christian | nessuno (crea solo `docs/prototipo/*`) | P1 |
+| P10–P15 | Giuseppe | nessuno (tutto in `app/game/engine/`) | P4; P15 attende anche P8 |
+| P16 | Antonio | `blueprints/auth/*` (segnaposto di P4) | P5, P7, P19 |
+| P17 | Antonio | `blueprints/profile/routes.py` (segnaposto di P4); crea `profile/settings.html` che poi modifica P43 | P16, P40 |
+| P18 | Antonio | nessuno | P5, P6 |
+| P19 | Christian | `templates/main/index.html` (P4) | P4, P52 |
+| P40 | Christian | nessuno di altri studenti (`base.html` è di Christian) | P19 |
+| P20 | Christian | nessuno | P19 |
+| P21 | Christian | `blueprints/game/routes.py` (P4); crea `pages/game.js` che poi modifica P24 | P8, P20, P40 |
+| P22 | Christian | `blueprints/main/routes.py` (P4); crea `pages/home.js` (poi P28, P29, P44) e `ModeModal.js` (poi P28, P47) | P8, P40, P52 |
+| P45 | Antonio | `blueprints/friends/*` (segnaposto di P4) | P5, P16 |
+| P46 | Christian | crea `FriendsPanel.js` (poi P47) e `ChatWindow.js` (poi P48) | P8, P40 |
+| P23 | Giuseppe | `sockets/__init__.py`, `connection_events.py` (P4) | P8, P16 |
+| P24 | Giuseppe | `pages/game.js` (P21), `game_events.py` (P4) | P15, P21, P23 |
+| P25 | Giuseppe | nessuno di altri studenti in parallelo | P24 |
+| P26 | Antonio | `realtime/room.py` (solo la chiamata al salvataggio) | P5; **P25** per la modifica a `room.py` |
+| P27 | Antonio | nessuno | P26 (service e repository) |
+| P28 | Antonio | `lobby_events.py`, `sockets/__init__.py` (dopo Giuseppe), `pages/home.js` e `ModeModal.js` (dopo Christian) | P22, P24, P27 |
+| P29 | Antonio | nessuno di altri studenti in parallelo | P28 |
+| P44 | Giuseppe | `sockets/__init__.py` e `pages/home.js` (dopo Antonio) | P25, P29 |
+| P47 | Giuseppe | `FriendsPanel.js` (dopo Christian), `ModeModal.js` (dopo Antonio), `friends_events.py` (P4) | P24, P29, P44, P45, P46 |
+| P48 | Antonio | `ChatWindow.js` (dopo Christian), `chat_events.py` (P4) | P23, P45, P46 |
+| P30 | Christian | `blueprints/stats/routes.py` (segnaposto di P4), `StatsPanel.js` (P40, sempre Christian) | P26, P27, P40 |
+| P55 | Giuseppe | `config.py` (P4: due chiavi, concordate nel punto); `game_events.py` è di Giuseppe | P8, P25 |
+| P56 | Christian | `pages/game.js` (dopo Giuseppe, P25) | P55 |
+| P31 | Giuseppe | nessuno (crea solo `tests/e2e/*`) | P25, P29, P47, P48 |
+| P36 | Christian | nessuno (crea solo `REVIEW.md`) | P31, P32, P33 |
+| P37 | Christian | `CLAUDE.md`, `README.md` (P3 e P9, sempre Christian) | P36 |
+| P39 | Antonio | `docs/DEMO.md` (creato da P38, sempre Antonio) | P38 |
 
 **Controlli di parallelismo** [D]: questi punti avvengono negli stessi giorni ma toccano file diversi. La verifica vale finché ognuno resta nei file elencati nel suo punto.
-- P25 (Studente 1) ∥ P28 (Studente 2): `room.py`, `game_events.py`, `connection_events.py`, `game.js` contro `matchmaking.py`, `lobby_events.py`, `sockets/__init__.py`, `home.js`.
-- P47 (Studente 1) ∥ P48 (Studente 2): `invites.py`, `friends_events.py`, `FriendsPanel.js` contro `chat_service.py`, `chat_repo.py`, `chat_events.py`, `ChatWindow.js`.
-- P44 (Studente 1) ∥ P33 (Studente 3): P33 può toccare `home.js` (vedi 9.2), quindi **P33 attende che P44 sia in `dev`**.
+- P25 (Giuseppe) ∥ P28 (Antonio): `room.py`, `game_events.py`, `connection_events.py`, `game.js` contro `matchmaking.py`, `lobby_events.py`, `sockets/__init__.py`, `home.js`.
+- P47 (Giuseppe) ∥ P48 (Antonio): `invites.py`, `friends_events.py`, `FriendsPanel.js` contro `chat_service.py`, `chat_repo.py`, `chat_events.py`, `ChatWindow.js`.
+- P44 (Giuseppe) ∥ P33 (Christian): P33 può toccare `home.js` (vedi 9.2), quindi **P33 attende che P44 sia in `dev`**.
 
 ### 9.2 Punti con file NON sicuri
 
 Per questi punti non posso dire adesso con certezza quali file verranno toccati. Per ognuno indico i file che penso tocchi, perché non sono sicuro, e a chi lo assegnerei. **Regola:** all'inizio del punto chi lo fa scrive qui la lista definitiva dei file e la comunica agli altri. Se uno di quei file è in uso da un altro studente, aspetta che l'altro abbia finito e fatto il merge in `dev`.
 
-**P32 — Sicurezza di base** · proposto: Studente 1 (giorno 7)
+**P32 — Sicurezza di base** · proposto: Giuseppe (giorno 7)
 - *Sicuri*: `config.py`, `app/__init__.py` (creati da P4), `tests/api/test_sicurezza.py`, `tests/sockets/test_validazione_eventi.py`.
 - *Probabili*: `app/sockets/connection_events.py`, `lobby_events.py`, `game_events.py`, `friends_events.py`, `chat_events.py`, `home_events.py`; `app/blueprints/auth/forms.py`; `app/blueprints/friends/routes.py`; forse `app/templates/auth/*.html`.
-- *Perché non sono sicuro*: il punto corregge **quello che manca** nel codice scritto da P16–P50. Se i gestori validano già bene i dati, non vanno toccati; se no, sì. Lo si sa solo leggendo il codice quando esiste. Diversi di quei file sono dello Studente 2 (`lobby_events.py` dopo P28–P29, `chat_events.py`, `friends/routes.py`): vanno toccati solo dopo che i punti dello Studente 2 sono in `dev`.
+- *Perché non sono sicuro*: il punto corregge **quello che manca** nel codice scritto da P16–P50. Se i gestori validano già bene i dati, non vanno toccati; se no, sì. Lo si sa solo leggendo il codice quando esiste. Diversi di quei file sono di Antonio (`lobby_events.py` dopo P28–P29, `chat_events.py`, `friends/routes.py`): vanno toccati solo dopo che i punti di Antonio sono in `dev`.
 
-**P33 — Errori e connessione nell'interfaccia** · proposto: Studente 3 (giorno 6)
+**P33 — Errori e connessione nell'interfaccia** · proposto: Christian (giorno 6)
 - *Sicuri*: crea `app/static/js/components/Banner.js`, `app/static/css/components/banner.css`, `tests/frontend/test_niente_alert.py`; modifica `app/static/js/core/socket.js` (P23), `app/templates/base.html` (P40).
 - *Probabili*: `app/static/js/pages/game.js`, `home.js`, `app/static/js/components/ModeModal.js`, `FriendsPanel.js`, `ChatWindow.js`.
-- *Perché non sono sicuro*: bisogna disattivare i pulsanti quando la connessione cade. Se le pagine usano già un'unica funzione `render(vista)` che legge lo stato della connessione, basta toccare `socket.js`; altrimenti vanno modificate anche le pagine e i componenti. Quei file sono stati modificati da Studente 1 e Studente 2: si inizia solo dopo che P25, P44, P47 e P48 sono in `dev`.
+- *Perché non sono sicuro*: bisogna disattivare i pulsanti quando la connessione cade. Se le pagine usano già un'unica funzione `render(vista)` che legge lo stato della connessione, basta toccare `socket.js`; altrimenti vanno modificate anche le pagine e i componenti. Quei file sono stati modificati da Giuseppe e Antonio: si inizia solo dopo che P25, P44, P47 e P48 sono in `dev`.
 
-**P34 — Rifinitura mobile e accessibilità** · proposto: Studente 3 (giorno 6–7)
+**P34 — Rifinitura mobile e accessibilità** · proposto: Christian (giorno 6–7)
 - *Probabili*: qualunque file in `app/static/css/` e `app/templates/`.
 - *Perché non sono sicuro*: i problemi si scoprono solo provando le pagine su un telefono vero. **Regola:** mentre P34 è aperto, nessun altro modifica file dell'interfaccia.
 
-**P35 — Carte vere** · proposto: Studente 3
-- *Sicuri*: modifica `app/static/js/components/Card.js`, `app/static/css/components/card.css` (P20, sempre Studente 3); crea `app/static/img/cards/LICENZA.md`.
+**P35 — Carte vere** · proposto: Christian
+- *Sicuri*: modifica `app/static/js/components/Card.js`, `app/static/css/components/card.css` (P20, sempre Christian); crea `app/static/img/cards/LICENZA.md`.
 - *Probabili*: 40 immagini (più il dorso) in `app/static/img/cards/`.
-- *Perché non sono sicuro*: nomi e formato dei file (`.webp`, `.png`, `.svg`) dipendono dal set che sceglierete (D19). Nessun conflitto con gli altri studenti: sono tutti file dello Studente 3.
+- *Perché non sono sicuro*: nomi e formato dei file (`.webp`, `.png`, `.svg`) dipendono dal set che sceglierete (D19). Nessun conflitto con gli altri studenti: sono tutti file di Christian.
 
-**P42 — Logo vero** · proposto: Studente 3
-- *Sicuri*: modifica `app/templates/partials/navbar.html`, `app/static/css/components/navbar.css` (P40, sempre Studente 3).
+**P42 — Logo vero** · proposto: Christian
+- *Sicuri*: modifica `app/templates/partials/navbar.html`, `app/static/css/components/navbar.css` (P40, sempre Christian).
 - *Probabili*: `app/static/img/logo.svg` (oppure `.png`), `app/static/img/favicon.ico`; forse `app/templates/base.html` per la favicon.
 - *Perché non sono sicuro*: il logo è un SVG disegnato da Claude, ma la favicon può servire in più formati o no, in base a come la inserite.
 
-**P43 — Immagini degli avatar** · proposto: Studente 3
+**P43 — Immagini degli avatar** · proposto: Christian
 - *Sicuri*: crea la cartella `app/static/img/avatars/`.
 - *Probabili*: un file per avatar (nomi e formato da D29); modifica `app/templates/partials/navbar.html`, `app/static/js/components/StatsPanel.js` (P30), `FriendsPanel.js` (P47), `app/templates/profile/settings.html` (P17).
 - *Perché non sono sicuro*: dipende da **quanti** avatar e **che formato** (D29), e da come le altre pagine hanno già previsto lo spazio per l'avatar: se usano un unico componente o una macro del template, basta modificare quello. `settings.html` e `FriendsPanel.js` sono di altri studenti: si inizia solo dopo che P17 e P47 sono in `dev`.
 
-**P53 — Tema scuro automatico** · proposto: Studente 3 (giorno 7, se c'è tempo)
+**P53 — Tema scuro automatico** · proposto: Christian (giorno 7, se c'è tempo)
 - *Sicuri*: modifica `app/static/css/base/variables.css` (P19).
 - *Probabili*: i CSS dei componenti e delle pagine che hanno ombre, trasparenze o immagini da regolare al buio (per esempio `navbar.css`, `card-background.css`, `table.css`).
 - *Perché non sono sicuro*: dipende da quanto i punti precedenti hanno usato solo le variabili. **Regola:** come per P34, mentre P53 è aperto nessun altro modifica file dell'interfaccia.
 
-**P38 — Installazione demo separata** · proposto: Studente 2 (giorno 7)
+**P38 — Installazione demo separata** · proposto: Antonio (giorno 7)
 - *Sicuri*: crea `docs/DEMO.md`.
 - *Probabili*: forse `scripts/pianifica_backup.ps1`, uno script che crea l'attività pianificata di Windows per il backup.
 - *Perché non sono sicuro*: l'attività pianificata si può creare anche a mano seguendo le istruzioni di `docs/DEMO.md`, e allora lo script non serve. Si decide all'inizio del punto. Il resto (cartella demo, `.env`, `PRODUZIONE`, firewall) è fuori dal repository e non crea conflitti.
 
-**Nota su P31** (Studente 1): i file di test sono sicuri. Se però i test trovano dei bug, le correzioni toccheranno altri file: ogni correzione diventa un punto nuovo, con la sua lista di file.
+**Nota su P31** (Giuseppe): i file di test sono sicuri. Se però i test trovano dei bug, le correzioni toccheranno altri file: ogni correzione diventa un punto nuovo, con la sua lista di file.
