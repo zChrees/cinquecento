@@ -34,6 +34,9 @@
     { name: 'Giulia', online: true, status: 'Online' },
     { name: 'Salvo', online: true, status: 'Online' },
     { name: 'Rosalia', online: true, status: 'In partita' },
+    { name: 'Carmelo', online: true, status: 'Online' },
+    { name: 'Agata', online: true, status: 'Online' },
+    { name: 'Ninni', online: true, status: 'Online' },
     { name: 'Turi', online: false, status: 'Visto 2 ore fa' },
     { name: 'Nina', online: false, status: 'Visto ieri' },
     { name: 'Pippo', online: false, status: 'Visto 3 giorni fa' }
@@ -88,6 +91,10 @@
   // Le finestre con data-animated si chiudono dopo l'animazione di uscita (.is-closing).
   // Se le animazioni sono spente (es. "riduci movimento"), si chiudono subito.
   function closeDialog(dialog) {
+    if (dialog.id === 'mode-modal') {
+      closeModeModal();
+      return;
+    }
     if (!dialog.open || dialog.classList.contains('is-closing')) return;
     if (!dialog.hasAttribute('data-animated')) {
       dialog.close();
@@ -278,12 +285,17 @@
   // Modal della modalità
   // ------------------------------------------------------------
   const modal = $('#mode-modal');
+  const modalFlip = $('.modal__flip', modal);
+  const modalBack = $('[data-modal-back]', modal);
+  const modalBody = $('.modal__body', modal);
   const playBtn = $('[data-play]');
   const inviteSection = $('[data-invite-section]');
   const inviteList = $('[data-invite-list]');
   const inviteHint = $('[data-invite-hint]');
   let current = { kind: 'veloce', mode: '1v1' };
   let inviteTimer = null;
+  let modalTile = null;        // carta-pulsante da cui è partito il modal
+  let modalBusy = false;       // animazione in corso: niente doppi clic
 
   function inviteRow(friend) {
     const li = el('li', 'invite__item');
@@ -319,12 +331,91 @@
     return li;
   }
 
+  // Testi della faccia per ogni modalità: solo regole e decisioni già prese
+  // (rating: 1v1 contro un amico non conta, 2v2 con un amico sì; code separate per punteggio).
+  const myRating = { '1v1': 1540, '2v2': 1482 };   // dati finti, come nel pannello statistiche
+
+  const modeTexts = {
+    'veloce-1v1': {
+      desc: 'Entri in coda e ti troviamo un avversario del tuo livello. Una sfida secca: tu contro lui, carta dopo carta.',
+      facts: [
+        ['person_search', 'Avversario scelto in base al rating'],
+        ['trending_up', 'Conta per il tuo rating 1v1 (' + myRating['1v1'] + ')'],
+        ['timer', '30 secondi per ogni turno']
+      ]
+    },
+    'veloce-2v2': {
+      desc: 'Entri in coda da solo: ti troviamo un compagno e una coppia avversaria del vostro livello.',
+      facts: [
+        ['handshake', 'Compagno e avversari arrivano dalla coda'],
+        ['event_seat', 'Il compagno siede di fronte a te'],
+        ['trending_up', 'Conta per il tuo rating 2v2 (' + myRating['2v2'] + ')']
+      ]
+    },
+    'amico-1v1': {
+      desc: 'Scegli i punti e invita un amico online: la partita parte appena accetta. Non conta per il rating.'
+    },
+    'amico-2v2': {
+      desc: "Tu e un amico, seduti uno di fronte all'altro, contro una coppia trovata in coda. Conta per il rating 2v2."
+    }
+  };
+
+  // Consigli dal regolamento (docs/REGOLE-GIOCO.md), uno diverso a ogni apertura
+  const ruleTips = [
+    'Il primo canto della mano vale 40 e fa diventare briscola quel seme; i canti dopo valgono 20.',
+    'Per cantare servono Re e Cavallo dello stesso seme, nel tuo turno e prima di giocare la carta.',
+    "Non c'è obbligo di rispondere al seme: puoi giocare qualsiasi carta.",
+    "L'Asso vale 11 punti e il Tre 10: sono i carichi, le carte più forti.",
+    'Se il Re o il Cavallo di un seme viene giocato, quel seme non si può più cantare.',
+    'A mazzo finito puoi cantare solo se hai ancora almeno 3 carte in mano.',
+    "Ogni mano vale 120 punti di carte, più i canti. L'ultima presa non dà punti in più.",
+    "All'inizio della mano non c'è briscola: la decide il primo canto."
+  ];
+  let lastTip = -1;
+
+  // Solo nella Partita Veloce: le code sono separate per punteggio
+  function renderTargetNote() {
+    const target = modal.querySelector('input[name="target"]:checked').value;
+    $('[data-target-note]').textContent = 'Incontri solo chi ha scelto ' + target + ' punti.';
+  }
+
+  $all('input[name="target"]', modal).forEach(function (input) {
+    input.addEventListener('change', renderTargetNote);
+  });
+
+  function renderModeTexts(kind, mode) {
+    const texts = modeTexts[kind + '-' + mode];
+    const quick = kind === 'veloce';
+    $('[data-modal-desc]').textContent = texts.desc;
+    renderTargetNote();
+
+    // "In breve", la frase dei punti e "Lo sapevi?" solo nella Partita Veloce:
+    // con un amico lo spazio serve alla lista da invitare
+    $('.modal__facts', modal).hidden = !quick;
+    $('[data-target-note]').hidden = !quick;
+    $('[data-modal-tip]').hidden = !quick;
+    if (quick) {
+      $('[data-modal-facts]').replaceChildren.apply($('[data-modal-facts]'), texts.facts.map(function (fact) {
+        const li = el('li');
+        li.append(iconEl(fact[0]), el('span', '', fact[1]));
+        return li;
+      }));
+    }
+    let tip = Math.floor(Math.random() * ruleTips.length);
+    if (tip === lastTip) tip = (tip + 1) % ruleTips.length;
+    lastTip = tip;
+    $('[data-tip-text]').textContent = ruleTips[tip];
+  }
+
   function openModeModal(kind, mode) {
+    if (modal.open || modalBusy) return;
     current = { kind: kind, mode: mode };
     clearTimeout(inviteTimer);
     $('[data-modal-kicker]').textContent = kind === 'amico' ? 'Gioca con un amico' : 'Partita Veloce';
     $('[data-modal-title]').textContent = mode;
     modal.querySelector('input[name="target"][value="500"]').checked = true;
+    renderModeTexts(kind, mode);
+    modal.dataset.kind = kind;   // per il CSS: con un amico, sui telefoni bassi, meno testi
 
     const withFriend = kind === 'amico';
     inviteSection.hidden = !withFriend;
@@ -337,10 +428,111 @@
       inviteList.replaceChildren.apply(inviteList, online.map(inviteRow));
     }
 
+    modalTile = $('.mode-tile[data-kind="' + kind + '"][data-mode="' + mode + '"]');
+    modal.style.setProperty('--tile', getComputedStyle(modalTile).getPropertyValue('--tile'));
+    inviteList.scrollTop = 0;
     modal.showModal();
+    flipModal(true);
   }
 
-  modal.addEventListener('close', function () { clearTimeout(inviteTimer); });
+  // ------------------------------------------------------------
+  // Modal della modalità: la carta-pulsante vola al centro, ingrandendosi, e si
+  // gira; sulla faccia bianca c'è il modal. Chiudendo fa il percorso al contrario.
+  // Con "riduci movimento" il modal compare e sparisce senza animazione.
+  // ------------------------------------------------------------
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const flipTiming = { open: 820, close: 620 };
+
+  // Retro della carta grande: una copia della carta-pulsante alla sua misura vera,
+  // ingrandita fino alla carta grande (così all'inizio è identica all'originale)
+  function fillModalBack() {
+    const copy = el('div', modalTile.className);
+    copy.append.apply(copy, Array.from(modalTile.childNodes).map(function (n) { return n.cloneNode(true); }));
+    copy.style.width = modalTile.offsetWidth + 'px';
+    copy.style.height = modalTile.offsetHeight + 'px';
+    copy.style.transform = 'scale(' + (modal.clientWidth / modalTile.offsetWidth) + ', ' + (modal.clientHeight / modalTile.offsetHeight) + ')';
+    modalBack.replaceChildren(copy);
+  }
+
+  // Posizione della carta grande: spostata di (dx, dy) dal centro, rimpicciolita
+  // (sx in larghezza, sy in altezza) e girata. easing: come si muove fino alla successiva.
+  // sx e sy sono diversi solo su telefono, dove la carta grande è più alta del normale.
+  function cardFrame(dx, dy, sx, sy, turn, easing) {
+    return {
+      transform: 'translate(' + dx + 'px, ' + dy + 'px) scale(' + sx + ', ' + sy + ') rotateY(' + turn + 'deg)',
+      easing: easing || 'linear'
+    };
+  }
+
+  function flipModal(opening) {
+    if (reduceMotion.matches || !modalFlip.animate) {
+      if (!opening) modal.close();
+      return;
+    }
+    modalBusy = true;
+    fillModalBack();
+
+    // Partenza: sopra la carta-pulsante, alla sua misura, girata sul retro
+    const from = modalTile.getBoundingClientRect();
+    const to = modal.getBoundingClientRect();
+    const dx = from.left + from.width / 2 - (to.left + to.width / 2);
+    const dy = from.top + from.height / 2 - (to.top + to.height / 2);
+    const sx = modalTile.offsetWidth / modal.clientWidth;
+    const sy = modalTile.offsetHeight / modal.clientHeight;
+    // A metà la carta è di taglio, già vicina al centro e quasi grande.
+    // Aprendo: prima si stacca e gira con calma, poi rallenta arrivando al centro.
+    // Chiudendo: parte piano, poi accelera verso il suo posto.
+    const start = cardFrame(dx, dy, sx, sy, 180, 'cubic-bezier(0.45, 0, 0.55, 1)');
+    const middle = cardFrame(dx * 0.35, dy * 0.35, sx + (1 - sx) * 0.72, sy + (1 - sy) * 0.72, 90,
+      opening ? 'cubic-bezier(0.15, 0.6, 0.3, 1)' : 'cubic-bezier(0.45, 0, 0.55, 1)');
+    const center = cardFrame(0, 0, 1, 1, 0, 'cubic-bezier(0.6, 0, 0.9, 0.5)');
+
+    modalTile.style.visibility = 'hidden';
+    modal.classList.toggle('is-closing', !opening);
+
+    const flip = modalFlip.animate(opening ? [start, middle, center] : [center, middle, start], {
+      duration: opening ? flipTiming.open : flipTiming.close,
+      fill: 'both'
+    });
+
+    // Il contenuto della faccia compare con un attimo di ritardo, quando la carta è quasi girata
+    if (opening) {
+      Array.from(modalBody.children).forEach(function (child, i) {
+        child.animate([
+          { opacity: 0, transform: 'translateY(10px)' },
+          { opacity: 1, transform: 'none' }
+        ], { duration: 320, delay: flipTiming.open * 0.45 + i * 50, easing: 'ease-out', fill: 'backwards' });
+      });
+    }
+
+    flip.finished.then(function () {
+      if (opening) {
+        flip.cancel();
+      } else {
+        modal.close();
+        flip.cancel();
+      }
+      modalBusy = false;
+    });
+  }
+
+  function closeModeModal() {
+    if (!modal.open || modalBusy) return;
+    clearTimeout(inviteTimer);
+    flipModal(false);
+  }
+
+  // Esc: il browser chiuderebbe subito; lo fermiamo per far vedere il ritorno della carta
+  modal.addEventListener('cancel', function (e) {
+    e.preventDefault();
+    closeModeModal();
+  });
+
+  modal.addEventListener('close', function () {
+    clearTimeout(inviteTimer);
+    modal.classList.remove('is-closing');
+    if (modalTile) modalTile.style.visibility = '';
+  });
 
   $all('[data-kind]').forEach(function (tile) {
     tile.addEventListener('click', function () {
@@ -376,7 +568,7 @@
     if (playBtn.disabled) return;
     const target = modal.querySelector('input[name="target"]:checked').value;
     playBtn.disabled = true;   // niente doppio clic
-    modal.close();
+    closeModeModal();
     showToast('Cerco una partita ' + current.mode + ' a ' + target + ' punti… (prototipo)');
   });
 

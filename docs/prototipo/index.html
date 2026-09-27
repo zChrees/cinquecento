@@ -185,36 +185,61 @@
   </div>
 </dialog>
 
-<!-- ===== Modal della modalità ===== -->
+<!--
+  ===== Modal della modalità =====
+  È una carta da gioco: il retro è una copia della carta-pulsante toccata (la mette
+  lo script), la faccia è bianca e contiene tutto il modal.
+-->
 <dialog class="modal" id="mode-modal" aria-labelledby="mode-title">
-  <div class="modal__head">
-    <div>
-      <p class="modal__kicker" data-modal-kicker>Partita Veloce</p>
-      <h2 class="modal__title" id="mode-title" data-modal-title>1v1</h2>
+  <div class="modal__flip">
+    <div class="modal__back" aria-hidden="true" data-modal-back></div>
+    <div class="modal__face">
+      <!-- X nell'angolo in alto a destra della carta -->
+      <button class="icon-btn modal__close" type="button" data-close aria-label="Chiudi">
+        <span class="icon" aria-hidden="true">close</span>
+      </button>
+
+      <!-- Corpo: cosa mostra dipende dall'altezza della carta (container query nel CSS) -->
+      <div class="modal__body">
+        <div class="modal__head">
+          <p class="modal__kicker" data-modal-kicker>Partita Veloce</p>
+          <h2 class="modal__title" id="mode-title" data-modal-title>1v1</h2>
+        </div>
+
+        <p class="modal__desc" data-modal-desc></p>
+
+        <fieldset class="target">
+          <legend class="target__legend">Punti per vincere</legend>
+          <div class="target__options">
+            <label class="target__option"><input type="radio" name="target" value="150"><span><b>150</b><small>Breve</small></span></label>
+            <label class="target__option"><input type="radio" name="target" value="300"><span><b>300</b><small>Media</small></span></label>
+            <label class="target__option"><input type="radio" name="target" value="500" checked><span><b>500</b><small>Classica</small></span></label>
+          </div>
+          <p class="target__note" data-target-note aria-live="polite"></p>
+        </fieldset>
+
+        <section class="modal__facts" aria-labelledby="facts-title">
+          <h3 class="modal__section-title" id="facts-title">In breve</h3>
+          <ul class="facts" data-modal-facts></ul>
+        </section>
+
+        <section class="invite" data-invite-section hidden>
+          <h3 class="invite__title" data-invite-title>Invita un amico</h3>
+          <ul class="invite__list" data-invite-list></ul>
+          <p class="invite__hint" data-invite-hint>Potrai giocare quando l'amico avrà accettato.</p>
+        </section>
+
+        <aside class="modal__tip" data-modal-tip>
+          <span class="icon" aria-hidden="true">lightbulb</span>
+          <p><strong>Lo sapevi?</strong> <span data-tip-text></span></p>
+        </aside>
+
+        <button class="btn btn--primary btn--big" type="button" data-play>
+          <span class="icon" aria-hidden="true">play_arrow</span>Gioca
+        </button>
+      </div>
     </div>
-    <button class="icon-btn" type="button" data-close aria-label="Chiudi">
-      <span class="icon" aria-hidden="true">close</span>
-    </button>
   </div>
-
-  <fieldset class="target">
-    <legend class="target__legend">Punti per vincere</legend>
-    <div class="target__options">
-      <label class="target__option"><input type="radio" name="target" value="150"><span>150</span></label>
-      <label class="target__option"><input type="radio" name="target" value="300"><span>300</span></label>
-      <label class="target__option"><input type="radio" name="target" value="500" checked><span>500</span></label>
-    </div>
-  </fieldset>
-
-  <section class="invite" data-invite-section hidden>
-    <h3 class="invite__title" data-invite-title>Invita un amico</h3>
-    <ul class="invite__list" data-invite-list></ul>
-    <p class="invite__hint" data-invite-hint>Potrai giocare quando l'amico avrà accettato.</p>
-  </section>
-
-  <button class="btn btn--primary btn--big" type="button" data-play>
-    <span class="icon" aria-hidden="true">play_arrow</span>Gioca
-  </button>
 </dialog>
 
 <!-- Messaggi brevi (es. "Richiesta inviata") -->
