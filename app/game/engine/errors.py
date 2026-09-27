@@ -11,3 +11,7 @@ class EngineError(Exception):
 
 class InvalidMoveError(EngineError):
     """Mossa non valida: viene rifiutata e lo stato della partita non cambia."""
+
+
+class NotYourTurnError(InvalidMoveError):
+    """Mossa di chi non è di turno: il server risponde not_your_turn invece di illegal_move."""
