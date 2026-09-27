@@ -1,0 +1,20 @@
+{
+  "_nota": "Risposta di GET /stats/me (campo data). Contratto: docs/CONTRATTO-SOCKET.md, 2.1.",
+  "games": 128,
+  "wins": 71,
+  "losses": 55,
+  "draws": 2,
+  "win_rate": 55,
+  "ratings": {
+    "1v1": {
+      "value": 1540,
+      "games": 96,
+      "provisional": false
+    },
+    "2v2": {
+      "value": 1482,
+      "games": 7,
+      "provisional": true
+    }
+  }
+}

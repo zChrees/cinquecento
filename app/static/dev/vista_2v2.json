@@ -1,0 +1,154 @@
+{
+  "_nota": "Vista di Mario (posto 0, squadra 0 con Salvo), 2v2 a 300, prima mano, terza presa: turno di Rosalia, che è scollegata. Nessuno ha cantato: carte franche. Contratto: docs/CONTRATTO-SOCKET.md, 3.3.",
+  "game_id": "e5f6a7b8",
+  "version": 19,
+  "mode": "2v2",
+  "target_score": 300,
+  "rated": true,
+  "status": "playing",
+  "hand_number": 1,
+  "dealer_seat": 3,
+  "you": {
+    "seat": 0
+  },
+  "players": [
+    {
+      "seat": 0,
+      "team": 0,
+      "user_id": 12,
+      "username": "Mario",
+      "avatar": null,
+      "cards_in_hand": 5,
+      "connected": true,
+      "reconnect_seconds_left": null
+    },
+    {
+      "seat": 1,
+      "team": 1,
+      "user_id": 44,
+      "username": "Giulia",
+      "avatar": "cavallo_spade",
+      "cards_in_hand": 4,
+      "connected": true,
+      "reconnect_seconds_left": null
+    },
+    {
+      "seat": 2,
+      "team": 0,
+      "user_id": 45,
+      "username": "Salvo",
+      "avatar": null,
+      "cards_in_hand": 4,
+      "connected": true,
+      "reconnect_seconds_left": null
+    },
+    {
+      "seat": 3,
+      "team": 1,
+      "user_id": 46,
+      "username": "Rosalia",
+      "avatar": "denari",
+      "cards_in_hand": 5,
+      "connected": false,
+      "reconnect_seconds_left": 48.0
+    }
+  ],
+  "hand": [
+    {
+      "suit": "coppe",
+      "rank": 1
+    },
+    {
+      "suit": "coppe",
+      "rank": 10
+    },
+    {
+      "suit": "denari",
+      "rank": 5
+    },
+    {
+      "suit": "spade",
+      "rank": 3
+    },
+    {
+      "suit": "bastoni",
+      "rank": 9
+    }
+  ],
+  "trick": {
+    "leader_seat": 1,
+    "cards": [
+      {
+        "seat": 1,
+        "card": {
+          "suit": "denari",
+          "rank": 7
+        }
+      },
+      {
+        "seat": 2,
+        "card": {
+          "suit": "denari",
+          "rank": 3
+        }
+      }
+    ]
+  },
+  "last_trick": {
+    "winner_seat": 1,
+    "cards": [
+      {
+        "seat": 0,
+        "card": {
+          "suit": "spade",
+          "rank": 2
+        }
+      },
+      {
+        "seat": 1,
+        "card": {
+          "suit": "spade",
+          "rank": 1
+        }
+      },
+      {
+        "seat": 2,
+        "card": {
+          "suit": "spade",
+          "rank": 6
+        }
+      },
+      {
+        "seat": 3,
+        "card": {
+          "suit": "spade",
+          "rank": 4
+        }
+      }
+    ]
+  },
+  "trump": null,
+  "deck_count": 12,
+  "sings": [],
+  "scores": [
+    {
+      "team": 0,
+      "total": 0
+    },
+    {
+      "team": 1,
+      "total": 0
+    }
+  ],
+  "last_hand": null,
+  "turn": {
+    "seat": 3,
+    "seconds_total": 30,
+    "seconds_left": 12.5
+  },
+  "legal": {
+    "play": [],
+    "sing": []
+  },
+  "result": null
+}

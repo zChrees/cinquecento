@@ -1,0 +1,158 @@
+{
+  "_nota": "Vista di Mario (posto 0), 1v1 a 500, terza mano, suo turno. Turi ha cantato 40 a coppe (briscola) e ha aperto la presa. Mario può cantare 20 a spade. Contratto: docs/CONTRATTO-SOCKET.md, 3.3.",
+  "game_id": "a1b2c3d4",
+  "version": 57,
+  "mode": "1v1",
+  "target_score": 500,
+  "rated": true,
+  "status": "playing",
+  "hand_number": 3,
+  "dealer_seat": 0,
+  "you": {
+    "seat": 0
+  },
+  "players": [
+    {
+      "seat": 0,
+      "team": 0,
+      "user_id": 12,
+      "username": "Mario",
+      "avatar": null,
+      "cards_in_hand": 5,
+      "connected": true,
+      "reconnect_seconds_left": null
+    },
+    {
+      "seat": 1,
+      "team": 1,
+      "user_id": 31,
+      "username": "Turi",
+      "avatar": "re_coppe",
+      "cards_in_hand": 4,
+      "connected": true,
+      "reconnect_seconds_left": null
+    }
+  ],
+  "hand": [
+    {
+      "suit": "spade",
+      "rank": 10
+    },
+    {
+      "suit": "spade",
+      "rank": 9
+    },
+    {
+      "suit": "denari",
+      "rank": 1
+    },
+    {
+      "suit": "bastoni",
+      "rank": 4
+    },
+    {
+      "suit": "coppe",
+      "rank": 7
+    }
+  ],
+  "trick": {
+    "leader_seat": 1,
+    "cards": [
+      {
+        "seat": 1,
+        "card": {
+          "suit": "coppe",
+          "rank": 3
+        }
+      }
+    ]
+  },
+  "last_trick": {
+    "winner_seat": 1,
+    "cards": [
+      {
+        "seat": 0,
+        "card": {
+          "suit": "bastoni",
+          "rank": 2
+        }
+      },
+      {
+        "seat": 1,
+        "card": {
+          "suit": "bastoni",
+          "rank": 8
+        }
+      }
+    ]
+  },
+  "trump": "coppe",
+  "deck_count": 22,
+  "sings": [
+    {
+      "seat": 1,
+      "suit": "coppe",
+      "points": 40
+    }
+  ],
+  "scores": [
+    {
+      "team": 0,
+      "total": 205
+    },
+    {
+      "team": 1,
+      "total": 135
+    }
+  ],
+  "last_hand": {
+    "hand_number": 2,
+    "teams": [
+      {
+        "team": 0,
+        "card_points": 70,
+        "sing_points": 40,
+        "hand_total": 110
+      },
+      {
+        "team": 1,
+        "card_points": 50,
+        "sing_points": 0,
+        "hand_total": 50
+      }
+    ]
+  },
+  "turn": {
+    "seat": 0,
+    "seconds_total": 30,
+    "seconds_left": 24.0
+  },
+  "legal": {
+    "play": [
+      {
+        "suit": "spade",
+        "rank": 10
+      },
+      {
+        "suit": "spade",
+        "rank": 9
+      },
+      {
+        "suit": "denari",
+        "rank": 1
+      },
+      {
+        "suit": "bastoni",
+        "rank": 4
+      },
+      {
+        "suit": "coppe",
+        "rank": 7
+      }
+    ],
+    "sing": [
+      "spade"
+    ]
+  },
+  "result": null
+}

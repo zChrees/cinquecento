@@ -1,0 +1,50 @@
+{
+  "_nota": "Dati della home. Le chiavi sono i nomi dei messaggi del contratto (docs/CONTRATTO-SOCKET.md); 'me' e 'me_senza_login' sono gli attributi data-* del <body> (1.5).",
+  "me": {
+    "user_id": 12,
+    "username": "Mario",
+    "avatar": null
+  },
+  "me_senza_login": null,
+  "home:status": {
+    "online_count": 24,
+    "resume": null
+  },
+  "home:status con partita in corso": {
+    "online_count": 24,
+    "resume": {
+      "game_id": "a1b2c3d4",
+      "url": "/game/a1b2c3d4",
+      "mode": "1v1",
+      "target_score": 500
+    }
+  },
+  "queue:status": {
+    "mode": "1v1",
+    "target_score": 500,
+    "seconds_waiting": 23,
+    "rating_range": {
+      "min": 1340,
+      "max": 1740
+    },
+    "partner": null
+  },
+  "queue:status 2v2 con un amico": {
+    "mode": "2v2",
+    "target_score": 300,
+    "seconds_waiting": 125,
+    "rating_range": null,
+    "partner": {
+      "user_id": 44,
+      "username": "Giulia",
+      "avatar": "cavallo_spade"
+    }
+  },
+  "queue:left": {
+    "reason": "partner_left"
+  },
+  "game:start": {
+    "game_id": "a1b2c3d4",
+    "url": "/game/a1b2c3d4"
+  }
+}

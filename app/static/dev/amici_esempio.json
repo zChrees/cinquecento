@@ -1,0 +1,135 @@
+{
+  "_nota": "Dati degli amici. Le chiavi sono i nomi dei messaggi del contratto (docs/CONTRATTO-SOCKET.md, 2.2 e 5).",
+  "GET /friends/": {
+    "friends": [
+      {
+        "user_id": 44,
+        "username": "Giulia",
+        "avatar": "cavallo_spade",
+        "presence": "online",
+        "unread": 2
+      },
+      {
+        "user_id": 45,
+        "username": "Salvo",
+        "avatar": null,
+        "presence": "online",
+        "unread": 0
+      },
+      {
+        "user_id": 46,
+        "username": "Rosalia",
+        "avatar": "denari",
+        "presence": "in_game",
+        "unread": 0
+      },
+      {
+        "user_id": 31,
+        "username": "Turi",
+        "avatar": "re_coppe",
+        "presence": "offline",
+        "unread": 0
+      },
+      {
+        "user_id": 47,
+        "username": "Nina",
+        "avatar": null,
+        "presence": "offline",
+        "unread": 1
+      }
+    ],
+    "requests_in": [
+      {
+        "user_id": 52,
+        "username": "Toto",
+        "avatar": null,
+        "sent_at": "2026-09-28T09:41:05.000Z"
+      }
+    ],
+    "requests_out": [
+      {
+        "user_id": 53,
+        "username": "Carmelo",
+        "avatar": "bastoni",
+        "sent_at": "2026-09-27T18:12:40.000Z"
+      }
+    ],
+    "blocked": [],
+    "counters": {
+      "requests_in": 1,
+      "unread_messages": 3
+    }
+  },
+  "friends:presence": {
+    "user_id": 31,
+    "presence": "online"
+  },
+  "friends:changed": {
+    "reason": "request_received"
+  },
+  "invite:received": {
+    "invite_id": "inv_9c1e",
+    "from": {
+      "user_id": 12,
+      "username": "Mario",
+      "avatar": null
+    },
+    "to": {
+      "user_id": 44,
+      "username": "Giulia",
+      "avatar": "cavallo_spade"
+    },
+    "mode": "2v2",
+    "target_score": 300,
+    "status": "pending",
+    "seconds_left": 60.0
+  },
+  "invite:update": {
+    "invite_id": "inv_9c1e",
+    "status": "accepted"
+  },
+  "chat:history (risposta)": {
+    "messages": [
+      {
+        "id": 1201,
+        "from_user_id": 44,
+        "to_user_id": 12,
+        "text": "Ciao Mario, na partita?",
+        "sent_at": "2026-09-28T13:58:02.120Z"
+      },
+      {
+        "id": 1202,
+        "from_user_id": 12,
+        "to_user_id": 44,
+        "text": "Amunì! Dammi 5 minuti",
+        "sent_at": "2026-09-28T13:58:40.503Z"
+      },
+      {
+        "id": 1207,
+        "from_user_id": 44,
+        "to_user_id": 12,
+        "text": "<b>questo resta testo</b>",
+        "sent_at": "2026-09-28T14:03:12.000Z"
+      }
+    ],
+    "has_more": false,
+    "can_write": true
+  },
+  "chat:message": {
+    "message": {
+      "id": 1208,
+      "from_user_id": 44,
+      "to_user_id": 12,
+      "text": "Ti aspetto",
+      "sent_at": "2026-09-28T14:03:30.871Z"
+    }
+  },
+  "errore (esempio)": {
+    "ok": false,
+    "error": {
+      "code": "too_fast",
+      "message": "Stai scrivendo troppo in fretta: aspetta un secondo.",
+      "retry_after": 1
+    }
+  }
+}
