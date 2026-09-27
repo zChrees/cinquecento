@@ -32,9 +32,6 @@ I punti di `SCALETTA.md` che dipendono da una domanda la richiamano con il suo c
 - [ ] **D15 — Per quanto tempo si mostrano le carte del canto** agli avversari: consigliati 3 secondi, più un'icona fissa accanto al giocatore per tutta la mano.
 - [ ] **D16 — Tolleranza del matchmaking**: consigliato di partire con ±100 punti di rating, allargare di +50 ogni 10 secondi, fino a ±400. Dopo 2 minuti si accetta qualunque avversario.
 - [ ] **D17 — Formazione delle squadre nella coda 2v2**: consigliato di unire i 4 giocatori in modo che le medie delle due squadre siano il più vicine possibile.
-- [ ] **D34 — Nome mostrato nell'interfaccia**: nel prototipo approvato la navbar dice **"Briscola"** (richiesta dell'utente), ma il gioco e il regolamento sono quelli del **Cinquecento**. Quale nome va nelle pagine vere, nel titolo della scheda del browser e nel logo (P42)? Consigliato: il nome del gioco che si gioca davvero.
-- [ ] **D35 — Punteggio per vincere e matchmaking**: con la scelta 150 / 300 / 500 nel modal, la coda va divisa per modalità **e** per punteggio (chi sceglie 150 incontra solo chi ha scelto 150) *(consigliato)*, oppure il punteggio lo sceglie il server? E il rating conta allo stesso modo per una partita a 150 e una a 500? Consigliato: code separate per punteggio, rating uguale per tutti i punteggi.
-- [ ] **D36 — Il 2v2 con un amico conta per il rating?** L'amico è il compagno e gli avversari arrivano dal matchmaking. Oggi vale la decisione "le partite nate da un invito non contano". Consigliato: **sì, conta**, perché gli avversari sono sconosciuti trovati dalla coda; il 1v1 contro un amico invece non conta.
 
 ## Amici e chat
 
@@ -50,7 +47,6 @@ I punti di `SCALETTA.md` che dipendono da una domanda la richiamano con il suo c
 - [ ] **D18 — Colore del tavolo di gioco**: colori e stile delle pagine vengono dal prototipo scritto da Claude (P52, stile siciliano, tema chiaro e scuro). Resta da decidere il tavolo, che il prototipo non comprende: consigliato il verde classico, accostato alla palette del prototipo, con una versione per il tema scuro.
 - [ ] **D19 — Immagini delle carte**: da dove vengono le vostre immagini e con che licenza? Serve saperlo per usarle nella versione finale (punto P35).
 - [ ] **D29 — Set di avatar**: quanti e con che soggetti? Consigliati 12 (i 4 semi e le 8 figure siciliane: Re, Cavallo e Fante di alcuni semi), in formato SVG. Chi li disegna, o da dove si prendono, e con che licenza?
-- [ ] **D37 — Dove mostrare i crediti delle immagini delle carte**: le carte dello sfondo (scansioni di Matsoftware su Wikimedia) hanno licenza **CC BY-SA 3.0**, che obbliga a citare autore e licenza in modo visibile. Prima era prevista la pagina Regole, che non c'è più. Opzioni: a) una riga piccola in fondo al pannello statistiche, sotto Impostazioni ed Esci *(consigliata)*; b) una pagina "Crediti" raggiungibile dalle impostazioni; c) sostituire le immagini con altre di pubblico dominio.
 
 ## Tempi
 

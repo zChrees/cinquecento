@@ -1,5 +1,5 @@
 /*
- * Briscola · prototipo della home (P52)
+ * Cinquecento · prototipo della home (P52)
  * Script classico (non modulo): il prototipo si apre con un doppio clic.
  * I dati sono finti. Il testo non viene mai inserito come HTML: solo textContent.
  */

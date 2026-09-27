@@ -13,7 +13,7 @@ Web-app per giocare online a **Cinquecento**, il gioco di carte siciliano simile
 
 ```
 ┌──────────────────────────────────┐
-│ (M)         Briscola          [A]│  avatar (statistiche) · nome · amici e chat
+│ (M)        Cinquecento        [A]│  avatar (statistiche) · nome · amici e chat
 ├──────────────────────────────────┤  navbar trasparente e sfocata
 │        o 24 giocatori online     │
 │  Partita Veloce                  │
@@ -179,7 +179,7 @@ cinquecento/
 │           ├── cards/         immagini delle 40 carte, con la loro licenza
 │           ├── cards-bg/      carte siciliane dello sfondo della home (CC BY-SA 3.0)
 │           ├── avatars/       set di avatar predefiniti
-│           └── logo.*         logo (nome da decidere, D34)
+│           └── logo.*         logo "Cinquecento"
 │
 └── tests/
     ├── esegui_tutti.py        runner: lancia tutte le suite in sicurezza

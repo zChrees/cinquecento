@@ -1,5 +1,5 @@
 /*
- * Briscola · prototipo della home (P52)
+ * Cinquecento · prototipo della home (P52)
  * Palette "Carretto siciliano". Mobile-first: le regole di base sono per
  * il telefono, i @media allargano.
  */
@@ -1082,6 +1082,19 @@ dialog::backdrop {
 
 .sheet__link .icon {
   color: var(--muted);
+}
+
+/* Crediti delle immagini delle carte (licenza CC BY-SA 3.0) */
+.sheet__credits {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.sheet__credits a {
+  color: inherit;
 }
 
 /* Pannello amici: a tutto schermo su telefono, laterale su computer */
