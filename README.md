@@ -241,7 +241,7 @@ I test usano **solo** il database `cinquecento_test` e la porta 5099. Si rifiuta
 - Branch permanenti: `main` (non si tocca) e `dev` (lavoro del gruppo).
 - Per ogni punto della scaletta si crea un **branch nuovo da `dev` aggiornato**. Lì si modifica e si testa, e **solo dopo l'ok** si fa il commit e il merge in `dev`.
 - Si modificano **solo i file indicati nel punto**. La divisione dei punti tra Giuseppe, Antonio e Christian, e l'ordine in cui farli per non creare conflitti, sono nella sezione 9 di [SCALETTA.md](SCALETTA.md).
-- Prima di ogni punto: `git switch dev` e `git pull`. Dopo l'ok: merge fast-forward in `dev` e **push subito**, poi si avvisano gli altri. Se il fast-forward non riesce, `git rebase dev` e di nuovo tutti i test (regole complete in [CLAUDE.md](CLAUDE.md), "Regole git").
+- Prima di ogni punto: `git switch dev` e `git pull`. Commit, merge fast-forward in `dev` e push si fanno **ognuno solo dopo l'ok** di chi lavora (anche quando li fa Claude); dopo il push si avvisano gli altri. Se il fast-forward non riesce, `git rebase dev` e di nuovo tutti i test (regole complete in [CLAUDE.md](CLAUDE.md), "Regole git").
 - `SCALETTA.md`, `CLAUDE.md`, `DECISIONI.md` e `DA-DECIDERE.md` li aggiorna **solo Christian**: gli altri, finito un punto, gli mandano un riepilogo.
 - Il regolamento, le decisioni prese e le domande aperte stanno nei documenti elencati sopra: prima di cambiare qualcosa, controlla lì.
 
