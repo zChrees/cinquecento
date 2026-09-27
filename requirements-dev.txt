@@ -1,0 +1,20 @@
+# Librerie usate solo per sviluppo e test, a versione fissa (Python 3.14.4).
+# Installazione, dentro la .venv:  pip install -r requirements.txt -r requirements-dev.txt
+
+# Test
+pytest==9.1.1
+iniconfig==2.3.0
+pluggy==1.6.0
+packaging==26.3
+Pygments==2.21.0
+
+# Controllo del codice (lint, D4): ruff check .
+ruff==0.16.9
+
+# Client Socket.IO simulati contro un server vero (test di sockets/)
+requests==2.34.2
+urllib3==2.8.0
+certifi==2026.7.22
+idna==3.20
+charset-normalizer==3.5.1
+websocket-client==1.9.2
