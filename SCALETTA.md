@@ -40,7 +40,7 @@ Una web-app per giocare online a **Cinquecento**, variante siciliana, con le car
 - [ ] P7 (Fase 1): log ed errori di base — `app/logging_config.py`, `app/errors.py`, `app/templates/errors/`
 - [ ] P8 (Fase 1): contratto tra server e pagine — `docs/CONTRATTO-SOCKET.md`, `app/static/dev/*.json`
 - [ ] P9 (Fase 1): guida di installazione verificata — `README.md`
-- [x] P52 (Fase 1, C): prototipo della home — `docs/prototipo/` — *27/09: approvato dopo varie prove: `index.html`, `prototipo.css`, `prototipo.js`, `LEGGIMI.md`, `img/` (carte siciliane da Wikimedia)*
+- [x] P52 (Fase 1, C): prototipo della home — `docs/prototipo/` — *27/09: approvato dopo varie prove: `index.html`, `prototipo.css`, `prototipo.js`, `LEGGIMI.md`, `img/` (carte siciliane da Wikimedia). Ritoccato lo stesso giorno su richiesta dell'utente: panno verde, navbar completamente trasparente, logo nuovo in CSS, animazioni dei pannelli statistiche e amici, carta 2v2 viola, sfondo tutto a cascata di carte (coppie Cavallo + Re, Assi, Tre e dorsi, con il dorso napoletano da Wikimedia), navbar e carte-pulsante in rilievo con i semi siciliani (`DECISIONI.md`, Interfaccia). Versione finale (27/09, branch `christian`, non in `dev`): scritte sul panno come il logo al posto del vetro liquido, navbar larga con icone più grandi su computer, Assi a sagoma, spessore crema solo in basso, modal a forma di carta che si gira, niente scorrimento tranne la lista degli amici da invitare*
 
 ### Fase 2 — Funzioni essenziali
 - [ ] P10 (Fase 2, A): carte, mazzo, parametri delle regole — `app/game/engine/cards.py`, `deck.py`, `rules.py`, `errors.py`

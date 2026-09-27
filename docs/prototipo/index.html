@@ -34,8 +34,8 @@
     </button>
 
     <a class="logo" href="#" aria-label="Cinquecento, torna alla home">
-      <img class="logo__suit" src="img/seme-denari.svg" alt="">
-      <span class="logo__text">Cinquecento</span>
+      <span class="logo__mark" aria-hidden="true" data-logo-cards><span class="logo__card"><span class="logo__flip"><img class="logo__face logo__face--back" src="img/dorso.webp" alt=""><img class="logo__face logo__face--front" src="img/cavallo-coppe.webp" alt=""></span></span><span class="logo__card"><span class="logo__flip"><img class="logo__face logo__face--back" src="img/dorso.webp" alt=""><img class="logo__face logo__face--front" src="img/re-coppe.webp" alt=""></span></span></span>
+      <span class="logo__text">Cinque<b>cento</b></span>
     </a>
 
     <button class="navbar__friends" type="button" data-open="friends" aria-haspopup="dialog" aria-label="Amici: 1 richiesta di amicizia">
@@ -60,11 +60,13 @@
       </h2>
       <div class="mode-section__tiles">
         <button class="mode-tile mode-tile--red" type="button" data-kind="veloce" data-mode="1v1">
+          <img class="mode-tile__suit" src="img/asso-coppe-figura.webp" alt="">
           <span class="icon mode-tile__icon" aria-hidden="true">person</span>
           <span class="mode-tile__label">1v1</span>
           <span class="mode-tile__sub">Uno contro uno</span>
         </button>
-        <button class="mode-tile mode-tile--green" type="button" data-kind="veloce" data-mode="2v2">
+        <button class="mode-tile mode-tile--purple" type="button" data-kind="veloce" data-mode="2v2">
+          <img class="mode-tile__suit" src="img/asso-spade-figura.webp" alt="">
           <span class="icon mode-tile__icon" aria-hidden="true">groups</span>
           <span class="mode-tile__label">2v2</span>
           <span class="mode-tile__sub">A coppie</span>
@@ -78,11 +80,13 @@
       </h2>
       <div class="mode-section__tiles">
         <button class="mode-tile mode-tile--yellow" type="button" data-kind="amico" data-mode="1v1">
+          <img class="mode-tile__suit" src="img/asso-denari-figura.webp" alt="">
           <span class="icon mode-tile__icon" aria-hidden="true">person</span>
           <span class="mode-tile__label">1v1</span>
-          <span class="mode-tile__sub">Sfida un amico</span>
+          <span class="mode-tile__sub">Sfida<br class="mode-tile__br"> un amico</span>
         </button>
         <button class="mode-tile mode-tile--blue" type="button" data-kind="amico" data-mode="2v2">
+          <img class="mode-tile__suit" src="img/asso-bastoni-figura.webp" alt="">
           <span class="icon mode-tile__icon" aria-hidden="true">groups</span>
           <span class="mode-tile__label">2v2</span>
           <span class="mode-tile__sub">Fai squadra</span>
@@ -93,7 +97,7 @@
 </main>
 
 <!-- ===== Pannello statistiche (tocco sull'avatar) ===== -->
-<dialog class="sheet sheet--stats" id="stats" aria-labelledby="stats-title">
+<dialog class="sheet sheet--stats" id="stats" aria-labelledby="stats-title" data-animated>
   <div class="sheet__head">
     <span class="avatar avatar--big" aria-hidden="true">M</span>
     <div>
@@ -117,14 +121,14 @@
     <a href="#" class="sheet__link"><span class="icon" aria-hidden="true">logout</span>Esci</a>
   </div>
   <p class="sheet__credits">
-    Carte dello sfondo: Matsoftware,
+    Immagini delle carte: Matsoftware,
     <a href="https://creativecommons.org/licenses/by-sa/3.0/deed.it" target="_blank" rel="noopener">CC BY-SA 3.0</a>,
     da Wikimedia Commons
   </p>
 </dialog>
 
 <!-- ===== Pannello amici (tocco sull'icona amici) ===== -->
-<dialog class="drawer" id="friends" aria-labelledby="friends-title">
+<dialog class="drawer" id="friends" aria-labelledby="friends-title" data-animated>
   <!-- Vista: elenco amici -->
   <div class="drawer__view" data-view="list">
     <div class="drawer__head">
@@ -181,36 +185,61 @@
   </div>
 </dialog>
 
-<!-- ===== Modal della modalità ===== -->
+<!--
+  ===== Modal della modalità =====
+  È una carta da gioco: il retro è una copia della carta-pulsante toccata (la mette
+  lo script), la faccia è bianca e contiene tutto il modal.
+-->
 <dialog class="modal" id="mode-modal" aria-labelledby="mode-title">
-  <div class="modal__head">
-    <div>
-      <p class="modal__kicker" data-modal-kicker>Partita Veloce</p>
-      <h2 class="modal__title" id="mode-title" data-modal-title>1v1</h2>
+  <div class="modal__flip">
+    <div class="modal__back" aria-hidden="true" data-modal-back></div>
+    <div class="modal__face">
+      <!-- X nell'angolo in alto a destra della carta -->
+      <button class="icon-btn modal__close" type="button" data-close aria-label="Chiudi">
+        <span class="icon" aria-hidden="true">close</span>
+      </button>
+
+      <!-- Corpo: cosa mostra dipende dall'altezza della carta (container query nel CSS) -->
+      <div class="modal__body">
+        <div class="modal__head">
+          <p class="modal__kicker" data-modal-kicker>Partita Veloce</p>
+          <h2 class="modal__title" id="mode-title" data-modal-title>1v1</h2>
+        </div>
+
+        <p class="modal__desc" data-modal-desc></p>
+
+        <fieldset class="target">
+          <legend class="target__legend">Punti per vincere</legend>
+          <div class="target__options">
+            <label class="target__option"><input type="radio" name="target" value="150"><span><b>150</b><small>Breve</small></span></label>
+            <label class="target__option"><input type="radio" name="target" value="300"><span><b>300</b><small>Media</small></span></label>
+            <label class="target__option"><input type="radio" name="target" value="500" checked><span><b>500</b><small>Classica</small></span></label>
+          </div>
+          <p class="target__note" data-target-note aria-live="polite"></p>
+        </fieldset>
+
+        <section class="modal__facts" aria-labelledby="facts-title">
+          <h3 class="modal__section-title" id="facts-title">In breve</h3>
+          <ul class="facts" data-modal-facts></ul>
+        </section>
+
+        <section class="invite" data-invite-section hidden>
+          <h3 class="invite__title" data-invite-title>Invita un amico</h3>
+          <ul class="invite__list" data-invite-list></ul>
+          <p class="invite__hint" data-invite-hint>Potrai giocare quando l'amico avrà accettato.</p>
+        </section>
+
+        <aside class="modal__tip" data-modal-tip>
+          <span class="icon" aria-hidden="true">lightbulb</span>
+          <p><strong>Lo sapevi?</strong> <span data-tip-text></span></p>
+        </aside>
+
+        <button class="btn btn--primary btn--big" type="button" data-play>
+          <span class="icon" aria-hidden="true">play_arrow</span>Gioca
+        </button>
+      </div>
     </div>
-    <button class="icon-btn" type="button" data-close aria-label="Chiudi">
-      <span class="icon" aria-hidden="true">close</span>
-    </button>
   </div>
-
-  <fieldset class="target">
-    <legend class="target__legend">Punti per vincere</legend>
-    <div class="target__options">
-      <label class="target__option"><input type="radio" name="target" value="150"><span>150</span></label>
-      <label class="target__option"><input type="radio" name="target" value="300"><span>300</span></label>
-      <label class="target__option"><input type="radio" name="target" value="500" checked><span>500</span></label>
-    </div>
-  </fieldset>
-
-  <section class="invite" data-invite-section hidden>
-    <h3 class="invite__title" data-invite-title>Invita un amico</h3>
-    <ul class="invite__list" data-invite-list></ul>
-    <p class="invite__hint" data-invite-hint>Potrai giocare quando l'amico avrà accettato.</p>
-  </section>
-
-  <button class="btn btn--primary btn--big" type="button" data-play>
-    <span class="icon" aria-hidden="true">play_arrow</span>Gioca
-  </button>
 </dialog>
 
 <!-- Messaggi brevi (es. "Richiesta inviata") -->
