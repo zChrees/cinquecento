@@ -38,7 +38,11 @@ La carta gialla usa un giallo più carico (`--yellow-card`, `#e9a000`) del giall
 
 ## Sfondo
 
-Il fondo della pagina è un **panno verde da tavolo**: più chiaro al centro, come sotto una lampada, e più scuro verso i bordi (`--felt`, `--felt-light`, `--felt-dark`), con una grana leggera disegnata da un piccolo SVG di rumore dentro il CSS, senza immagini in più.
+Il fondo della pagina è un **panno verde da tavolo** con profondità:
+- **luce da lampada**: una pozza di luce calda sopra il centro del tavolo; il verde è più chiaro lì e sempre più scuro verso i bordi (`--felt-light`, `--felt`, `--felt-dark`, `--felt-edge`);
+- **trama del feltro**: fibre fini, un po' allungate, chiare e scure (riquadro di 220 px che si ripete), più macchie ampie e irregolari appena più scure (riquadro di 900 px), come un tessuto vero.
+
+Trama e macchie sono piccoli SVG di rumore scritti dentro il CSS, senza immagini in più. Il filtro SVG copre esattamente il 100% del riquadro: così il rumore si ripete senza cuciture visibili.
 
 Sopra il panno c'è una **cascata di carte che cade dall'alto**, senza fermarsi mai (script in `prototipo.js`, parte "Sfondo"):
 - due carte su cinque cadono **di dorso** (`img/dorso.webp`, vedi "Immagini e licenze"); le altre sono di faccia, a turno una **coppia Cavallo + Re** (a ventaglio, come in mano a chi canta 40, che cade tutta insieme), un **Asso** e un **Tre** (i carichi);
