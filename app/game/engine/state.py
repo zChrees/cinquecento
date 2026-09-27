@@ -64,3 +64,31 @@ class HandResult:
     @property
     def totals(self) -> tuple[int, ...]:
         return tuple(cards + sings for cards, sings in zip(self.card_points, self.sing_points, strict=True))
+
+
+@dataclass(frozen=True)
+class GameResult:
+    winner_team: int | None  # None = pareggio
+
+
+@dataclass(frozen=True)
+class GameState:
+    """Partita intera (P14): mani una dopo l'altra fino al punteggio scelto."""
+
+    num_players: int
+    target_score: int
+    hand_number: int  # da 1
+    first_seat: int  # chi comincia la mano in corso
+    hand: HandState  # a partita finita resta l'ultima mano, finita
+    scores: tuple[int, ...]  # per squadra, delle mani già finite
+    last_hand: HandResult | None  # None nella prima mano
+    result: GameResult | None  # None durante la partita
+
+    @property
+    def finished(self) -> bool:
+        return self.result is not None
+
+    @property
+    def dealer_seat(self) -> int:
+        """Il mazziere è sempre alla sinistra di chi comincia (D11)."""
+        return (self.first_seat - 1) % self.num_players

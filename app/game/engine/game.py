@@ -1,21 +1,29 @@
-"""Svolgimento di una mano (P13, regole in docs/REGOLE-GIOCO.md, "Svolgimento di una mano").
+"""Svolgimento di una mano (P13) e della partita intera (P14).
 
-apply(stato, azione) -> nuovo stato; legal_actions(stato) -> le mosse di chi è di turno.
+Regole in docs/REGOLE-GIOCO.md, "Svolgimento di una mano", "Chi comincia" e
+"Punteggio e fine partita".
+
+Mano: apply(stato, azione) -> nuovo stato; legal_actions(stato) -> le mosse di chi è di turno.
+Partita: new_game, apply_game e game_legal_actions, che usano quelle della mano.
 Una mossa non valida solleva InvalidMoveError (NotYourTurnError fuori turno) e lo stato
 di partenza resta com'è, perché è immutabile.
 """
 
+import random
+import secrets
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
 
 from app.game.engine.actions import Action, PlayCardAction, SingAction
 from app.game.engine.cards import Card, Suit
-from app.game.engine.deck import full_deck
+from app.game.engine.deck import full_deck, shuffled_deck
 from app.game.engine.errors import EngineError, InvalidMoveError, NotYourTurnError
 from app.game.engine.rules import MARIANNA, RuleSet
 from app.game.engine.singing import sing, singable_suits
 from app.game.engine.state import (
     TEAMS,
+    GameResult,
+    GameState,
     HandResult,
     HandState,
     LastTrick,
@@ -164,6 +172,90 @@ def hand_result(state: HandState, rules: RuleSet = MARIANNA) -> HandResult:
     for done in state.sings:
         sing_points[team_of(done.seat)] += done.points
     return HandResult(card_points=tuple(card_points), sing_points=tuple(sing_points))
+
+
+def new_game(
+    num_players: int,
+    target_score: int,
+    rng: random.Random | None = None,
+    rules: RuleSet = MARIANNA,
+) -> GameState:
+    """Prima mano: chi comincia si sceglie a caso, il mazziere è alla sua sinistra (D11).
+
+    In gioco rng è None (secrets.SystemRandom); i test passano un seme fisso.
+    """
+    if num_players not in rules.player_counts:
+        raise EngineError("Si gioca in 2 o in 4.")
+    if (
+        isinstance(target_score, bool)
+        or not isinstance(target_score, int)
+        or target_score not in rules.target_scores
+    ):
+        allowed = ", ".join(str(score) for score in rules.target_scores[:-1])
+        raise EngineError(f"Punteggio non valido: si gioca a {allowed} o {rules.target_scores[-1]}.")
+    if rng is None:
+        rng = secrets.SystemRandom()
+    first_seat = rng.randrange(num_players)
+    return GameState(
+        num_players=num_players,
+        target_score=target_score,
+        hand_number=1,
+        first_seat=first_seat,
+        hand=new_hand(num_players, first_seat, shuffled_deck(rng), rules),
+        scores=(0,) * TEAMS,
+        last_hand=None,
+        result=None,
+    )
+
+
+def game_legal_actions(game: GameState, seat: int, rules: RuleSet = MARIANNA) -> LegalActions:
+    if game.finished:
+        return LegalActions(play=(), sing=())
+    return legal_actions(game.hand, seat, rules)
+
+
+def apply_game(
+    game: GameState,
+    action: Action,
+    rng: random.Random | None = None,
+    rules: RuleSet = MARIANNA,
+) -> GameState:
+    """Applica la mossa alla mano in corso; a fine mano somma i punti e controlla la fine.
+
+    Il punteggio per vincere si controlla solo a fine mano, anche se un canto lo fa
+    raggiungere prima. Se la partita continua comincia la mano dopo, con il mazzo
+    mescolato di nuovo (rng serve solo a questo).
+    """
+    if game.finished:
+        raise InvalidMoveError("La partita è finita.")
+    hand = apply(game.hand, action, rules)
+    if not hand.finished:
+        return replace(game, hand=hand)
+
+    done = hand_result(hand, rules)
+    scores = tuple(score + points for score, points in zip(game.scores, done.totals, strict=True))
+    result = _game_result(scores, game.target_score)
+    if result is not None:
+        return replace(game, hand=hand, scores=scores, last_hand=done, result=result)
+
+    # Si gira verso destra: comincia chi sta alla destra di chi aveva cominciato (D11)
+    first_seat = _next_seat(game.first_seat, game.num_players)
+    return replace(
+        game,
+        hand_number=game.hand_number + 1,
+        first_seat=first_seat,
+        hand=new_hand(game.num_players, first_seat, shuffled_deck(rng), rules),
+        scores=scores,
+        last_hand=done,
+    )
+
+
+def _game_result(scores: tuple[int, ...], target_score: int) -> GameResult | None:
+    """Vince chi arriva ad almeno N; se ci arrivano entrambi il più alto; a parità è pareggio."""
+    if max(scores) < target_score:
+        return None
+    leaders = [team for team, score in enumerate(scores) if score == max(scores)]
+    return GameResult(winner_team=leaders[0] if len(leaders) == 1 else None)
 
 
 def _next_seat(seat: int, num_players: int, steps: int = 1) -> int:
