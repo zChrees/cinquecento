@@ -11,8 +11,8 @@
 --       maiuscole e minuscole DIVERSE ("Mario" e "mario" sono due utenti)
 --   D23 blocco degli utenti: sì
 --   D24 chat tra amici a testo libero, mai cancellata (solo con l'account);
---   D26 messaggi tra amici lunghi al massimo 1000 caratteri;
 --       le frasi pronte del tavolo NON si salvano: il server le inoltra e basta
+--   D26 messaggi tra amici lunghi al massimo 1000 caratteri
 --   D35 rating uguale per 150, 300 e 500 punti
 --   D36 il 1v1 con un amico non conta per il rating, il 2v2 sì
 --   D38 nomi di tabelle, colonne e valori in italiano
@@ -24,6 +24,10 @@
 --     tranne il nome utente (D7).
 --   - Date e ore sempre in UTC: la conversione all'ora italiana la fa
 --     la pagina.
+--   - Una partita si salva TUTTA INSIEME A FINE PARTITA (P26): la riga in
+--     partite, i giocatori e le mosse, in una sola transazione. Le partite
+--     in corso stanno solo in memoria (app/realtime/): nel database non
+--     esiste mai una partita "a metà" (28/09/2026).
 --   - Niente contatori duplicati: statistiche (partite, vinte, perse)
 --     e numero di partite giocate si calcolano da giocatori_partita.
 --   - I valori iniziali del rating (1500, 350, 0,06) stanno in
@@ -70,7 +74,7 @@ CREATE TABLE rating (
 
 
 -- ---------------------------------------------------------------------
--- 3. partite: una riga per partita, creata quando la partita parte.
+-- 3. partite: una riga per partita, scritta a fine partita (P26).
 -- ---------------------------------------------------------------------
 CREATE TABLE partite (
     id                  INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -78,15 +82,15 @@ CREATE TABLE partite (
     punti_per_vincere   SMALLINT UNSIGNED NOT NULL,        -- solo 150, 300 o 500
     conta_per_rating    BOOLEAN NOT NULL,                  -- no per il 1v1 contro un amico (D36)
     iniziata_il         DATETIME NOT NULL,
-    finita_il           DATETIME NULL,                     -- vuota finché la partita è in corso
-    motivo_fine         ENUM('punteggio', 'abbandono') NULL,  -- vuoto finché è in corso
-    squadra_vincente    TINYINT UNSIGNED NULL,             -- 0 o 1; vuota = pareggio (o partita in corso)
-    punti_squadra_0     SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    punti_squadra_1     SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    finita_il           DATETIME NOT NULL,
+    motivo_fine         ENUM('punteggio', 'abbandono') NOT NULL,
+    squadra_vincente    TINYINT UNSIGNED NULL,             -- 0 o 1; vuota = pareggio
+    punti_squadra_0     SMALLINT UNSIGNED NOT NULL,        -- punti finali della squadra 0
+    punti_squadra_1     SMALLINT UNSIGNED NOT NULL,
     PRIMARY KEY (id),
     CONSTRAINT ck_partite_punti CHECK (punti_per_vincere IN (150, 300, 500)),
     CONSTRAINT ck_partite_vincente CHECK (squadra_vincente IS NULL OR squadra_vincente IN (0, 1)),
-    CONSTRAINT ck_partite_fine CHECK ((finita_il IS NULL) = (motivo_fine IS NULL))  -- finita se e solo se c'è il motivo
+    CONSTRAINT ck_partite_date CHECK (finita_il >= iniziata_il)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
@@ -100,7 +104,7 @@ CREATE TABLE giocatori_partita (
     posto           TINYINT UNSIGNED NOT NULL,             -- 0-1 nel 1v1, 0-3 nel 2v2 (i compagni uno di fronte all'altro)
     squadra         TINYINT UNSIGNED NOT NULL,             -- 0 o 1
     utente_id       INT UNSIGNED NULL,                     -- vuoto = "utente eliminato" (D6)
-    risultato       ENUM('vittoria', 'sconfitta', 'pareggio') NULL,  -- vuoto finché la partita è in corso
+    risultato       ENUM('vittoria', 'sconfitta', 'pareggio') NOT NULL,
     ha_abbandonato  BOOLEAN NOT NULL DEFAULT FALSE,        -- non è rientrato entro 60 secondi
     PRIMARY KEY (partita_id, posto),
     UNIQUE KEY uq_giocatori_utente (partita_id, utente_id),  -- lo stesso utente non siede due volte (i vuoti non contano)
