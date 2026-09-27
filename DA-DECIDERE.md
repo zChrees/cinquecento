@@ -20,8 +20,6 @@ Per D8, D9, D10, D16, D26 e D27, `config.py` (P4) usa già il valore consigliato
 
 ## Gioco
 
-- [ ] **D11 — Chi comincia dalla seconda mano in poi**: la prima mano è decisa il 28/09/2026 (primo giocatore a caso, mazziere alla sua sinistra: vedi `DECISIONI.md`). Per le mani successive: a) ogni volta a caso; b) a rotazione verso destra: comincia il giocatore alla destra di chi aveva cominciato la mano prima *(consigliato: è l'uso al tavolo, ed è equo)*; c) comincia chi ha vinto la mano prima. Serve a P14 (Giuseppe).
-- [ ] **D12 — Quale carta gioca la mossa automatica** allo scadere dei 30 secondi: **riaperta il 28/09/2026**. La mossa automatica non canta (deciso). Il gruppo ha indicato "a caso"; la regola precedente ("la carta di valore più basso") non diceva cosa fare a parità di valore. Serve a P15 (Giuseppe) e P25.
 - [ ] **D13 — Abbandono nel 2v2**: consigliato che perda tutta la squadra, con penalità sul rating solo per chi ha abbandonato; oppure penalità per tutta la squadra.
 - [ ] **D14 — Stesso utente in due schede o dispositivi**: consigliato che l'ultima scheda aperta prenda il posto della precedente, che mostra "partita aperta altrove"; oppure la seconda scheda viene bloccata.
 - [ ] **D15 — Per quanto tempo si mostrano le carte del canto** agli avversari: consigliati 3 secondi, più un'icona fissa accanto al giocatore per tutta la mano.

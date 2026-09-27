@@ -246,16 +246,16 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 - *Fatto quando*: una mano 1v1 e una 2v2 giocate con seme fisso finiscono con 120 punti di carte in totale; l'ordine di pesca è corretto; una mossa non valida viene **rifiutata con un errore chiaro** e lo stato non cambia.
 - *Dipende da*: P11, P12.
 
-**P14 — Partita fino al punteggio scelto** · piccolo · decisione: **D11** (prima mano decisa il 28/09/2026; le mani successive sono ancora da decidere)
+**P14 — Partita fino al punteggio scelto** · piccolo · decisione: **D11** (decisa il 28/09/2026: regola in `docs/REGOLE-GIOCO.md`, "Chi comincia")
 - *Cosa e perché*: la partita finisce quando qualcuno arriva al punteggio scelto all'inizio (150, 300 o 500, dal modal della home). Un punteggio diverso da questi tre viene rifiutato.
 - *File* — modifica: `app/game/engine/game.py`, `app/game/engine/state.py` (P13). Crea: `tests/engine/test_partita.py`. Certezza: **sicuro**.
-- *Fatto quando*: per ognuno dei tre punteggi, la partita finisce solo a fine mano; vince chi arriva ad almeno N (con N esatti si vince); se ci arrivano entrambi vince il più alto; a parità è pareggio; arrivare a N durante la mano con un canto non chiude la partita; un punteggio fuori elenco viene rifiutato; nella prima mano il primo giocatore è scelto a caso (con un seme fisso nei test) e il mazziere è quello alla sua sinistra; dalla seconda mano chi comincia segue D11.
+- *Fatto quando*: per ognuno dei tre punteggi, la partita finisce solo a fine mano; vince chi arriva ad almeno N (con N esatti si vince); se ci arrivano entrambi vince il più alto; a parità è pareggio; arrivare a N durante la mano con un canto non chiude la partita; un punteggio fuori elenco viene rifiutato; nella prima mano il primo giocatore è scelto a caso (con un seme fisso nei test) e il mazziere è quello alla sua sinistra; dalla seconda mano comincia il giocatore alla destra di chi aveva cominciato la mano prima, e il mazziere è sempre alla sinistra di chi comincia.
 - *Dipende da*: P13.
 
-**P15 — Vista per giocatore, mosse legali, mossa automatica** · medio · decisione: **D12** (riaperta il 28/09/2026: quale carta gioca)
+**P15 — Vista per giocatore, mosse legali, mossa automatica** · medio · decisione: **D12** (decisa il 28/09/2026: regola in `docs/REGOLE-GIOCO.md`, "Tempo per turno")
 - *Cosa e perché*: dallo stato completo si ricava la vista di **un** giocatore, senza le carte degli altri né l'ordine del mazzo. È la difesa principale contro chi prova a imbrogliare.
 - *File* — crea: `app/game/engine/views.py`, `auto_move.py`, `tests/engine/test_viste.py`, `tests/engine/test_mossa_automatica.py`. Certezza: **sicuro**.
-- *Fatto quando*: la vista non contiene mai carte che il giocatore non può vedere (controllo su tutte le posizioni di una partita intera); le mosse legali coincidono con quelle che `apply` accetta; la mossa automatica è sempre legale, non canta mai e sceglie la carta come deciso in D12 (con un seme fisso nei test, se la scelta è a caso); la vista ha lo stesso formato di `app/static/dev/vista_*.json`.
+- *Fatto quando*: la vista non contiene mai carte che il giocatore non può vedere (controllo su tutte le posizioni di una partita intera); le mosse legali coincidono con quelle che `apply` accetta; la mossa automatica è sempre legale, non canta mai e sceglie la carta come deciso in D12 (meno punti, poi non di briscola, poi la più debole, poi a caso: un test per ogni passo, con un seme fisso per il caso); la vista ha lo stesso formato di `app/static/dev/vista_*.json`.
 - *Dipende da*: P13, P8.
 
 #### Account e dati (B)
@@ -624,7 +624,7 @@ Due studenti che lavorano in parallelo non toccano mai gli stessi file. Vale anc
 **Christian (Studente 3) — interfaccia e documenti:** P3, P52, P8, P9, P19, P40, P20, P21, P22, P46, P56, P30, P36, P37 (più P33, P34, P35, P42, P43 e P53 in 9.2)
 
 **Da dove si parte** (aggiornato il 28/09/2026, con P1, P2, P3, P4 e P52 già fatti) [L]:
-- **Giuseppe**: P10 → P11 → P12 → P13 subito; P14 (per la prima mano D11 è decisa; per le mani successive aspetta la risposta); **P6 appena P5 è in `dev`** (è piccolo e sblocca Antonio: conviene interrompere il motore); P15 quando P8 è in `dev` e D12 è decisa (riaperta il 28/09).
+- **Giuseppe**: P10 → P11 → P12 → P13 subito; P14 (D11 decisa); **P6 appena P5 è in `dev`** (è piccolo e sblocca Antonio: conviene interrompere il motore); P15 quando P8 è in `dev` (D12 decisa).
 - **Antonio**: **P5 subito**, partendo dalle tabelle approvate in `docs/proposta-tabelle.sql` (D38): per prima cosa verifica su MySQL il punto incerto delle amicizie (commento nel file); P7 quando P6 e P19 sono in `dev`; P18 quando P5 e P6 sono in `dev`.
 - **Christian**: P8 (il contratto si approva in tre prima del merge: lo usano P15, P21, P22, P23 e P46), poi P19, poi P40.
 
