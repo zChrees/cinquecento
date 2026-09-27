@@ -1,0 +1,39 @@
+/*
+ * Pagine di accesso e registrazione (P19; i modelli li scrive P16 usando queste
+ * classi, senza modificare questo file). Struttura:
+ *   <main class="page page--form">
+ *     <section class="panel auth">
+ *       <h1 class="auth__title">Accedi</h1>
+ *       <p class="auth__subtitle">...</p>
+ *       <form class="form"> campi di form.css, poi .form__actions con il pulsante </form>
+ *       <p class="auth__switch">Non hai un account? <a href="...">Registrati</a></p>
+ *     </section>
+ *   </main>
+ */
+
+.auth {
+  display: grid;
+  gap: 18px;
+}
+
+.auth__title {
+  font-size: 1.7rem;
+  text-align: center;
+}
+
+.auth__subtitle {
+  margin-top: -10px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.auth__switch {
+  text-align: center;
+  color: var(--muted);
+}
+
+@media (min-width: 640px) {
+  .auth {
+    padding: 32px 30px;
+  }
+}

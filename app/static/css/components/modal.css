@@ -1,0 +1,99 @@
+/*
+ * Finestre nella pagina (P19): base comune di tutti i <dialog> e finestra di
+ * conferma riutilizzabile (.dialog, creata da js/components/Modal.js) al posto di
+ * alert / confirm / prompt. Base e animazioni dal prototipo (P52).
+ */
+
+dialog {
+  padding: 0;
+  border: 0;
+  color: var(--text);
+  background: var(--surface);
+}
+
+dialog::backdrop {
+  background: var(--backdrop);
+}
+
+/* Le finestre animate (data-animated): lo sfondo scuro compare e scompare sfumando */
+dialog[data-animated][open]::backdrop {
+  animation: backdrop-in 0.25s ease;
+}
+
+dialog[data-animated].is-closing::backdrop {
+  animation: backdrop-out 0.2s ease forwards;
+}
+
+/* Finestra di conferma: al centro, larga al massimo 400 px */
+.dialog {
+  width: calc(100% - 2 * var(--gutter));
+  max-width: 400px;
+  max-height: calc(100dvh - 32px);
+  padding: 22px 20px 20px;
+  border-radius: var(--radius-l);
+  box-shadow: var(--shadow-2);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.dialog[open] {
+  animation: dialog-in 0.2s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+.dialog.is-closing {
+  animation: dialog-out 0.15s ease-in forwards;
+}
+
+.dialog__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.dialog__title {
+  flex: 1;
+  padding-top: 8px;
+  font-size: 1.3rem;
+}
+
+.dialog__head .icon-btn {
+  margin: -4px -8px 0 0;
+}
+
+.dialog__body {
+  color: var(--muted);
+}
+
+.dialog__actions {
+  display: flex;
+  flex-wrap: wrap-reverse;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+/* Su telefono i pulsanti si allargano e stanno uno sopra l'altro, quello principale in alto */
+.dialog__actions .btn {
+  flex: 1 1 140px;
+}
+
+@keyframes dialog-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.95); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes dialog-out {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateY(6px) scale(0.96); }
+}
+
+@keyframes backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes backdrop-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}

@@ -1,0 +1,108 @@
+/*
+ * Pulsanti (P19, dal prototipo P52).
+ * .btn con una variante: --primary (azione principale), --ghost (secondaria,
+ * es. "Annulla"), --danger (azione che non si annulla); misure --small e --big.
+ * .icon-btn: pulsante con sola icona; va sempre con aria-label.
+ * Un pulsante disattivato (disabled) resta visibile ma sbiadito: serve anche
+ * mentre si aspetta la risposta del server (niente doppi clic).
+ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 48px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.btn--primary {
+  background: var(--primary);
+  color: var(--on-primary);
+  box-shadow: 0 4px 0 var(--primary-strong);
+}
+
+.btn--primary:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+.btn--ghost {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.btn--ghost:hover:not(:disabled) {
+  filter: brightness(0.97);
+}
+
+.btn--danger {
+  background: var(--danger);
+  color: var(--on-primary);
+  box-shadow: 0 4px 0 var(--danger-strong);
+}
+
+.btn--danger:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+.btn--small {
+  min-height: 44px;
+  padding: 0 16px;
+}
+
+.btn--small .icon {
+  font-size: 20px;
+}
+
+.btn--big {
+  width: 100%;
+  min-height: 56px;
+  font-size: 1.15rem;
+}
+
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.icon-btn:hover {
+  background: var(--surface-2);
+}
+
+.icon-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.icon-btn--filled {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.icon-btn--filled:hover {
+  background: var(--primary-strong);
+}
