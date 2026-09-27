@@ -1,4 +1,4 @@
-# Cinquecento — istruzioni per Claude Code
+D4# Cinquecento — istruzioni per Claude Code
 
 > Le voci marcate "(da P#)" si completano quando il punto della scaletta indicato è fatto.
 
@@ -12,7 +12,7 @@
 
 6. Il regolamento del gioco è in **`docs/REGOLE-GIOCO.md`**: è il riferimento unico per il motore di gioco.
 
-**Stato (27/09/2026):** in `dev` ci sono P1, P2, **P52** (prototipo della home approvato, in `docs/prototipo/`) e i documenti aggiornati: niente classifica, stanza privata, storico né pagina delle regole (P41, P49, P50, P51 tolti), niente bottom navbar, punteggio 150/300/500; decise D34 (nome "Cinquecento"), D35 (code separate per punteggio, rating uguale per tutti), D36 (il 2v2 con un amico conta per il rating), D37 (crediti delle immagini in fondo al pannello statistiche); tema scuro rimandato al nuovo punto P53 (Fase 4). `dev` non è ancora su GitHub (push solo su richiesta). Prossimo passo: **P4** (scheletro del progetto; prima serve decidere D4, il lint).
+**Stato (27/09/2026):** in `dev` ci sono P1, P2, **P52** (prototipo della home approvato, in `docs/prototipo/`) e i documenti aggiornati: niente classifica, stanza privata, storico né pagina delle regole (P41, P49, P50, P51 tolti), niente bottom navbar, punteggio 150/300/500; decise D34 (nome "Cinquecento"), D35 (code separate per punteggio, rating uguale per tutti), D36 (il 2v2 con un amico conta per il rating), D37 (crediti delle immagini in fondo al pannello statistiche); tema scuro rimandato al nuovo punto P53 (Fase 4). In `dev` c'è anche **P4** (scheletro: `run.py`, `config.py`, segnaposto di `app/`, 31 test PASS, `ruff check .` pulito); decise D4 (ruff), python-dotenv e cryptography, SQLAlchemy 2.0. `dev` locale è avanti rispetto a GitHub (push solo su richiesta). Prossimo passo: **P5** (database: prima servono D6, D23, D24).
 
 ## File e cartelle da ignorare
 
@@ -85,7 +85,7 @@ Da riempire man mano: le parti del codice che hanno già avuto bug o che hanno r
 ## Testing
 
 - Le suite stanno in `tests/` e provano il programma vero dall'esterno quando possibile (server avviato, client simulati), non solo funzioni isolate.
-- Comando per tutte le suite (da P6): `python tests/esegui_tutti.py`. Una sola suite: `python tests/esegui_tutti.py engine` (le suite sono le cartelle di `tests/`). Numero di controlli attuale: 0 PASS (aggiornalo a ogni lotto).
+- Comando per tutte le suite (da P6): `python tests/esegui_tutti.py`. Una sola suite: `python tests/esegui_tutti.py engine` (le suite sono le cartelle di `tests/`). Numero di controlli attuale: 31 PASS (aggiornalo a ogni lotto). Finché P6 non c'è: `python -m pytest tests`.
 - **I test non toccano mai dati reali**: usano solo il database `cinquecento_test` e la porta 5099, e si rifiutano di partire se trovano il file `PRODUZIONE` nella cartella del progetto o un database che non finisce con `_test`. Mai lanciarli nella cartella della demo.
 - File che i test devono modificare (configurazioni, dati di esempio): copia fuori dal progetto, ripristino identico verificato con un hash, copia cancellata alla fine.
 - Prima di avviare un server di test controlla che la porta sia libera: se è occupata, fermati e chiedi (l'utente può avere il suo server acceso). Ricorda all'utente di chiudere le schede del browser collegate prima di un giro completo.
@@ -112,7 +112,7 @@ Per modifiche mirate l'utente preferisce diff o snippet piccoli con la posizione
 - Installazione (da P4): `py -3.14 -m venv .venv`, poi `.venv\Scripts\activate` e `pip install -r requirements.txt`; copia `.env.example` in `.env` e compila i valori.
 - Database (da P5): `mysql -u root -p < scripts/setup_db.sql` (una volta sola), poi `python scripts/migrate.py`.
 - Avvio (da P4): `python run.py` → `http://localhost:5000`.
-- Lint: da decidere (D4).
+- Lint (da P4): `ruff check .` (regole di base, nessun file di configurazione; niente `ruff format`).
 - Test (da P6): `python tests/esegui_tutti.py`.
 - Backup e ripristino (da P18): `python scripts/backup.py`, `python scripts/ripristina.py <file> <database>`; il ripristino su un database che non è di test chiede conferma.
 

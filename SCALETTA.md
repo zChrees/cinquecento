@@ -34,7 +34,7 @@ Una web-app per giocare online a **Cinquecento**, variante siciliana, con le car
 - [x] P1 (Fase 1): fine riga fissati — `.gitattributes` — *26/09: creato; i file tracciati sono `i/lf w/crlf`, un `.sh` nuovo resta LF; marcati binari anche jpeg, gif, font, gz e zip*
 - [x] P2 (Fase 1): `.gitignore` completo — `.gitignore` — *26/09: aggiunti segreti (`.env`, `.env.*` tranne `.env.example`), `PRODUZIONE`, `backups/`, `logs/`, `*.sql.gz`, `*.dump`, file di sistema ed editor; provato con file finti*
 - [ ] P3 (Fase 1): riga "Stato" e regola di consegna — `CLAUDE.md`
-- [ ] P4 (Fase 1): scheletro del progetto con tutti i file "segnaposto" — `run.py`, `config.py`, `app/`, `requirements*.txt`, `.env.example`
+- [x] P4 (Fase 1): scheletro del progetto con tutti i file "segnaposto" — `run.py`, `config.py`, `app/`, `requirements*.txt`, `.env.example` — *27/09: 36 file dell'elenco, 39 librerie fissate con `==`, 31 test PASS (`python -m pytest tests/api/test_avvio.py`, finché P6 non aggiunge `conftest.py`), `ruff check .` pulito (D4); il controllo di MySQL sta in `run.py`, così i test di P4 non richiedono MySQL*
 - [ ] P5 (Fase 1): database e prima migrazione — `scripts/setup_db.sql`, `migrations/001_init.sql`, `scripts/migrate.py`, `app/models/`
 - [ ] P6 (Fase 1): runner dei test — `tests/esegui_tutti.py`, `tests/conftest.py`
 - [ ] P7 (Fase 1): log ed errori di base — `app/logging_config.py`, `app/errors.py`, `app/templates/errors/`

@@ -2,6 +2,7 @@
 
 Domande ancora aperte, per l'utente o per il gruppo. Quando una è decisa: spuntala, spostala in `DECISIONI.md` con data e motivo, e cancellala da qui.
 I punti di `SCALETTA.md` che dipendono da una domanda la richiamano con il suo codice (D1, D2, …).
+Per D7, D8, D9, D10, D16, D24, D26 e D27, `config.py` (P4) usa già il valore consigliato, con il commento "provvisorio, Dn": se la decisione è diversa, si cambia solo quel numero.
 
 ## Processo e gruppo
 
@@ -9,7 +10,6 @@ I punti di `SCALETTA.md` che dipendono da una domanda la richiamano con il suo c
 - [ ] **D2 — Chi dà l'ok ai merge in `dev` degli altri due studenti**, e dopo il merge si fa subito il push (così gli altri vedono il lavoro) oppure no? Consigliato: ognuno dà l'ok ai propri punti dopo averli provati, e fa il push su `dev` subito dopo il merge. Resta da decidere anche cosa fare del branch `christian`, che non è più il branch di partenza: lasciarlo com'è *(consigliato)* o cancellarlo.
 - [ ] **D3 — Chi è lo Studente 1, 2 e 3** della sezione 9 di `SCALETTA.md`, e se la divisione proposta va bene.
 - [ ] **D22 — Chi aggiorna i documenti condivisi** (`SCALETTA.md`, la riga "Stato" di `CLAUDE.md`, `DECISIONI.md`, `DA-DECIDERE.md`). Se li modificano tutti e tre nei branch dei punti, i conflitti sono quasi certi, perché le righe da spuntare sono vicine tra loro. Opzioni: a) nei branch dei punti non si toccano; **una sola persona li aggiorna a fine giornata**, su un branch apposito da `dev` *(consigliata)*; b) ognuno li aggiorna nel proprio branch e i conflitti si risolvono a mano; c) la riga "Stato" diventa una riga per studente, e per il resto vale la a).
-- [ ] **D4 — Strumento di controllo del codice (lint)**: consigliato `ruff`, installato solo per lo sviluppo, che segnala errori ed è veloce; oppure nessuno strumento, solo i test.
 
 ## Tecnologia
 

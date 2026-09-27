@@ -24,6 +24,10 @@
 - 26/09/2026 — **Rating Glicko-2**, separato per 1v1 e 2v2. Il pareggio vale 0.5. Motivo: gestisce l'incertezza dei giocatori nuovi e si adatta alle squadre meglio dell'Elo.
 - 26/09/2026 — **Architettura modulare**: app factory + blueprint per dominio. Livelli routes/sockets → services → repositories → MySQL. JS con un entry point per pagina. CSS diviso in base, componenti e pagine. Motivo: richiesta esplicita dell'utente.
 - 26/09/2026 — Nomi nel **codice in inglese**, testi dell'**interfaccia e documenti in italiano**. Motivo: approvato con il primo CLAUDE.md (esempi `sing_40`, `sing_20`).
+- 27/09/2026 — **Lint con `ruff`** (0.16.9, solo in `requirements-dev.txt`): `ruff check .` con le regole di base, **senza file di configurazione** e **senza `ruff format`**, che riscriverebbe i file di tutti e creerebbe conflitti. Motivo: scelta dell'utente sulla raccomandazione di Claude (chiude D4).
+- 27/09/2026 — **Due librerie in più** oltre alle estensioni ammesse: **python-dotenv** (legge il file `.env`; è quella che Flask stesso usa) e **cryptography** (serve a PyMySQL per il login di MySQL 8.0, `caching_sha2_password`). Motivo: scelta dell'utente sulla raccomandazione di Claude.
+- 27/09/2026 — **SQLAlchemy 2.0** (2.0.54), non la 2.1: Flask-SQLAlchemy 3.1.1 è scritta per la 2.0 e la 2.1 era appena uscita. Tutte le librerie, anche quelle indirette, sono fissate con `==` in `requirements*.txt`. Motivo: scelta dell'utente sulla raccomandazione di Claude.
+- 27/09/2026 — **Controllo di MySQL all'avvio in `run.py`**, non in `create_app()`: si collega al server senza scegliere un database e accetta solo la 8.0; così i test che non usano il database non richiedono MySQL. Il controllo di Python (solo 3.14) sta invece in `create_app()`. Il server è Werkzeug in tutte le configurazioni (`ALLOW_UNSAFE_WERKZEUG`), anche nei test, che lo avviano fuori da un terminale. Motivo: scelta dell'utente sulla raccomandazione di Claude.
 
 ## Dati
 
