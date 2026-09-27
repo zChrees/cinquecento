@@ -53,7 +53,7 @@ Web-app per giocare online a **Cinquecento**, variante siciliana (Marianna), con
 
 ## Regole git
 
-- Branch permanenti: `main` (rilasci, non si tocca) e `dev` (lavoro e integrazione del gruppo). Portare `dev` in `main` è una decisione dell'utente: non proporla. Il branch `christian` non è più il branch di partenza.
+- Branch permanenti: `main` (rilasci, non si tocca) e `dev` (lavoro e integrazione del gruppo). Portare `dev` in `main` è una decisione dell'utente: non proporla. Il vecchio branch `christian` è stato cancellato il 28/09/2026, in locale e su GitHub: su GitHub ci sono solo `main` e `dev`, più i branch dei lotti quando qualcuno li pubblica.
 - Per ogni lotto: **branch nuovo da `dev` aggiornato** (es. `feature/p10-carte`, `docs/...`, `fix/...`): prima `git switch dev` e `git pull`, poi il branch. Prima di crearlo, controlla che i punti da cui dipende siano già in `dev` **su GitHub** (colonna "Attende" della sezione 9 di `SCALETTA.md`): se non ci sono, fermati e dillo.
 - Mai modifiche o commit direttamente su `dev`, e mai sui branch degli altri due.
 - Lascia le modifiche **senza commit**: l'utente le prova.
@@ -62,7 +62,7 @@ Web-app per giocare online a **Cinquecento**, variante siciliana (Marianna), con
 - Se il fast-forward non è possibile, perché nel frattempo un altro ha portato il suo punto in `dev`: spiegalo all'utente e, con il suo ok, torna sul branch del lotto, `git rebase dev`, rilancia **tutte** le suite e ripeti il merge. Il rebase si fa solo su un branch mai pushato. Se il rebase dà un conflitto, `git rebase --abort`, fermati e spiegalo all'utente: vuol dire che due persone hanno toccato lo stesso file, e va chiarito tra loro.
 - Mai `push --force` su `dev` o `main`.
 - Mai tracciare dipendenze, dati reali, segreti, backup, log (controlla `.gitignore` prima del primo commit di un file nuovo).
-- Remote `origin` su GitHub (`zChrees/cinquecento`): **il push si fa solo dopo l'ok esplicito dell'utente**, mai in automatico (D2). Dopo un merge in `dev` chiedigli se pushare, ricordando che conviene farlo presto: così gli altri due fanno il pull prima del loro prossimo punto. Dopo il push, ricordagli di avvisarli. Non allineare né pushare altri branch (per esempio `christian`) se non lo chiede.
+- Remote `origin` su GitHub (`zChrees/cinquecento`): **il push si fa solo dopo l'ok esplicito dell'utente**, mai in automatico (D2). Dopo un merge in `dev` chiedigli se pushare, ricordando che conviene farlo presto: così gli altri due fanno il pull prima del loro prossimo punto. Dopo il push, ricordagli di avvisarli. Non pushare altri branch se non lo chiede.
 
 ## Convenzioni del codice
 
