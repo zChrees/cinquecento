@@ -53,14 +53,14 @@ class BaseConfig:
     TURN_SECONDS = 30
     RECONNECT_SECONDS = 60
 
-    # Matchmaking (provvisorio, D16): intervallo di rating che si allarga col tempo
+    # Matchmaking (deciso, D16): intervallo di rating che si allarga col tempo
     MATCH_RANGE_START = 100
     MATCH_RANGE_STEP = 50
     MATCH_RANGE_STEP_SECONDS = 10
     MATCH_RANGE_MAX = 400
     MATCH_ANY_AFTER_SECONDS = 120
 
-    # Rating Glicko-2 (provvisorio, D9)
+    # Rating Glicko-2: valore iniziale e partite "provvisorie" per modalità decisi (D9)
     RATING_INITIAL = 1500
     RATING_RD_INITIAL = 350
     RATING_VOLATILITY_INITIAL = 0.06
@@ -74,7 +74,7 @@ class BaseConfig:
     LOGIN_MAX_ATTEMPTS = 5
     LOGIN_LOCK_SECONDS = 300
 
-    # Amici, chat e inviti: lunghezza dei messaggi decisa (D26), il resto provvisorio (D26, D27).
+    # Amici, chat e inviti: limiti decisi (D26), scadenza degli inviti decisa (D27).
     # I messaggi tra amici non si cancellano mai (D24): niente giorni di conservazione.
     FRIENDS_MAX = 100
     CHAT_MAX_LENGTH = 1000

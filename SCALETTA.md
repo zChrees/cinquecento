@@ -105,7 +105,7 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 
 | File | Punti che lo toccano (in ordine) | Nota |
 |---|---|---|
-| `app/__init__.py`, `config.py` | P4 → P55 → P32 | Dopo P4: P55 (Giuseppe) aggiunge una chiave a `config.py`, concordata nel punto; poi solo P32. Il 28/09/2026 Christian ha aggiornato commenti e chiavi di `config.py` alle decisioni prese, prima che partissero i punti |
+| `app/__init__.py`, `config.py` | P4 → P55 → P32 | Dopo P4: P55 (Giuseppe) aggiunge una chiave a `config.py`, concordata nel punto; poi solo P32. Il 28/09/2026 Christian ha aggiornato commenti e chiavi di `config.py` alle decisioni prese, prima che partissero i punti; lo stesso giorno, dopo D9, D16, D26 e D27, ha aggiornato di nuovo i commenti (solo i commenti, non i valori) |
 | `requirements.txt`, `requirements-dev.txt`, `.env.example`, `app/extensions.py` | P4 | Una libreria o una chiave nuova richiede di fermarsi e concordarla |
 | `app/sockets/__init__.py` | P4 → P23 → P28 → P44 | Giuseppe → Antonio → Giuseppe, ciascuno dopo che il punto precedente è in `dev` |
 | `app/realtime/room.py` | P23 → P24 → P25 → P26 | Giuseppe; P26 (Antonio) aggiunge solo la chiamata al salvataggio, dopo che P25 è in `dev` |
@@ -266,7 +266,7 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 - *Fatto quando*: registrazione ok; username duplicato → errore; password sbagliata → errore generico; dopo il logout le pagine protette rimandano al login; nel database non c'è la password in chiaro; dopo N tentativi sbagliati → attesa.
 - *Dipende da*: P5, P7, P19.
 
-**P17 — Impostazioni: avatar e cancellazione dell'account** · piccolo · decisione: **D6** (già applicata in P5), **D29**
+**P17 — Impostazioni: avatar e cancellazione dell'account** · piccolo · decisione: **D6** (già applicata in P5), **D29** (in parte: 12 avatar in SVG, decisi il 28/09/2026; restano quali figure, autore e licenza)
 - *Cosa e perché*: la pagina "Impostazioni" (dal link nel pannello statistiche dell'avatar) permette di **scegliere un avatar** da un set predefinito e di **cancellare l'account**. `avatars.py` contiene l'elenco degli avatar ammessi: il server rifiuta qualunque valore fuori elenco. Finché le immagini non ci sono (P43), la pagina mostra il nome o il numero di ogni avatar.
 - *File* — modifica: `app/blueprints/profile/routes.py` (P4), `app/services/auth_service.py`, `app/repositories/user_repo.py` (P16). Crea: `app/services/avatars.py`, `app/templates/profile/settings.html`, `app/static/js/pages/profile.js`, `app/static/css/pages/profile.css`, `tests/api/test_impostazioni.py`. Certezza: **sicuro**.
 - *Fatto quando*: l'avatar scelto viene salvato; un avatar fuori elenco viene rifiutato; dopo la conferma (con la finestra nella pagina di P19, non `confirm()`) l'utente non esiste più, il login fallisce, e le partite restano come deciso in D6.
@@ -278,7 +278,7 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 - *Fatto quando*: sul database di test: backup → modifica dei dati → ripristino → dati identici a prima [T].
 - *Dipende da*: P5, P6.
 
-**P45 — Amicizie** · medio · decisione: **D23, D26, D33**
+**P45 — Amicizie** · medio · decisione: **D23, D26, D33** (decise il 27 e 28/09/2026)
 - *Cosa e perché*: cercare un utente per username e mandargli una **richiesta di amicizia**; accettare, rifiutare, annullare una richiesta; rimuovere un amico; vedere la lista degli amici e delle richieste in arrivo (con il numero per il contatore nella navbar). Sono richieste HTTP in JSON, protette da CSRF. C'è anche "blocca utente" (D23): il blocco toglie l'amicizia.
 - *File* — modifica: `app/blueprints/friends/__init__.py`, `app/blueprints/friends/routes.py` (segnaposto di P4). Crea: `app/services/friend_service.py`, `app/repositories/friend_repo.py`, `tests/api/test_amicizie.py`. Certezza: **sicuro**.
 - *Fatto quando*: test via HTTP: richiesta → accettazione → i due sono amici; una richiesta doppia o a sé stessi viene rifiutata; rimuovere un amico lo toglie per entrambi; un utente bloccato non può mandare richieste (D23); si rispetta il limite di D26.
@@ -290,7 +290,7 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 - *Fatto quando*: dopo una partita simulata, nel database di test ci sono partita, giocatori ed eventi in ordine; un errore a metà salvataggio non lascia dati parziali.
 - *Dipende da*: P5 per service, repository e test; P25 solo per la modifica a `room.py`, che si fa per ultima.
 
-**P27 — Rating Glicko-2** · medio · decisione: **D9**
+**P27 — Rating Glicko-2** · medio · decisione: **D9** (decisa il 28/09/2026)
 - *File* — crea: `app/services/glicko2.py`, `app/services/rating_service.py`, `app/repositories/rating_repo.py`, `tests/services/test_glicko2.py`, `tests/services/test_rating_service.py`. Modifica: `app/services/match_service.py` (P26). Certezza: **sicuro**.
 - *Fatto quando*: test contro l'esempio numerico ufficiale di Glicko-2 (documento di Glickman) [T]; il pareggio conta 0.5; il 1v1 contro un amico non cambia il rating, il 2v2 con un amico come compagno sì; il rating conta allo stesso modo a 150, 300 e 500 punti; 1v1 e 2v2 separati; aggiornamento nella stessa transazione del salvataggio.
 - *Dipende da*: P26 (service e repository).
@@ -322,7 +322,7 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 - *Fatto quando*: la pagina di prova mostra le 40 carte e una mano da 5 a 360 px; ogni carta ha attributi `data-suit` e `data-rank` stabili.
 - *Dipende da*: P19.
 
-**P21 — Tavolo di gioco con dati finti** · medio · decisione: **D15**
+**P21 — Tavolo di gioco con dati finti** · medio · decisione: **D15** (decisa il 28/09/2026)
 - *Cosa e perché*: il tavolo (la tua mano, gli avversari coperti, la presa in corso, la briscola, i punteggi, il timer, i pulsanti "Canta 40/20"), disegnato da un'**unica funzione `render(vista)`** a partire da `app/static/dev/vista_*.json`. C'è un pulsante "esci" con conferma.
 - *File* — crea: `app/templates/game/table.html`, `app/static/js/pages/game.js`, `app/static/js/components/Table.js`, `Trick.js`, `Scoreboard.js`, `Timer.js`, `SingButtons.js`, `app/static/css/components/table.css`, `trick.css`, `scoreboard.css`, `timer.css`, `app/static/css/pages/game.css`, `tests/api/test_pagina_tavolo.py`. Modifica: `app/blueprints/game/routes.py` (P4). Certezza: **sicuro**.
 - *Fatto quando*: con `?demo=1v1` e `?demo=2v2` il tavolo si vede correttamente; i pulsanti delle mosse non legali sono disattivati; il test verifica che la pagina risponda e contenga i marcatori `data-*`.
@@ -356,7 +356,7 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 
 #### Tempo reale e integrazione (I)
 
-**P23 — Collegamento in tempo reale** · medio · decisione: **D14**
+**P23 — Collegamento in tempo reale** · medio · decisione: **D14** (decisa il 28/09/2026)
 - *Cosa e perché*: Flask-SocketIO in modalità threading; si collega solo chi ha fatto il login; `RoomManager` tiene le stanze in memoria con **un lock per stanza**. Lato pagina, `core/socket.js` gestisce connessione e riconnessione automatica.
 - *File* — crea: `app/realtime/events.py`, `room.py`, `room_manager.py`, `app/static/js/core/socket.js`, `app/static/js/core/events.js`, `app/static/js/vendor/socket.io.min.js` (versione fissa, annotata in testa al file), `tests/sockets/conftest.py`, `tests/sockets/test_connessione.py`, `tests/sockets/test_lock_stanza.py`. Modifica: `app/sockets/__init__.py`, `app/sockets/connection_events.py` (P4). Certezza: **sicuro**.
 - *Fatto quando*: test con client simulati: un utente senza login viene rifiutato; due utenti nella stessa stanza ricevono gli eventi; 50 azioni inviate insieme vengono elaborate una alla volta senza errori.
@@ -368,12 +368,12 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 - *Fatto quando*: test con client simulati: una partita 1v1 e una 2v2 fino al punteggio (a 150 per fare prima), con la stanza creata da `create_room`; una mossa illegale riceve un errore e non cambia niente; le due funzioni esposte hanno un test. La prova a mano con due browser si fa da P28, quando c'è la coda.
 - *Dipende da*: P15, P21, P23.
 
-**P25 — Timer, riconnessione, abbandono** · medio · decisione: **D12, D13**
+**P25 — Timer, riconnessione, abbandono** · medio · decisione: **D12, D13** (decise il 28/09/2026: regole in `docs/REGOLE-GIOCO.md`, "Tempo per turno")
 - *File* — modifica: `app/realtime/room.py` (P24), `app/sockets/game_events.py` (P24), `app/sockets/connection_events.py` (P23), `app/static/js/pages/game.js` (P24). Crea: `tests/sockets/test_timer_riconnessione.py`. Certezza: **sicuro**.
 - *Fatto quando*: con i tempi ridotti dalla configurazione di test: a turno scaduto il server gioca la mossa automatica; chi si riconnette in tempo riceve di nuovo la sua vista; oltre il tempo la partita finisce per abbandono.
 - *Dipende da*: P24.
 
-**P28 — Matchmaking 1v1** · medio · decisione: **D16**
+**P28 — Matchmaking 1v1** · medio · decisione: **D16** (decisa il 28/09/2026: i valori di `config.py`)
 - *Cosa e perché*: "Gioca" nel modal di Partita Veloce mette il giocatore in coda per la modalità **e il punteggio** scelti (code separate); quando trova un avversario il server crea la stanza con `create_room` (P24) e porta entrambi al tavolo.
 - *File* — crea: `app/realtime/matchmaking.py`, `tests/sockets/test_matchmaking_1v1.py`. Modifica: `app/sockets/lobby_events.py` (P4), `app/sockets/__init__.py` (P23, per avviare il controllo periodico delle code), `app/static/js/pages/home.js` e `app/static/js/components/ModeModal.js` (P22, per collegare "Gioca" e la schermata di coda). Certezza: **sicuro**.
 - *Fatto quando*: due giocatori con rating vicino e stesso punteggio vengono abbinati subito; con punteggi diversi no; con rating lontani solo dopo che la tolleranza si è allargata; chi annulla esce dalla coda; lo stesso utente non può stare due volte in coda (doppio clic, due schede).
@@ -391,7 +391,7 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 - *Fatto quando*: test con client simulati: il numero di utenti online sale e scende con le connessioni (lo stesso utente con due schede conta una volta sola); un utente con una partita in corso riceve il link per rientrare.
 - *Dipende da*: P25, P29.
 
-**P47 — Amici online e inviti a partita** · medio · decisione: **D27**
+**P47 — Amici online e inviti a partita** · medio · decisione: **D27** (decisa il 28/09/2026)
 - *Cosa e perché*: il pannello amici mostra **chi è online** in tempo reale e riceve le richieste di amicizia senza ricaricare la pagina. Nel modal di **Gioca con un amico** la lista degli amici online diventa vera: "Invita" manda l'invito, l'amico lo riceve con un conto alla rovescia, e **"Gioca" si attiva solo quando ha accettato**. Poi:
   - **1v1**: il server crea subito la stanza con i due amici (`create_room` di P24);
   - **2v2**: i due amici entrano **insieme** nella coda 2v2 come coppia (P29), e gli avversari arrivano dal matchmaking.
@@ -401,7 +401,7 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 - *Fatto quando*: test con client simulati: un amico che si collega appare online agli altri; un invito 1v1 accettato porta i due nella stessa stanza; un invito 2v2 accettato mette la coppia in coda; un invito scaduto o rifiutato avvisa chi l'ha mandato; non si può invitare chi non è amico o chi è già in partita.
 - *Dipende da*: P24, P29, P44, P45, P46.
 
-**P48 — Chat tra amici** · medio · decisione: **D24, D25, D26**
+**P48 — Chat tra amici** · medio · decisione: **D24, D25, D26** (decise il 27 e 28/09/2026)
 - *Cosa e perché*: messaggi in tempo reale **solo tra amici**, salvati nel database, con la cronologia che si carica all'apertura della chat e un contatore dei messaggi non letti. Protezioni: lunghezza massima e limite di frequenza (D26), testo sempre mostrato come testo, mai nei log. I messaggi **non si cancellano mai** (D24): spariscono solo con l'account di uno dei due (lo fa il database, P5). Se l'amicizia finisce o c'è un blocco, la conversazione resta visibile ma non si può più scrivere.
 - *File* — crea: `app/services/chat_service.py`, `app/repositories/chat_repo.py`, `tests/sockets/test_chat.py`. Modifica: `app/sockets/chat_events.py` (P4), `app/static/js/components/ChatWindow.js` (P46). Certezza: **sicuro**.
 - *Fatto quando*: test con client simulati: un messaggio arriva solo al destinatario; a chi non è amico il messaggio viene rifiutato; un messaggio troppo lungo o troppo frequente viene rifiutato con un avviso; un messaggio con `<script>` viene mostrato come testo; la cronologia si carica in ordine; dopo la fine dell'amicizia o un blocco la cronologia si legge ma un messaggio nuovo viene rifiutato.
@@ -466,7 +466,7 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 - *Fatto quando*: il logo si vede nitido a 40 px su telefono e computer (anche in tema scuro, se P53 è già fatto); il tocco porta alla home.
 - *Dipende da*: P40.
 
-**P43 — Immagini degli avatar** · piccolo · **decisione: sì** (D29) — **file non tutti sicuri, vedi sezione 9.2**
+**P43 — Immagini degli avatar** · piccolo · **decisione: sì** (D29: decisi il 28/09/2026 numero e formato, restano quali figure, autore e licenza) — **file non tutti sicuri, vedi sezione 9.2**
 - *Cosa e perché*: le immagini del set di avatar scelto in D29, mostrate nella navbar, nel pannello statistiche, nelle impostazioni e nella lista amici.
 - *Fatto quando*: ogni avatar di `avatars.py` ha la sua immagine; chi non ne ha scelto uno vede le iniziali; il peso totale è contenuto (sotto 300 KB).
 - *Dipende da*: P17, P40, P46.

@@ -38,6 +38,7 @@ Ogni mano vale 120 punti di carte, più i canti.
 
 - Ogni giocatore ha **30 secondi** per il suo turno. Allo scadere il server gioca al suo posto la carta scelta così: 1) quella con **meno punti**; 2) a parità, una carta **non di briscola**, perché la briscola serve a vincere le prese; 3) a parità, la **più debole** nella presa (il 2 prima del 4, e così via); 4) se resta ancora una parità (per esempio il 4 di coppe e il 4 di spade, senza briscola tra i due), una delle due **a caso**. La mossa automatica **non canta mai**. Deciso il 28/09/2026 (D12).
 - Chi si disconnette ha **60 secondi** per rientrare; poi la partita è persa per abbandono.
+- Nel **2v2**, se un giocatore abbandona, **perde tutta la squadra**, ma il **rating scende solo a chi ha abbandonato**. Deciso il 28/09/2026 (D13).
 
 ## Svolgimento di una mano
 
@@ -75,4 +76,4 @@ Ogni mano vale 120 punti di carte, più i canti.
 
 ## Punti ancora aperti
 
-Vedi `DA-DECIDERE.md`, sezione "Gioco" (per esempio cosa succede quando qualcuno abbandona un 2v2: D13).
+Vedi `DA-DECIDERE.md`, sezione "Gioco" (per esempio come si formano le squadre nella coda 2v2: D17).

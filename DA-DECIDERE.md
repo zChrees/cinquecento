@@ -2,7 +2,7 @@
 
 Domande ancora aperte, per l'utente o per il gruppo. Quando una è decisa: spuntala, spostala in `DECISIONI.md` con data e motivo, e cancellala da qui.
 I punti di `SCALETTA.md` che dipendono da una domanda la richiamano con il suo codice (D1, D2, …).
-Per D8, D9, D10, D16, D26 e D27, `config.py` (P4) usa già il valore consigliato, con il commento "provvisorio, Dn": se la decisione è diversa, si cambia solo quel numero.
+Per D8 e D10, `config.py` (P4) usa già il valore consigliato, con il commento "provvisorio, Dn": se la decisione è diversa, si cambia solo quel numero.
 
 ## Processo e gruppo
 
@@ -15,28 +15,17 @@ Per D8, D9, D10, D16, D26 e D27, `config.py` (P4) usa già il valore consigliato
 ## Dati
 
 - [ ] **D8 — Regole per la password**: consigliato almeno 8 caratteri, senza altri obblighi.
-- [ ] **D9 — Rating iniziale e visibilità**: consigliato 1500, mostrato come "provvisorio" per le prime 10 partite.
 - [ ] **D10 — Per quanti giorni tenere i backup**: consigliato 14 giorni.
 
 ## Gioco
 
-- [ ] **D13 — Abbandono nel 2v2**: consigliato che perda tutta la squadra, con penalità sul rating solo per chi ha abbandonato; oppure penalità per tutta la squadra.
-- [ ] **D14 — Stesso utente in due schede o dispositivi**: consigliato che l'ultima scheda aperta prenda il posto della precedente, che mostra "partita aperta altrove"; oppure la seconda scheda viene bloccata.
-- [ ] **D15 — Per quanto tempo si mostrano le carte del canto** agli avversari: consigliati 3 secondi, più un'icona fissa accanto al giocatore per tutta la mano.
-- [ ] **D16 — Tolleranza del matchmaking**: consigliato di partire con ±100 punti di rating, allargare di +50 ogni 10 secondi, fino a ±400. Dopo 2 minuti si accetta qualunque avversario.
 - [ ] **D17 — Formazione delle squadre nella coda 2v2**: consigliato di unire i 4 giocatori in modo che le medie delle due squadre siano il più vicine possibile.
-
-## Amici e chat
-
-- [ ] **D26 — Limiti**: consigliati al massimo 100 amici e non più di 1 messaggio al secondo. La lunghezza dei messaggi è decisa il 27/09/2026: al massimo 1000 caratteri (vedi `DECISIONI.md`).
-- [ ] **D27 — Inviti a partita**: consigliata una scadenza di 60 secondi. Dal prototipo approvato il 27/09/2026: nel 1v1 l'amico invitato è l'avversario; nel 2v2 è il **compagno di squadra** e gli avversari arrivano dal matchmaking. Si invita un amico alla volta. Resta da decidere cosa succede se l'amico rifiuta o non risponde (consigliato: l'invito scade, compare un avviso e si può invitare un altro amico).
-- [ ] **D33 — Ricerca di un utente per mandargli la richiesta**: consigliato **username esatto** (protegge la privacy ed evita lo spam); oppure ricerca per parte del nome.
 
 ## Interfaccia
 
 - [ ] **D18 — Colore del tavolo di gioco**: colori e stile delle pagine vengono dal prototipo scritto da Claude (P52, stile siciliano; per ora solo tema chiaro, il tema scuro è P53). Resta da decidere il tavolo, che il prototipo non comprende: consigliato il verde classico, accostato alla palette del prototipo, con una versione per il tema scuro quando arriva P53.
 - [ ] **D19 — Immagini delle carte**: da dove vengono le vostre immagini e con che licenza? Serve saperlo per usarle nella versione finale (punto P35).
-- [ ] **D29 — Set di avatar**: quanti e con che soggetti? Consigliati 12 (i 4 semi e le 8 figure siciliane: Re, Cavallo e Fante di alcuni semi), in formato SVG. Chi li disegna, o da dove si prendono, e con che licenza?
+- [ ] **D29 — Set di avatar**: deciso il 28/09/2026 che sono 12 in SVG, con i 4 semi e 8 figure siciliane (vedi `DECISIONI.md`). Restano aperti: quali 8 figure (Re, Cavallo e Fante di quali semi), chi li disegna o da dove si prendono, e con che licenza.
 
 ## Tempi
 
