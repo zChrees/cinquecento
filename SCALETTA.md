@@ -45,14 +45,14 @@ Una web-app per giocare online a **Cinquecento**, variante siciliana, con le car
 ### Fase 2 — Funzioni essenziali
 - [x] P10 (Fase 2, A): carte, mazzo, parametri delle regole — `app/game/engine/cards.py`, `deck.py`, `rules.py`, `errors.py` — *28/09 (Giuseppe, commit `3052632`): 45 test nuovi, 76 PASS in tutto; punteggi 150/300/500 sia in `config.py` sia in `RuleSet`, tenuti uguali da un test*
 - [x] P11 (Fase 2, A): chi vince la presa — `app/game/engine/trick.py` — *28/09 (Giuseppe, commit `121aea7`): 30 test nuovi (tutte le coppie di carte e 2.000 prese da 4), 106 PASS in tutto; `trick_winner` restituisce la posizione nella presa, P13 la trasforma nel giocatore*
-- [ ] P12 (Fase 2, A): cantare 40 e 20 — `app/game/engine/singing.py`
-- [ ] P13 (Fase 2, A): svolgimento di una mano, 1v1 e 2v2 — `app/game/engine/state.py`, `actions.py`, `game.py`
+- [x] P12 (Fase 2, A): cantare 40 e 20 — `app/game/engine/singing.py` — *28/09 (Giuseppe, commit `b5d7123`): 23 test nuovi, 129 PASS in tutto; fuori elenco, con l'ok di Giuseppe, `errors.py` (suo, P10) con `NotYourTurnError`, così P24 risponde `not_your_turn` come chiede il contratto*
+- [x] P13 (Fase 2, A): svolgimento di una mano, 1v1 e 2v2 — `app/game/engine/state.py`, `actions.py`, `game.py` — *28/09 (Giuseppe, commit `448da13`): 283 test nuovi (mani intere con 100 semi fissi per modalità), 412 PASS in tutto; `legal_actions(stato, posto)` in `game.py`; `new_hand` riceve mazzo mescolato e chi comincia (mescolare e D11 spettano a P14)*
 - [ ] P14 (Fase 2, A): partita fino al punteggio scelto (150, 300, 500), pareggio, mazziere — `app/game/engine/game.py`, `state.py`
 - [ ] P15 (Fase 2, A): vista per giocatore, mosse legali, mossa automatica — `app/game/engine/views.py`, `auto_move.py`
 - [ ] P16 (Fase 2, B): registrazione, login, logout — `app/blueprints/auth/`, `auth_service.py`, `user_repo.py`, `app/templates/auth/`
 - [ ] P17 (Fase 2, B): impostazioni: avatar e cancellazione dell'account — `app/blueprints/profile/`, `app/templates/profile/`, `app/services/avatars.py`
 - [ ] P18 (Fase 2, B): backup e ripristino — `scripts/backup.py`, `scripts/ripristina.py`
-- [ ] P19 (Fase 2, C): base grafica mobile-first — `app/templates/base.html`, `app/static/css/base/`
+- [x] P19 (Fase 2, C): base grafica mobile-first — `app/templates/base.html`, `app/static/css/base/` — *28/09 (Christian, commit `03648ef`): `base.html`, messaggi flash, CSS di base e dei componenti dal prototipo (colori solo in `variables.css`, uguali al prototipo), `Modal.js` e `dom.js`; 13 test nuovi, 425 PASS in tutto dopo il rebase su P12 e P13; foto a 360×640, 360×560 e 1440×900*
 - [ ] P40 (Fase 2, C): navbar, pannello statistiche con dati finti, finestra "Accedi o registrati" — `partials/navbar.html`, `app/static/js/core/layout.js`, `StatsPanel.js`
 - [ ] P20 (Fase 2, C): componenti carta e mano — `app/static/js/components/Card.js`, `Hand.js`
 - [ ] P21 (Fase 2, C): tavolo di gioco con dati finti — `app/templates/game/table.html`, `app/static/js/pages/game.js`
