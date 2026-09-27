@@ -6,7 +6,8 @@ Web-app per giocare online a **Cinquecento**, il gioco di carte siciliano simile
   - **Partita Veloce**: la **coda di matchmaking** abbina giocatori di livello simile in base al rating;
   - **Gioca con un amico**: si invita un amico online; nel 1v1 è l'avversario, nel 2v2 il compagno di squadra (gli avversari arrivano dal matchmaking).
 - **Account personali**: registrazione, login, scelta di un avatar, cancellazione dell'account, **statistiche**.
-- **Amici**: richieste di amicizia, chi è online, **chat** e **inviti** a una 1v1 o 2v2.
+- **Amici**: richieste di amicizia, chi è online, **chat** a testo libero e **inviti** a una 1v1 o 2v2.
+- **Al tavolo**: le **frasi pronte** da mandare agli altri giocatori, in italiano e in siciliano ("Amunì!", "Baciamo le mani"…).
 - Pensata prima per lo **smartphone** (mobile-first), funziona anche da computer. La home non scorre mai.
 
 ### Com'è fatta l'interfaccia
@@ -14,18 +15,18 @@ Web-app per giocare online a **Cinquecento**, il gioco di carte siciliano simile
 ```
 ┌──────────────────────────────────┐
 │ (M)        Cinquecento        [A]│  avatar (statistiche) · nome · amici e chat
-├──────────────────────────────────┤  navbar trasparente e sfocata
+├──────────────────────────────────┤  navbar trasparente, scritte sul panno
 │        o 24 giocatori online     │
 │  Partita Veloce                  │
 │  ┌─────────┐    ┌─────────┐      │
-│  │   1v1   │    │   2v2   │      │  carte-pulsante: si apre il modal
-│  └─────────┘    └─────────┘      │  con i punti (150 / 300 / 500) e "Gioca"
+│  │   1v1   │    │   2v2   │      │  carte-pulsante: toccata, vola al centro, si gira
+│  └─────────┘    └─────────┘      │  e diventa il modal con i punti (150 / 300 / 500)
 │  Gioca con un amico              │
 │  ┌─────────┐    ┌─────────┐      │
 │  │   1v1   │    │   2v2   │      │  + la lista degli amici da invitare
 │  └─────────┘    └─────────┘      │
 └──────────────────────────────────┘
-   sullo sfondo: carte siciliane sparse negli spazi vuoti
+   sullo sfondo: panno verde con una cascata di carte siciliane
 ```
 
 Il riferimento grafico è il prototipo in [docs/prototipo/](docs/prototipo/): si apre con un doppio clic su `index.html`.
@@ -75,6 +76,7 @@ cinquecento/
 │
 ├── docs/
 │   ├── REGOLE-GIOCO.md        regolamento del gioco (riferimento unico)
+│   ├── proposta-tabelle.sql   tabelle del database approvate (D38): la usa P5, poi si cancella
 │   ├── CONTRATTO-SOCKET.md    eventi scambiati tra pagine e server, formato della "vista"
 │   ├── DEMO.md                lista di controllo per il giorno della demo
 │   ├── prototipo/             prototipo approvato della home (P52), riferimento grafico
@@ -115,14 +117,15 @@ cinquecento/
 │   │   ├── room_manager.py    elenco delle stanze attive, creazione delle stanze
 │   │   ├── matchmaking.py     code 1v1 e 2v2, per punteggio
 │   │   ├── presence.py        chi è online
-│   │   └── invites.py         inviti a partita tra amici
+│   │   ├── invites.py         inviti a partita tra amici
+│   │   └── table_phrases.py   elenco delle frasi pronte del tavolo
 │   │
 │   ├── sockets/               ingressi in tempo reale (sottili)
 │   │   ├── __init__.py        registra i gestori degli eventi
 │   │   ├── connection_events.py   collegamento, scollegamento, controllo del login
 │   │   ├── home_events.py     dati della home (utenti online, rientro in partita)
 │   │   ├── lobby_events.py    entrata e uscita dalle code
-│   │   ├── game_events.py     gioca carta, canta, riconnessione
+│   │   ├── game_events.py     gioca carta, canta, riconnessione, frasi del tavolo
 │   │   ├── friends_events.py  amici online, inviti
 │   │   └── chat_events.py     messaggi della chat
 │   │
@@ -156,7 +159,7 @@ cinquecento/
 │   │   ├── user.py
 │   │   ├── rating.py
 │   │   ├── match.py           partite, giocatori della partita, eventi
-│   │   ├── friendship.py      richieste di amicizia, amicizie (ed eventuali blocchi)
+│   │   ├── friendship.py      richieste di amicizia, amicizie e blocchi
 │   │   └── chat_message.py
 │   │
 │   ├── templates/             pagine HTML (Jinja2)
@@ -180,7 +183,7 @@ cinquecento/
 │       ├── dev/               dati di esempio e pagina di prova delle carte (solo sviluppo)
 │       └── img/
 │           ├── cards/         immagini delle 40 carte, con la loro licenza
-│           ├── cards-bg/      carte siciliane dello sfondo della home (CC BY-SA 3.0)
+│           ├── cards-bg/      carte del prototipo: sfondo, logo, carte-pulsante (P40)
 │           ├── avatars/       set di avatar predefiniti
 │           └── logo.*         logo "Cinquecento"
 │
@@ -237,7 +240,9 @@ I test usano **solo** il database `cinquecento_test` e la porta 5099. Si rifiuta
 
 - Branch permanenti: `main` (non si tocca) e `dev` (lavoro del gruppo).
 - Per ogni punto della scaletta si crea un **branch nuovo da `dev` aggiornato**. Lì si modifica e si testa, e **solo dopo l'ok** si fa il commit e il merge in `dev`.
-- Si modificano **solo i file indicati nel punto**. La divisione dei punti tra i tre studenti, e l'ordine in cui farli per non creare conflitti, sono nella sezione 9 di [SCALETTA.md](SCALETTA.md).
+- Si modificano **solo i file indicati nel punto**. La divisione dei punti tra Giuseppe, Antonio e Christian, e l'ordine in cui farli per non creare conflitti, sono nella sezione 9 di [SCALETTA.md](SCALETTA.md).
+- Prima di ogni punto: `git switch dev` e `git pull`. Dopo l'ok: merge fast-forward in `dev` e **push subito**, poi si avvisano gli altri. Se il fast-forward non riesce, `git rebase dev` e di nuovo tutti i test (regole complete in [CLAUDE.md](CLAUDE.md), "Regole git").
+- `SCALETTA.md`, `CLAUDE.md`, `DECISIONI.md` e `DA-DECIDERE.md` li aggiorna **solo Christian**: gli altri, finito un punto, gli mandano un riepilogo.
 - Il regolamento, le decisioni prese e le domande aperte stanno nei documenti elencati sopra: prima di cambiare qualcosa, controlla lì.
 
 ## Documenti

@@ -33,7 +33,7 @@ Una web-app per giocare online a **Cinquecento**, variante siciliana, con le car
 ### Fase 1 — Fondamenta
 - [x] P1 (Fase 1): fine riga fissati — `.gitattributes` — *26/09: creato; i file tracciati sono `i/lf w/crlf`, un `.sh` nuovo resta LF; marcati binari anche jpeg, gif, font, gz e zip*
 - [x] P2 (Fase 1): `.gitignore` completo — `.gitignore` — *26/09: aggiunti segreti (`.env`, `.env.*` tranne `.env.example`), `PRODUZIONE`, `backups/`, `logs/`, `*.sql.gz`, `*.dump`, file di sistema ed editor; provato con file finti*
-- [ ] P3 (Fase 1): riga "Stato" e regola di consegna — `CLAUDE.md`
+- [x] P3 (Fase 1): riga "Stato" e regola di consegna — `CLAUDE.md` — *28/09: spuntato; la riga "Stato" e i passi di "Consegna" esistono dal primo CLAUDE.md, adattati il 27/09 al lavoro in tre (D22)*
 - [x] P4 (Fase 1): scheletro del progetto con tutti i file "segnaposto" — `run.py`, `config.py`, `app/`, `requirements*.txt`, `.env.example` — *27/09: 36 file dell'elenco, 39 librerie fissate con `==`, 31 test PASS (`python -m pytest tests/api/test_avvio.py`, finché P6 non aggiunge `conftest.py`), `ruff check .` pulito (D4); il controllo di MySQL sta in `run.py`, così i test di P4 non richiedono MySQL*
 - [ ] P5 (Fase 1): database e prima migrazione — `scripts/setup_db.sql`, `migrations/001_init.sql`, `scripts/migrate.py`, `app/models/`
 - [ ] P6 (Fase 1): runner dei test — `tests/esegui_tutti.py`, `tests/conftest.py`
@@ -105,7 +105,7 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 
 | File | Punti che lo toccano (in ordine) | Nota |
 |---|---|---|
-| `app/__init__.py`, `config.py` | P4 → P55 → P32 | Dopo P4: P55 (Giuseppe) cambia due chiavi di `config.py`, concordate nel punto; poi solo P32 |
+| `app/__init__.py`, `config.py` | P4 → P55 → P32 | Dopo P4: P55 (Giuseppe) aggiunge una chiave a `config.py`, concordata nel punto; poi solo P32. Il 28/09/2026 Christian ha aggiornato commenti e chiavi di `config.py` alle decisioni prese, prima che partissero i punti |
 | `requirements.txt`, `requirements-dev.txt`, `.env.example`, `app/extensions.py` | P4 | Una libreria o una chiave nuova richiede di fermarsi e concordarla |
 | `app/sockets/__init__.py` | P4 → P23 → P28 → P44 | Giuseppe → Antonio → Giuseppe, ciascuno dopo che il punto precedente è in `dev` |
 | `app/realtime/room.py` | P23 → P24 → P25 → P26 | Giuseppe; P26 (Antonio) aggiunge solo la chiamata al salvataggio, dopo che P25 è in `dev` |
@@ -135,7 +135,7 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 | `app/static/js/components/Card.js`, `app/static/css/components/card.css` | P20 → P35 | Christian |
 | `docs/DEMO.md` | P38 → P39 | Antonio |
 | `README.md` | P9 → P37 | Christian |
-| `docs/prototipo/*` | P52 | Dopo P52 nessuno lo modifica: P19, P40 e P22 lo **leggono** soltanto |
+| `docs/prototipo/*` | P52 | Dopo P52 nessuno lo modifica: P19, P40 e P22 lo **leggono** soltanto (il 28/09/2026 Christian ha corretto solo un rimando nel `LEGGIMI.md`: le immagini arrivano con P40) |
 | `SCALETTA.md`, `CLAUDE.md` (riga Stato), `DECISIONI.md`, `DA-DECIDERE.md` | Christian | **Solo Christian** li aggiorna, su un branch `docs/…` da `dev` (D22). Nei branch dei punti non si toccano; Giuseppe e Antonio gli mandano un riepilogo di ogni punto |
 
 ## 4. Fasi e dettaglio dei punti
@@ -163,7 +163,7 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 - *Dipende da*: nessuno.
 
 **P4 — Scheletro del progetto** · medio · decisione: **D4** (lint)
-- *Cosa e perché*: crea tutta la struttura del `README.md` con i file di collegamento **già pronti come segnaposto** (vedi sezione 3), così gli altri punti non devono toccare i file centrali. `config.py` contiene fin da subito **tutte** le chiavi: database, `SECRET_KEY`, `HOST`, `PORT`, secondi del turno (30), secondi di riconnessione (60), parametri del matchmaking, limiti della chat (lunghezza e frequenza dei messaggi), durata degli inviti, cartelle di log e backup, giorni di conservazione dei backup e dei messaggi. All'avvio si **controllano le versioni** (Python 3.14, MySQL 8.0) e ci si ferma con un messaggio chiaro se non corrispondono.
+- *Cosa e perché*: crea tutta la struttura del `README.md` con i file di collegamento **già pronti come segnaposto** (vedi sezione 3), così gli altri punti non devono toccare i file centrali. `config.py` contiene fin da subito **tutte** le chiavi: database, `SECRET_KEY`, `HOST`, `PORT`, secondi del turno (30), secondi di riconnessione (60), parametri del matchmaking, limiti della chat (lunghezza e frequenza dei messaggi), durata degli inviti, cartelle di log e backup, giorni di conservazione dei backup (e dei messaggi: tolta il 28/09/2026, perché i messaggi non si cancellano, D24). All'avvio si **controllano le versioni** (Python 3.14, MySQL 8.0) e ci si ferma con un messaggio chiaro se non corrispondono.
 - *File* — crea:
   - radice: `run.py`, `config.py`, `.env.example`, `requirements.txt`, `requirements-dev.txt`
   - `app/__init__.py`, `app/extensions.py`, `app/checks.py`
@@ -178,10 +178,10 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 - *Dipende da*: P1, P2.
 
 **P5 — Database** · medio · decisione: **D6, D7, D23, D24, D26, D38 prese il 27/09/2026** (le tabelle approvate sono in `docs/proposta-tabelle.sql`)
-- *Cosa e perché*: `setup_db.sql` crea i database `cinquecento_dev` e `cinquecento_test` con un utente MySQL dedicato, in `utf8mb4`/InnoDB. `001_init.sql` crea **tutte** le tabelle della prima versione, con i nomi in italiano (D38): `utenti`, `rating`, `partite`, `giocatori_partita`, `mosse_partita`, `amicizie`, `blocchi`, `messaggi`, `versione_schema`. **Parte da `docs/proposta-tabelle.sql`** (27/09/2026), una volta approvata, e la cancella. Il comportamento alla cancellazione di un utente (D6) si decide qui, con le chiavi esterne. `migrate.py` applica le migrazioni mancanti. I modelli Python rispecchiano le tabelle.
-- *File* — crea: `scripts/setup_db.sql`, `migrations/001_init.sql`, `scripts/migrate.py`, `app/models/user.py`, `app/models/rating.py`, `app/models/match.py`, `app/models/friendship.py`, `app/models/chat_message.py`, `tests/db/test_migrate.py`. Certezza: **sicuro**. Se D23 = sì, il modello dei blocchi va in `app/models/friendship.py`.
+- *Cosa e perché*: `setup_db.sql` crea i database `cinquecento_dev` e `cinquecento_test` con un utente MySQL dedicato, in `utf8mb4`/InnoDB. `001_init.sql` crea **tutte** le tabelle della prima versione, con i nomi in italiano (D38): `utenti`, `rating`, `partite`, `giocatori_partita`, `mosse_partita`, `amicizie`, `blocchi`, `messaggi`, `versione_schema`. **Parte da `docs/proposta-tabelle.sql`** (approvata il 27/09/2026, aggiornata il 28/09 con il salvataggio a fine partita) e la cancella. Il comportamento alla cancellazione di un utente (D6) sta nelle chiavi esterne del file. `migrate.py` applica le migrazioni mancanti. I modelli Python rispecchiano le tabelle.
+- *File* — crea: `scripts/setup_db.sql`, `migrations/001_init.sql`, `scripts/migrate.py`, `app/models/user.py`, `app/models/rating.py`, `app/models/match.py`, `app/models/friendship.py`, `app/models/chat_message.py`, `tests/db/test_migrate.py`. Certezza: **sicuro**. Il modello dei blocchi (D23) va in `app/models/friendship.py`.
 - *Nota*: nella prima versione nessun altro punto aggiunge migrazioni. Se ne serve una, è un punto nuovo da concordare.
-- *Fatto quando*: su un database vuoto `migrate.py` crea tutte le tabelle; rilanciato non fa niente [T].
+- *Fatto quando*: su un database vuoto `migrate.py` crea tutte le tabelle; rilanciato non fa niente [T]. In più, test delle **regole del database** su `cinquecento_test` (28/09/2026): cancellando un utente spariscono il suo rating, le amicizie, i blocchi e i messaggi, mentre in `giocatori_partita` la riga resta con `utente_id` vuoto (D6); un nome utente troppo corto, troppo lungo, con lettere accentate o con spazi viene rifiutato, `Mario` e `mario` possono esistere tutti e due, due email uguali a parte le maiuscole no (D7); lo stesso utente non può sedere due volte nella stessa partita; una seconda amicizia tra gli stessi due utenti, anche in direzione opposta, viene rifiutata (se MySQL non accetta le colonne calcolate, il test lo documenta e il controllo passa a P45); un punteggio per vincere diverso da 150, 300 e 500 viene rifiutato; una partita senza data o motivo di fine viene rifiutata (si salva solo a fine partita); un messaggio più lungo di 1000 caratteri viene rifiutato (D26).
 - *Dipende da*: P4 per `migrate.py` e i modelli. I due file SQL possono partire in parallelo a P4.
 
 **P6 — Runner dei test** · medio · decisione: no
@@ -246,16 +246,16 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 - *Fatto quando*: una mano 1v1 e una 2v2 giocate con seme fisso finiscono con 120 punti di carte in totale; l'ordine di pesca è corretto; una mossa non valida viene **rifiutata con un errore chiaro** e lo stato non cambia.
 - *Dipende da*: P11, P12.
 
-**P14 — Partita fino al punteggio scelto** · piccolo · decisione: **D11**
+**P14 — Partita fino al punteggio scelto** · piccolo · decisione: **D11** (prima mano decisa il 28/09/2026; le mani successive sono ancora da decidere)
 - *Cosa e perché*: la partita finisce quando qualcuno arriva al punteggio scelto all'inizio (150, 300 o 500, dal modal della home). Un punteggio diverso da questi tre viene rifiutato.
 - *File* — modifica: `app/game/engine/game.py`, `app/game/engine/state.py` (P13). Crea: `tests/engine/test_partita.py`. Certezza: **sicuro**.
-- *Fatto quando*: per ognuno dei tre punteggi, la partita finisce solo a fine mano; vince chi arriva ad almeno N (con N esatti si vince); se ci arrivano entrambi vince il più alto; a parità è pareggio; arrivare a N durante la mano con un canto non chiude la partita; un punteggio fuori elenco viene rifiutato.
+- *Fatto quando*: per ognuno dei tre punteggi, la partita finisce solo a fine mano; vince chi arriva ad almeno N (con N esatti si vince); se ci arrivano entrambi vince il più alto; a parità è pareggio; arrivare a N durante la mano con un canto non chiude la partita; un punteggio fuori elenco viene rifiutato; nella prima mano il primo giocatore è scelto a caso (con un seme fisso nei test) e il mazziere è quello alla sua sinistra; dalla seconda mano chi comincia segue D11.
 - *Dipende da*: P13.
 
-**P15 — Vista per giocatore, mosse legali, mossa automatica** · medio · decisione: **D12**
+**P15 — Vista per giocatore, mosse legali, mossa automatica** · medio · decisione: **D12** (riaperta il 28/09/2026: quale carta gioca)
 - *Cosa e perché*: dallo stato completo si ricava la vista di **un** giocatore, senza le carte degli altri né l'ordine del mazzo. È la difesa principale contro chi prova a imbrogliare.
 - *File* — crea: `app/game/engine/views.py`, `auto_move.py`, `tests/engine/test_viste.py`, `tests/engine/test_mossa_automatica.py`. Certezza: **sicuro**.
-- *Fatto quando*: la vista non contiene mai carte che il giocatore non può vedere (controllo su tutte le posizioni di una partita intera); le mosse legali coincidono con quelle che `apply` accetta; la mossa automatica è sempre legale; la vista ha lo stesso formato di `app/static/dev/vista_*.json`.
+- *Fatto quando*: la vista non contiene mai carte che il giocatore non può vedere (controllo su tutte le posizioni di una partita intera); le mosse legali coincidono con quelle che `apply` accetta; la mossa automatica è sempre legale, non canta mai e sceglie la carta come deciso in D12 (con un seme fisso nei test, se la scelta è a caso); la vista ha lo stesso formato di `app/static/dev/vista_*.json`.
 - *Dipende da*: P13, P8.
 
 #### Account e dati (B)
@@ -279,13 +279,13 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 - *Dipende da*: P5, P6.
 
 **P45 — Amicizie** · medio · decisione: **D23, D26, D33**
-- *Cosa e perché*: cercare un utente per username e mandargli una **richiesta di amicizia**; accettare, rifiutare, annullare una richiesta; rimuovere un amico; vedere la lista degli amici e delle richieste in arrivo (con il numero per il contatore nella navbar). Sono richieste HTTP in JSON, protette da CSRF. Se D23 = sì, anche "blocca utente".
+- *Cosa e perché*: cercare un utente per username e mandargli una **richiesta di amicizia**; accettare, rifiutare, annullare una richiesta; rimuovere un amico; vedere la lista degli amici e delle richieste in arrivo (con il numero per il contatore nella navbar). Sono richieste HTTP in JSON, protette da CSRF. C'è anche "blocca utente" (D23): il blocco toglie l'amicizia.
 - *File* — modifica: `app/blueprints/friends/__init__.py`, `app/blueprints/friends/routes.py` (segnaposto di P4). Crea: `app/services/friend_service.py`, `app/repositories/friend_repo.py`, `tests/api/test_amicizie.py`. Certezza: **sicuro**.
-- *Fatto quando*: test via HTTP: richiesta → accettazione → i due sono amici; una richiesta doppia o a sé stessi viene rifiutata; rimuovere un amico lo toglie per entrambi; un utente bloccato non può mandare richieste (se D23 = sì); si rispetta il limite di D26.
+- *Fatto quando*: test via HTTP: richiesta → accettazione → i due sono amici; una richiesta doppia o a sé stessi viene rifiutata; rimuovere un amico lo toglie per entrambi; un utente bloccato non può mandare richieste (D23); si rispetta il limite di D26.
 - *Dipende da*: P5, P16.
 
 **P26 — Salvataggio delle partite** · piccolo · decisione: no
-- *Cosa e perché*: a fine partita si salvano risultato, giocatori ed eventi **in una sola transazione** (o tutto o niente).
+- *Cosa e perché*: a fine partita si salvano risultato, giocatori ed eventi **in una sola transazione** (o tutto o niente). Prima della fine nel database non si scrive niente: la partita in corso sta solo in memoria (deciso il 28/09/2026).
 - *File* — crea: `app/services/match_service.py`, `app/repositories/match_repo.py`, `tests/services/test_match_service.py`. Modifica: `app/realtime/room.py` (P25), **solo** per aggiungere la chiamata al salvataggio a fine partita. Certezza: **sicuro**.
 - *Fatto quando*: dopo una partita simulata, nel database di test ci sono partita, giocatori ed eventi in ordine; un errore a metà salvataggio non lascia dati parziali.
 - *Dipende da*: P5 per service, repository e test; P25 solo per la modifica a `room.py`, che si fa per ultima.
@@ -410,7 +410,7 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 **P54 — Frasi del tavolo: elenco e salvataggio** · **tolto il 27/09/2026**, lo stesso giorno in cui era stato aggiunto: le frasi del tavolo non si salvano (D24), quindi non c'è niente da fare nel database. L'elenco delle frasi passa a P55.
 
 **P55 — Frasi del tavolo in tempo reale** · piccolo · decisione: no (D24 decisa)
-- *Cosa e perché*: al tavolo i giocatori si mandano solo **frasi pronte** (D24), in italiano e in siciliano. Questo punto fissa l'**elenco unico** delle frasi (codice e testo, per esempio `amuni` → "Amunì!"; l'elenco approvato è in `DECISIONI.md`, D24) e l'evento con cui un giocatore ne manda una (nomi e dati da P8). Sotto il lock della stanza il server controlla che chi manda sia seduto a quel tavolo, che il codice sia nell'elenco e che sia passato il tempo minimo (**una frase ogni 3 secondi** per giocatore); poi la manda a **tutti i giocatori della partita**, anche agli avversari nel 2v2, e **non la salva da nessuna parte**. In memoria, nella stanza, resta solo l'ora dell'ultima frase di ogni giocatore, che sparisce con la stanza. All'ingresso nella stanza manda l'elenco delle frasi, così la pagina non ne ha una copia sua. In `config.py` aggiunge `TABLE_PHRASE_MIN_INTERVAL_SECONDS = 3` e toglie `CHAT_RETENTION_DAYS`, che non serve più.
+- *Cosa e perché*: al tavolo i giocatori si mandano solo **frasi pronte** (D24), in italiano e in siciliano. Questo punto fissa l'**elenco unico** delle frasi (codice e testo, per esempio `amuni` → "Amunì!"; l'elenco approvato è in `DECISIONI.md`, D24) e l'evento con cui un giocatore ne manda una (nomi e dati da P8). Sotto il lock della stanza il server controlla che chi manda sia seduto a quel tavolo, che il codice sia nell'elenco e che sia passato il tempo minimo (**una frase ogni 3 secondi** per giocatore); poi la manda a **tutti i giocatori della partita**, anche agli avversari nel 2v2, e **non la salva da nessuna parte**. In memoria, nella stanza, resta solo l'ora dell'ultima frase di ogni giocatore, che sparisce con la stanza. All'ingresso nella stanza manda l'elenco delle frasi, così la pagina non ne ha una copia sua. In `config.py` aggiunge `TABLE_PHRASE_MIN_INTERVAL_SECONDS = 3` (`CHAT_RETENTION_DAYS` è già stata tolta il 28/09/2026).
 - *File* — crea: `app/realtime/table_phrases.py`, `tests/sockets/test_frasi_tavolo.py`. Modifica: `app/sockets/game_events.py` (P25), `config.py` (P4). Certezza: **sicuro**.
 - *Fatto quando*: test con client simulati: la frase arriva a tutti e 2 (1v1) o tutti e 4 (2v2) i giocatori; chi non è al tavolo viene rifiutato; un codice sconosciuto viene rifiutato; una seconda frase prima di 3 secondi viene rifiutata con un avviso (con i tempi ridotti della configurazione di test); nessuna frase finisce nel database né nei log.
 - *Dipende da*: P8, P25.
@@ -513,15 +513,15 @@ Segue la divisione della sezione 9. **Attenzione**: con amici, chat e prototipo 
 
 | Giorno | Giuseppe: motore e tempo reale | Antonio: account, dati, amici, pagine dati | Christian: interfaccia e documenti |
 |---|---|---|---|
-| 1 — 27/09 | P1, P2, P4 | P5 (i file SQL subito, il resto dopo P4) | P3, P52 (dopo P1), P8 (il contratto si approva insieme) |
-| 2 — 28/09 | P6, P10, P11, P12 | P7 (dopo P6 e P19), P18 | P19, P40 |
+| 1 — 27/09 | fatti: P1, P2, P4 | — (tabelle approvate: D38) | fatti: P52, P3 |
+| 2 — 28/09 | P10, P11, P12, P6 (appena P5 è in `dev`) | **P5**, P7 (dopo P6 e P19), P18 | **P8** (il contratto si approva insieme), P19, P40 |
 | 3 — 29/09 | P13, P14, P15 | P16, P17 (dopo P40) | P20, P22, P9 |
 | 4 — 30/09 | P23 | P45, P26 (service, repository e test), P27 | P21, P46 |
 | 5 — 01/10 | P24, P25 | P28 (dopo P24), chiamata di P26 in `room.py` (dopo P25) | P30 |
 | 6 — 02/10 | P44 (dopo P29), P47, P55 | P29, P48 | P56 (dopo P55), P33, P34, P35 |
 | 7 — 03/10 | P31, P32 | P38, P39 | P42, P43, P53 (se c'è tempo), P36, P37 |
 
-I giorni sono indicativi. La regola che conta è quella delle dipendenze: un punto inizia solo quando i punti da cui dipende sono già in `dev`.
+I giorni sono indicativi (aggiornati il 28/09/2026: P5 e P8, previsti il 27/09, passano al 28/09, e la settimana resta la stessa). La regola che conta è quella delle dipendenze: un punto inizia solo quando i punti da cui dipende sono già in `dev`.
 
 **Se il tempo stringe**, ordine di taglio proposto (da confermare, D31): P53 (resta solo il tema chiaro) → P56 e P55 (niente frasi al tavolo) → P43 e P42 (restano iniziali e nome testuale) → P35 (restano le carte CSS) → P48 (chat) → P29 (niente 2v2: senza la coda 2v2 non si può giocare nemmeno in coppia con un amico) → P34. **Non si tagliano mai** P6, P15, P24, P31 e P32.
 
@@ -572,7 +572,7 @@ Chi crea ogni file. I file creati da P4 come segnaposto e poi riempiti da altri 
 
 | Rischio | Come lo affrontiamo |
 |---|---|
-| **Tempo**: 48 punti in una settimana per tre persone sono molti, e amici e chat sono il blocco più grosso aggiunto | Filoni paralleli grazie al contratto P8 e ai dati finti (P21, P22, P46); tolti classifica, stanza privata, storico e regole (27/09); ordine di taglio proposto (D31); punti piccoli |
+| **Tempo**: 50 punti in una settimana per tre persone sono molti, e amici e chat sono il blocco più grosso aggiunto | Filoni paralleli grazie al contratto P8 e ai dati finti (P21, P22, P46); tolti classifica, stanza privata, storico e regole (27/09); ordine di taglio proposto (D31); punti piccoli |
 | **Conflitti git tra i tre** | Ogni punto elenca i suoi file; P4 prepara i segnaposto; file condivisi in sequenza (sezione 3 e colonna "Attende" della sezione 9); documenti condivisi aggiornati solo da Christian (D22) |
 | **Regole implementate male** | `docs/REGOLE-GIOCO.md` come riferimento unico; un test per ogni regola (P11–P14); controllo delle regole nella code review (P36) |
 | **Carte avversarie visibili dal browser** | Vista per giocatore (P15), controllata in tutte le posizioni e poi end-to-end (P31) |
@@ -594,7 +594,7 @@ Chi crea ogni file. I file creati da P4 come segnaposto e poi riempiti da altri 
 | Caricamento di una foto profilo | Servono spazio per i file, controllo dei contenuti e privacy: si usa un set di avatar predefiniti |
 | Più processi server e Redis (gioco pubblico) | Con meno di 50 utenti basta un processo; l'architettura non lo impedisce |
 | Bot che sostituisce chi abbandona, partite contro il computer | Utile quando ci sono pochi giocatori, ma non necessario per la consegna |
-| Chat di gruppo e chat durante la partita | Per ora la chat è solo tra due amici (D25) |
+| Chat di gruppo e chat a testo libero durante la partita | La chat a testo libero è solo tra due amici; al tavolo ci sono solo le frasi pronte (D24, D25; P55, P56) |
 | Segnalazione di utenti e moderazione | Con un gruppo di amici basta il blocco (D23) |
 | Replay delle partite | Gli eventi vengono già salvati (P26): si potrà aggiungere dopo |
 | Notifiche push sul telefono | Richiedono configurazione in più; per ora bastano i contatori nella pagina |
@@ -617,14 +617,14 @@ Qui ci sono solo i punti di cui conosco **con certezza** tutti i file. Sono divi
 
 Due studenti che lavorano in parallelo non toccano mai gli stessi file. Vale anche per i documenti condivisi (`SCALETTA.md`, riga Stato di `CLAUDE.md`, `DECISIONI.md`, `DA-DECIDERE.md`): li aggiorna solo Christian, su un branch `docs/…` (D22).
 
-**Giuseppe (Studente 1) — motore di gioco e tempo reale:** P1, P2, P4, P6, P10, P11, P12, P13, P14, P15, P23, P24, P25, P44, P47, P55, P31
+**Giuseppe (Studente 1) — motore di gioco e tempo reale:** P1, P2, P4, P6, P10, P11, P12, P13, P14, P15, P23, P24, P25, P44, P47, P55, P31 (più P32 in 9.2)
 
-**Antonio (Studente 2) — account, dati, amici:** P5, P7, P16, P17, P18, P45, P26, P27, P28, P29, P48, P39
+**Antonio (Studente 2) — account, dati, amici:** P5, P7, P16, P17, P18, P45, P26, P27, P28, P29, P48, P39 (più P38 in 9.2)
 
-**Christian (Studente 3) — interfaccia e documenti:** P3, P52, P8, P9, P19, P40, P20, P21, P22, P46, P56, P30, P36, P37 (più P53 in 9.2)
+**Christian (Studente 3) — interfaccia e documenti:** P3, P52, P8, P9, P19, P40, P20, P21, P22, P46, P56, P30, P36, P37 (più P33, P34, P35, P42, P43 e P53 in 9.2)
 
-**Da dove si parte** (27/09/2026, con P1, P2, P4 e P52 già in `dev`) [L]:
-- **Giuseppe**: P10 → P11 → P12 → P13 subito; P14 (D11 decisa); **P6 appena P5 è in `dev`** (è piccolo e sblocca Antonio: conviene interrompere il motore); P15 quando P8 è in `dev` (D12 è decisa).
+**Da dove si parte** (aggiornato il 28/09/2026, con P1, P2, P3, P4 e P52 già fatti) [L]:
+- **Giuseppe**: P10 → P11 → P12 → P13 subito; P14 (per la prima mano D11 è decisa; per le mani successive aspetta la risposta); **P6 appena P5 è in `dev`** (è piccolo e sblocca Antonio: conviene interrompere il motore); P15 quando P8 è in `dev` e D12 è decisa (riaperta il 28/09).
 - **Antonio**: **P5 subito**, partendo dalle tabelle approvate in `docs/proposta-tabelle.sql` (D38): per prima cosa verifica su MySQL il punto incerto delle amicizie (commento nel file); P7 quando P6 e P19 sono in `dev`; P18 quando P5 e P6 sono in `dev`.
 - **Christian**: P8 (il contratto si approva in tre prima del merge: lo usano P15, P21, P22, P23 e P46), poi P19, poi P40.
 
@@ -661,7 +661,7 @@ Due studenti che lavorano in parallelo non toccano mai gli stessi file. Vale anc
 | P47 | Giuseppe | `FriendsPanel.js` (dopo Christian), `ModeModal.js` (dopo Antonio), `friends_events.py` (P4) | P24, P29, P44, P45, P46 |
 | P48 | Antonio | `ChatWindow.js` (dopo Christian), `chat_events.py` (P4) | P23, P45, P46 |
 | P30 | Christian | `blueprints/stats/routes.py` (segnaposto di P4), `StatsPanel.js` (P40, sempre Christian) | P26, P27, P40 |
-| P55 | Giuseppe | `config.py` (P4: due chiavi, concordate nel punto); `game_events.py` è di Giuseppe | P8, P25 |
+| P55 | Giuseppe | `config.py` (P4: una chiave nuova, concordata nel punto); `game_events.py` è di Giuseppe | P8, P25 |
 | P56 | Christian | `pages/game.js` (dopo Giuseppe, P25) | P55 |
 | P31 | Giuseppe | nessuno (crea solo `tests/e2e/*`) | P25, P29, P47, P48 |
 | P36 | Christian | nessuno (crea solo `REVIEW.md`) | P31, P32, P33 |
@@ -680,7 +680,7 @@ Per questi punti non posso dire adesso con certezza quali file verranno toccati.
 **P32 — Sicurezza di base** · proposto: Giuseppe (giorno 7)
 - *Sicuri*: `config.py`, `app/__init__.py` (creati da P4), `tests/api/test_sicurezza.py`, `tests/sockets/test_validazione_eventi.py`.
 - *Probabili*: `app/sockets/connection_events.py`, `lobby_events.py`, `game_events.py`, `friends_events.py`, `chat_events.py`, `home_events.py`; `app/blueprints/auth/forms.py`; `app/blueprints/friends/routes.py`; forse `app/templates/auth/*.html`.
-- *Perché non sono sicuro*: il punto corregge **quello che manca** nel codice scritto da P16–P50. Se i gestori validano già bene i dati, non vanno toccati; se no, sì. Lo si sa solo leggendo il codice quando esiste. Diversi di quei file sono di Antonio (`lobby_events.py` dopo P28–P29, `chat_events.py`, `friends/routes.py`): vanno toccati solo dopo che i punti di Antonio sono in `dev`.
+- *Perché non sono sicuro*: il punto corregge **quello che manca** nel codice scritto da P16–P56. Se i gestori validano già bene i dati, non vanno toccati; se no, sì. Lo si sa solo leggendo il codice quando esiste. Diversi di quei file sono di Antonio (`lobby_events.py` dopo P28–P29, `chat_events.py`, `friends/routes.py`): vanno toccati solo dopo che i punti di Antonio sono in `dev`.
 
 **P33 — Errori e connessione nell'interfaccia** · proposto: Christian (giorno 6)
 - *Sicuri*: crea `app/static/js/components/Banner.js`, `app/static/css/components/banner.css`, `tests/frontend/test_niente_alert.py`; modifica `app/static/js/core/socket.js` (P23), `app/templates/base.html` (P40).

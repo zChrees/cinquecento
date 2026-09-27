@@ -29,6 +29,16 @@ Ogni mano vale 120 punti di carte, più i canti.
 - **1v1**: due giocatori.
 - **2v2**: due squadre da due, con i compagni seduti uno di fronte all'altro. Si gioca in senso antiorario, cioè verso destra. I punti di ciascun giocatore vanno alla sua squadra.
 
+## Chi comincia
+
+- Nella **prima mano** il giocatore che gioca per primo si sceglie **a caso**. Il **mazziere** è il giocatore **alla sua sinistra** (deciso il 28/09/2026, D11). Online il mazziere non distribuisce niente: serve solo a sapere chi comincia.
+- **Dalla seconda mano in poi**: da decidere (D11 in `DA-DECIDERE.md`).
+
+## Tempo per turno
+
+- Ogni giocatore ha **30 secondi** per il suo turno. Allo scadere il server gioca una carta al suo posto (**mossa automatica**), senza cantare. Quale carta gioca è da decidere (D12 in `DA-DECIDERE.md`).
+- Chi si disconnette ha **60 secondi** per rientrare; poi la partita è persa per abbandono.
+
 ## Svolgimento di una mano
 
 1. Si mescola e si danno **5 carte** a testa. Le carte rimaste formano il mazzo.
@@ -65,4 +75,4 @@ Ogni mano vale 120 punti di carte, più i canti.
 
 ## Punti ancora aperti
 
-Vedi `DA-DECIDERE.md`, sezione "Gioco" (per esempio chi fa il mazziere e chi gioca per primo nella prima mano).
+Vedi `DA-DECIDERE.md`, sezione "Gioco": chi comincia dalla seconda mano in poi (D11), quale carta gioca la mossa automatica (D12), cosa succede quando qualcuno abbandona un 2v2 (D13).

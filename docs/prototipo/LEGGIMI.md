@@ -148,6 +148,6 @@ Da ricordare per le pagine vere: le immagini CC BY-SA richiedono una **riga di c
 ## Cose che le pagine vere NON riprendono
 
 - I parametri `?apri=` e l'accettazione automatica dell'invito dopo 2 secondi.
-- Il codice dello sfondo, che nelle pagine vere va nel componente `js/components/CardBackground.js` e le immagini in `app/static/img/cards-bg/` (P22).
+- Il codice dello sfondo, che nelle pagine vere va nel componente `js/components/CardBackground.js` (P22); le immagini vanno in `app/static/img/cards-bg/` già con P40, perché le usa anche il logo.
 - I dati finti (Mario, 24 online, amici, messaggi, rating): nelle pagine vere arrivano dal server.
 - Lo script classico: le pagine vere usano moduli ES, che però non partono aprendo un file con un doppio clic.
