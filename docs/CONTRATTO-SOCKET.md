@@ -27,7 +27,7 @@ Nei file di esempio la chiave `_nota` è solo un commento: il server non la mand
 - **Chiavi JSON** in inglese, `snake_case`. I testi da mostrare (messaggi di errore) sono in italiano.
 - **Modalità**: `"1v1"` oppure `"2v2"`. **Punti per vincere** (`target_score`): solo `150`, `300` o `500`.
 - **Semi**: `"denari"`, `"coppe"`, `"spade"`, `"bastoni"` (sono nomi propri del gioco, come nel regolamento).
-- **Carta**: `{"suit": "coppe", "rank": 10}`. `rank` va da 1 a 10: **1 = Asso**, 2–7 le carte numerate, **8 = Fante, 9 = Cavallo, 10 = Re**. È la stessa coppia degli attributi `data-suit` e `data-rank` del componente carta (P20). Il motore può rappresentarla come vuole al suo interno: la conversione la fa la vista (P15).
+- **Carta**: `{"suit": "coppe", "rank": 10}`. `rank` va da 1 a 10: **1 = Asso**, 2–7 le carte numerate, **8 = Fante, 9 = Cavallo, 10 = Re**. È la stessa coppia degli attributi `data-suit` e `data-rank` del componente carta (P20). Il motore la rappresenta con un codice (`"denari-1"`, P10): la conversione tra le due forme la fanno la vista (P15) e il gestore delle mosse (P24), che rifiuta ogni carta non valida.
 - **Utenti**: sempre con il numero (`user_id`) e, dove si mostrano, `username` e `avatar`. `avatar` è il codice di un avatar del set (D29) oppure `null`: con `null` la pagina mostra l'iniziale del nome.
 - **Date e ore**: testo ISO 8601 in UTC, con i millesimi e la `Z` finale (`"2026-09-28T14:03:12.000Z"`). La pagina le converte nell'ora italiana.
 - **Tempi che scorrono** (turno, invito, attesa per rientrare): il server manda i **secondi rimasti** nel momento dell'invio (`seconds_left`, anche con decimali) e la pagina conta alla rovescia da sola. Niente orari assoluti, perché l'orologio del telefono può essere sbagliato.
@@ -147,6 +147,7 @@ I posti (`seat`) sono numerati da 0 **nell'ordine di gioco** (verso destra, D11)
 - **`game:join`** lo manda la pagina del tavolo appena collegata; serve anche per rientrare dopo una disconnessione (entro 60 secondi). Se lo stesso utente fa `game:join` da un'altra scheda o dispositivo, **l'ultima prende il posto** della precedente, che riceve `game:replaced` e mostra "partita aperta altrove" (D14).
 - **`version`**: ogni vista ha un numero che sale a ogni cambiamento della partita. `game:play_card` e `game:sing` mandano il numero della vista su cui l'utente ha deciso; se nel frattempo la partita è cambiata, il server risponde `stale_state` e rimanda la vista attuale. Così il doppio clic e le due schede non giocano due carte.
 - **Dopo ogni mossa accettata** il server manda a ogni giocatore la sua nuova vista (`game:state`). Anche il turno scaduto (mossa automatica, D12) e i cambi di connessione di un giocatore producono una nuova vista.
+- **Un seme alla volta**: `game:sing` porta un solo seme. Il primo canto della mano vale 40 e fissa la briscola, i successivi valgono 20; chi ha due coppie al primo canto sceglie quale cantare per prima. Per cantarne un'altra si manda un altro `game:sing`, con la `version` nuova.
 - **Canto** (D15): `game:sang` porta le due carte mostrate (`cards`: Re e Cavallo del seme); la pagina le mostra per `show_seconds` secondi (3). Nella vista resta l'elenco dei canti della mano (`sings`), per l'icona fissa accanto a chi ha cantato.
 - **Frasi del tavolo** (D24, P55–P56): l'elenco arriva con `game:phrases` a ogni ingresso nella stanza, e la pagina non ne tiene una copia sua. `game:phrase` porta solo il codice: il testo si prende dall'elenco. Le frasi non si salvano e chi rientra non vede quelle arrivate nel frattempo.
 - **`game:leave`**: il pulsante "esci" del tavolo, dopo la conferma nella pagina. Vale come abbandono (nel 2v2 perde tutta la squadra, D13).
@@ -177,7 +178,7 @@ Esempi completi: `vista_1v1.json` e `vista_2v2.json`. La vista contiene **solo q
 | `legal` | le tue mosse ammesse adesso: `play` (carte giocabili) e `sing` (semi che puoi cantare); **liste vuote quando non è il tuo turno** |
 | `result` | `null` durante la partita; a partita finita: `reason` (`"score"` o `"abandon"`), `winner_team` (0, 1, oppure `null` per il pareggio), `abandoned_seats` (posti di chi ha abbandonato) e `scores` finali |
 
-La pagina **non calcola regole**: attiva solo le carte di `legal.play` e i pulsanti "Canta" dei semi in `legal.sing`. Il punto "40 o 20" lo decide il server. I punti delle carte prese si vedono solo a fine mano, in `last_hand` (come al tavolo vero, dove le prese stanno coperte).
+La pagina **non calcola regole**: attiva solo le carte di `legal.play` e i pulsanti "Canta" dei semi in `legal.sing`. Il punto "40 o 20" lo decide il server. I **punti dei canti si vedono subito** (il canto è pubblico: `sings`); si nascondono solo i **punti delle carte prese**, che si vedono a fine mano in `last_hand` (come al tavolo vero, dove le prese stanno coperte).
 
 ---
 
