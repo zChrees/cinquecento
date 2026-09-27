@@ -21,8 +21,18 @@
   --yellow: #ffc21a;          /* giallo vivo per dettagli e contatori */
   --yellow-card: #e9a000;     /* giallo più carico per la carta, sotto il testo bianco */
   --blue: #1f6fe0;
+  --purple: #7b3fc4;          /* carta-pulsante 2v2 veloce: il verde si confondeva con il tavolo */
   --card-face: #fffaf0;       /* carta color crema */
   --card-edge: #e6d5b8;       /* bordo e spessore della carta */
+
+  /* Tavolo: panno verde, più chiaro al centro come sotto una lampada */
+  --felt: #1c6b43;
+  --felt-light: #2b8a58;
+  --felt-dark: #0e4429;
+
+  /* Navbar: completamente trasparente sul panno, scritte color crema */
+  --on-navbar: #fff8ec;
+  --navbar-hover: rgb(255 255 255 / 0.12);
 
   /* Ruoli usati dai componenti */
   --primary: var(--red);
@@ -113,7 +123,12 @@ body {
   font-size: 16px;
   line-height: 1.5;
   color: var(--text);
-  background: var(--bg);
+  /* Panno del tavolo: grana leggera (rumore SVG) sopra una luce radiale */
+  background-color: var(--felt);
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse 120% 90% at 50% 42%, var(--felt-light) 0%, var(--felt) 55%, var(--felt-dark) 100%);
+  background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -160,11 +175,9 @@ h3 {
 }
 
 /* ============================================================
-   Sfondo: carte siciliane sparse su tutta la pagina
-   Cavallo e Re di tutti e quattro i semi (cantare 40), Assi e Tre (i carichi).
-   Lo script le mette in una griglia di caselle invisibili sfalsate a mattoncini:
-   ogni casella è più grande del suo gruppo anche ruotato, quindi i gruppi non si
-   toccano mai. Solo Cavallo e Re di una coppia si sovrappongono fra loro.
+   Sfondo: una cascata di carte che cade dall'alto. Carte di dorso
+   (img/dorso.webp) e, di faccia, Assi, Tre (i carichi) e coppie
+   Cavallo + Re (cantare 40). Le crea lo script.
    ============================================================ */
 
 .bg-deco {
@@ -176,27 +189,49 @@ h3 {
   --bg-card-w: 60px;
 }
 
-.bg-card,
-.bg-pair {
+/*
+ * Ogni carta parte sopra lo schermo e cade fino a sotto, girando piano
+ * e spostandosi un po' di lato. --delay negativo: all'apertura la cascata è già
+ * a metà. Senza animazioni ("riduci movimento") resta ferma nel punto --y.
+ * Le carte sono piene, non trasparenti: quelle grandi (vicine) coprono quelle
+ * piccole (lontane), che lo script mette prima nella pagina. La distanza si
+ * vede dalla luce: le lontane sono più scure (--shade).
+ */
+.bg-fall {
   position: absolute;
+  top: 0;
   left: var(--x);
-  top: var(--y);
-  opacity: 0.6;
-  transform: translate(-50%, -50%) rotate(var(--r, 0deg));
+  width: var(--bg-card-w);
+  aspect-ratio: var(--card-ratio);
+  border-radius: 6px;
+  object-fit: cover;
+  filter: brightness(var(--shade, 0.8));
+  box-shadow: 0 6px 14px rgb(0 0 0 / 0.28);
+  transform: translate(-50%, var(--y)) rotate(var(--r0));
+  animation: bg-fall var(--dur) linear var(--delay) infinite;
+  will-change: transform;
 }
 
-.bg-card,
+@keyframes bg-fall {
+  from { transform: translate(-50%, -110%) rotate(var(--r0)); }
+  to { transform: translate(calc(-50% + var(--drift)), calc(100vh + 40px)) rotate(var(--r1)); }
+}
+
+/* Coppia Cavallo + Re che cade insieme, a ventaglio come in mano a chi canta */
+.bg-fall.bg-pair {
+  display: flex;
+  width: auto;
+  aspect-ratio: auto;
+  border-radius: 0;
+  box-shadow: none;
+}
+
 .bg-pair img {
   width: var(--bg-card-w);
   aspect-ratio: var(--card-ratio);
   border-radius: 6px;
   object-fit: cover;
-  box-shadow: 0 3px 10px rgb(60 30 10 / 0.22);
-}
-
-/* Cavallo e Re appena sovrapposti, a ventaglio, come in mano a chi canta */
-.bg-pair {
-  display: flex;
+  box-shadow: 0 6px 14px rgb(0 0 0 / 0.28);
 }
 
 .bg-pair img:first-child {
@@ -305,15 +340,16 @@ h3 {
 /* ============================================================
    Navbar
    ============================================================ */
-/* Navbar trasparente: le carte dello sfondo si vedono sfocate dietro */
+/*
+ * Navbar completamente trasparente: niente fondo, sfocatura né ombra.
+ * L'ombra sotto le scritte le tiene leggibili quando passa dietro una carta.
+ */
 .navbar {
   position: relative;
   z-index: 10;
   flex: none;
-  background: rgb(255 248 236 / 0.55);
-  -webkit-backdrop-filter: blur(14px) saturate(1.4);
-  backdrop-filter: blur(14px) saturate(1.4);
-  box-shadow: 0 1px 0 rgb(60 30 10 / 0.08), 0 6px 20px rgb(60 30 10 / 0.06);
+  color: var(--on-navbar);
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.5);
 }
 
 .navbar__inner {
@@ -326,6 +362,10 @@ h3 {
   padding: 0 12px;
 }
 
+/*
+ * Avatar e amici su una pillola di vetro chiaro, sollevata dal panno: luce sul
+ * bordo alto e ombra sotto. Passandoci sopra si alza un po' di più.
+ */
 .navbar__account,
 .navbar__friends {
   position: relative;
@@ -336,8 +376,13 @@ h3 {
   padding: 2px;
   border: 0;
   border-radius: var(--radius-pill);
-  background: transparent;
+  background: rgb(255 255 255 / 0.1);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.28),
+    inset 0 0 0 1px rgb(255 255 255 / 0.12),
+    0 4px 12px rgb(0 0 0 / 0.3);
   cursor: pointer;
+  transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .navbar__account {
@@ -351,8 +396,53 @@ h3 {
 }
 
 .navbar__friends:hover,
-.navbar__account:hover {
-  background: var(--surface-2);
+.navbar__friends:focus-visible,
+.navbar__account:hover,
+.navbar__account:focus-visible {
+  background: var(--navbar-hover);
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.35),
+    inset 0 0 0 1px rgb(255 255 255 / 0.18),
+    0 8px 18px rgb(0 0 0 / 0.35);
+}
+
+/* Avatar: si ingrandisce, si inclina e l'anello giallo si illumina */
+.navbar__account .avatar {
+  transition: transform 0.25s cubic-bezier(0.3, 1.6, 0.5, 1), box-shadow 0.25s ease;
+}
+
+.navbar__account:hover .avatar,
+.navbar__account:focus-visible .avatar {
+  transform: scale(1.08) rotate(-8deg);
+  box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--yellow), 0 0 18px 4px rgb(255 194 26 / 0.55);
+}
+
+/* Amici: l'icona saluta oscillando e il contatore rimbalza */
+.navbar__friends:hover .icon,
+.navbar__friends:focus-visible .icon {
+  animation: wave 0.6s ease;
+}
+
+.navbar__friends:hover .badge,
+.navbar__friends:focus-visible .badge {
+  animation: pop 0.4s ease;
+}
+
+@keyframes wave {
+  0%, 100% { transform: rotate(0); }
+  25% { transform: rotate(-14deg) scale(1.12); }
+  50% { transform: rotate(10deg) scale(1.12); }
+  75% { transform: rotate(-5deg) scale(1.05); }
+}
+
+@keyframes pop {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+}
+
+.navbar :focus-visible {
+  outline-color: var(--yellow);
 }
 
 /* Su telefono le scritte accanto alle icone non ci stanno */
@@ -382,26 +472,71 @@ h3 {
   font-size: 1.5rem;
 }
 
+/*
+ * Logo: due carte stilizzate a ventaglio (come Cavallo e Re quando si canta)
+ * e il nome in due toni, "Cinque" crema e "cento" giallo.
+ */
 .logo {
+  --mark-h: 26px;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  color: var(--text);
+  gap: 10px;
+  color: var(--on-navbar);
   text-decoration: none;
   border-radius: var(--radius-s);
 }
 
-.logo__suit {
-  width: 28px;
-  height: 28px;
+.logo__mark {
+  position: relative;
+  flex: none;
+  width: calc(var(--mark-h) * 0.95);
+  height: var(--mark-h);
+}
+
+.logo__mark span {
+  position: absolute;
+  bottom: 0;
+  width: calc(var(--mark-h) * 0.64);
+  height: var(--mark-h);
+  border-radius: 4px;
+  box-shadow: 0 3px 8px rgb(0 0 0 / 0.4), inset 0 0 0 1.5px rgb(255 255 255 / 0.45);
+  transform-origin: 50% 100%;
+  transition: transform 0.2s ease;
+}
+
+.logo__mark span:first-child {
+  left: 0;
+  background: linear-gradient(160deg, #ffd65a, var(--yellow-card));
+  transform: rotate(-10deg);
+}
+
+.logo__mark span:last-child {
+  right: 0;
+  background: linear-gradient(160deg, #ef5a4a, var(--red-strong));
+  transform: rotate(10deg);
+}
+
+.logo:hover .logo__mark span:first-child {
+  transform: rotate(-18deg);
+}
+
+.logo:hover .logo__mark span:last-child {
+  transform: rotate(18deg);
 }
 
 .logo__text {
   font-family: var(--font-title);
-  font-weight: 700;
-  font-size: 1.6rem;
-  letter-spacing: -0.01em;
-  color: var(--red);
+  font-weight: 600;
+  font-size: 1.45rem;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  /* In rilievo sul panno: spessore sotto e ombra morbida */
+  text-shadow: 0 2px 0 rgb(0 0 0 / 0.28), 0 4px 14px rgb(0 0 0 / 0.4);
+}
+
+.logo__text b {
+  font-weight: inherit;
+  color: var(--yellow);
 }
 
 .badge {
@@ -520,11 +655,29 @@ h3 {
 }
 
 /*
- * Pulsante modalità disegnato come una carta da gioco: carta colorata con le
- * proporzioni di una carta siciliana, cornice interna, seme negli angoli
- * (in basso a destra capovolto) e scritte bianche uguali su tutte e quattro.
+ * Pulsante modalità disegnato come una carta da gioco stampata, in rilievo:
+ * - colore della carta in --tile, con una versione chiara e una scura calcolate;
+ * - bordo esterno crema sottile, come il margine di una carta vera;
+ * - la superficie ha i dettagli di una stampa, nello stesso stile dell'Asso:
+ *   grana della carta, tratteggio fine a incisione, trama a rombi leggera,
+ *   un medaglione di luce dietro l'Asso e i margini appena consumati;
+ * - cornice doppia con fregi negli angoli, sbalzata come l'Asso (::before);
+ * - sotto: lo spessore della carta (ombra piena scura) e un'ombra morbida larga.
+ * Con il mouse la carta si solleva e si inclina verso il puntatore (--rx, --ry
+ * dallo script) e un riflesso di luce la segue (--gx, --gy).
  */
 .mode-tile {
+  --tile-light: color-mix(in srgb, var(--tile) 72%, #ffffff);
+  --tile-dark: color-mix(in srgb, var(--tile) 62%, #000000);
+  --rx: 0deg;
+  --ry: 0deg;
+  --lift: 0px;
+  --edge: 7px;
+  /* Fregi d'angolo (voluta, fogliolina, puntino e rombi), uno per angolo */
+  --fregio-tl: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' fill='none' stroke='%23fff' stroke-width='1.4' stroke-linecap='round'%3E%3Cg%3E%3Cpath d='M8 42C8 22 22 8 42 8'/%3E%3Cpath d='M14 40C14 25 25 14 40 14' stroke-width='0.8'/%3E%3Cpath d='M20 30c-3-7 3-13 10-10c-5 0-8 3-7 8z' fill='%23fff'/%3E%3Cpath d='M24 24c4-1 7 1 8 5' /%3E%3Ccircle cx='13' cy='13' r='2.6' fill='%23fff' stroke='none'/%3E%3Cpath d='M13 4l2 3-2 3-2-3z' fill='%23fff' stroke='none'/%3E%3Cpath d='M4 13l3-2 3 2-3 2z' fill='%23fff' stroke='none'/%3E%3C/g%3E%3C/svg%3E");
+  --fregio-tr: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' fill='none' stroke='%23fff' stroke-width='1.4' stroke-linecap='round'%3E%3Cg transform='translate(48 0) scale(-1 1)'%3E%3Cpath d='M8 42C8 22 22 8 42 8'/%3E%3Cpath d='M14 40C14 25 25 14 40 14' stroke-width='0.8'/%3E%3Cpath d='M20 30c-3-7 3-13 10-10c-5 0-8 3-7 8z' fill='%23fff'/%3E%3Cpath d='M24 24c4-1 7 1 8 5' /%3E%3Ccircle cx='13' cy='13' r='2.6' fill='%23fff' stroke='none'/%3E%3Cpath d='M13 4l2 3-2 3-2-3z' fill='%23fff' stroke='none'/%3E%3Cpath d='M4 13l3-2 3 2-3 2z' fill='%23fff' stroke='none'/%3E%3C/g%3E%3C/svg%3E");
+  --fregio-bl: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' fill='none' stroke='%23fff' stroke-width='1.4' stroke-linecap='round'%3E%3Cg transform='translate(0 48) scale(1 -1)'%3E%3Cpath d='M8 42C8 22 22 8 42 8'/%3E%3Cpath d='M14 40C14 25 25 14 40 14' stroke-width='0.8'/%3E%3Cpath d='M20 30c-3-7 3-13 10-10c-5 0-8 3-7 8z' fill='%23fff'/%3E%3Cpath d='M24 24c4-1 7 1 8 5' /%3E%3Ccircle cx='13' cy='13' r='2.6' fill='%23fff' stroke='none'/%3E%3Cpath d='M13 4l2 3-2 3-2-3z' fill='%23fff' stroke='none'/%3E%3Cpath d='M4 13l3-2 3 2-3 2z' fill='%23fff' stroke='none'/%3E%3C/g%3E%3C/svg%3E");
+  --fregio-br: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' fill='none' stroke='%23fff' stroke-width='1.4' stroke-linecap='round'%3E%3Cg transform='translate(48 48) scale(-1 -1)'%3E%3Cpath d='M8 42C8 22 22 8 42 8'/%3E%3Cpath d='M14 40C14 25 25 14 40 14' stroke-width='0.8'/%3E%3Cpath d='M20 30c-3-7 3-13 10-10c-5 0-8 3-7 8z' fill='%23fff'/%3E%3Cpath d='M24 24c4-1 7 1 8 5' /%3E%3Ccircle cx='13' cy='13' r='2.6' fill='%23fff' stroke='none'/%3E%3Cpath d='M13 4l2 3-2 3-2-3z' fill='%23fff' stroke='none'/%3E%3Cpath d='M4 13l3-2 3 2-3 2z' fill='%23fff' stroke='none'/%3E%3C/g%3E%3C/svg%3E");
   position: relative;
   display: flex;
   flex-direction: column;
@@ -539,34 +692,99 @@ h3 {
   color: #ffffff;
   text-align: center;
   cursor: pointer;
-  box-shadow: var(--shadow-1), inset 0 -5px 0 rgb(0 0 0 / 0.12);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  background:
+    /* grana della carta stampata */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.16 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E"),
+    /* luce dall'alto */
+    radial-gradient(120% 70% at 30% 0%, rgb(255 255 255 / 0.28), transparent 60%),
+    /* medaglione di luce dietro l'Asso */
+    radial-gradient(ellipse 40% 30% at 50% 50%, rgb(255 255 255 / 0.18), transparent 72%),
+    /* margini appena consumati */
+    radial-gradient(ellipse 90% 80% at 50% 50%, transparent 62%, rgb(0 0 0 / 0.16) 100%),
+    /* tratteggio fine a incisione */
+    repeating-linear-gradient(135deg, rgb(255 255 255 / 0.07) 0 1px, transparent 1px 3.5px),
+    /* trama a rombi, leggera */
+    repeating-conic-gradient(from 45deg, rgb(255 255 255 / 0.05) 0 25%, transparent 0 50%) 50% 50% / 20px 20px,
+    linear-gradient(165deg, var(--tile-light), var(--tile) 50%, var(--tile-dark));
+  box-shadow:
+    inset 0 0 0 2px var(--card-face),
+    inset 0 0 0 3px rgb(0 0 0 / 0.12),
+    0 var(--edge) 0 var(--tile-dark),
+    0 calc(var(--edge) + 2px) 0 color-mix(in srgb, var(--tile-dark) 70%, #000000),
+    0 calc(var(--edge) + 14px) 26px rgb(0 0 0 / 0.38),
+    0 calc(var(--edge) + 30px) 50px rgb(0 0 0 / 0.2);
+  transform: perspective(800px) translateY(var(--lift)) rotateX(var(--rx)) rotateY(var(--ry));
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
-/* Cornice interna, come il bordo stampato di una carta */
+/* Cornice doppia con i fregi negli angoli, sbalzata: luce sopra e ombra sotto */
 .mode-tile::before {
   content: "";
   position: absolute;
-  inset: 7px;
-  border: 2px solid currentColor;
-  border-radius: calc(var(--radius-l) - 6px);
-  opacity: 0.35;
+  inset: 10px;
+  border: 4px double #ffffff;
+  border-radius: calc(var(--radius-l) - 9px);
+  background-image: var(--fregio-tl), var(--fregio-tr), var(--fregio-bl), var(--fregio-br);
+  background-position: top 3px left 3px, top 3px right 3px, bottom 3px left 3px, bottom 3px right 3px;
+  background-size: 24% auto;
+  background-repeat: no-repeat;
+  filter: drop-shadow(0 -1px 0 rgb(255 255 255 / 0.4)) drop-shadow(0 1.5px 1px rgb(0 0 0 / 0.4));
+  opacity: 0.6;
   pointer-events: none;
 }
 
-.mode-tile:hover {
-  transform: translateY(-3px) rotate(-0.6deg);
-  box-shadow: var(--shadow-2), inset 0 -5px 0 rgb(0 0 0 / 0.12);
+/* Riflesso di luce che segue il puntatore */
+.mode-tile::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at var(--gx, 50%) var(--gy, 0%), rgb(255 255 255 / 0.35), transparent 55%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
 }
 
+.mode-tile:hover,
+.mode-tile:focus-visible {
+  --lift: -6px;
+  --edge: 10px;
+}
+
+.mode-tile:hover::after,
+.mode-tile:focus-visible::after {
+  opacity: 1;
+}
+
+/* Premuta: la carta scende e lo spessore si schiaccia */
 .mode-tile:active {
-  transform: scale(0.97);
+  --lift: 4px;
+  --edge: 3px;
 }
 
-.mode-tile--red { background: var(--red); }
-.mode-tile--green { background: var(--green); }
-.mode-tile--yellow { background: var(--yellow-card); }
-.mode-tile--blue { background: var(--blue); }
+.mode-tile--red { --tile: var(--red); }
+.mode-tile--purple { --tile: var(--purple); }
+.mode-tile--yellow { --tile: var(--yellow-card); }
+.mode-tile--blue { --tile: var(--blue); }
+
+/*
+ * Seme grande dietro le scritte, sbalzato nella carta: chiaro e in grigio, con
+ * una luce sul bordo alto e un'ombra sotto, come un rilievo sulla superficie.
+ */
+.mode-tile__suit {
+  position: absolute;
+  top: 18%;
+  left: 20%;
+  width: 60%;
+  height: 64%;
+  object-fit: contain;
+  filter:
+    grayscale(1) brightness(1.6) contrast(1.1)
+    drop-shadow(0 -1px 0 rgb(255 255 255 / 0.6))
+    drop-shadow(0 3px 2px rgb(0 0 0 / 0.5));
+  opacity: 0.5;
+  pointer-events: none;
+}
 
 .mode-tile__icon {
   font-size: 34px;
@@ -575,7 +793,8 @@ h3 {
 .mode-tile__label,
 .mode-tile__sub,
 .mode-tile__icon {
-  text-shadow: 0 2px 0 rgb(0 0 0 / 0.2);
+  position: relative;
+  text-shadow: 0 2px 0 rgb(0 0 0 / 0.25), 0 3px 10px rgb(0 0 0 / 0.2);
 }
 
 .mode-tile__label {
@@ -589,6 +808,37 @@ h3 {
   font-weight: 800;
   font-size: 0.9rem;
   line-height: 1.25;
+}
+
+/*
+ * Telefono in verticale: "giocatori online" in fondo, centrato; titoli delle
+ * sezioni centrati; icona degli amici più grande. L'altezza delle carte-pulsante
+ * (--tile-h) non cambia: "giocatori online" si sposta, ma occupa lo stesso spazio.
+ */
+@media (max-width: 639px) {
+  .home {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  }
+
+  .online {
+    order: 1;
+    margin-top: auto;
+  }
+
+  .home__sections {
+    margin-top: 0;
+  }
+
+  .mode-section__title {
+    margin-inline: auto;
+  }
+
+  .navbar__friends .icon {
+    font-size: 30px;
+  }
 }
 
 /* Tablet: carte di larghezza massima 220 px, sezioni centrate */
@@ -676,13 +926,12 @@ h3 {
     margin-left: 2px;
   }
 
-  .logo__text {
-    font-size: 1.9rem;
+  .logo {
+    --mark-h: 30px;
   }
 
-  .logo__suit {
-    width: 32px;
-    height: 32px;
+  .logo__text {
+    font-size: 1.75rem;
   }
 
   .home {
@@ -726,8 +975,8 @@ h3 {
     --bg-card-w: 104px;
   }
 
-  .bg-card,
-  .bg-pair img {
+  .bg-pair img,
+  .bg-fall {
     border-radius: 9px;
   }
 }
@@ -1281,6 +1530,66 @@ dialog::backdrop {
   .sheet {
     margin-left: max(12px, calc((100% - var(--content-max)) / 2 + 24px));
   }
+}
+
+/*
+ * Animazioni del pannello statistiche e del pannello amici (data-animated).
+ * L'apertura parte da sola quando il dialog si apre; per la chiusura lo script
+ * aggiunge .is-closing e chiude il dialog a fine animazione.
+ */
+.sheet[data-animated][open] {
+  transform-origin: 24px 0;   /* si apre "dall'avatar", in alto a sinistra */
+  animation: sheet-in 0.22s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+.sheet[data-animated].is-closing {
+  animation: sheet-out 0.16s ease-in forwards;
+}
+
+.drawer[data-animated][open] {
+  animation: drawer-in 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.drawer[data-animated].is-closing {
+  animation: drawer-out 0.22s ease-in forwards;
+}
+
+dialog[data-animated][open]::backdrop {
+  animation: backdrop-in 0.25s ease;
+}
+
+dialog[data-animated].is-closing::backdrop {
+  animation: backdrop-out 0.2s ease forwards;
+}
+
+@keyframes sheet-in {
+  from { opacity: 0; transform: translateY(-10px) scale(0.92); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes sheet-out {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateY(-6px) scale(0.95); }
+}
+
+@keyframes drawer-in {
+  from { transform: translateX(100%); }
+  to { transform: none; }
+}
+
+@keyframes drawer-out {
+  from { transform: none; }
+  to { transform: translateX(100%); }
+}
+
+@keyframes backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes backdrop-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
 /* Messaggio breve in basso */

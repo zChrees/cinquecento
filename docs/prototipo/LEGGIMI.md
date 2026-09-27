@@ -1,6 +1,6 @@
 # Prototipo della home (P52)
 
-Prototipo statico della home, scritto da Claude il 27/09/2026 seguendo il prompt dell'utente, con la palette scelta: **Carretto siciliano**. Serve **solo come riferimento grafico**: il server non lo usa.
+Prototipo statico della home, scritto da Claude il 27/09/2026 seguendo il prompt dell'utente, con la palette scelta: **Carretto siciliano**, su un **panno verde da tavolo** (ritocco dello stesso giorno). Serve **solo come riferimento grafico**: il server non lo usa.
 
 ## Come si apre
 
@@ -8,8 +8,8 @@ Doppio clic su `index.html`. Serve internet, perché font e icone arrivano da Go
 
 ## Cosa si può provare
 
-- **Avatar** (in alto a sinistra): apre le statistiche (partite, vinte, perse, percentuale, rating 1v1 e 2v2), con i link Impostazioni ed Esci e, in fondo, la riga dei crediti delle immagini.
-- **Amici** (in alto a destra): apre il pannello (a tutto schermo su telefono, laterale su computer) con la ricerca per username e l'invio della richiesta, le richieste ricevute (accetta o rifiuta), gli amici online e offline e la chat con ciascuno.
+- **Avatar** (in alto a sinistra): apre, con un'animazione che parte dall'avatar, le statistiche (partite, vinte, perse, percentuale, rating 1v1 e 2v2), con i link Impostazioni ed Esci e, in fondo, la riga dei crediti delle immagini.
+- **Amici** (in alto a destra): apre il pannello, che entra scorrendo da destra (a tutto schermo su telefono, laterale su computer) con la ricerca per username e l'invio della richiesta, le richieste ricevute (accetta o rifiuta), gli amici online e offline e la chat con ciascuno.
 - **Partita Veloce 1v1 / 2v2**: modal con i punti per vincere (150, 300, 500) e "Gioca".
 - **Gioca con un amico 1v1 / 2v2**: stesso modal più la lista degli amici online da invitare. "Gioca" resta disattivato finché l'amico non accetta: nel prototipo accetta da solo dopo 2 secondi.
 
@@ -17,47 +17,67 @@ Per aprire subito uno stato, aggiungi all'indirizzo `?apri=` seguito da `statist
 
 ## Carte-pulsante
 
-Ogni modalità è una **carta da gioco colorata** con le proporzioni di una carta siciliana (larghezza/altezza 0,61), una cornice interna come il bordo stampato, l'icona, "1v1" o "2v2" e il sottotitolo, tutto in bianco:
+Ogni modalità è una **carta da gioco colorata in rilievo**, con le proporzioni di una carta siciliana (larghezza/altezza 0,61) e l'icona, "1v1" o "2v2" e il sottotitolo in bianco:
 
-| Carta | Colore | Sottotitolo |
-|---|---|---|
-| Partita Veloce 1v1 | rosso | Uno contro uno |
-| Partita Veloce 2v2 | verde | A coppie |
-| Gioca con un amico 1v1 | giallo | Sfida un amico |
-| Gioca con un amico 2v2 | blu | Fai squadra |
+| Carta | Colore | Asso al centro | Sottotitolo |
+|---|---|---|---|
+| Partita Veloce 1v1 | rosso | coppe | Uno contro uno |
+| Partita Veloce 2v2 | viola (`--purple`, `#7b3fc4`; era verde, ma si confondeva con il tavolo) | spade | A coppie |
+| Gioca con un amico 1v1 | giallo | denari | Sfida un amico |
+| Gioca con un amico 2v2 | blu | bastoni | Fai squadra |
+
+Com'è fatta (`prototipo.css`, `.mode-tile`):
+- **colore**: ogni carta ha il suo colore in `--tile`; il CSS ne ricava una versione chiara e una scura (`color-mix`) per la sfumatura dall'alto in basso e per lo spessore;
+- **bordi**: un bordo esterno crema sottile (2 px), come il margine bianco di una carta vera, e dentro una cornice doppia con un **fregio in ogni angolo** (voluta, fogliolina, puntino e rombi; piccoli SVG scritti dentro il CSS), sbalzati come l'Asso;
+- **superficie stampata**, nello stesso stile dell'Asso perché non stacchi dal resto: grana della carta, tratteggio fine a incisione, trama leggera a rombi (tipo maiolica), un medaglione di luce dietro l'Asso e i margini appena consumati; i colori restano pieni;
+- **disegni**: una luce dall'alto, l'**Asso del suo seme** grande al centro, **sbalzato**: chiaro, in grigio, con una luce sul bordo alto e un'ombra sotto, come un rilievo sulla superficie della carta;
+- **3D**: sotto la carta c'è il suo spessore (una striscia scura piena) e un'ombra larga e morbida. Passandoci sopra la carta si solleva e lo spessore cresce; premendola scende e lo spessore si schiaccia;
+- **inclinazione**: con il mouse la carta si inclina verso il puntatore (fino a 10 gradi) e un riflesso di luce lo segue (script in `prototipo.js`, subito dopo il modal). Solo con un mouse vero: sul telefono e con "riduci movimento" la carta non si inclina.
 
 La carta gialla usa un giallo più carico (`--yellow-card`, `#e9a000`) del giallo dei dettagli (`--yellow`, `#ffc21a`), con un'ombra sotto le scritte, perché il testo bianco si legga. Il contrasto resta comunque più basso di quello delle altre carte.
 
 ## Sfondo
 
-Carte siciliane vere negli **spazi vuoti** della pagina:
-- **Cavallo e Re di tutti e quattro i semi**, sempre in coppia (a ventaglio, come in mano a chi canta 40);
-- tutti gli **Assi** e tutti i **Tre** (i carichi).
+Il fondo della pagina è un **panno verde da tavolo**: più chiaro al centro, come sotto una lampada, e più scuro verso i bordi (`--felt`, `--felt-light`, `--felt-dark`), con una grana leggera disegnata da un piccolo SVG di rumore dentro il CSS, senza immagini in più.
 
-Regole (script in `prototipo.js`, parte "Sfondo"):
-- le carte **non vanno dietro** le carte-pulsante, i titoli e "giocatori online": lo script misura dove sono e lascia libere quelle zone;
-- **eccezione, sugli schermi con poco spazio** (di solito i telefoni): se dopo il primo giro le carte coprono meno del 45% dello spazio libero, un secondo giro mette altre carte anche **dietro le carte-pulsante**, purché ognuna resti visibile almeno per un terzo e spunti nello spazio vuoto. Titoli e "giocatori online" restano sempre liberi;
-- le carte **non si sovrappongono mai** fra loro: solo Cavallo e Re di una coppia stanno uno sopra l'altro;
-- dietro la **navbar trasparente** le carte sono ammesse e si vedono sfocate;
-- le carte possono uscire dallo schermo al massimo per il 40%, così "spuntano" dai bordi;
-- lo script prova i punti dello schermo in ordine di precedenza: prima le carte a misura piena (coppie in circa un punto su tre, poi Assi e Tre), poi al 75%, infine carte singole al 55% solo nei buchi stretti;
-- spostamenti e rotazioni sono "casuali" ma sempre uguali per lo stesso punto, quindi lo sfondo non cambia ogni volta;
-- lo sfondo si ricalcola quando la finestra cambia misura e quando titoli e carte si spostano (per esempio quando arrivano i font da Google).
+Sopra il panno c'è una **cascata di carte che cade dall'alto**, senza fermarsi mai (script in `prototipo.js`, parte "Sfondo"):
+- due carte su cinque cadono **di dorso** (`img/dorso.webp`, vedi "Immagini e licenze"); le altre sono di faccia, a turno una **coppia Cavallo + Re** (a ventaglio, come in mano a chi canta 40, che cade tutta insieme), un **Asso** e un **Tre** (i carichi);
+- le carte hanno misure diverse: le più piccole sembrano più lontane, quindi cadono più lente, sono un po' più scure (`--shade`) e passano dietro alle più grandi;
+- le carte sono **piene, non trasparenti**: quando due si incrociano, la più grande (più vicina) copre la più piccola (più lontana);
+- mentre cadono girano piano su se stesse e si spostano un po' di lato;
+- all'apertura della pagina la cascata è già a metà (ogni carta parte da un punto diverso del suo giro);
+- passano **dietro** a tutto (navbar, titoli, "giocatori online", carte-pulsante);
+- il numero di carte dipende dalla larghezza dello schermo: 8 su telefono, 16 a 1280 px, 24 a 1920 px;
+- con **"riduci movimento"** attivo nel sistema la cascata resta ferma, con le carte sparse sullo schermo.
 
-Misura delle carte a piena grandezza: 60 px su telefono, 84 px su tablet, 104 px su computer.
+Spostamenti, rotazioni e velocità sono "casuali" ma sempre uguali, quindi lo sfondo non cambia a ogni apertura. La cascata si ricrea (e riparte) solo quando cambia la misura della finestra.
 
-Parte dello spazio libero coperta dalle carte, misurata il 27/09/2026: 43–53% sui telefoni (360×640, 375×667, 390×844, 412×915), 55% con il telefono in orizzontale (844×390), 50% su tablet (768×1024), 48–56% su computer (1280×720, 1440×900, 1920×1080).
+Misura delle carte più vicine: 60 px su telefono, 84 px su tablet, 104 px su computer; le più lontane sono al 55%.
+
+Carte della cascata, contate il 27/09/2026: a 360×640 8 carte (3 dorsi, 2 coppie, 2 Assi, 1 Tre); a 1440×900 18 carte (7 dorsi, 4 coppie, 4 Assi, 3 Tre); a 1920×1080 24 carte (10 dorsi, 5 coppie, 5 Assi, 4 Tre).
 
 ## Layout
 
 **La pagina non scorre mai**, né su telefono né su computer: è alta esattamente quanto lo schermo. Le carte-pulsante si rimpiccioliscono sugli schermi bassi: la loro altezza massima (`--tile-h` in `prototipo.css`) è lo schermo meno navbar, "giocatori online", titoli e spazi.
 
-- **Telefono**: navbar con avatar, "Cinquecento" e amici; giocatori online al centro; le due sezioni una sotto l'altra, ciascuna con due carte affiancate.
+- **Telefono** (fino a 639 px): navbar con avatar, "Cinquecento" e amici (icona degli amici più grande, 30 px); le due sezioni una sotto l'altra, con il titolo centrato e due carte affiancate; "giocatori online" **in fondo alla pagina**, centrato.
 - **Telefono in orizzontale** (altezza fino a 520 px): le quattro carte su una sola fila.
 - **Tablet** (da 640 px): carte larghe al massimo 220 px, sezioni centrate. Da 900 px le due sezioni sono affiancate.
 - **Computer** (da 1024 px): navbar con le scritte "Mario" e "Amici", carte più grandi e più distanziate.
 
-La **navbar è trasparente e sfocata** (effetto vetro): si vedono, sfocate, le carte dello sfondo che le passano dietro.
+La **navbar è completamente trasparente**: niente fondo, sfocatura né ombra sotto tutta la barra. Avatar e amici stanno su una **pillola di vetro chiaro in rilievo** (luce sul bordo alto, ombra sotto) e il nome ha uno spessore e un'ombra che lo staccano dal panno; con scritte e icone color crema (`--on-navbar`). Un'ombra leggera sotto le scritte le tiene leggibili quando dietro passa una carta.
+
+**Passandoci sopra** (o arrivandoci con la tastiera) la pillola si alza un po'; l'**avatar** si ingrandisce, si inclina e il suo anello giallo si illumina; l'**icona degli amici** oscilla come un saluto e il contatore rimbalza.
+
+**Logo**: due carte stilizzate a ventaglio, gialla e rossa (come Cavallo e Re quando si canta), che si aprono un po' passandoci sopra con il mouse, e il nome in due toni: "Cinque" color crema e "cento" giallo, in Fredoka. È solo CSS: nessuna immagine. Il logo definitivo in SVG resta per P42.
+
+## Animazioni
+
+- **Pannello statistiche**: si apre ingrandendosi dall'angolo dell'avatar (0,22 s) e si chiude rimpicciolendosi e sfumando (0,16 s).
+- **Pannello amici**: entra scorrendo da destra (0,3 s) ed esce allo stesso modo (0,22 s).
+- Lo sfondo scuro dietro i due pannelli compare e scompare sfumando.
+- La chiusura è animata con la X, con Esc e toccando fuori: lo script aggiunge `.is-closing` e chiude il pannello a fine animazione. Le finestre animate hanno l'attributo `data-animated`; il modal della modalità non ce l'ha e si chiude subito come prima.
+- Con "riduci movimento" attivo nel sistema, niente animazioni: i pannelli si aprono e si chiudono subito.
 
 Controllato il 27/09/2026 a 360×640, 375×667, 390×844, 412×915, 768×1024, 844×390, 1280×720, 1440×900 e 1920×1080: in tutti i casi il contenuto è alto quanto lo schermo e l'ultima carta-pulsante resta dentro.
 
@@ -71,10 +91,12 @@ Controllato il 27/09/2026 a 360×640, 375×667, 390×844, 412×915, 768×1024, 8
 
 | File | Cosa | Fonte | Licenza |
 |---|---|---|---|
-| `img/seme-denari.svg` | Seme di denari, accanto al nome "Cinquecento" | Wikimedia Commons, file `Seme_denari_carte_siciliane.svg`, autore Florixc | **Pubblico dominio** |
-| `img/cavallo-*.webp`, `img/re-*.webp`, `img/asso-*.webp`, `img/tre-*.webp` (4 semi ciascuno) | Carte dello sfondo, ritagliate dalle scansioni e portate a 200 × 326 px | Wikimedia Commons, file `Carte_da_gioco_siciliane_-_<seme>.jpg`, autore Matsoftware | **CC BY-SA 3.0**: si possono usare citando l'autore e la licenza; i ritagli restano sotto la stessa licenza |
+| `img/seme-denari.svg` | Seme di denari: era accanto al nome "Cinquecento", ora non è più usato (il logo è in CSS) | Wikimedia Commons, file `Seme_denari_carte_siciliane.svg`, autore Florixc | **Pubblico dominio** |
+| `img/asso-<seme>-figura.webp` (4 semi) | Asso al centro delle carte-pulsante: la figura dell'Asso **scontornata** (sfondo bianco e buchi bianchi resi trasparenti, tranne la moneta del denaro; tolte le macchioline della scansione), ritagliata e portata al doppio della misura | Ricavate da `img/asso-<seme>.webp`, quindi dalle scansioni di Matsoftware | **CC BY-SA 3.0**, come le carte da cui vengono |
+| `img/cavallo-<seme>.webp`, `img/re-<seme>.webp`, `img/asso-<seme>.webp`, `img/tre-<seme>.webp` (4 semi ciascuno) | Carte di faccia della cascata, ritagliate dalle scansioni e portate a 200 × 326 px | Wikimedia Commons, file `Carte_da_gioco_siciliane_-_<seme>.jpg`, autore Matsoftware | **CC BY-SA 3.0**: si possono usare citando l'autore e la licenza; i ritagli restano sotto la stessa licenza |
+| `img/dorso.webp` | Dorso delle carte della cascata: disegno a cubi, ritagliato, portato a 200 × 326 px e colorato di rosso su crema (l'originale è in bianco e nero) | Wikimedia Commons, file `Carte_Napoletane_retro.jpg`, autore Trocche100 (it.wikipedia). È il dorso delle **carte napoletane**: su Commons non c'è un dorso di carte siciliane con licenza libera, e questo disegno a cubi è quello classico dei mazzi regionali italiani | **Pubblico dominio**: nessun obbligo di citazione |
 
-Da ricordare per le pagine vere: le immagini CC BY-SA richiedono una **riga di crediti** visibile nel sito: va in fondo al pannello statistiche, come nel prototipo ("Carte dello sfondo: Matsoftware, CC BY-SA 3.0, da Wikimedia Commons", con il collegamento alla licenza).
+Da ricordare per le pagine vere: le immagini CC BY-SA richiedono una **riga di crediti** visibile nel sito: va in fondo al pannello statistiche, come nel prototipo ("Immagini delle carte: Matsoftware, CC BY-SA 3.0, da Wikimedia Commons": le carte della cascata e gli Assi delle carte-pulsante, con il collegamento alla licenza).
 
 ## Risorse esterne
 

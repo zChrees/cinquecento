@@ -84,17 +84,48 @@
   // ------------------------------------------------------------
   // Finestre: apertura, chiusura con X, con Esc e toccando fuori
   // ------------------------------------------------------------
+
+  // Le finestre con data-animated si chiudono dopo l'animazione di uscita (.is-closing).
+  // Se le animazioni sono spente (es. "riduci movimento"), si chiudono subito.
+  function closeDialog(dialog) {
+    if (!dialog.open || dialog.classList.contains('is-closing')) return;
+    if (!dialog.hasAttribute('data-animated')) {
+      dialog.close();
+      return;
+    }
+    dialog.classList.add('is-closing');
+    if (getComputedStyle(dialog).animationName === 'none') {
+      dialog.classList.remove('is-closing');
+      dialog.close();
+      return;
+    }
+    dialog.addEventListener('animationend', function onEnd(e) {
+      if (e.target !== dialog) return;
+      dialog.removeEventListener('animationend', onEnd);
+      dialog.classList.remove('is-closing');
+      dialog.close();
+    });
+  }
+
   $all('dialog').forEach(function (dialog) {
     dialog.addEventListener('click', function (e) {
       if (e.target !== dialog) return;
       const r = dialog.getBoundingClientRect();
       const inside = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
-      if (!inside) dialog.close();
+      if (!inside) closeDialog(dialog);
     });
+
+    // Esc: il browser chiuderebbe subito; lo fermiamo per far vedere l'animazione
+    if (dialog.hasAttribute('data-animated')) {
+      dialog.addEventListener('cancel', function (e) {
+        e.preventDefault();
+        closeDialog(dialog);
+      });
+    }
   });
 
   $all('[data-close]').forEach(function (b) {
-    b.addEventListener('click', function () { b.closest('dialog').close(); });
+    b.addEventListener('click', function () { closeDialog(b.closest('dialog')); });
   });
 
   $all('[data-open]').forEach(function (b) {
@@ -317,6 +348,30 @@
     });
   });
 
+  // Carte-pulsante in 3D: con il mouse la carta si inclina verso il puntatore e il
+  // riflesso di luce lo segue. Solo con un mouse vero e senza "riduci movimento".
+  const tiltAllowed = window.matchMedia('(hover: hover) and (pointer: fine)').matches &&
+    !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const tiltMax = 10;   // gradi di inclinazione massima
+
+  if (tiltAllowed) {
+    $all('.mode-tile').forEach(function (tile) {
+      tile.addEventListener('pointermove', function (e) {
+        // Posizione del puntatore sulla carta, da 0 a 1 in orizzontale e in verticale
+        const r = tile.getBoundingClientRect();
+        const px = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+        const py = Math.min(1, Math.max(0, (e.clientY - r.top) / r.height));
+        tile.style.setProperty('--ry', ((px - 0.5) * 2 * tiltMax).toFixed(1) + 'deg');
+        tile.style.setProperty('--rx', ((0.5 - py) * 2 * tiltMax).toFixed(1) + 'deg');
+        tile.style.setProperty('--gx', (px * 100).toFixed(0) + '%');
+        tile.style.setProperty('--gy', (py * 100).toFixed(0) + '%');
+      });
+      tile.addEventListener('pointerleave', function () {
+        ['--rx', '--ry', '--gx', '--gy'].forEach(function (name) { tile.style.removeProperty(name); });
+      });
+    });
+  }
+
   playBtn.addEventListener('click', function () {
     if (playBtn.disabled) return;
     const target = modal.querySelector('input[name="target"]:checked').value;
@@ -326,26 +381,21 @@
   });
 
   // ------------------------------------------------------------
-  // Sfondo: carte siciliane negli spazi vuoti
-  // Lo script guarda dove sono le carte-pulsante, i titoli e "giocatori online"
-  // e mette le carte solo dove non toccano né quelle zone né le altre carte già
-  // messe. Solo Cavallo e Re di una coppia si sovrappongono, fra loro.
-  // Se lo sfondo resta troppo vuoto, altre carte vanno dietro le carte-pulsante,
-  // sempre visibili almeno per un terzo. Dietro la navbar trasparente si vedono sfocate.
+  // Sfondo: una cascata di carte che cade dall'alto senza fermarsi
+  // Carte di dorso e, di faccia, Assi, Tre (i carichi) e coppie Cavallo + Re
+  // a ventaglio (cantare 40). Passano dietro a tutto, anche dietro la navbar.
   // ------------------------------------------------------------
   const bgDeco = $('[data-bg-cards]');
 
-  // Coppie Cavallo + Re dei quattro semi, e carte singole: Assi e Tre (i carichi)
-  const bgPairs = ['pair:coppe', 'pair:bastoni', 'pair:spade', 'pair:denari'];
-  const bgSingles = ['asso-denari', 'tre-spade', 'asso-coppe', 'tre-denari', 'asso-bastoni', 'tre-coppe', 'asso-spade', 'tre-bastoni'];
+  // Carte di faccia, a turno: ogni tanto una coppia Cavallo + Re, poi Assi e Tre
+  const bgFaces = [
+    'pair:coppe', 'asso-denari', 'tre-spade',
+    'pair:bastoni', 'asso-coppe', 'tre-denari',
+    'pair:spade', 'asso-bastoni', 'tre-coppe',
+    'pair:denari', 'asso-spade', 'tre-bastoni'
+  ];
 
-  // Zone da lasciare libere: le scritte sempre; le carte-pulsante tranne quando lo sfondo resta troppo vuoto
-  const bgLabelSelector = '.online, .mode-section__title';
-  const bgTileSelector = '.mode-tile';
-  // Sotto questa parte di spazio libero coperta, le carte vanno anche dietro le carte-pulsante
-  const bgMinCoverage = 0.45;
-
-  // Numero "casuale" ma sempre uguale per lo stesso punto, così lo sfondo non cambia a ogni ridisegno
+  // Numero "casuale" ma sempre uguale per la stessa carta, così lo sfondo non cambia a ogni apertura
   function pseudoRandom(i, k) {
     const x = Math.sin(i * 12.9898 + k * 78.233) * 43758.5453;
     return x - Math.floor(x);
@@ -358,142 +408,62 @@
     return img;
   }
 
-  function bgGroup(kind) {
+  function bgCard(kind) {
     if (kind.indexOf('pair:') === 0) {
       const seme = kind.slice(5);
-      const pair = el('span', 'bg-pair');
+      const pair = el('span', 'bg-fall bg-pair');
       pair.append(bgImage('cavallo-' + seme), bgImage('re-' + seme));
       return pair;
     }
     const card = bgImage(kind);
-    card.className = 'bg-card';
+    card.className = 'bg-fall';
     return card;
   }
 
-  // Rettangolo occupato da un gruppo largo w e alto h, centrato in (cx, cy) e ruotato di deg gradi
-  function boxOf(cx, cy, w, h, deg) {
-    const a = Math.abs(deg) * Math.PI / 180;
-    const bw = w * Math.cos(a) + h * Math.sin(a);
-    const bh = h * Math.cos(a) + w * Math.sin(a);
-    return { l: cx - bw / 2, t: cy - bh / 2, r: cx + bw / 2, b: cy + bh / 2 };
-  }
-
-  // Area della parte comune a due rettangoli (0 se non si toccano)
-  function overlapArea(a, b) {
-    const w = Math.min(a.r, b.r) - Math.max(a.l, b.l);
-    const h = Math.min(a.b, b.b) - Math.max(a.t, b.t);
-    return w > 0 && h > 0 ? w * h : 0;
-  }
-
-  function touchesAny(box, list, pad) {
-    return list.some(function (o) {
-      return box.l < o.r + pad && box.r > o.l - pad && box.t < o.b + pad && box.b > o.t - pad;
-    });
-  }
-
+  // Carte sparse su tutta la larghezza, di misure diverse. Le più piccole sembrano
+  // più lontane: cadono più lente, sono più scure e passano dietro alle grandi
+  // (sono piene, non trasparenti: chi sta davanti copre chi sta dietro).
   function renderBackground() {
     const cardW = parseFloat(getComputedStyle(bgDeco).getPropertyValue('--bg-card-w'));
-    const cardH = cardW / 0.61;
     const area = bgDeco.getBoundingClientRect();
-    const gap = cardW * 0.12;   // spazio minimo tra due gruppi e attorno alle zone libere
-
-    function rectOf(node) {
-      const r = node.getBoundingClientRect();
-      return { l: r.left - area.left, t: r.top - area.top, r: r.right - area.left, b: r.bottom - area.top };
+    const count = Math.max(8, Math.min(26, Math.round(area.width / cardW * 1.3)));
+    const cards = [];
+    let faces = 0;
+    for (let i = 0; i < count; i += 1) {
+      const rnd = function (k) { return pseudoRandom(i + 1, k + 20); };
+      const depth = 0.55 + rnd(1) * 0.45;
+      // Due carte su cinque cadono di dorso, alternate a quelle di faccia
+      const back = i % 5 === 1 || i % 5 === 3;
+      const node = back ? bgCard('dorso') : bgCard(bgFaces[faces % bgFaces.length]);
+      if (!back) faces += 1;
+      const dur = (9 + rnd(4) * 5) / depth;
+      const r0 = (rnd(6) * 2 - 1) * 40;
+      const r1 = r0 + (rnd(7) < 0.5 ? -1 : 1) * (90 + rnd(8) * 180);
+      const props = {
+        '--bg-card-w': (cardW * depth).toFixed(1) + 'px',
+        '--x': (((i + 0.2 + rnd(3) * 0.6) / count) * area.width).toFixed(1) + 'px',
+        '--y': (rnd(10) * area.height).toFixed(1) + 'px',   // posizione da ferma, senza animazioni
+        '--dur': dur.toFixed(2) + 's',
+        '--delay': (-rnd(5) * dur).toFixed(2) + 's',
+        '--r0': r0.toFixed(1) + 'deg',
+        '--r1': r1.toFixed(1) + 'deg',
+        '--drift': ((rnd(9) * 2 - 1) * cardW * 1.2).toFixed(1) + 'px',
+        '--shade': (0.45 + depth * 0.4).toFixed(2)   // luce: 0,67 per le lontane, 0,85 per le vicine
+      };
+      Object.keys(props).forEach(function (name) { node.style.setProperty(name, props[name]); });
+      cards.push({ depth: depth, node: node });
     }
-
-    // Zone da lasciare libere: le scritte sempre, le carte-pulsante solo nel primo giro
-    const labels = $all(bgLabelSelector).map(rectOf);
-    const tiles = $all(bgTileSelector).map(rectOf);
-    const screen = { l: 0, t: 0, r: area.width, b: area.height };
-
-    const placed = [];
-    const groups = [];
-    const step = Math.max(8, Math.round(cardW * 0.2));   // passo fitto: si riempiono anche i buchi piccoli
-    const next = { pair: 0, single: 0 };   // prossima coppia e prossima carta da usare
-
-    // Prova tutti i punti dello schermo con le passate indicate e mette le carte dove c'è posto.
-    // avoid: zone da non toccare. behindTiles: le carte possono stare dietro le carte-pulsante,
-    // ma devono restare visibili almeno per un terzo.
-    function fill(passes, avoid, behindTiles, seed) {
-      passes.forEach(function (passInfo, pass) {
-        const scale = passInfo[0];
-        const list = passInfo[1];
-        const counter = list === bgPairs ? 'pair' : 'single';
-        const salt = (seed + pass) * 7919;
-        let spot = 0;   // numero del punto provato, per la casualità ripetibile
-        for (let y = 0; y <= area.height; y += step) {
-          for (let x = 0; x <= area.width; x += step) {
-            spot += 1;
-            const kind = list[next[counter] % list.length];
-            const isPair = kind.indexOf('pair:') === 0;
-            // Le coppie si provano solo in circa un punto su tre, così resta spazio per Assi e Tre
-            if (isPair && pseudoRandom(spot + salt, 9) > 0.35) continue;
-            const cw = cardW * scale;
-            const ch = cardH * scale;
-            // Una coppia a ventaglio occupa circa 1,75 carte in larghezza
-            const w = isPair ? cw * 1.75 : cw;
-            const h = isPair ? ch * 1.08 : ch;
-            const deg = (pseudoRandom(spot + salt, 3) * 2 - 1) * (isPair ? 8 : 14);
-            const cx = x + (pseudoRandom(spot + salt, 1) * 2 - 1) * step * 0.45;
-            const cy = y + (pseudoRandom(spot + salt, 2) * 2 - 1) * step * 0.45;
-            const box = boxOf(cx, cy, w, h, deg);
-            const bw = box.r - box.l;
-            const bh = box.b - box.t;
-            // Può uscire dallo schermo al massimo per il 40%: le carte "spuntano" dai bordi
-            const out = 0.4;
-            if (box.l < -bw * out || box.r > area.width + bw * out || box.t < -bh * out || box.b > area.height + bh * out) continue;
-            if (touchesAny(box, avoid, gap) || touchesAny(box, placed, gap * scale)) continue;
-            if (behindTiles) {
-              const hidden = tiles.reduce(function (sum, tile) { return sum + overlapArea(box, tile); }, 0);
-              if (hidden > (bw * bh) * (2 / 3)) continue;
-            }
-
-            const node = bgGroup(kind);
-            node.style.setProperty('--bg-card-w', cw.toFixed(1) + 'px');
-            node.style.setProperty('--x', cx.toFixed(1) + 'px');
-            node.style.setProperty('--y', cy.toFixed(1) + 'px');
-            node.style.setProperty('--r', deg.toFixed(1) + 'deg');
-            placed.push(box);
-            groups.push(node);
-            next[counter] += 1;
-          }
-        }
-      });
-    }
-
-    // Primo giro: solo negli spazi vuoti. A misura piena prima le coppie e poi le carte singole,
-    // poi le stesse al 75%, infine carte singole al 55% nei buchi rimasti.
-    fill([
-      [1, bgPairs], [1, bgSingles],
-      [0.75, bgPairs], [0.75, bgSingles],
-      [0.55, bgSingles]
-    ], labels.concat(tiles), false, 0);
-
-    // Quanta parte dello spazio libero è coperta dalle carte?
-    const freeArea = area.width * area.height -
-      labels.concat(tiles).reduce(function (sum, r) { return sum + overlapArea(r, screen); }, 0);
-    const covered = placed.reduce(function (sum, b) { return sum + overlapArea(b, screen); }, 0);
-
-    // Secondo giro, solo se lo sfondo è rimasto troppo vuoto (succede sui telefoni stretti):
-    // le carte possono stare anche dietro le carte-pulsante e spuntare nello spazio vuoto.
-    if (freeArea > 0 && covered / freeArea < bgMinCoverage) {
-      fill([[1, bgPairs], [1, bgSingles], [0.75, bgSingles]], labels, true, 100);
-    }
-
-    bgDeco.replaceChildren.apply(bgDeco, groups);
+    // Prima le lontane, poi le vicine: nella pagina chi viene dopo sta davanti
+    cards.sort(function (a, b) { return a.depth - b.depth; });
+    bgDeco.replaceChildren.apply(bgDeco, cards.map(function (c) { return c.node; }));
   }
 
-  // Si ridisegna quando cambia la finestra e quando titoli e carte-pulsante si spostano:
-  // succede per esempio quando arrivano i font da Google, che cambiano le misure dei testi.
+  // Si ricrea solo quando cambia la misura della finestra (la cascata riparte da capo)
   let bgTimer = null;
-  function scheduleBackground() {
+  window.addEventListener('resize', function () {
     clearTimeout(bgTimer);
     bgTimer = setTimeout(renderBackground, 120);
-  }
-  window.addEventListener('resize', scheduleBackground);
-  if (document.fonts) document.fonts.addEventListener('loadingdone', scheduleBackground);
-  new ResizeObserver(scheduleBackground).observe($('.home__sections'));
+  });
   renderBackground();
 
   // ------------------------------------------------------------

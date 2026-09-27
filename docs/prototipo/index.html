@@ -34,8 +34,8 @@
     </button>
 
     <a class="logo" href="#" aria-label="Cinquecento, torna alla home">
-      <img class="logo__suit" src="img/seme-denari.svg" alt="">
-      <span class="logo__text">Cinquecento</span>
+      <span class="logo__mark" aria-hidden="true"><span></span><span></span></span>
+      <span class="logo__text">Cinque<b>cento</b></span>
     </a>
 
     <button class="navbar__friends" type="button" data-open="friends" aria-haspopup="dialog" aria-label="Amici: 1 richiesta di amicizia">
@@ -60,11 +60,13 @@
       </h2>
       <div class="mode-section__tiles">
         <button class="mode-tile mode-tile--red" type="button" data-kind="veloce" data-mode="1v1">
+          <img class="mode-tile__suit" src="img/asso-coppe-figura.webp" alt="">
           <span class="icon mode-tile__icon" aria-hidden="true">person</span>
           <span class="mode-tile__label">1v1</span>
           <span class="mode-tile__sub">Uno contro uno</span>
         </button>
-        <button class="mode-tile mode-tile--green" type="button" data-kind="veloce" data-mode="2v2">
+        <button class="mode-tile mode-tile--purple" type="button" data-kind="veloce" data-mode="2v2">
+          <img class="mode-tile__suit" src="img/asso-spade-figura.webp" alt="">
           <span class="icon mode-tile__icon" aria-hidden="true">groups</span>
           <span class="mode-tile__label">2v2</span>
           <span class="mode-tile__sub">A coppie</span>
@@ -78,11 +80,13 @@
       </h2>
       <div class="mode-section__tiles">
         <button class="mode-tile mode-tile--yellow" type="button" data-kind="amico" data-mode="1v1">
+          <img class="mode-tile__suit" src="img/asso-denari-figura.webp" alt="">
           <span class="icon mode-tile__icon" aria-hidden="true">person</span>
           <span class="mode-tile__label">1v1</span>
           <span class="mode-tile__sub">Sfida un amico</span>
         </button>
         <button class="mode-tile mode-tile--blue" type="button" data-kind="amico" data-mode="2v2">
+          <img class="mode-tile__suit" src="img/asso-bastoni-figura.webp" alt="">
           <span class="icon mode-tile__icon" aria-hidden="true">groups</span>
           <span class="mode-tile__label">2v2</span>
           <span class="mode-tile__sub">Fai squadra</span>
@@ -93,7 +97,7 @@
 </main>
 
 <!-- ===== Pannello statistiche (tocco sull'avatar) ===== -->
-<dialog class="sheet sheet--stats" id="stats" aria-labelledby="stats-title">
+<dialog class="sheet sheet--stats" id="stats" aria-labelledby="stats-title" data-animated>
   <div class="sheet__head">
     <span class="avatar avatar--big" aria-hidden="true">M</span>
     <div>
@@ -117,14 +121,14 @@
     <a href="#" class="sheet__link"><span class="icon" aria-hidden="true">logout</span>Esci</a>
   </div>
   <p class="sheet__credits">
-    Carte dello sfondo: Matsoftware,
+    Immagini delle carte: Matsoftware,
     <a href="https://creativecommons.org/licenses/by-sa/3.0/deed.it" target="_blank" rel="noopener">CC BY-SA 3.0</a>,
     da Wikimedia Commons
   </p>
 </dialog>
 
 <!-- ===== Pannello amici (tocco sull'icona amici) ===== -->
-<dialog class="drawer" id="friends" aria-labelledby="friends-title">
+<dialog class="drawer" id="friends" aria-labelledby="friends-title" data-animated>
   <!-- Vista: elenco amici -->
   <div class="drawer__view" data-view="list">
     <div class="drawer__head">
