@@ -67,18 +67,18 @@ class BaseConfig:
     GLICKO_TAU = 0.5
     RATING_PROVISIONAL_GAMES = 10
 
-    # Account (provvisorio, D7 e D8) e tentativi di login (P16)
+    # Account: nome utente deciso (D7), password provvisoria (D8); tentativi di login (P16)
     USERNAME_MIN = 3
     USERNAME_MAX = 20
     PASSWORD_MIN = 8
     LOGIN_MAX_ATTEMPTS = 5
     LOGIN_LOCK_SECONDS = 300
 
-    # Amici, chat e inviti (provvisorio, D24, D26, D27)
+    # Amici, chat e inviti: lunghezza dei messaggi decisa (D26), il resto provvisorio (D26, D27).
+    # I messaggi tra amici non si cancellano mai (D24): niente giorni di conservazione.
     FRIENDS_MAX = 100
     CHAT_MAX_LENGTH = 1000
     CHAT_MIN_INTERVAL_SECONDS = 1
-    CHAT_RETENTION_DAYS = 30
     INVITE_SECONDS = 60
 
     # Log e backup (conservazione provvisoria, D10)
