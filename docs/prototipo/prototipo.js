@@ -467,6 +467,49 @@
   renderBackground();
 
   // ------------------------------------------------------------
+  // Logo: le due carte di dorso ogni tanto si girano e mostrano Cavallo e Re
+  // di un seme, poi tornano sul dorso; al giro dopo tocca al seme successivo.
+  // Con "riduci movimento" restano ferme sul dorso.
+  // ------------------------------------------------------------
+  const logoCards = $all('[data-logo-cards] .logo__card');
+  const logoSuits = ['coppe', 'denari', 'spade', 'bastoni'];
+  const logoTiming = { back: 3000, front: 2600, stagger: 180, flip: 900 };
+
+  function flipLogoCard(card, front) {
+    card.classList.add('is-flipping');
+    card.classList.toggle('is-front', front);
+    setTimeout(function () { card.classList.remove('is-flipping'); }, logoTiming.flip);
+  }
+
+  function logoCycle(i) {
+    const suit = logoSuits[i % logoSuits.length];
+    // Le facce si cambiano mentre si vede il dorso, quindi il cambio non si nota
+    $('.logo__face--front', logoCards[0]).src = 'img/cavallo-' + suit + '.webp';
+    $('.logo__face--front', logoCards[1]).src = 'img/re-' + suit + '.webp';
+    setTimeout(function () {
+      flipLogoCard(logoCards[0], true);
+      setTimeout(function () { flipLogoCard(logoCards[1], true); }, logoTiming.stagger);
+      setTimeout(function () {
+        flipLogoCard(logoCards[0], false);
+        setTimeout(function () { flipLogoCard(logoCards[1], false); }, logoTiming.stagger);
+        setTimeout(function () { logoCycle(i + 1); }, logoTiming.flip + logoTiming.stagger);
+      }, logoTiming.flip + logoTiming.front);
+    }, logoTiming.back);
+  }
+
+  if (logoCards.length === 2 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    // Tutte le figure caricate prima, così il giro non scatta
+    const preload = logoSuits.map(function (suit) {
+      return ['cavallo-', 're-'].map(function (who) {
+        const img = new Image();
+        img.src = 'img/' + who + suit + '.webp';
+        return img.decode ? img.decode().catch(function () {}) : Promise.resolve();
+      });
+    });
+    Promise.all([].concat.apply([], preload)).then(function () { logoCycle(0); });
+  }
+
+  // ------------------------------------------------------------
   // Link finti
   // ------------------------------------------------------------
   $all('a[href="#"]').forEach(function (a) {

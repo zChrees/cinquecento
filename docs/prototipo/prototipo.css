@@ -508,7 +508,7 @@ h3 {
  * Un alone scuro morbido dietro lo stacca dal panno e dalle carte che passano.
  */
 .logo {
-  --mark-h: 30px;
+  --mark-h: 34px;
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -535,35 +535,77 @@ h3 {
   height: var(--mark-h);
 }
 
-.logo__mark span {
+/*
+ * Due carte vere a ventaglio, di dorso. Ogni tanto lo script le gira (.is-front)
+ * e mostrano Cavallo e Re di un seme, poi tornano sul dorso; al giro dopo il seme
+ * cambia. .logo__card è la carta nel ventaglio (rotazione e ombra), .logo__flip
+ * gira in 3D con le due facce (dorso e figura) una dietro l'altra.
+ */
+.logo__card {
   position: absolute;
   bottom: 0;
-  width: calc(var(--mark-h) * 0.64);
+  width: calc(var(--mark-h) * 0.61);
   height: var(--mark-h);
-  border-radius: 4px;
-  box-shadow: 0 2px 0 rgb(0 0 0 / 0.25), 0 4px 10px rgb(0 0 0 / 0.45), inset 0 0 0 1.5px rgb(255 255 255 / 0.5);
   transform-origin: 50% 100%;
-  transition: transform 0.2s ease;
+  transition: transform 0.25s ease;
+  perspective: 240px;
 }
 
-.logo__mark span:first-child {
+.logo__card:first-child {
   left: 0;
-  background: linear-gradient(160deg, #ffd65a, var(--yellow-card));
   transform: rotate(-10deg);
 }
 
-.logo__mark span:last-child {
+.logo__card:last-child {
   right: 0;
-  background: linear-gradient(160deg, #ef5a4a, var(--red-strong));
   transform: rotate(10deg);
 }
 
-.logo:hover .logo__mark span:first-child {
+.logo:hover .logo__card:first-child {
   transform: rotate(-18deg);
 }
 
-.logo:hover .logo__mark span:last-child {
+.logo:hover .logo__card:last-child {
   transform: rotate(18deg);
+}
+
+.logo__flip {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.9s cubic-bezier(0.45, 0.05, 0.2, 1);
+}
+
+.logo__card.is-front .logo__flip {
+  transform: rotateY(180deg);
+}
+
+/* Mentre gira, la carta si solleva un po', come quando la si prende in mano */
+.logo__card.is-flipping .logo__flip {
+  animation: logo-lift 0.9s ease-in-out;
+}
+
+@keyframes logo-lift {
+  0%, 100% { translate: 0 0; scale: 1; }
+  50% { translate: 0 -4px; scale: 1.05; }
+}
+
+.logo__face {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 3px;
+  object-fit: cover;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  box-shadow: 0 2px 0 rgb(0 0 0 / 0.25), 0 4px 10px rgb(0 0 0 / 0.45), inset 0 0 0 1px rgb(255 255 255 / 0.5);
+}
+
+.logo__face--front {
+  transform: rotateY(180deg);
 }
 
 .logo__text {
@@ -848,7 +890,27 @@ h3 {
 .mode-tile__sub,
 .mode-tile__icon {
   position: relative;
-  text-shadow: 0 2px 0 rgb(0 0 0 / 0.25), 0 3px 10px rgb(0 0 0 / 0.2);
+  /*
+   * Scritte in leggero rilievo, con bordi netti come il logo: spessore nel colore
+   * scuro della carta (strati pieni a mezzo pixel), linea scura alla base e un
+   * alone scuro leggero che le stacca dall'Asso dietro.
+   */
+  text-shadow:
+    0 0.5px 0 var(--tile-dark),
+    0 1px 0 var(--tile-dark),
+    0 1.5px 0 var(--tile-dark),
+    0 2px 0 rgb(0 0 0 / 0.35),
+    0 0 8px rgb(0 0 0 / 0.28),
+    0 4px 10px rgb(0 0 0 / 0.25);
+}
+
+/* Il sottotitolo è piccolo: rilievo più sottile */
+.mode-tile__sub {
+  text-shadow:
+    0 0.5px 0 var(--tile-dark),
+    0 1px 0 var(--tile-dark),
+    0 1.5px 0 rgb(0 0 0 / 0.35),
+    0 0 6px rgb(0 0 0 / 0.3);
 }
 
 .mode-tile__label {
@@ -864,17 +926,43 @@ h3 {
   line-height: 1.25;
 }
 
+/* A capo che vale solo sul telefono (vedi sotto) */
+.mode-tile__br {
+  display: none;
+}
+
 /*
  * Telefono in verticale: "giocatori online" in fondo, centrato; icona degli
  * amici più grande. L'altezza delle carte-pulsante
  * (--tile-h) non cambia: "giocatori online" si sposta, ma occupa lo stesso spazio.
  */
 @media (max-width: 639px) {
+  /*
+   * Più spazio tra gli elementi: navbar e primo titolo, titolo e carte, le due
+   * sezioni, le due carte affiancate e "giocatori online". --tile-h sottrae anche
+   * questi spazi in più, così le carte si rimpiccioliscono e la pagina non scorre.
+   */
   .home {
+    --tile-h: calc((100vh - 280px) / 2);
     display: flex;
     flex-direction: column;
-    gap: 14px;
-    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+    gap: 22px;
+    padding-top: 18px;
+    padding-bottom: calc(14px + env(safe-area-inset-bottom));
+  }
+
+  @supports (height: 100dvh) {
+    .home {
+      --tile-h: calc((100dvh - 280px) / 2);
+    }
+  }
+
+  .mode-section__title {
+    margin-bottom: 14px;
+  }
+
+  .mode-section__tiles {
+    gap: 20px;
   }
 
   .online {
@@ -883,11 +971,17 @@ h3 {
   }
 
   .home__sections {
+    gap: 26px;
     margin-top: 0;
   }
 
   .navbar__friends .icon {
     font-size: 30px;
+  }
+
+  /* "Sfida" e a capo "un amico": su una riga sola uscirebbe dalla cornice */
+  .mode-tile__br {
+    display: inline;
   }
 }
 
@@ -977,7 +1071,7 @@ h3 {
   }
 
   .logo {
-    --mark-h: 38px;
+    --mark-h: 44px;
   }
 
   .logo__text {
