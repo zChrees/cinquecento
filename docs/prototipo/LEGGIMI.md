@@ -28,10 +28,10 @@ Ogni modalità è una **carta da gioco colorata in rilievo**, con le proporzioni
 
 Com'è fatta (`prototipo.css`, `.mode-tile`):
 - **colore**: ogni carta ha il suo colore in `--tile`; il CSS ne ricava una versione chiara e una scura (`color-mix`) per la sfumatura dall'alto in basso e per lo spessore;
-- **bordi**: un bordo esterno crema sottile (2 px), come il margine bianco di una carta vera, e dentro una cornice doppia con un **fregio in ogni angolo** (voluta, fogliolina, puntino e rombi; piccoli SVG scritti dentro il CSS), sbalzati come l'Asso;
-- **superficie stampata**, nello stesso stile dell'Asso perché non stacchi dal resto: grana della carta, tratteggio fine a incisione, trama leggera a rombi (tipo maiolica), un medaglione di luce dietro l'Asso e i margini appena consumati; i colori restano pieni;
+- **bordi**: un bordo esterno crema sottile (2 px), come il margine bianco di una carta vera, e dentro una cornice doppia sbalzata come l'Asso (niente fregi negli angoli);
+- **superficie stampata**, nello stesso stile dell'Asso perché non stacchi dal resto: grana della carta, tratteggio fine a incisione, trama leggera a rombi (tipo maiolica), un medaglione di luce dietro l'Asso e i margini appena consumati. Queste velature sono leggere apposta, perché i **colori restino vivaci**: la parte alta della carta è schiarita solo del 8%;
 - **disegni**: una luce dall'alto, l'**Asso del suo seme** grande al centro, **sbalzato**: chiaro, in grigio, con una luce sul bordo alto e un'ombra sotto, come un rilievo sulla superficie della carta;
-- **3D**: sotto la carta c'è il suo spessore (una striscia scura piena) e un'ombra larga e morbida. Passandoci sopra la carta si solleva e lo spessore cresce; premendola scende e lo spessore si schiaccia;
+- **3D**: sotto la carta c'è il suo spessore (una striscia scura piena di soli 2 px, per un 3D leggero) e un'ombra larga e morbida. Passandoci sopra la carta si solleva e lo spessore cresce; premendola scende e lo spessore si schiaccia;
 - **inclinazione**: con il mouse la carta si inclina verso il puntatore (fino a 10 gradi) e un riflesso di luce lo segue (script in `prototipo.js`, subito dopo il modal). Solo con un mouse vero: sul telefono e con "riduci movimento" la carta non si inclina.
 
 La carta gialla usa un giallo più carico (`--yellow-card`, `#e9a000`) del giallo dei dettagli (`--yellow`, `#ffc21a`), con un'ombra sotto le scritte, perché il testo bianco si legga. Il contrasto resta comunque più basso di quello delle altre carte.
@@ -69,7 +69,7 @@ La **navbar è completamente trasparente**: niente fondo, sfocatura né ombra so
 
 **Passandoci sopra** (o arrivandoci con la tastiera) la pillola si alza un po'; l'**avatar** si ingrandisce, si inclina e il suo anello giallo si illumina; l'**icona degli amici** oscilla come un saluto e il contatore rimbalza.
 
-**Logo**: due carte stilizzate a ventaglio, gialla e rossa (come Cavallo e Re quando si canta), che si aprono un po' passandoci sopra con il mouse, e il nome in due toni: "Cinque" color crema e "cento" giallo, in Fredoka. È solo CSS: nessuna immagine. Il logo definitivo in SVG resta per P42.
+**Logo**: due carte stilizzate a ventaglio, gialla e rossa (come Cavallo e Re quando si canta), che si aprono un po' passandoci sopra con il mouse, e il nome in due toni: "Cinque" color crema e "cento" giallo, in Fredoka. È **in risalto**: lettere con un **leggero rilievo** e **bordi netti** (Fredoka 700; lo spessore è di 1,5 px, fatto di tre strati pieni a mezzo pixel l'uno dall'altro, più scuri della lettera: bruno per "Cinque", ambra per "cento"; poi una linea scura netta alla base e un'ombra morbida corta e leggera, che non sfuma i bordi) e un alone scuro morbido dietro, che lo stacca dal panno e dalle carte che passano. Misura: nome 1,7 rem su telefono e 2,2 rem su computer; anche a 360 px restano circa 25 px di spazio da avatar e amici. È solo CSS: nessuna immagine. Il logo definitivo in SVG resta per P42.
 
 ## Animazioni
 

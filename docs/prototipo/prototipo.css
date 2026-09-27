@@ -474,16 +474,28 @@ h3 {
 
 /*
  * Logo: due carte stilizzate a ventaglio (come Cavallo e Re quando si canta)
- * e il nome in due toni, "Cinque" crema e "cento" giallo.
+ * e il nome in due toni, "Cinque" crema e "cento" giallo, in rilievo 3D.
+ * Un alone scuro morbido dietro lo stacca dal panno e dalle carte che passano.
  */
 .logo {
-  --mark-h: 26px;
+  --mark-h: 30px;
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 10px;
   color: var(--on-navbar);
   text-decoration: none;
   border-radius: var(--radius-s);
+}
+
+.logo::before {
+  content: "";
+  position: absolute;
+  inset: -10px -26px;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(0 0 0 / 0.24), transparent);
+  pointer-events: none;
 }
 
 .logo__mark {
@@ -499,7 +511,7 @@ h3 {
   width: calc(var(--mark-h) * 0.64);
   height: var(--mark-h);
   border-radius: 4px;
-  box-shadow: 0 3px 8px rgb(0 0 0 / 0.4), inset 0 0 0 1.5px rgb(255 255 255 / 0.45);
+  box-shadow: 0 2px 0 rgb(0 0 0 / 0.25), 0 4px 10px rgb(0 0 0 / 0.45), inset 0 0 0 1.5px rgb(255 255 255 / 0.5);
   transform-origin: 50% 100%;
   transition: transform 0.2s ease;
 }
@@ -526,17 +538,32 @@ h3 {
 
 .logo__text {
   font-family: var(--font-title);
-  font-weight: 600;
-  font-size: 1.45rem;
-  letter-spacing: 0.01em;
+  font-weight: 700;
+  font-size: 1.7rem;
+  letter-spacing: 0.025em;
   line-height: 1;
-  /* In rilievo sul panno: spessore sotto e ombra morbida */
-  text-shadow: 0 2px 0 rgb(0 0 0 / 0.28), 0 4px 14px rgb(0 0 0 / 0.4);
+  /*
+   * Lettere in rilievo con bordi netti: lo spessore è fatto di strati pieni,
+   * ben più scuri della faccia e senza sfocatura; poi una linea scura netta alla
+   * base. L'unica ombra morbida è lontana e leggera, così non sfuma i bordi.
+   */
+  text-shadow:
+    0 0.5px 0 #b39c6f,
+    0 1px 0 #9c8559,
+    0 1.5px 0 #836d45,
+    0 2px 0 rgb(0 0 0 / 0.35),
+    0 5px 10px rgb(0 0 0 / 0.2);
 }
 
 .logo__text b {
   font-weight: inherit;
   color: var(--yellow);
+  text-shadow:
+    0 0.5px 0 #c98600,
+    0 1px 0 #aa6f00,
+    0 1.5px 0 #8a5900,
+    0 2px 0 rgb(0 0 0 / 0.35),
+    0 5px 10px rgb(0 0 0 / 0.2);
 }
 
 .badge {
@@ -661,23 +688,18 @@ h3 {
  * - la superficie ha i dettagli di una stampa, nello stesso stile dell'Asso:
  *   grana della carta, tratteggio fine a incisione, trama a rombi leggera,
  *   un medaglione di luce dietro l'Asso e i margini appena consumati;
- * - cornice doppia con fregi negli angoli, sbalzata come l'Asso (::before);
+ * - cornice doppia sbalzata come l'Asso (::before);
  * - sotto: lo spessore della carta (ombra piena scura) e un'ombra morbida larga.
  * Con il mouse la carta si solleva e si inclina verso il puntatore (--rx, --ry
  * dallo script) e un riflesso di luce la segue (--gx, --gy).
  */
 .mode-tile {
-  --tile-light: color-mix(in srgb, var(--tile) 72%, #ffffff);
-  --tile-dark: color-mix(in srgb, var(--tile) 62%, #000000);
+  --tile-light: color-mix(in srgb, var(--tile) 92%, #ffffff);
+  --tile-dark: color-mix(in srgb, var(--tile) 70%, #000000);
   --rx: 0deg;
   --ry: 0deg;
   --lift: 0px;
-  --edge: 7px;
-  /* Fregi d'angolo (voluta, fogliolina, puntino e rombi), uno per angolo */
-  --fregio-tl: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' fill='none' stroke='%23fff' stroke-width='1.4' stroke-linecap='round'%3E%3Cg%3E%3Cpath d='M8 42C8 22 22 8 42 8'/%3E%3Cpath d='M14 40C14 25 25 14 40 14' stroke-width='0.8'/%3E%3Cpath d='M20 30c-3-7 3-13 10-10c-5 0-8 3-7 8z' fill='%23fff'/%3E%3Cpath d='M24 24c4-1 7 1 8 5' /%3E%3Ccircle cx='13' cy='13' r='2.6' fill='%23fff' stroke='none'/%3E%3Cpath d='M13 4l2 3-2 3-2-3z' fill='%23fff' stroke='none'/%3E%3Cpath d='M4 13l3-2 3 2-3 2z' fill='%23fff' stroke='none'/%3E%3C/g%3E%3C/svg%3E");
-  --fregio-tr: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' fill='none' stroke='%23fff' stroke-width='1.4' stroke-linecap='round'%3E%3Cg transform='translate(48 0) scale(-1 1)'%3E%3Cpath d='M8 42C8 22 22 8 42 8'/%3E%3Cpath d='M14 40C14 25 25 14 40 14' stroke-width='0.8'/%3E%3Cpath d='M20 30c-3-7 3-13 10-10c-5 0-8 3-7 8z' fill='%23fff'/%3E%3Cpath d='M24 24c4-1 7 1 8 5' /%3E%3Ccircle cx='13' cy='13' r='2.6' fill='%23fff' stroke='none'/%3E%3Cpath d='M13 4l2 3-2 3-2-3z' fill='%23fff' stroke='none'/%3E%3Cpath d='M4 13l3-2 3 2-3 2z' fill='%23fff' stroke='none'/%3E%3C/g%3E%3C/svg%3E");
-  --fregio-bl: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' fill='none' stroke='%23fff' stroke-width='1.4' stroke-linecap='round'%3E%3Cg transform='translate(0 48) scale(1 -1)'%3E%3Cpath d='M8 42C8 22 22 8 42 8'/%3E%3Cpath d='M14 40C14 25 25 14 40 14' stroke-width='0.8'/%3E%3Cpath d='M20 30c-3-7 3-13 10-10c-5 0-8 3-7 8z' fill='%23fff'/%3E%3Cpath d='M24 24c4-1 7 1 8 5' /%3E%3Ccircle cx='13' cy='13' r='2.6' fill='%23fff' stroke='none'/%3E%3Cpath d='M13 4l2 3-2 3-2-3z' fill='%23fff' stroke='none'/%3E%3Cpath d='M4 13l3-2 3 2-3 2z' fill='%23fff' stroke='none'/%3E%3C/g%3E%3C/svg%3E");
-  --fregio-br: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' fill='none' stroke='%23fff' stroke-width='1.4' stroke-linecap='round'%3E%3Cg transform='translate(48 48) scale(-1 -1)'%3E%3Cpath d='M8 42C8 22 22 8 42 8'/%3E%3Cpath d='M14 40C14 25 25 14 40 14' stroke-width='0.8'/%3E%3Cpath d='M20 30c-3-7 3-13 10-10c-5 0-8 3-7 8z' fill='%23fff'/%3E%3Cpath d='M24 24c4-1 7 1 8 5' /%3E%3Ccircle cx='13' cy='13' r='2.6' fill='%23fff' stroke='none'/%3E%3Cpath d='M13 4l2 3-2 3-2-3z' fill='%23fff' stroke='none'/%3E%3Cpath d='M4 13l3-2 3 2-3 2z' fill='%23fff' stroke='none'/%3E%3C/g%3E%3C/svg%3E");
+  --edge: 2px;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -694,40 +716,35 @@ h3 {
   cursor: pointer;
   background:
     /* grana della carta stampata */
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.16 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E"),
     /* luce dall'alto */
-    radial-gradient(120% 70% at 30% 0%, rgb(255 255 255 / 0.28), transparent 60%),
+    radial-gradient(120% 70% at 30% 0%, rgb(255 255 255 / 0.14), transparent 60%),
     /* medaglione di luce dietro l'Asso */
-    radial-gradient(ellipse 40% 30% at 50% 50%, rgb(255 255 255 / 0.18), transparent 72%),
+    radial-gradient(ellipse 40% 30% at 50% 50%, rgb(255 255 255 / 0.1), transparent 72%),
     /* margini appena consumati */
-    radial-gradient(ellipse 90% 80% at 50% 50%, transparent 62%, rgb(0 0 0 / 0.16) 100%),
+    radial-gradient(ellipse 90% 80% at 50% 50%, transparent 62%, rgb(0 0 0 / 0.08) 100%),
     /* tratteggio fine a incisione */
-    repeating-linear-gradient(135deg, rgb(255 255 255 / 0.07) 0 1px, transparent 1px 3.5px),
+    repeating-linear-gradient(135deg, rgb(255 255 255 / 0.04) 0 1px, transparent 1px 3.5px),
     /* trama a rombi, leggera */
-    repeating-conic-gradient(from 45deg, rgb(255 255 255 / 0.05) 0 25%, transparent 0 50%) 50% 50% / 20px 20px,
+    repeating-conic-gradient(from 45deg, rgb(255 255 255 / 0.04) 0 25%, transparent 0 50%) 50% 50% / 20px 20px,
     linear-gradient(165deg, var(--tile-light), var(--tile) 50%, var(--tile-dark));
   box-shadow:
     inset 0 0 0 2px var(--card-face),
     inset 0 0 0 3px rgb(0 0 0 / 0.12),
     0 var(--edge) 0 var(--tile-dark),
-    0 calc(var(--edge) + 2px) 0 color-mix(in srgb, var(--tile-dark) 70%, #000000),
     0 calc(var(--edge) + 14px) 26px rgb(0 0 0 / 0.38),
     0 calc(var(--edge) + 30px) 50px rgb(0 0 0 / 0.2);
   transform: perspective(800px) translateY(var(--lift)) rotateX(var(--rx)) rotateY(var(--ry));
   transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
-/* Cornice doppia con i fregi negli angoli, sbalzata: luce sopra e ombra sotto */
+/* Cornice doppia sbalzata: luce sopra e ombra sotto */
 .mode-tile::before {
   content: "";
   position: absolute;
   inset: 10px;
   border: 4px double #ffffff;
   border-radius: calc(var(--radius-l) - 9px);
-  background-image: var(--fregio-tl), var(--fregio-tr), var(--fregio-bl), var(--fregio-br);
-  background-position: top 3px left 3px, top 3px right 3px, bottom 3px left 3px, bottom 3px right 3px;
-  background-size: 24% auto;
-  background-repeat: no-repeat;
   filter: drop-shadow(0 -1px 0 rgb(255 255 255 / 0.4)) drop-shadow(0 1.5px 1px rgb(0 0 0 / 0.4));
   opacity: 0.6;
   pointer-events: none;
@@ -748,7 +765,7 @@ h3 {
 .mode-tile:hover,
 .mode-tile:focus-visible {
   --lift: -6px;
-  --edge: 10px;
+  --edge: 3px;
 }
 
 .mode-tile:hover::after,
@@ -759,7 +776,7 @@ h3 {
 /* Premuta: la carta scende e lo spessore si schiaccia */
 .mode-tile:active {
   --lift: 4px;
-  --edge: 3px;
+  --edge: 1px;
 }
 
 .mode-tile--red { --tile: var(--red); }
@@ -927,11 +944,11 @@ h3 {
   }
 
   .logo {
-    --mark-h: 30px;
+    --mark-h: 38px;
   }
 
   .logo__text {
-    font-size: 1.75rem;
+    font-size: 2.2rem;
   }
 
   .home {
