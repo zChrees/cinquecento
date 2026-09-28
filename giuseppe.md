@@ -22,6 +22,16 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### Correzione di migrate.py quando MySQL rifiuta la connessione (28/09/2026)
+
+- **Branch**: fix/migrate-connessione (era "Da assegnare" in `SCALETTA.md`)
+- **File**: modificato scripts/migrate.py (`main`); creato tests/db/test_migrate_connessione.py, file nuovo per non toccare `test_migrate.py` di P5
+- **Controlli**: 719 PASS in tutto (2 nuovi, in `db`), `ruff check .` pulito
+- **Decisioni prese**: nessuna. `engine.raw_connection()` lancia l'errore di PyMySQL così com'è, mentre `main` aspettava solo quello di SQLAlchemy: ora li prende tutti e due e stampa il suo messaggio con il codice di MySQL.
+- **Domande nuove**: nessuna
+- **Punti delicati**: il test prova password sbagliata (errore 1045, vuole MySQL acceso) e porta senza MySQL (2003), con la configurazione dei test; controlla che non ci sia traceback e che la password non compaia nel messaggio.
+- **Note per gli altri**: nessuna
+
 ### P16 — Registrazione, login, logout: la logica (28/09/2026)
 
 Punto di Antonio, fatto da Giuseppe con il suo permesso. È la parte di logica; la grafica di `login.html` e `register.html` si rifinisce dopo, sempre da Giuseppe.

@@ -178,8 +178,10 @@ def main(argv=None):
     except (ConfigError, MigrationError) as exc:
         print(f"Migrazione annullata: {exc}", file=sys.stderr)
         return 1
-    except sa.exc.OperationalError as exc:
-        code = exc.orig.args[0] if exc.orig is not None and exc.orig.args else "?"
+    # engine.raw_connection() lancia l'errore di PyMySQL così com'è, non quello di SQLAlchemy.
+    except (sa.exc.OperationalError, pymysql.err.OperationalError) as exc:
+        orig = getattr(exc, "orig", exc)
+        code = orig.args[0] if orig is not None and orig.args else "?"
         print(
             f"Migrazione annullata: non riesco a collegarmi a MySQL (errore MySQL {code}). "
             "Controlla che MySQL sia avviato, che scripts/setup_db.sql sia stato lanciato "
