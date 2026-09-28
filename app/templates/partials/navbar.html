@@ -15,8 +15,7 @@
   - Indirizzi di accesso, impostazioni e uscita: li crea P16 / P17 (Antonio).
     "Esci" è un modulo POST con il token CSRF, non un link: un altro sito non può
     far uscire l'utente.
-  - Statistiche: per ora i dati finti di app/static/dev/ (data-stats-url); quelli
-    veri (GET /stats/me) arrivano con P30.
+  - Statistiche: data-stats-url è GET /stats/me (P30), sempre con i dati veri.
 #}
 {% set img_base = url_for('static', filename='img/cards-bg/') %}
 <header class="navbar" data-part="navbar">
@@ -57,7 +56,7 @@
 </header>
 
 {% if current_user.is_authenticated %}
-<dialog class="sheet" id="stats" aria-labelledby="stats-title" data-animated data-stats-url="{{ url_for('static', filename='dev/statistiche_esempio.json') }}">
+<dialog class="sheet" id="stats" aria-labelledby="stats-title" data-animated data-stats-url="{{ url_for('stats.me') }}">
   <div class="sheet__head">
     <span class="avatar avatar--big" aria-hidden="true">{{ current_user.username[:1] | upper }}</span>
     <div>

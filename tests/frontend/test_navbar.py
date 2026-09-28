@@ -169,14 +169,13 @@ def test_crediti_anche_nella_finestra_di_accesso():
     assert "footer = null" in modal
     assert re.search(r"el\('div', \{ class: 'dialog__actions' \}, buttons\),\s*footer,", modal)
 
-def test_dati_finti_delle_statistiche_raggiungibili(app, user_home):
+def test_statistiche_dal_server_e_forma_dell_esempio(user_home):
+    # P30: il pannello chiede sempre i dati veri (GET /stats/me, provato in
+    # tests/api/test_statistiche.py); il file di esempio resta come riferimento del contratto
     url = re.search(r'data-stats-url="([^"]+)"', user_home).group(1)
-    assert url == "/static/dev/statistiche_esempio.json"
-    response = app.test_client().get(url)
-    assert response.status_code == 200
-    data = json.loads(response.get_data(as_text=True))
-    response.close()
-    for key in ("games", "wins", "losses", "win_rate", "ratings"):
+    assert url == "/stats/me"
+    data = json.loads((STATIC / "dev" / "statistiche_esempio.json").read_text(encoding="utf-8"))
+    for key in ("games", "wins", "losses", "draws", "win_rate", "ratings"):
         assert key in data, key
     for mode in ("1v1", "2v2"):
         assert {"value", "games", "provisional"} <= data["ratings"][mode].keys()

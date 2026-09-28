@@ -22,6 +22,21 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P30 — Pannello statistiche con dati reali (28/09/2026)
+
+- **Branch**: feature/p30-statistiche (partito da `dev` con P28 già dentro)
+- **File**: creati `app/services/stats_service.py`, `app/repositories/stats_repo.py`, `tests/api/test_statistiche.py`; modificati `app/blueprints/stats/routes.py`, `js/components/StatsPanel.js`; fuori elenco, con il mio ok, `templates/partials/navbar.html` (`data-stats-url` ora è `/stats/me`) e `tests/frontend/test_navbar.py` (il test controllava l'indirizzo dei dati finti); questo file
+- **Controlli**: 1119 PASS in 7 suite (14 nuovi), `ruff check .` pulito
+- **Correzione per P28** (commit a parte, stesso branch): in `tests/api/test_pagina_home.py` il test `test_partita_veloce_apre_e_annulla_la_coda` ora aspetta "tra 1400 e 1600", come proposto da Giuseppe: da P28 la home usa la coda vera e l'utente di prova ha 1500
+- **Decisioni prese** (mie, sulle raccomandazioni di Claude):
+  - il pannello usa **sempre i dati veri** (`GET /stats/me`), anche in sviluppo; `statistiche_esempio.json` resta solo come esempio del contratto (i dati finti della home non li ho toccati);
+  - nel 2v2 la partita in cui **il compagno abbandona** non conta tra le "partite che contano per il rating" di chi è rimasto (il suo rating non cambia, D13), quindi non accorcia il suo "provvisorio"; nel conteggio generale resta una partita persa.
+  - Scelte tecniche: percentuale di vittorie sulle partite giocate, pareggi compresi, arrotondata con la metà per eccesso (12,5% → 13%); rating arrotondato allo stesso modo; senza login `not_logged_in` con 401 in JSON, come le rotte degli amici
+- **Domande nuove**: nessuna. La domanda di Giuseppe (P28) **"2v2 con più amici invitati"** (un solo amico invitato: in squadra insieme; più di uno: squadre a caso) è **approvata da tutti e tre** (28/09/2026: Christian, e Antonio tramite Christian). Cambia D27 ("un amico alla volta"), il contratto 5.3 e P47 (Giuseppe)
+- **Antonio non potrà lavorare al progetto per un bel po'** (da 28/09/2026, detto da Christian): i suoi punti ancora aperti (P29, P48, P38, P39) vanno riassegnati
+- **Punti delicati**: "provvisorio" si conta da `giocatori_partita` e `partite.conta_per_rating` (non si salva, P27): se un giorno cambia chi "conta per il rating", va cambiato `stats_repo.rated_games`. Le colonne `DOUBLE` di `rating` si convertono in `float` in `stats_repo.rating_values`. `fetchStats` ora restituisce il campo `data` della risposta del contratto e rifiuta una risposta senza `ok: true`
+- **Cosa devono fare gli altri**: **Chi è di turno sui documenti**: spuntare P30, registrare la decisione sul compagno di chi abbandona in `DECISIONI.md` (Dati) e il punto delicato in `CLAUDE.md`. **Chi è di turno** registra anche la decisione sul 2v2 con più amici (aggiorna D27 in `DECISIONI.md`, contratto 5.3) e la riassegnazione dei punti di Antonio nella sezione 9 di `SCALETTA.md`. **Giuseppe**: il test della home l'ho corretto io come proponevi; la proposta sul 2v2 con più amici è approvata, per P29 e P47 (va aggiornato il contratto 5.3). `stats_repo.py` legge soltanto, `rating_repo.py` non l'ho toccato
+
 ### P57 — Momenti del tavolo: ultima presa, fine mano, carte del canto (28/09/2026)
 
 - **Branch**: feature/p57-momenti-tavolo

@@ -2,8 +2,9 @@
  * Contenuto del pannello statistiche (P40): partite, vinte, perse, percentuale
  * di vittorie e rating 1v1 e 2v2 (contratto, docs/CONTRATTO-SOCKET.md, 2.1).
  *
- * Per ora i dati sono quelli finti di app/static/dev/statistiche_esempio.json;
- * con P30 arrivano da GET /stats/me, nella forma {"ok": true, "data": {...}}.
+ * I dati arrivano da GET /stats/me (P30), nella forma {"ok": true, "data": {...}},
+ * sempre, anche in sviluppo; app/static/dev/statistiche_esempio.json resta solo
+ * come esempio del contratto.
  * Il pannello (dialog #stats) sta in partials/navbar.html; lo apre js/core/layout.js.
  * Stile in css/components/stats-panel.css.
  */
@@ -49,11 +50,13 @@ export function StatsMessage(text) {
  * risposta non è valida: chi la chiama mostra un messaggio.
  *
  * @param {string} url indirizzo dei dati (attributo data-stats-url del pannello)
- * @returns {Promise<object>}
+ * @returns {Promise<object>} il campo data della risposta
  */
 export async function fetchStats(url) {
   if (!navigator.onLine) throw new Error('offline');
   const response = await fetch(url, { headers: { Accept: 'application/json' } });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  return response.json();
+  const body = await response.json();
+  if (!body || body.ok !== true || !body.data) throw new Error('risposta non valida');
+  return body.data;
 }
