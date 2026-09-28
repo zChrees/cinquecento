@@ -185,12 +185,18 @@ def login_cookie(base_url, username, password=PASSWORD):
 
 @pytest.fixture
 def connect(server):
-    """connect("Primo") → client Socket.IO collegato con il login di quell'utente."""
+    """connect("Primo") → client Socket.IO collegato con il login di quell'utente.
+
+    `before(client)`, se c'è, si chiama prima del collegamento: serve per ascoltare gli
+    eventi che il server manda appena la scheda si collega (P28: queue:status).
+    """
     clients = []
 
-    def _connect(username=None, transports=("websocket",)):
+    def _connect(username=None, transports=("websocket",), before=None):
         client = sio_client.Client(reconnection=False)
         headers = {"Cookie": login_cookie(server["url"], username)} if username else {}
+        if before is not None:
+            before(client)
         clients.append(client)
         client.connect(server["url"], headers=headers, transports=list(transports), wait_timeout=WAIT)
         return client

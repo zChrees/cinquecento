@@ -1,15 +1,15 @@
 # Riepiloghi di Giuseppe
 
-> **Questo file lo scrive solo Giuseppe** (Studente 1: motore e tempo reale). Lo leggono Christian e Antonio dopo il `git pull` di `dev`: Christian da qui aggiorna i documenti condivisi (`SCALETTA.md`, `CLAUDE.md`, `DECISIONI.md`, `DA-DECIDERE.md`), Antonio ci trova le modifiche al progetto e le informazioni utili al suo lavoro. Nessun altro lo modifica, nemmeno per correggere un errore: si segnala a Giuseppe.
+> **Questo file lo scrive solo Giuseppe** (Studente 1: motore e tempo reale). Lo leggono Christian e Antonio dopo il `git pull` di `dev`, per le novità utili al progetto e al loro lavoro; chi è di turno sui documenti condivisi (`SCALETTA.md`, `CLAUDE.md`, `DECISIONI.md`, `DA-DECIDERE.md`, scelto dal gruppo a fine giornata) li aggiorna da qui. Nessun altro lo modifica, nemmeno per correggere un errore: si segnala a Giuseppe.
 >
-> **Come si aggiorna** (regola in `CLAUDE.md`, "Consegna"): a fine punto, nel branch del punto (`feature/…`, `fix/…`), Giuseppe aggiunge il riepilogo **in cima** alla sezione "Riepiloghi", nello stesso commit del punto; così arriva in `dev` con il merge. Il numero del commit non si scrive: lo si trova con `git log -- giuseppe.md`.
+> **Come si aggiorna** (regola in `CLAUDE.md`, "Consegna"): a fine punto, nel branch del punto (`feature/…`, `fix/…`), Giuseppe aggiunge il riepilogo **in cima** alla sezione "Riepiloghi", nello stesso commit del punto; così arriva in `dev` con il merge. Quando è di turno sui documenti, il riepilogo dell'aggiornamento va qui, nel branch `docs/…`. Il numero del commit non si scrive: lo si trova con `git log -- giuseppe.md`.
 
 ## Schema
 
 ```markdown
 ### P<numero> — <titolo> (<data>)
 
-- **Branch**: feature/…
+- **Branch**: feature/… (docs/… per un aggiornamento dei documenti condivisi)
 - **File**: creati …; modificati … (se fuori elenco: perché e con l'ok di chi)
 - **Controlli**: <N> PASS in tutto (<M> nuovi), `ruff check .` pulito
 - **Decisioni prese**: … oppure "nessuna"
@@ -21,6 +21,38 @@
 ## Riepiloghi
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
+
+### P28 — Matchmaking 1v1 (28/09/2026)
+
+Punto di Antonio, fatto da Giuseppe con il suo permesso (anche per P29, che segue). Prima di cominciare: nessun branch di P28 su GitHub.
+
+- **Branch**: feature/p28-matchmaking
+- **File**: creati `app/realtime/matchmaking.py`, `tests/sockets/test_matchmaking_1v1.py`; modificati `app/sockets/lobby_events.py`, `app/static/js/pages/home.js`. **Non toccati**, anche se nell'elenco: `app/sockets/__init__.py` (il controllo delle code parte al primo `queue:join`, `lobby_events` era già registrato) e `ModeModal.js` ("Gioca" arrivava già a `play(...)`). **Fuori elenco, con l'ok di Giuseppe**: `app/repositories/rating_repo.py` (P27, di Antonio: una funzione di sola lettura, `get_value`), `app/sockets/connection_events.py` (P23/P25: stato della coda alla scheda nuova, uscita dalla coda con l'ultima scheda), `app/static/js/core/events.js` (P23: i nomi `QUEUE_*`), `tests/sockets/conftest.py` (il fixture `connect` accetta `before(client)`, per ascoltare gli eventi mandati appena la scheda si collega). Aggiornata anche l'intestazione di questo file con la regola dei documenti a turno, come chiesto da Christian
+- **Controlli**: 1092 PASS e **1 FAIL** su 1093, in 7 suite (39 nuovi, nella suite `sockets`, rilanciati 3 volte di fila senza errori), `ruff check .` pulito. Il FAIL è `tests/api/test_pagina_home.py::test_partita_veloce_apre_e_annulla_la_coda` (P22, di Christian): vedi "Note per gli altri"
+- **Decisioni prese** (scelte di Giuseppe sulle raccomandazioni di Claude):
+  - **abbinamento solo se i due si accettano a vicenda**: la differenza di rating sta nell'intervallo di tutti e due, così nessuno si trova un avversario fuori da "Avversari con rating tra X e Y";
+  - **chi chiude tutte le schede esce dalla coda** (`queue:left` con `"cancelled"`), così non viene abbinato a una partita a cui non arriverebbe; una scheda che si collega mentre l'utente è in coda riceve subito `queue:status`;
+  - **per P29, coda 2v2 di singoli** (chiude D17): i 4 giocatori si dividono in modo che le medie delle due squadre siano il più vicine possibile.
+- **Scelte tecniche**:
+  - code in memoria, una per modalità e punteggio, sotto un lock unico; la logica (`MatchQueue`) non dipende da Flask e si prova con un orologio finto;
+  - si serve prima chi aspetta da più tempo, con l'avversario di rating più vicino; i posti si tirano a sorte;
+  - un thread prova gli abbinamenti ogni secondo e **subito dopo ogni `queue:join`**, e rimanda `queue:status` quando l'intervallo si allarga (ogni 10 secondi fino a ±400, poi `rating_range: null` dopo 2 minuti, D16); l'intervallo non scende sotto 0;
+  - la partita si crea con `create_room(..., rated=True)` dentro `app.app_context()`: a fine partita si salva (P26, c'è un test);
+  - `queue:join`: `request_id` da 1 a 100 caratteri, `mode` `"1v1"` o `"2v2"`, `target_score` 150, 300 o 500 (intero, non `bool`); lo stesso `request_id` riceve la stessa risposta (`RecentRequests` di P45, importato senza modificarlo); `busy` "Sei già in coda." da un'altra scheda, "Hai già una partita in corso." se è al tavolo; **`mode: "2v2"` risponde `not_allowed` "La coda 2v2 non è ancora attiva."** fino a P29;
+  - `queue:status` va anche alle altre schede dello stesso utente; `queue:left` a tutte; `queue:leave` risponde `ok` anche se non era in coda;
+  - rating letto a ogni `queue:join` da `rating` della modalità (1500 se manca la riga), convertendo il `Decimal`;
+  - pagina: "Gioca" nella Partita Veloce 1v1 usa la coda vera **anche in sviluppo** (con i dati finti restano il 2v2 fino a P29 e gli inviti fino a P47); `game:start` porta al tavolo.
+- **Domande nuove**:
+  - **2v2 con più amici invitati** (per P29 e P47): Giuseppe vorrebbe "se inviti un solo amico siete in squadra insieme; se ne inviti più di uno, le squadre sono a caso". Oggi però è deciso che **si invita un amico alla volta** (D27, contratto 5.3: un secondo `invite:send` risponde `busy`). Va deciso nel gruppo se cambiarlo; se sì, cambiano il contratto e P47.
+- **Punti delicati**:
+  - `create_room` dalla coda gira nel thread del controllo, fuori da una richiesta: per questo il thread lavora dentro `app.app_context()`, con l'app presa al primo `queue:join`;
+  - la coda non sa quali schede ha l'utente: all'uscita di una scheda `connection_events` conta quelle rimaste nel canale `user:<id>`;
+  - un abbinamento la cui `create_room` fallisce (uno dei due è entrato in partita per un'altra via, P47) rimette in coda chi non è in partita, con la sua attesa;
+  - i test cambiano `matchmaking.RANGE_STEP_SECONDS` con `monkeypatch` (valori letti al momento dell'uso) e a ogni prova tolgono dalla coda e dalle stanze gli utenti di prova.
+- **Note per il contratto o per gli altri**: nessun cambiamento al contratto.
+  - **Christian**: il test `test_partita_veloce_apre_e_annulla_la_coda` di `tests/api/test_pagina_home.py` aspetta l'intervallo dei dati finti, "tra 1340 e 1740", ma ora la home entra nella coda vera: l'utente di prova non ha rating (1500), quindi il server manda "tra 1400 e 1600". **Proposta**: nella riga 358 cambiare `"tra 1340 e 1740"` in `"tra 1400 e 1600"`; con questo cambiamento il test passa tutto, compreso Esc che annulla la coda vera (provato con una copia temporanea, poi cancellata). Non l'ho toccato perché il file è tuo: **ci dai l'ok per cambiarlo noi, o lo cambi tu?** In più la schermata di coda si ridisegna a ogni `queue:status` (ogni 10 secondi, per l'intervallo nuovo), quindi le carte che si mescolano ripartono: se vuoi evitarlo, un `setQueueRange(overlay, range)` in `QueueOverlay.js` basterebbe;
+  - **Antonio**: `rating_repo.get_value(user_id, mode)` (float o `None`) è di sola lettura, senza blocchi; P29 lo faccio io, sugli stessi file;
+  - **tutti**: il `request_id` della home è un codice casuale di 32 cifre esadecimali (`getRandomValues`), uno per clic su "Gioca".
 
 ### P55 — Frasi del tavolo in tempo reale (28/09/2026)
 

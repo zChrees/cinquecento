@@ -7,20 +7,27 @@
  *   rientro e la schermata di coda dallo stato della pagina. Lo stato ha la forma
  *   del contratto (docs/CONTRATTO-SOCKET.md): home:status (5.1), queue:status (4),
  *   la lista degli amici di GET /friends/ (2.2) e i rating di GET /stats/me (2.1).
- * - Per ora lo stato viene dai dati finti di app/static/dev/ (attributi
+ * - Coda vera (P28): "Gioca" nella Partita Veloce 1v1 manda queue:join (con un
+ *   request_id per clic); la schermata di coda si apre con la risposta e si
+ *   aggiorna con queue:status (anche dalle altre schede dello stesso utente);
+ *   "Annulla" manda queue:leave e la schermata si chiude con queue:left;
+ *   game:start porta al tavolo.
+ * - Il resto per ora viene dai dati finti di app/static/dev/ (attributi
  *   data-demo-*, solo in sviluppo e nei test; con ?demo=rientro c'è l'avviso di
- *   rientro). Più avanti: la coda con i socket (P28), home:status (P44), gli
- *   inviti veri (P47). Senza dati finti (demo vera) "giocatori online" resta
- *   nascosto e "Gioca" avvisa che la ricerca non è ancora attiva.
+ *   rientro): la coda 2v2 (P29), home:status (P44), gli inviti veri (P47). Senza
+ *   dati finti (demo vera) "giocatori online" resta nascosto e "Gioca", fuori
+ *   dalla Partita Veloce 1v1, avvisa che la ricerca non è ancora attiva.
  * - Carte-pulsante: senza login aprono "Accedi o registrati" (P40); con il login
  *   la carta-modal della modalità (components/ModeModal.js).
  */
 
 import { initLayout, isLoggedIn } from '../core/layout.js';
+import { connect, on, send } from '../core/socket.js';
+import { EVENTS } from '../core/events.js';
 import { openLoginPrompt } from '../components/LoginPrompt.js';
 import { initCardBackground } from '../components/CardBackground.js';
 import { openModeModal, setInviteStatus } from '../components/ModeModal.js';
-import { QueueOverlay, setQueueSeconds } from '../components/QueueOverlay.js';
+import { QueueOverlay, enableQueueCancel, setQueueSeconds } from '../components/QueueOverlay.js';
 import { ResumeBanner } from '../components/ResumeBanner.js';
 import { el, icon } from '../utils/dom.js';
 
@@ -49,6 +56,9 @@ const queueView = { overlay: null, queue: null, since: 0, timer: null };
 
 function renderQueue(queue) {
   if (queueView.queue === queue) return;
+  // Un queue:status nuovo (intervallo allargato) ridisegna la schermata: se "Annulla"
+  // aspettava già la risposta del server, resta disattivato.
+  const cancelling = Boolean(queueView.overlay?.querySelector('[data-queue-cancel]').disabled);
   if (queueView.overlay) {
     clearInterval(queueView.timer);
     queueView.overlay.close();
@@ -58,6 +68,7 @@ function renderQueue(queue) {
   queueView.queue = queue;
   if (!queue) return;
   const overlay = QueueOverlay(queue, { imgBase, onCancel: leaveQueue });
+  if (cancelling) overlay.querySelector('[data-queue-cancel]').disabled = true;
   document.body.append(overlay);
   overlay.showModal();
   queueView.overlay = overlay;
@@ -121,14 +132,66 @@ function cancelInvite() {
   clearTimeout(inviteTimer);
 }
 
+// ------------------------------------------------------------
+// Coda vera (P28, contratto 4)
+// ------------------------------------------------------------
+
+let realQueue = false;   // la coda aperta è quella del server (non quella dei dati finti)
+let joining = false;     // queue:join in attesa di risposta: niente doppio invio
+let starting = false;    // è arrivato game:start: si sta andando al tavolo
+
+/** request_id (contratto 1.3): un codice casuale per ogni clic su "Gioca". */
+function newRequestId() {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  return [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function joinQueue(mode, targetScore) {
+  if (joining || state.queue || starting) return;
+  joining = true;
+  const answer = await send(EVENTS.QUEUE_JOIN, { request_id: newRequestId(), mode, target_score: targetScore });
+  joining = false;
+  if (!answer.ok) {
+    showMessage(answer.error.message, 'error');
+    return;
+  }
+  if (starting) return;
+  realQueue = true;
+  state.queue = answer.data;
+  render(state);
+}
+
+function showQueue(queue) {
+  if (starting) return;
+  realQueue = true;
+  state.queue = queue;
+  render(state);
+}
+
+function closeQueue() {
+  realQueue = false;
+  state.queue = null;
+  render(state);
+}
+
+function goToTable({ url } = {}) {
+  if (typeof url !== 'string' || !url.startsWith('/game/')) return;
+  starting = true;
+  window.location.assign(url);
+}
+
 function play({ kind, mode, targetScore, invitee }) {
   clearTimeout(inviteTimer);
   if (!navigator.onLine) {
     showMessage('Sei offline: potrai giocare appena torna la connessione.', 'error');
     return;
   }
+  if (kind === 'veloce' && mode === '1v1') {
+    joinQueue(mode, targetScore);
+    return;
+  }
   if (!demo || !demoData) {
-    // La coda arriva con P28, gli inviti con P47
+    // La coda 2v2 arriva con P29, gli inviti con P47
     showMessage('La ricerca della partita non è ancora attiva.', 'info');
     return;
   }
@@ -136,17 +199,27 @@ function play({ kind, mode, targetScore, invitee }) {
     showMessage(`Prova: qui comincerebbe la partita contro ${invitee.username}.`, 'info');
     return;
   }
-  // Dati finti: si entra subito in coda. Con P28: queue:join, poi la risposta del server.
+  // Dati finti: si entra subito in coda (2v2 fino a P29, 2v2 con un amico fino a P47)
   const example = invitee ? demoData['queue:status 2v2 con un amico'] : demoData['queue:status'];
   const partner = invitee ? { user_id: invitee.user_id, username: invitee.username, avatar: invitee.avatar } : null;
   state.queue = { ...example, mode, target_score: targetScore, partner };
   render(state);
 }
 
-// Dati finti: si esce subito dalla coda. Con P28: queue:leave, e la schermata si chiude con la risposta.
-function leaveQueue() {
-  state.queue = null;
-  render(state);
+// "Annulla": con la coda vera queue:leave, e la schermata si chiude con la risposta;
+// con i dati finti si esce subito.
+async function leaveQueue() {
+  if (!realQueue) {
+    closeQueue();
+    return;
+  }
+  const answer = await send(EVENTS.QUEUE_LEAVE, {});
+  if (!answer.ok) {
+    showMessage(answer.error.message, 'error');
+    if (queueView.overlay) enableQueueCancel(queueView.overlay);
+    return;
+  }
+  closeQueue();
 }
 
 function openTile(tile) {
@@ -221,4 +294,10 @@ async function loadDemo() {
 
 initCardBackground(background);
 render(state);
+if (isLoggedIn()) {
+  on(EVENTS.QUEUE_STATUS, showQueue);
+  on(EVENTS.QUEUE_LEFT, closeQueue);
+  on(EVENTS.GAME_START, goToTable);
+  connect();
+}
 if (demo) loadDemo();

@@ -23,6 +23,16 @@ def get_for_update(user_ids, mode):
     return {row.user_id: row for row in rows}
 
 
+def get_value(user_id, mode):
+    """Il rating di un utente in una modalità, come float, oppure None se non ha ancora la
+    riga (P28, per la coda). Sola lettura, senza blocchi: la colonna DOUBLE arriva come
+    Decimal e qui si converte."""
+    value = db.session.scalar(
+        sa.select(Rating.value).where(Rating.user_id == user_id, Rating.mode == mode)
+    )
+    return None if value is None else float(value)
+
+
 def add(user_id, mode, value, deviation, volatility, updated_at):
     """La prima riga di un utente in una modalità (alla sua prima partita che conta)."""
     row = Rating(user_id=user_id, mode=mode, value=value, deviation=deviation,

@@ -16,6 +16,11 @@ export const EVENTS = Object.freeze({
   GAME_PHRASE: 'game:phrase',
   GAME_REPLACED: 'game:replaced',
   GAME_START: 'game:start',
+  // Code di matchmaking (4)
+  QUEUE_JOIN: 'queue:join',
+  QUEUE_LEAVE: 'queue:leave',
+  QUEUE_STATUS: 'queue:status',
+  QUEUE_LEFT: 'queue:left',
 });
 
 /** Motivo del rifiuto della connessione per chi non ha fatto il login (contratto 1.4). */
