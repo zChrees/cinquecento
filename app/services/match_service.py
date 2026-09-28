@@ -13,6 +13,7 @@ Mosse salvate (mosse_partita.tipo, nomi in italiano come le altre colonne, D38):
 - mossa_automatica  {"seme", "valore"}   la carta giocata dal server a tempo scaduto (D12)
 - abbandono         {"motivo"}           "esci" (game:leave) o "tempo_scaduto" (non rientrato)
 Date e ore in UTC. Nei log solo numeri, mai nomi degli utenti.
+P27: nella stessa transazione si aggiorna il rating (rating_service.apply_match).
 """
 
 import logging
@@ -21,6 +22,7 @@ from dataclasses import dataclass
 from app.extensions import db
 from app.models.match import END_REASONS, MODES
 from app.repositories import match_repo
+from app.services import rating_service
 
 log = logging.getLogger(__name__)
 
@@ -122,6 +124,7 @@ def save_match(record):
             }
             for number, move in enumerate(record.moves, start=1)
         ])
+        rating_service.apply_match(record)  # P27: nella stessa transazione della partita
         db.session.commit()
     except Exception:
         db.session.rollback()

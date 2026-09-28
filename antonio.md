@@ -24,6 +24,27 @@
 
 <!-- Il più recente in cima. File creato da Christian il 28/09/2026 con lo schema; da qui in poi lo scrive solo Antonio. Il riepilogo di P16 (punto di Antonio fatto da Giuseppe) è in giuseppe.md, quello di P5 (fatto da Christian) in christian.md. -->
 
+### P27 — Rating Glicko-2 (28/09/2026)
+
+- **Branch**: feature/p27-rating
+- **File**: creati `app/services/glicko2.py`, `app/services/rating_service.py`, `app/repositories/rating_repo.py`, `tests/services/test_glicko2.py`, `tests/services/test_rating_service.py`; modificato `app/services/match_service.py` (P26). Nessun file fuori elenco
+- **Controlli**: 1028 PASS in tutto, in 7 suite (23 nuovi, nella suite `services`), `ruff check .` pulito
+- **Decisioni prese**: **2v2, la squadra avversaria come un solo avversario** (scelta (a) di Antonio sulla raccomandazione di Claude): rating medio dei due avversari, deviazione come radice della media dei quadrati, volatilità media (`glicko2.team_opponent`). Il compagno non entra nel calcolo
+- **Scelte tecniche**:
+  - `glicko2.py`: il calcolo di Glickman (passi 1–8), in Python puro; il test lo confronta con l'esempio numerico del documento (1500 / 200 / 0,06 → 1464,06 / 151,52 / 0,05999);
+  - **ogni partita è un periodo a sé**, e la deviazione non cresce da sola con l'inattività (più semplice per la prima versione);
+  - vittoria 1, pareggio 0,5, sconfitta 0; rating separati per 1v1 e 2v2, uguali per 150, 300 e 500 punti; la riga di `rating` si crea alla prima partita che conta, con i valori di `config.py` (1500 / 350 / 0,06, D9);
+  - il 1v1 contro un amico (`conta_per_rating` falso) non cambia niente; il 2v2 con un amico come compagno conta (D36);
+  - **abbandono nel 2v2** (D13): il rating scende solo a chi ha abbandonato; il compagno resta com'era (e se era la sua prima partita non gli si crea la riga); gli avversari guadagnano normalmente. Nel 1v1 chi abbandona perde;
+  - `rating_service.apply_match` sta dentro `match_service.save_match`, prima del commit: se il rating fallisce non si salva nemmeno la partita, e viceversa (c'è un test per ognuno dei due casi); tutti i nuovi valori si calcolano dai rating di prima della partita, poi si scrivono;
+  - le righe di `rating` si leggono con `SELECT ... FOR UPDATE` (lettura bloccante: vede sempre i dati confermati, vedi P45).
+- **Domande nuove**: nessuna
+- **Punti delicati**:
+  - **le colonne `DOUBLE` del modello `Rating` (P5) arrivano da SQLAlchemy come `Decimal`**, non come `float`: il servizio le converte prima del calcolo (senza, la seconda partita di un utente dava `TypeError`). Vale per chiunque legga il rating (P30, P28);
+  - "provvisorio" (le prime 10 partite per modalità, D9) non si salva: lo calcola chi mostra il rating contando le partite che contano in `giocatori_partita` e `partite` (P30);
+  - **blocco intermittente dei test**: in un giro completo la suite `api` è rimasta ferma ed è stata fermata dal runner dopo 615 secondi invece di 120. Rilanciata da sola (221 PASS in 58 s) e con tutte le suite (1028 PASS in 127 s) non si è ripetuto. `api` non usa il codice di P27. Ipotesi, non verificata: un Chrome senza finestra dei test delle pagine rimasto aperto, che tiene occupato l'output e blocca anche la chiusura della suite. Da tenere d'occhio.
+- **Note per il contratto o per gli altri**: nessun cambiamento al contratto. **Christian** (P30): il rating per le statistiche è in `rating` (`valore`, per `modalita`); chi non ha la riga ha 1500. **Antonio** (P28): per la coda il rating del giocatore si legge da `rating` della modalità scelta (1500 se non c'è la riga), convertendo il `Decimal`.
+
 ### P26 — Salvataggio delle partite (28/09/2026)
 
 - **Branch**: feature/p26-salvataggio
