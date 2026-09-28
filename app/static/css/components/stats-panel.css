@@ -1,0 +1,163 @@
+/*
+ * Pannello statistiche (P40), dal prototipo di P52 (docs/prototipo/prototipo.css,
+ * ".sheet"): si apre toccando l'avatar, in alto a sinistra sotto l'avatar,
+ * ingrandendosi dal suo angolo. Contenuto disegnato da js/components/StatsPanel.js.
+ */
+
+.sheet {
+  width: calc(100% - 24px);
+  max-width: 380px;
+  margin: calc(var(--navbar-h) + 10px) auto auto 12px;
+  padding: 18px;
+  border-radius: var(--radius-l);
+  box-shadow: var(--shadow-2);
+}
+
+.sheet__head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.sheet__head > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.sheet__title {
+  font-size: 1.4rem;
+  overflow-wrap: anywhere;
+}
+
+.sheet__subtitle {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.stat {
+  padding: 10px 8px;
+  border-radius: var(--radius-m);
+  background: var(--surface-2);
+  text-align: center;
+}
+
+.stat dt {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.stat dd {
+  font-family: var(--font-title);
+  font-weight: 600;
+  font-size: 1.4rem;
+}
+
+.stat--win dd { color: var(--green); }
+.stat--lose dd { color: var(--red-strong); }
+
+/* Rating provvisorio (prime 10 partite della modalità, D9) */
+.stat__note {
+  display: block;
+  color: var(--muted);
+  font-family: var(--font-text);
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* Statistiche non disponibili (errore o connessione assente) */
+.sheet__message {
+  padding: 12px 8px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.sheet__links {
+  display: grid;
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.sheet__logout {
+  display: contents;
+}
+
+/* Impostazioni (link) ed Esci (pulsante del modulo di uscita) hanno lo stesso aspetto */
+.sheet__link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--radius-s);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.sheet__link:hover {
+  background: var(--surface-2);
+}
+
+.sheet__link .icon {
+  color: var(--muted);
+}
+
+/* Crediti delle immagini delle carte (licenza CC BY-SA 3.0, D37) */
+.sheet__credits {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.sheet__credits a {
+  color: inherit;
+}
+
+@media (min-width: 1024px) {
+  .sheet {
+    margin-left: calc(var(--navbar-side) - 8px);   /* sotto l'avatar */
+  }
+}
+
+/*
+ * Animazioni: l'apertura parte da sola quando il dialog si apre; per la chiusura
+ * layout.js aggiunge .is-closing e chiude il dialog a fine animazione. Lo sfondo
+ * scuro è animato in modal.css (dialog[data-animated]). Con "riduci movimento"
+ * reset.css toglie le animazioni e il pannello si apre e si chiude subito.
+ */
+.sheet[data-animated][open] {
+  transform-origin: 24px 0;   /* si apre "dall'avatar", in alto a sinistra */
+  animation: sheet-in 0.22s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+.sheet[data-animated].is-closing {
+  animation: sheet-out 0.16s ease-in forwards;
+}
+
+@keyframes sheet-in {
+  from { opacity: 0; transform: translateY(-10px) scale(0.92); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes sheet-out {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateY(-6px) scale(0.95); }
+}

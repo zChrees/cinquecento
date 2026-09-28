@@ -2,10 +2,13 @@
 {#
   Home provvisoria (P19): usa già base.html e il panno del prototipo.
   La home vera (carte-pulsante, modal, cascata di carte) la scrive P22.
+  js/pages/home.js per ora avvia solo navbar e pannelli (P40).
   data-stato="ok" resta finché serve al test di avvio di P4.
 #}
 
 {% block page_name %}home{% endblock %}
+
+{% block page_script %}<script type="module" src="{{ url_for('static', filename='js/pages/home.js') }}"></script>{% endblock %}
 
 {% block content %}
 <p class="visually-hidden" data-stato="ok">ok</p>

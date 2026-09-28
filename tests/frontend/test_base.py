@@ -102,7 +102,7 @@ def test_risorse_esterne_solo_da_google_fonts(home):
 def test_i_css_della_base_esistono(app, home):
     client = app.test_client()
     paths = re.findall(r'href="(/static/[^"]+)"', home)
-    assert len(paths) == 7
+    assert len(paths) == 9   # 7 di P19, più navbar.css e stats-panel.css (P40)
     for path in paths:
         response = client.get(path)
         assert response.status_code == 200, path
@@ -136,10 +136,12 @@ def test_pagine_estendono_base_senza_stile_ne_script_scritti_dentro():
 
 
 def test_risorse_esterne_solo_in_base_html():
+    # Risorse caricate dalla pagina (fogli di stile, script, immagini); i link normali
+    # (<a href>, per esempio la licenza nei crediti, P40) sono ammessi
     for path in _templates():
         if path.name == "base.html":
             continue
-        assert not re.search(r'(?:href|src)="https?://', _template_text(path)), path.name
+        assert not re.search(r'(?:<link\b[^>]*\bhref|\bsrc)="https?://', _template_text(path)), path.name
 
 
 def test_js_senza_html_ne_finestre_del_browser():

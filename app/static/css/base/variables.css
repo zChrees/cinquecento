@@ -55,6 +55,24 @@
     0 5px 10px rgb(0 0 0 / 0.2);
   --online-light: #5be08f;    /* puntino "online" più chiaro, leggibile sul panno */
 
+  /* (P40) Logo: nome in rilievo con bordi netti, "Cinque" con strati bruni e "cento" con strati ambra */
+  --relief-logo:
+    0 0.5px 0 #b39c6f,
+    0 1px 0 #9c8559,
+    0 1.5px 0 #836d45,
+    0 2px 0 rgb(0 0 0 / 0.35),
+    0 5px 10px rgb(0 0 0 / 0.2);
+  --relief-logo-accent:
+    0 0.5px 0 #c98600,
+    0 1px 0 #aa6f00,
+    0 1.5px 0 #8a5900,
+    0 2px 0 rgb(0 0 0 / 0.35),
+    0 5px 10px rgb(0 0 0 / 0.2);
+  --logo-card-shadow: 0 2px 0 rgb(0 0 0 / 0.25), 0 4px 10px rgb(0 0 0 / 0.45), inset 0 0 0 1px rgb(255 255 255 / 0.5);   /* (P40) carte del logo */
+  --halo: rgb(0 0 0 / 0.26);          /* (P40) alone scuro dietro le scritte sul panno */
+  --halo-logo: rgb(0 0 0 / 0.24);     /* (P40) alone scuro dietro il logo */
+  --avatar-glow: rgb(255 194 26 / 0.55);   /* (P40) anello dell'avatar illuminato al passaggio */
+
   /* Ruoli usati dai componenti */
   --primary: var(--red);
   --primary-strong: var(--red-strong);

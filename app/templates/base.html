@@ -6,7 +6,7 @@
   - page_script: UN SOLO <script type="module"> con il file della pagina in js/pages/;
   - page_class: classi in più per <main> (es. "page--form" per i moduli);
   - content: il contenuto.
-  Il blocco navbar lo riempie P40 con partials/navbar.html.
+  - navbar: predefinito partials/navbar.html (P40); una pagina senza navbar lo svuota.
   Le risorse esterne (font e icone da Google Fonts) si caricano SOLO qui e sono
   solo quelle elencate in docs/prototipo/LEGGIMI.md.
   Gli attributi data-user-* del <body> e il meta csrf-token sono fissati dal
@@ -31,6 +31,8 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/components/button.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/components/form.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/components/modal.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components/navbar.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components/stats-panel.css') }}">
   {% block styles %}{% endblock %}
   {% block page_script %}{% endblock %}
 </head>
@@ -39,7 +41,7 @@
 {% else %}
 <body data-user-id="" data-username="" data-avatar="">
 {% endif %}
-  {% block navbar %}{% endblock %}
+  {% block navbar %}{% include "partials/navbar.html" %}{% endblock %}
 
   <main class="page {% block page_class %}{% endblock %}" data-page="{% block page_name %}{% endblock %}">
     {% block content %}{% endblock %}

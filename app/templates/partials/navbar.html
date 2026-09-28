@@ -1,0 +1,79 @@
+{#
+  Navbar di tutte le pagine (P40), inclusa da base.html. Dal prototipo di P52
+  (docs/prototipo/index.html): trasparente, scritte direttamente sul panno.
+  Il comportamento (pannello statistiche, logo che si gira, finestra "Accedi o
+  registrati") sta in js/core/layout.js, che ogni pagina importa.
+
+  - Con il login: avatar con l'iniziale (le immagini arrivano con P43), che apre
+    il pannello statistiche; amici con il contatore (il pannello arriva con P46).
+  - Senza login: icona generica e "Accedi"; avatar e amici aprono la finestra
+    "Accedi o registrati per giocare" (data-login-prompt).
+  - Indirizzi di accesso, impostazioni e uscita: li crea P16 / P17 (Antonio).
+    "Esci" è un modulo POST con il token CSRF, non un link: un altro sito non può
+    far uscire l'utente.
+  - Statistiche: per ora i dati finti di app/static/dev/ (data-stats-url); quelli
+    veri (GET /stats/me) arrivano con P30.
+#}
+{% set img_base = url_for('static', filename='img/cards-bg/') %}
+<header class="navbar" data-part="navbar">
+  <div class="navbar__inner">
+    {% if current_user.is_authenticated %}
+    <button class="navbar__account felt-text" type="button" data-open-stats aria-haspopup="dialog" aria-controls="stats">
+      <span class="avatar" aria-hidden="true">{{ current_user.username[:1] | upper }}</span>
+      <span class="navbar__label">{{ current_user.username }}</span>
+      <span class="visually-hidden">: apri le tue statistiche</span>
+    </button>
+    {% else %}
+    <button class="navbar__account felt-text" type="button" data-login-prompt aria-haspopup="dialog" aria-label="Accedi o registrati">
+      <span class="avatar" aria-hidden="true"><span class="icon">person</span></span>
+      <span class="navbar__label" aria-hidden="true">Accedi</span>
+    </button>
+    {% endif %}
+
+    <a class="logo" href="{{ url_for('main.index') }}" aria-label="Cinquecento, torna alla home">
+      <span class="logo__mark" aria-hidden="true" data-logo-cards data-img-base="{{ img_base }}">
+        <span class="logo__card"><span class="logo__flip"><img class="logo__face logo__face--back" src="{{ img_base }}dorso.webp" alt=""><img class="logo__face logo__face--front" src="{{ img_base }}cavallo-coppe.webp" alt=""></span></span>
+        <span class="logo__card"><span class="logo__flip"><img class="logo__face logo__face--back" src="{{ img_base }}dorso.webp" alt=""><img class="logo__face logo__face--front" src="{{ img_base }}re-coppe.webp" alt=""></span></span>
+      </span>
+      <span class="logo__text">Cinque<b>cento</b></span>
+    </a>
+
+    {% if current_user.is_authenticated %}
+    <button class="navbar__friends felt-text" type="button" data-friends-button aria-label="Amici">
+    {% else %}
+    <button class="navbar__friends felt-text" type="button" data-login-prompt aria-haspopup="dialog" aria-label="Amici: accedi per vederli">
+    {% endif %}
+      <span class="icon" aria-hidden="true">group</span>
+      <span class="navbar__label" aria-hidden="true">Amici</span>
+      <span class="badge" aria-hidden="true" data-friends-badge hidden></span>
+    </button>
+  </div>
+</header>
+
+{% if current_user.is_authenticated %}
+<dialog class="sheet" id="stats" aria-labelledby="stats-title" data-animated data-stats-url="{{ url_for('static', filename='dev/statistiche_esempio.json') }}">
+  <div class="sheet__head">
+    <span class="avatar avatar--big" aria-hidden="true">{{ current_user.username[:1] | upper }}</span>
+    <div>
+      <h2 class="sheet__title" id="stats-title">{{ current_user.username }}</h2>
+      <p class="sheet__subtitle">Le tue statistiche</p>
+    </div>
+    <button class="icon-btn" type="button" data-close aria-label="Chiudi">
+      <span class="icon" aria-hidden="true">close</span>
+    </button>
+  </div>
+  <div data-stats-body aria-live="polite"></div>
+  <div class="sheet__links">
+    <a class="sheet__link" href="/profile/settings"><span class="icon" aria-hidden="true">settings</span>Impostazioni</a>
+    <form class="sheet__logout" method="post" action="/auth/logout">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="sheet__link" type="submit" data-logout><span class="icon" aria-hidden="true">logout</span>Esci</button>
+    </form>
+  </div>
+  <p class="sheet__credits" data-credits>
+    Immagini delle carte: Matsoftware,
+    <a href="https://creativecommons.org/licenses/by-sa/3.0/deed.it" target="_blank" rel="noopener">CC BY-SA 3.0</a>,
+    da Wikimedia Commons
+  </p>
+</dialog>
+{% endif %}
