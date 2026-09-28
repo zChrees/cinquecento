@@ -24,6 +24,26 @@
 
 <!-- Il più recente in cima. File creato da Christian il 28/09/2026 con lo schema; da qui in poi lo scrive solo Antonio. Il riepilogo di P16 (punto di Antonio fatto da Giuseppe) è in giuseppe.md, quello di P5 (fatto da Christian) in christian.md. -->
 
+### P18 — Backup e ripristino (28/09/2026)
+
+- **Branch**: feature/p18-backup
+- **File**: creati `scripts/backup.py`, `scripts/ripristina.py`, `tests/db/test_backup.py`. Nessun file fuori elenco
+- **Controlli**: 836 PASS in tutto (27 nuovi, nella suite `db`), `ruff check .` pulito
+- **Decisioni prese**: nessuna sul progetto; D10 resta aperta (`BACKUP_RETENTION_DAYS = 14`, provvisorio in `config.py`). Scelte tecniche:
+  - `python scripts/backup.py` salva il database del `.env` in `backups/<database>_AAAA-MM-GG_HHMMSS.sql.gz` (ora locale), compresso; poi cancella i backup più vecchi di `BACKUP_RETENTION_DAYS` giorni. Cancella **solo** i file con quella forma del nome, e l'età la legge dal nome, non dalla data del file;
+  - `python scripts/ripristina.py <file> <database>` ricarica un backup nel database indicato. Se il nome non finisce con `_test`, chiede di **scrivere il nome del database** per confermare (un "sì" non basta); prima di toccare il database controlla che il file sia intero e sia un backup di MySQL;
+  - `mysqldump` e `mysql` si cercano nel PATH e poi in `C:\Program Files\MySQL\MySQL Server 8.0\bin` (da me non sono nel PATH);
+  - la password non passa mai sulla riga di comando e non si stampa: sta in un file di opzioni temporaneo, cancellato alla fine;
+  - opzioni di `mysqldump`: `--single-transaction` (copia coerente senza bloccare le tabelle), `--no-tablespaces` (senza, serve il permesso PROCESS, che l'utente `cinquecento` non ha), `--set-gtid-purged=OFF`, `--skip-dump-date`. Il backup non contiene `CREATE DATABASE` né `USE`, quindi si può ricaricare in un database diverso da quello di partenza.
+- **Domande nuove**: nessuna
+- **Punti delicati**:
+  - un backup non riuscito non lascia file: si scrive come `.parziale` e prende il nome vero solo alla fine;
+  - il ripristino sostituisce le tabelle presenti nel backup; le tabelle che nel backup non ci sono restano come sono;
+  - l'utente MySQL del `.env` può scrivere solo in `cinquecento_dev` e `cinquecento_test` (`setup_db.sql`): per il database della demo (P38) servirà un `GRANT` anche su quello;
+  - il backup **giornaliero** (decisione "Backup giornaliero con `mysqldump`") va programmato sul PC della demo, per esempio con l'Utilità di pianificazione di Windows: non è in P18, va in P38;
+  - la suite `db` ora vuole anche i programmi `mysqldump` e `mysql`: se mancano, i test si fermano con un messaggio chiaro.
+- **Note per il contratto o per gli altri**: nessun cambiamento al contratto. **Christian**: in "Comandi utili" di `CLAUDE.md` i comandi di P18 sono già giusti (`python scripts/backup.py`, `python scripts/ripristina.py <file> <database>`); vanno aggiunte le note sulla conferma e sui programmi di MySQL, se le vuoi nel README.
+
 ### P7 — Log ed errori di base (28/09/2026)
 
 - **Branch**: feature/p7-log-errori
