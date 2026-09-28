@@ -24,6 +24,27 @@
 
 <!-- Il più recente in cima. File creato da Christian il 28/09/2026 con lo schema; da qui in poi lo scrive solo Antonio. Il riepilogo di P16 (punto di Antonio fatto da Giuseppe) è in giuseppe.md, quello di P5 (fatto da Christian) in christian.md. -->
 
+### P26 — Salvataggio delle partite (28/09/2026)
+
+- **Branch**: feature/p26-salvataggio
+- **File**: creati `app/services/match_service.py`, `app/repositories/match_repo.py`, `tests/services/test_match_service.py` (suite nuova `services`); modificato `app/realtime/room.py`, **un po' più di "solo la chiamata"** (scelta 1a di Antonio, vedi sotto). Nessun altro file
+- **Controlli**: 995 PASS in tutto, in 7 suite (15 nuovi, nella suite `services`), `ruff check .` pulito
+- **Decisioni prese** (scelte di Antonio sulle raccomandazioni di Claude):
+  - **1a, `room.py` tiene l'elenco delle mosse**: il motore conserva solo lo stato attuale, non lo storico, quindi senza questo `mosse_partita` resterebbe vuota. La scaletta diceva di toccare `room.py` "solo per la chiamata al salvataggio": in più ci sono l'elenco delle mosse in memoria (`_moves`) e la loro registrazione in `play`, `sing`, nella mossa automatica e in `abandon`;
+  - **2a, mosse salvate** (`mosse_partita.tipo` e `dettagli`, nomi in italiano come le colonne, D38): `gioca_carta` `{"seme", "valore"}`; `canta` `{"seme", "punti"}` (40 o 20, letti dal motore); `mossa_automatica` `{"seme", "valore"}` (tempo scaduto, D12); `abbandono` `{"motivo": "esci" | "tempo_scaduto"}`. Ogni mossa ha numero progressivo da 1, mano, posto e ora (UTC, con i millesimi).
+- **Scelte tecniche**:
+  - la stanza, a fine partita, prepara un `MatchRecord` (modalità, punteggio, rating sì/no, inizio e fine, motivo, squadra vincente, punti finali, giocatori e mosse) e chiama `match_service.save_match`, che controlla i dati e scrive `partite`, `giocatori_partita` e `mosse_partita` in **una sola transazione**; un errore a metà fa rollback e non resta niente (provato con un errore finto dopo partita e giocatori, e con un utente inesistente);
+  - risultato per giocatore da `winner_team`: `vittoria`, `sconfitta` o `pareggio`; `ha_abbandonato` per chi è uscito; nell'abbandono vince l'altra squadra (nel 2v2 perde tutta la squadra, D13);
+  - si salva **una volta sola**, nei due punti in cui la partita finisce: `Room._apply` (per punteggio) e `Room.abandon` (per abbandono);
+  - la partita può finire per un timer, fuori da una richiesta: la stanza si ricorda l'applicazione Flask quando la partita parte (`has_app_context`) e salva dentro `app.app_context()`. Una stanza creata fuori da Flask (per esempio dai test di P24 e P25, che chiamano `create_room` direttamente) non salva e lo scrive nel log (WARNING);
+  - se il salvataggio fallisce, i giocatori vedono comunque il risultato; l'errore va nel log (ERROR).
+- **Domande nuove**: nessuna
+- **Punti delicati**:
+  - **`create_room` va chiamata dentro Flask** (un gestore di un evento o di una richiesta), altrimenti la partita non si salva: vale per P28, P29 (coda) e P47 (inviti), che la chiamano dai loro gestori;
+  - il salvataggio avviene sotto il lock della stanza: l'ultima mossa aspetta la scrittura nel database (pochi millesimi);
+  - `utente_id` deve esistere al momento del salvataggio: P17 già impedisce di cancellare l'account durante una partita.
+- **Note per il contratto o per gli altri**: nessun cambiamento al contratto. **Antonio** (P27, rating): l'aggiornamento del rating va in `match_service.save_match`, prima del `commit`, così sta nella stessa transazione. **Giuseppe**: `room.py` ha l'elenco delle mosse e il salvataggio; `Room._apply` ora vuole anche il tipo e i dettagli della mossa. **Christian** (P30, statistiche): le partite finite sono in `giocatori_partita` (risultato per utente) e `partite`.
+
 ### P25 — Timer, riconnessione, abbandono (28/09/2026)
 
 Punto di Giuseppe, fatto da Antonio con il suo permesso. Prima di cominciare: nessun branch di P25 su GitHub né sul PC.

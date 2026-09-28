@@ -22,6 +22,15 @@ P25:
   l'abbandono: il risultato lo scrive la stanza nella vista (reason "abandon").
 - I tempi si leggono da TURN_SECONDS e RECONNECT_SECONDS quando la partita parte:
   i test li riducono prima di creare la stanza.
+
+P26: la stanza tiene in memoria l'elenco delle mosse (gioca_carta, canta,
+mossa_automatica, abbandono) e, quando la partita finisce (per punteggio in _apply,
+per abbandono in abandon), la salva UNA volta con match_service.save_match. La
+partita può finire anche per un timer, fuori da una richiesta: per questo la stanza
+si ricorda l'applicazione Flask quando la partita parte. Senza applicazione (per
+esempio una stanza creata dai test fuori da Flask) non si salva e lo si scrive nel
+log. Se il salvataggio fallisce i giocatori vedono comunque il risultato; l'errore
+va nel log.
 """
 
 import logging
@@ -29,6 +38,9 @@ import secrets
 import threading
 import time
 from dataclasses import dataclass
+from datetime import UTC, datetime
+
+from flask import current_app, has_app_context
 
 from app.extensions import socketio
 from app.game.engine.actions import PlayCardAction, SingAction
@@ -37,6 +49,8 @@ from app.game.engine.cards import Card, Rank
 from app.game.engine.game import apply_game, new_game
 from app.game.engine.views import card_to_dict, player_view
 from app.realtime.events import room_channel
+from app.services import match_service
+from app.services.match_service import MatchRecord, MoveRecord, PlayerRecord
 from config import BaseConfig
 
 log = logging.getLogger(__name__)
@@ -45,6 +59,15 @@ MODES = {"1v1": 2, "2v2": 4}
 TURN_SECONDS = BaseConfig.TURN_SECONDS
 RECONNECT_SECONDS = BaseConfig.RECONNECT_SECONDS
 SING_SHOW_SECONDS = 3  # D15: per quanto la pagina mostra Re e Cavallo cantati
+MODE_OF_PLAYERS = {n: mode for mode, n in MODES.items()}
+
+
+def utc_now():
+    return datetime.now(UTC).replace(tzinfo=None)
+
+
+def card_details(card):
+    return {"seme": card.suit.value, "valore": card.rank.value}
 
 
 @dataclass(frozen=True)
@@ -85,6 +108,12 @@ class Room:
         self._turn_timer = None
         self._reconnect = {}  # posto scollegato -> (scadenza, timer)
 
+        # Salvataggio a fine partita (P26)
+        self._app = None  # l'applicazione Flask, per salvare anche dai timer
+        self._started_at = None
+        self._moves = []  # MoveRecord, nell'ordine della partita
+        self._saved = False
+
     # --- Lock e membri (P23) ---
 
     def run(self, action, *args, **kwargs):
@@ -117,6 +146,10 @@ class Room:
             self.version = 1
             self.turn_seconds = TURN_SECONDS
             self.reconnect_seconds = RECONNECT_SECONDS
+            self._app = current_app._get_current_object() if has_app_context() else None
+            self._started_at = utc_now()
+            self._moves = []
+            self._saved = False
             self._start_turn()
 
     @property
@@ -152,13 +185,15 @@ class Room:
     def play(self, seat, card: Card):
         """Gioca una carta (il motore controlla turno e regole); poi sale la version."""
         with self.lock:
-            self._apply(PlayCardAction(seat, card))
+            self._apply(PlayCardAction(seat, card), "gioca_carta", card_details(card))
 
     def sing(self, seat, suit):
         """Canta un seme; restituisce l'evento game:sang da mostrare a tutti (D15)."""
         with self.lock:
             before = len(self.game.hand.sings)
-            self._apply(SingAction(seat, suit))
+            # 40 o 20 lo decide il motore: i punti si leggono dal canto appena fatto
+            self._apply(SingAction(seat, suit), "canta",
+                        lambda game: {"seme": suit.value, "punti": game.hand.sings[before].points})
             done = self.game.hand.sings[before]
             return {
                 "seat": seat,
@@ -168,12 +203,22 @@ class Room:
                 "show_seconds": SING_SHOW_SECONDS,
             }
 
-    def _apply(self, action):
+    def _apply(self, action, kind, details):
+        """Applica la mossa del motore e la aggiunge all'elenco delle mosse (P26).
+
+        `details` è il dizionario da salvare, oppure una funzione che lo ricava dalla
+        partita dopo la mossa.
+        """
         before = self.game
         self.game = apply_game(self.game, action, self._rng)
+        if callable(details):
+            details = details(self.game)
+        self._moves.append(MoveRecord(hand=before.hand_number, seat=action.seat, kind=kind,
+                                      details=details, at=utc_now()))
         self.version += 1
         if self.game.finished:
             self._stop_timers()
+            self._save()
         elif self.game.hand.turn_seat != before.hand.turn_seat or self.game.hand_number != before.hand_number:
             self._start_turn()
         # Dopo un canto il turno resta a chi ha cantato: il suo tempo continua a scorrere
@@ -196,7 +241,8 @@ class Room:
             if token != self._turn_token or self.finished:
                 return  # il giocatore ha già giocato, o la partita è finita
             try:
-                self._apply(auto_move(self.game, self._rng))
+                action = auto_move(self.game, self._rng)
+                self._apply(action, "mossa_automatica", card_details(action.card))
             except Exception:
                 log.exception("Mossa automatica non riuscita nella stanza %s", self.id)
                 return
@@ -238,11 +284,12 @@ class Room:
             if waiting is None or waiting[0] != deadline or self.finished:
                 return  # è rientrato in tempo, o la partita è già finita
             log.info("Posto %s non rientrato in tempo nella stanza %s: abbandono", seat, self.id)
-            if self.abandon(seat):
+            if self.abandon(seat, "tempo_scaduto"):
                 self.broadcast_states()
 
-    def abandon(self, seat):
-        """La partita è persa per abbandono di `seat` (game:leave o rientro fuori tempo).
+    def abandon(self, seat, reason="esci"):
+        """La partita è persa per abbandono di `seat`: `reason` è "esci" (game:leave) o
+        "tempo_scaduto" (non rientrato in tempo).
 
         Restituisce False se la partita era già finita (in quel caso non cambia niente).
         """
@@ -250,9 +297,49 @@ class Room:
             if self.game is None or self.finished:
                 return False
             self.abandoned_seats = (seat,)
+            self._moves.append(MoveRecord(hand=self.game.hand_number, seat=seat, kind="abbandono",
+                                          details={"motivo": reason}, at=utc_now()))
             self.version += 1
             self._stop_timers()
+            self._save()
             return True
+
+    # --- Salvataggio a fine partita (P26) ---
+
+    def _save(self):
+        """Salva la partita finita, una volta sola (sotto il lock). Un errore va nel log."""
+        if self._saved:
+            return
+        self._saved = True
+        if self._app is None:
+            log.warning("Partita della stanza %s non salvata: nessuna applicazione Flask", self.id)
+            return
+        try:
+            with self._app.app_context():
+                match_service.save_match(self._match_record())
+        except Exception:
+            log.exception("Salvataggio della partita della stanza %s non riuscito", self.id)
+
+    def _match_record(self):
+        if self.abandoned_seats:
+            reason, winner = "abbandono", 1 - self.abandoned_seats[0] % 2
+        else:
+            reason, winner = "punteggio", self.game.result.winner_team
+        return MatchRecord(
+            mode=MODE_OF_PLAYERS[len(self.players)],
+            target_score=self.game.target_score,
+            rated=self.rated,
+            started_at=self._started_at,
+            ended_at=utc_now(),
+            reason=reason,
+            winner_team=winner,
+            scores=tuple(self.game.scores),
+            players=tuple(
+                PlayerRecord(seat=seat, user_id=player.user_id, abandoned=seat in self.abandoned_seats)
+                for seat, player in enumerate(self.players)
+            ),
+            moves=tuple(self._moves),
+        )
 
     def _abandon_result(self, scores):
         losing_team = self.abandoned_seats[0] % 2  # la squadra di un posto è posto % 2 (nel 1v1 = il posto)
