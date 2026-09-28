@@ -22,6 +22,15 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Correzione — Test della home dopo P47 (28/09/2026)
+
+- **Branch**: feature/p35-carte-vere (commit a parte, dopo il rebase su P47)
+- **File**: modificato `tests/api/test_pagina_home.py`: tolti `test_invito_finto_poi_gioca_e_coda_con_il_compagno` e `test_con_un_amico_1v1_messaggio_di_prova`, che provavano l'invito finto della home (P22), sostituito da quello vero di P47; il flusso vero lo provano `tests/sockets/test_inviti.py` e `tests/frontend/test_invito_ricevuto.py` (proposta di Giuseppe, opzione "toglierli")
+- **Controlli**: **suite non rilanciate** dopo il rebase su P47 e dopo questa modifica, per scelta di Christian; l'ultimo giro (P35, prima del rebase) era 1167 PASS. `ruff check` pulito sul file
+- **Decisioni prese**: nessuna
+- **Domande nuove**: nessuna
+- **Cosa devono fare gli altri**: **Chi fa il prossimo punto**: lanciare tutte le suite prima di cominciare, perché dopo P47 e P35 insieme non sono state lanciate. **Chi è di turno sui documenti**: in `DECISIONI.md` (P22, "Home con dati finti") amici e inviti non sono più finti, come scrive Giuseppe in P47
+
 ### P35 — Carte vere (28/09/2026)
 
 - **Branch**: feature/p35-carte-vere

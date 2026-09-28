@@ -316,31 +316,10 @@ def test_la_carta_modal_contiene_tutto(logged_in, server, size):
         _close_modal(logged_in)
 
 
-def test_invito_finto_poi_gioca_e_coda_con_il_compagno(logged_in, server):
-    logged_in.open(f"{server}/", 390, 844)
-    _open_modal(logged_in, "amico", "2v2")
-    assert logged_in.js("document.querySelector('[data-play]').disabled") is True
-    names = logged_in.js("[...document.querySelectorAll('.invite__name')].map((e) => e.textContent)")
-    assert names == ["Giulia", "Salvo"]   # solo gli amici online di amici_esempio.json
-    _click(logged_in, '[data-invite-user="44"]')
-    assert logged_in.js("document.querySelector('[data-invite-user=\"44\"]').dataset.state") == "pending"
-    # Un invito alla volta: gli altri "Invita" e i punti sono fermi
-    assert logged_in.js("document.querySelector('[data-invite-user=\"45\"]').disabled") is True
-    assert logged_in.js("[...document.querySelectorAll('input[name=target]')].every((i) => i.disabled)") is True
-    assert logged_in.js("document.querySelector('[data-play]').disabled") is True
-    logged_in.wait_js("document.querySelector('[data-invite-user=\"44\"]').dataset.state === 'accepted'",
-                      "accettazione dell'invito finto", timeout=6)
-    assert logged_in.js("document.querySelector('[data-play]').disabled") is False
-
-    _click(logged_in, "[data-play]")
-    logged_in.wait_js("document.querySelector('[data-queue-overlay]')?.open", "schermata di coda")
-    text = logged_in.js("document.querySelector('[data-queue-overlay]').textContent")
-    assert "In squadra con Giulia" in text and "Va bene qualunque avversario" in text
-    assert "Cerco gli avversari" in text and "2v2 · 500 punti" in text
-    # Mentre si è in coda le carte-pulsante non aprono il modal (la schermata copre la pagina)
-    assert logged_in.js("document.querySelector('[data-mode-modal]').open") is False
-    _click(logged_in, "[data-queue-cancel]")
-    logged_in.wait_js("!document.querySelector('[data-queue-overlay]')", "chiusura della schermata di coda")
+# Da P47 amici e inviti della home sono veri: i due test dell'invito finto (l'amico
+# che accettava dopo 2 secondi, il messaggio "Prova: qui comincerebbe la partita")
+# sono stati tolti. Il flusso vero lo provano tests/sockets/test_inviti.py (server)
+# e tests/frontend/test_invito_ricevuto.py (browser), di P47.
 
 
 def test_partita_veloce_apre_e_annulla_la_coda(logged_in, server):
@@ -363,17 +342,6 @@ def test_partita_veloce_apre_e_annulla_la_coda(logged_in, server):
     logged_in.send("Input.dispatchKeyEvent", type="keyDown", key="Escape", code="Escape", windowsVirtualKeyCode=27)
     logged_in.send("Input.dispatchKeyEvent", type="keyUp", key="Escape", code="Escape", windowsVirtualKeyCode=27)
     logged_in.wait_js("!document.querySelector('[data-queue-overlay]')", "Esc sulla schermata di coda")
-
-
-def test_con_un_amico_1v1_messaggio_di_prova(logged_in, server):
-    logged_in.open(f"{server}/", 1440, 900)
-    _open_modal(logged_in, "amico", "1v1")
-    _click(logged_in, '[data-invite-user="45"]')
-    logged_in.wait_js("!document.querySelector('[data-play]').disabled", "accettazione dell'invito finto", timeout=6)
-    _click(logged_in, "[data-play]")
-    logged_in.wait_js("document.querySelector('[data-flash]')?.textContent.includes('contro Salvo')",
-                      "messaggio della partita di prova")
-    assert logged_in.js("document.querySelector('[data-queue-overlay]')") is None
 
 
 def test_senza_login_la_carta_apre_la_finestra_di_accesso(browser, server):
