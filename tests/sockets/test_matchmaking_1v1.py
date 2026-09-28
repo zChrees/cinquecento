@@ -92,8 +92,9 @@ def test_due_volte_in_coda_busy(queue):
 def test_rating_vicini_stesso_punteggio_si_abbinano(queue):
     queue.join(_player(1), "1v1", 150, 1500)
     queue.join(_player(2), "1v1", 150, 1590)
-    [(a, b)] = queue.take_matches()
-    assert {a.user_id, b.user_id} == {1, 2}
+    [match] = queue.take_matches()
+    assert set(match.user_ids) == {1, 2}
+    assert match.teams in (((_player(1),), (_player(2),)), ((_player(2),), (_player(1),)))
     assert len(queue) == 0
 
 
@@ -140,8 +141,8 @@ def test_prima_chi_aspetta_da_piu_tempo_con_il_rating_piu_vicino(queue, clock):
     queue.join(_player(2), "1v1", 150, 1580)
     clock.now += 1
     queue.join(_player(3), "1v1", 150, 1510)
-    [(a, b)] = queue.take_matches()
-    assert (a.user_id, b.user_id) == (1, 3)
+    [match] = queue.take_matches()
+    assert match.user_ids == (1, 3)
     assert 2 in queue
 
 
@@ -161,7 +162,7 @@ def test_aggiornamenti_solo_quando_l_intervallo_cambia(queue, clock):
 def test_annulla_e_rimetti_in_coda(queue):
     queue.join(_player(1), "1v1", 150, 1500)
     entry = queue.leave(1)
-    assert entry.user_id == 1 and 1 not in queue
+    assert entry.user_ids == (1,) and 1 not in queue
     assert queue.leave(1) is None
     queue.requeue(entry)
     assert 1 in queue
@@ -341,7 +342,6 @@ def test_chi_e_gia_in_partita_non_entra_in_coda(connect, ids):
     ({"request_id": "r", "mode": "1v1", "target_score": 200}, "invalid_data"),
     ({"request_id": "r", "mode": "1v1", "target_score": "150"}, "invalid_data"),
     ({"request_id": "r", "mode": "1v1", "target_score": True}, "invalid_data"),
-    ({"request_id": "r", "mode": "2v2", "target_score": 150}, "not_allowed"),
 ])
 def test_dati_non_validi(connect, ids, data, code):
     answer = connect("Primo").call("queue:join", data, timeout=WAIT)

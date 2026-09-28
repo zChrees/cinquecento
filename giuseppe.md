@@ -22,6 +22,29 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### P29 — Matchmaking 2v2 (28/09/2026)
+
+Punto di Antonio, fatto da Giuseppe con il suo permesso, subito dopo P28.
+
+- **Branch**: feature/p29-matchmaking-2v2
+- **File**: creato `tests/sockets/test_matchmaking_2v2.py`; modificati `app/realtime/matchmaking.py`, `app/sockets/lobby_events.py`, `app/static/js/pages/home.js`. **Correzione del browser dei test** (commit a parte, con l'ok di Giuseppe): modificato `tests/browser.py` (di Christian, P46), creato `tests/frontend/test_avvio_browser.py`. **Fuori elenco, miei**: `tests/sockets/test_matchmaking_1v1.py` (P28: le partite trovate ora sono oggetti `Match`, tolto il controllo "2v2 non attivo") e `tests/sockets/conftest.py` (il fixture `server` restituisce anche `app`, per chiamare `matchmaker.join_pair` dai test)
+- **Controlli**: **1146 PASS** in 7 suite, tutto PASS, dopo il rebase su P30 e sulla correzione di Christian del test della home di P28 (23 nuovi nella suite `sockets`, rilanciata 3 volte di fila senza errori, e 5 nella suite `frontend` per la correzione del browser dei test), `ruff check .` pulito
+- **Decisioni prese**: **coda 2v2 di singoli** (chiude D17, scelta di Giuseppe sulla raccomandazione di Claude): le squadre si formano in modo che le medie delle due squadre siano il più vicine possibile.
+- **Scelte tecniche**:
+  - in coda ci sono **voci**: un singolo, oppure una **coppia già formata**, che gioca sempre nella stessa squadra, contro due singoli o contro un'altra coppia; il rating della coppia è la media dei due (vale per l'intervallo di `queue:status`, uguale per i due);
+  - la regola "si accettano a vicenda" di P28 vale per **ogni coppia di voci** della partita: con quattro singoli servono tutti e quattro nell'intervallo di ognuno;
+  - si serve prima chi aspetta da più tempo; tra le partite possibili si sceglie quella con i rating più vicini (differenza tra il più alto e il più basso), poi quella con le squadre più bilanciate, poi chi aspetta da più tempo; per ogni voce si guardano solo le 8 più vicine di rating (`CANDIDATES`), così il calcolo resta leggero (provato con 40 in coda);
+  - posti: squadre e posti dentro la squadra tirati a sorte; i posti 0 e 2 sono una squadra (contratto 3.1); `rated=True` sempre (anche la coppia con l'amico, D36);
+  - **`matchmaker.join_pair(app, utente, compagno, target_score, sid=None)`** fa entrare la coppia nella coda 2v2 e restituisce lo stato di `utente`; il compagno riceve `queue:status` con `partner`. Rifiuta con `busy` se uno dei due è già in coda o in partita, con `invalid_data` la coppia con sé stessi. **Non è collegata a nessun evento**: la chiamerà `invite:start` di P47;
+  - se esce uno della coppia (Annulla o ultima scheda chiusa) esce tutta la coppia: lui riceve `queue:left` `"cancelled"`, il compagno `"partner_left"`;
+  - pagina: "Gioca" nella Partita Veloce 2v2 usa la coda vera; con `"partner_left"` compare "Il tuo compagno è uscito dalla coda."; il 2v2 con un amico resta con i dati finti fino a P47.
+- **Domande nuove**: nessuna (quella sul 2v2 con più amici invitati è nel riepilogo di P28)
+- **Punti delicati**:
+  - la coda tiene un indice utente → voce: i due della coppia puntano alla **stessa** voce; per toglierla si usa sempre `leave` (o `_remove`), mai il `del` di un solo utente;
+  - `join_pair` va chiamata dentro Flask (serve per leggere il rating e per avviare il controllo delle code con l'app), come `create_room` (P26);
+  - **errore intermittente nella suite `frontend`, corretto** (commit separato nello stesso branch, con l'ok di Giuseppe): circa un giro su cinque dava "1 errori" all'avvio del browser di un test (visto in `test_momenti_tavolo.py`). Causa: `tests/browser.py` leggeva `DevToolsActivePort` mentre Chrome lo stava ancora scrivendo, e su Windows il file bloccato dà `PermissionError`. Non dipendeva da P28 né da P29. Ora `read_devtools_port` considera il file bloccato, vuoto o incompleto come "non ancora pronto" e riprova; test nuovo `tests/frontend/test_avvio_browser.py` (5 controlli); dopo la correzione 10 giri di `frontend` su 10 senza errori.
+- **Note per il contratto o per gli altri**: nessun cambiamento al contratto. **Chi fa P47** (io): `invite:start` nel 2v2 chiama `matchmaker.join_pair(current_app._get_current_object(), chi_invita, invitato, target_score, request.sid)` e risponde con lo stato che restituisce; nel 1v1 chiama `create_room(..., rated=False)`. **Christian**: oltre alla correzione del test di P28, ho toccato il tuo `tests/browser.py` (P46) per l'errore intermittente descritto sopra: solo l'attesa della porta di Chrome (`read_devtools_port`), il resto è com'era. **Antonio**: il blocco della suite `api` che avevi visto in P27 potrebbe avere la stessa origine (il browser dei test che non parte), ma non l'ho verificato [N].
+
 ### P28 — Matchmaking 1v1 (28/09/2026)
 
 Punto di Antonio, fatto da Giuseppe con il suo permesso (anche per P29, che segue). Prima di cominciare: nessun branch di P28 su GitHub.

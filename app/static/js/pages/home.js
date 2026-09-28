@@ -7,16 +7,17 @@
  *   rientro e la schermata di coda dallo stato della pagina. Lo stato ha la forma
  *   del contratto (docs/CONTRATTO-SOCKET.md): home:status (5.1), queue:status (4),
  *   la lista degli amici di GET /friends/ (2.2) e i rating di GET /stats/me (2.1).
- * - Coda vera (P28): "Gioca" nella Partita Veloce 1v1 manda queue:join (con un
- *   request_id per clic); la schermata di coda si apre con la risposta e si
- *   aggiorna con queue:status (anche dalle altre schede dello stesso utente);
- *   "Annulla" manda queue:leave e la schermata si chiude con queue:left;
+ * - Coda vera (P28, P29): "Gioca" nella Partita Veloce (1v1 e 2v2) manda
+ *   queue:join (con un request_id per clic); la schermata di coda si apre con la
+ *   risposta e si aggiorna con queue:status (anche dalle altre schede dello
+ *   stesso utente); "Annulla" manda queue:leave e la schermata si chiude con
+ *   queue:left (con "partner_left" un messaggio dice che il compagno è uscito);
  *   game:start porta al tavolo.
  * - Il resto per ora viene dai dati finti di app/static/dev/ (attributi
  *   data-demo-*, solo in sviluppo e nei test; con ?demo=rientro c'è l'avviso di
- *   rientro): la coda 2v2 (P29), home:status (P44), gli inviti veri (P47). Senza
- *   dati finti (demo vera) "giocatori online" resta nascosto e "Gioca", fuori
- *   dalla Partita Veloce 1v1, avvisa che la ricerca non è ancora attiva.
+ *   rientro): home:status (P44) e gli inviti veri (P47). Senza dati finti (demo
+ *   vera) "giocatori online" resta nascosto e "Gioca con un amico" avvisa che la
+ *   ricerca non è ancora attiva.
  * - Carte-pulsante: senza login aprono "Accedi o registrati" (P40); con il login
  *   la carta-modal della modalità (components/ModeModal.js).
  */
@@ -174,6 +175,13 @@ function closeQueue() {
   render(state);
 }
 
+function onQueueLeft({ reason } = {}) {
+  if (reason === 'partner_left' && state.queue) {
+    showMessage('Il tuo compagno è uscito dalla coda.', 'info');
+  }
+  closeQueue();
+}
+
 function goToTable({ url } = {}) {
   if (typeof url !== 'string' || !url.startsWith('/game/')) return;
   starting = true;
@@ -186,12 +194,12 @@ function play({ kind, mode, targetScore, invitee }) {
     showMessage('Sei offline: potrai giocare appena torna la connessione.', 'error');
     return;
   }
-  if (kind === 'veloce' && mode === '1v1') {
+  if (kind === 'veloce') {
     joinQueue(mode, targetScore);
     return;
   }
   if (!demo || !demoData) {
-    // La coda 2v2 arriva con P29, gli inviti con P47
+    // Gli inviti arrivano con P47
     showMessage('La ricerca della partita non è ancora attiva.', 'info');
     return;
   }
@@ -199,9 +207,9 @@ function play({ kind, mode, targetScore, invitee }) {
     showMessage(`Prova: qui comincerebbe la partita contro ${invitee.username}.`, 'info');
     return;
   }
-  // Dati finti: si entra subito in coda (2v2 fino a P29, 2v2 con un amico fino a P47)
-  const example = invitee ? demoData['queue:status 2v2 con un amico'] : demoData['queue:status'];
-  const partner = invitee ? { user_id: invitee.user_id, username: invitee.username, avatar: invitee.avatar } : null;
+  // Dati finti: con un amico nel 2v2 si entra subito in coda (fino a P47)
+  const example = demoData['queue:status 2v2 con un amico'];
+  const partner = { user_id: invitee.user_id, username: invitee.username, avatar: invitee.avatar };
   state.queue = { ...example, mode, target_score: targetScore, partner };
   render(state);
 }
@@ -296,7 +304,7 @@ initCardBackground(background);
 render(state);
 if (isLoggedIn()) {
   on(EVENTS.QUEUE_STATUS, showQueue);
-  on(EVENTS.QUEUE_LEFT, closeQueue);
+  on(EVENTS.QUEUE_LEFT, onQueueLeft);
   on(EVENTS.GAME_START, goToTable);
   connect();
 }

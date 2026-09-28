@@ -161,6 +161,7 @@ def server():
     thread = threading.Thread(target=http.serve_forever, daemon=True)
     thread.start()
     yield {
+        "app": app,  # per chiamare dai test le funzioni che vogliono l'app (P29: matchmaker.join_pair)
         "url": f"http://{app.config['HOST']}:{app.config['PORT']}",
         "user_ids": user_ids,
         "probe": probe,
