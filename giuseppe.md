@@ -22,6 +22,30 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### Documenti: registrati P28–P30, P35, P42, P44, P47, P48, P56, P57 e metà di P38 (28/09/2026)
+
+- **Branch**: docs/registra-p28-p57
+- **File**: modificati `SCALETTA.md` (tracker, sezione 4 con P58–P60, sezione 3, sezione 9 e 9.2), `DECISIONI.md` (Dati, Interfaccia, Gioco, Processo), `DA-DECIDERE.md`, `CLAUDE.md` (riga "Stato", punti delicati, numero dei controlli), questo file
+- **Controlli**: nessuno (soli documenti); 1233 PASS e 2 FAIL su 1235 dall'ultimo giro di Giuseppe (P38)
+- **Registrati**: di Christian, P57, P30 (con la correzione del test della home di P28), P56, la correzione del test della home di P44, P35, la correzione dei test della home di P47, P42; di Giuseppe, P28, P29 (con la correzione di `tests/browser.py`), P44, P47, P48 e la parte di P38 nel repository (**P38 non spuntato**). Di Antonio niente di nuovo dopo P27
+- **Decisioni prese**:
+  - **P38 e P39 passano a Giuseppe**, perché Antonio non può lavorare al progetto per un bel po' (scelta di Giuseppe, di turno); Antonio resta nella sezione 9 con i punti che ha fatto;
+  - **punti nuovi**: **P58** (ultima presa della mano nella vista, Giuseppe: approvata dai tre), **P59** (2v2 con più amici invitati, Giuseppe: approvata dai tre, file in 9.2), **P60** (togliere le viste finte `?demo=` prima della consegna, Christian, prima di P36: proposta di Christian, accettata da Giuseppe);
+  - registrate in `DECISIONI.md` le decisioni dei riepiloghi: D17 e D19 chiuse; coda con accettazione reciproca; invito ricevuto, inviti che dopo "Accetta" non scadono; chat con chi ti ha bloccato; momenti del tavolo; frasi nella pagina; carte vere; logo e icona; statistiche del compagno di chi abbandona; backup pianificato; 2v2 con più amici (cambia D27, vale da P59); le decisioni vecchie che cambiano hanno la nota "Aggiornata"
+- **Domande nuove** (in `DA-DECIDERE.md`): **D41** `cannot_write` in `chat:history` (contratto 5.4, da approvare in tre); **D42** conversazioni con gli ex amici; **D20** completata con "da quale branch si installa la demo"
+- **Punti delicati**: aggiunti in `CLAUDE.md` quelli di coda, presenza, inviti, chat, momenti del tavolo, frasi nella pagina, statistiche, carte e icona, demo, browser dei test. **Trovato leggendo il codice** [L]: la cancellazione dell'account (`auth_service.py`) controlla solo la partita in corso, non la coda né un invito aperto (il punto delicato di P17 lo chiedeva a P28 e P47): aggiunto ai file probabili di P32
+- **Note per gli altri**:
+  - **Christian**: i due test di `tests/frontend/test_pannello_amici.py` che non passano dopo P48 (riepilogo di P48 qui sotto) sono il tuo primo passo in "Da dove si parte". Il contratto 5.3 per il 2v2 con più amici lo aggiorna chi fa P59 (io), con i dettagli concordati all'inizio del punto; `cannot_write` (5.4) aspetta D41
+  - **Antonio**: P38 e P39 sono passati a me; se torni prima della fine, dimmelo
+- **Da revisionare, Christian** (scelte fatte da me mentre ero di turno, che toccano anche te: se qualcosa non va, scrivilo nel tuo riepilogo e lo correggo, o lo corregge chi è di turno):
+  - `SCALETTA.md`, tracker: le note dei tuoi punti P30, P35, P42, P56, P57 (commit, test, file fuori elenco) le ho ricavate dai tuoi riepiloghi;
+  - `SCALETTA.md`, sezione 4: **P60** è scritto da me sulla tua proposta di P57 (cosa fare, "Fatto quando", dipendenze P21, P22, P56, P57, prima di P36; P36 ora dipende anche da P60); in 9.2 i file di P60 sono una mia ipotesi (`game.js`, `home.js`, i quattro test che usano `?demo=`; forse `blueprints/game/routes.py`, `main/routes.py`, `app/static/dev/`): all'inizio del punto scrivi tu la lista definitiva;
+  - `SCALETTA.md`, sezione 3: le righe di `ModeModal.js` (ora "P22 → P59": P28 e P47 non l'hanno toccato), `game.js` (P21 → P24 → P25 → P57 → P56 → P60), `base.html` (P19 → P40 → P46 → P42 → P33), e le righe nuove di `core/events.js`, `friend_service.py`, `tests/browser.py`;
+  - `SCALETTA.md`, sezione 9: nel tuo elenco ho aggiunto P60; in "Da dove si parte" il tuo ordine è: i 2 test del pannello amici, `game.js` per P58, P33, P34, P43, P53, P60, P36 (è una proposta mia: cambialo se preferisci); due controlli di parallelismo nuovi: P31/P32 con P33, P59 con P33 e P60 (P59 può toccare `ModeModal.js`, che è tuo);
+  - `DECISIONI.md`, Interfaccia: le decisioni tue di P57, P56, P35 e P42 sono riscritte dai tuoi riepiloghi, con "Motivo: scelte di Christian"; la decisione di P30 (compagno di chi abbandona) è in Dati; ho aggiunto "Aggiornata" alle decisioni di P22 ("Home con dati finti": ora quasi tutto è vero), P46 (chat vera da P48) e "Carte" del 26/09;
+  - `DA-DECIDERE.md`: tolta D19 (chiusa da te in P35); **D42** (conversazioni con gli ex amici) dice che, se serve, è un punto nuovo tuo;
+  - `CLAUDE.md`: punti delicati nuovi di P57, P56, P30 e P35/P42 ricavati dai tuoi riepiloghi.
+
 ### P38 — Installazione demo separata e backup pianificato: la parte nel repository (28/09/2026)
 
 Punto di Antonio, fatto da Giuseppe con il suo permesso. **Fatto a metà, per scelta di Giuseppe**: c'è la parte nel repository (guida e script); l'installazione sul PC della demo aspetta D20. P38 dipendeva da P37 solo per l'ordine (la demo si prepara alla fine): l'unica dipendenza tecnica, P18 (backup), è in `dev`.
