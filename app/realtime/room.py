@@ -78,8 +78,9 @@ finish_listeners = []
 
 
 def notify(listeners, user_ids, app):
+    user_ids = tuple(user_ids)  # prima del ciclo: un generatore lo leggerebbe solo il primo (P31)
     for listener in listeners:
-        socketio.start_background_task(listener, tuple(user_ids), app)
+        socketio.start_background_task(listener, user_ids, app)
 
 
 def utc_now():

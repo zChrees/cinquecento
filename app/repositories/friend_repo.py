@@ -21,7 +21,10 @@ ACCEPTED = "accettata"
 
 
 def utc_now():
-    return datetime.now(UTC).replace(tzinfo=None)
+    """Già al secondo, come le colonne DATETIME delle amicizie e dei blocchi: MySQL
+    arrotonderebbe i decimali, e la risposta di POST /friends/requests avrebbe un'ora
+    diversa da quella della lista (P31)."""
+    return datetime.now(UTC).replace(tzinfo=None, microsecond=0)
 
 
 def lock_users(*user_ids):

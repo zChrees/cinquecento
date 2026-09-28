@@ -14,7 +14,10 @@ from app.models.chat_message import ChatMessage
 
 
 def utc_now():
-    return datetime.now(UTC).replace(tzinfo=None)
+    """Già ai millesimi, come `inviato_il` (DATETIME(3)): MySQL arrotonderebbe il resto,
+    e la risposta di chat:send avrebbe un'ora diversa da chat:history (P31)."""
+    now = datetime.now(UTC).replace(tzinfo=None)
+    return now.replace(microsecond=now.microsecond // 1000 * 1000)
 
 
 def add(sender_id, recipient_id, text, sent_at):
