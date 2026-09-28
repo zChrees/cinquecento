@@ -71,7 +71,7 @@ Una web-app per giocare online a **Cinquecento**, variante siciliana, con le car
 - [ ] P47 (Fase 2, I): amici online e inviti a partita — `app/realtime/invites.py`, `app/sockets/friends_events.py`, `ModeModal.js`
 - [ ] P48 (Fase 2, B+I): chat tra amici — `chat_service.py`, `chat_repo.py`, `app/sockets/chat_events.py`
 - [ ] ~~P54 (Fase 2, B): frasi del tavolo: elenco e salvataggio~~ — **tolto il 27/09/2026**: le frasi del tavolo non si salvano (D24)
-- [ ] P55 (Fase 2, I): frasi del tavolo in tempo reale — `app/realtime/table_phrases.py`, `app/sockets/game_events.py`, `config.py`
+- [x] P55 (Fase 2, I): frasi del tavolo in tempo reale — `app/realtime/table_phrases.py`, `app/sockets/game_events.py`, `config.py` — *28/09 (Giuseppe, commit `523e222`): 23 test nuovi nella suite `sockets`, 1054 PASS in tutto; le 19 frasi di D24 in `table_phrases.PHRASES`, mandate con `game:phrases` a ogni `game:join`, prima di `game:state`; `game:send_phrase` `{game_id, code}` sotto il lock della stanza, solo dalla scheda al tavolo; `game:phrase` `{seat, code}` a tutti al tavolo; limite di 3 secondi per giocatore (`TABLE_PHRASE_MIN_INTERVAL_SECONDS`), `too_fast` con `retry_after` in secondi interi; si possono mandare anche a partita finita; testo e codice mai nel log né nel database. Fuori elenco, con l'ok di Giuseppe: `room.py` (campo `phrase_times`) e `tests/sockets/test_partita.py` (l'utente "Quarto" si registra solo se non c'è)*
 - [ ] P56 (Fase 2, C): frasi del tavolo nella pagina — `TablePhrases.js`, `table-phrases.css`, `pages/game.js`
 - [ ] P57 (Fase 2, C): momenti del tavolo: ultima presa, riepilogo di fine mano, carte del canto — `HandSummary.js`, `Table.js`, `pages/game.js`
 - [ ] P30 (Fase 2, B+C): pannello statistiche con dati reali — `stats_service.py`, `stats_repo.py`, `StatsPanel.js`
@@ -637,10 +637,10 @@ Due studenti che lavorano in parallelo non toccano mai gli stessi file. Vale anc
 
 **Christian (Studente 3) — interfaccia e documenti:** P3, P52, P8, P9, P19, P40, P20, P21, P22, P46, P56, P57, P30, P36, P37 (più P33, P34, P35, P42, P43 e P53 in 9.2)
 
-**Da dove si parte** (aggiornato il 28/09/2026 notte: in `dev` ci sono P1–P8, P10–P27, P40, P45, P46 e P52, più le correzioni di `app/checks.py` e `scripts/migrate.py`) [L]:
-- **Giuseppe**: **P55** (frasi del tavolo, P25 è in `dev`; il test instabile di P25 è corretto); P44 dopo P29, poi P47. Ha fatto anche P16 al posto di Antonio e ne rifinisce la grafica.
+**Da dove si parte** (aggiornato il 28/09/2026 notte: in `dev` ci sono P1–P8, P10–P27, P40, P45, P46, P52 e P55, più le correzioni di `app/checks.py` e `scripts/migrate.py`) [L]:
+- **Giuseppe**: P55 fatto; **P44 aspetta P29** (Antonio) e P47 aspetta P44, quindi per ora non ha punti liberi: può aiutare Antonio o prendere `js/pages/auth.js` (sotto, "Da concordare"). Ha fatto anche P16 al posto di Antonio e ne rifinisce la grafica.
 - **Antonio**: **P28** (P22, P24 e P27 sono in `dev`). Le suite `api` e `sockets` richiedono MySQL. `create_room` va chiamata dal gestore dell'evento, dentro Flask, altrimenti la partita non si salva (P26); il rating per la coda si legge da `rating` convertendo il `Decimal` (P27). Per **P28**, da P22 in poi `home.js` e `ModeModal.js` sono pronti: "Gioca" arriva alla funzione `play(...)` di `home.js` e la schermata di coda si apre mettendo lo stato di `queue:status` in `state.queue` (oggi con i dati finti).
-- **Christian**: **P57** (ultima presa, fine mano, carte del canto: P25 è in `dev`), poi **P30** (statistiche: P26 e P27 sono in `dev`; il rating è in `rating.valore` per `modalita`, 1500 se manca la riga; "provvisorio" si conta dalle partite), poi P56 dopo P55.
+- **Christian**: **P57** (ultima presa, fine mano, carte del canto: P25 è in `dev`), poi **P30** (statistiche: P26 e P27 sono in `dev`; il rating è in `rating.valore` per `modalita`, 1500 se manca la riga; "provvisorio" si conta dalle partite), poi **P56** (P55 è in `dev`: l'elenco arriva con `game:phrases` a ogni `game:join`, `game:phrase` porta `seat` e `code`, il testo si prende dall'elenco; pulsante disattivato 3 secondi dopo l'invio, `retry_after` in secondi interi).
 - **Da concordare**: le pagine di accesso e registrazione (P16) non hanno ancora uno script di pagina, quindi lì la navbar non si apre. Serve un `js/pages/auth.js` che importa `core/layout.js` e chiama `initLayout()`: non è nell'elenco di nessun punto; proposta: lo aggiunge Giuseppe con la grafica delle due pagine.
 
 | Punto | Chi | File condivisi con punti di altri studenti | Attende (già in `dev`) |

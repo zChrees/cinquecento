@@ -22,15 +22,15 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
-### Documenti: regola dei documenti a turno; registrati P26, P27 e la correzione di P25 (28/09/2026)
+### Documenti: regola dei documenti a turno; registrati P26, P27, la correzione di P25 e P55 (28/09/2026)
 
 - **Branch**: docs/regola-documenti
 - **File**: modificati `CLAUDE.md` (punto 5 di "Prima di lavorare", riga "Stato", "Processo di lavoro", "Testing", "Consegna", punti delicati di P25, P26 e P27; tolto un "D4" rimasto per sbaglio davanti al titolo), `DECISIONI.md` (Dati; Processo), `SCALETTA.md` (regola in cima, P25, P26, P27, sezioni 3, 8 e 9), questo file
-- **Controlli**: nessuno (soli documenti); 1031 PASS dall'ultimo giro di Giuseppe
+- **Controlli**: nessuno (soli documenti); 1054 PASS dall'ultimo giro di Giuseppe (P55)
 - **Decisioni prese**: **documenti condivisi a turno** (scelta del gruppo, sostituisce D22): durante la giornata ognuno scrive solo il riepilogo nel proprio file; a fine giornata il gruppo sceglie chi dei tre aggiorna `SCALETTA.md`, `CLAUDE.md`, `DECISIONI.md` e `DA-DECIDERE.md`, che legge i riepiloghi nuovi dei **tre** file (compreso il suo). Chi è di turno lo dice a Claude a inizio sessione, altrimenti Claude non tocca i documenti. Fin dove sono registrati i riepiloghi lo dice la riga "Stato" di `CLAUDE.md`, uno per file. Registrate anche le decisioni di Antonio su P26 (la stanza tiene le mosse, formato delle mosse) e P27 (2v2: la squadra avversaria come un solo avversario)
 - **Domande nuove**: nessuna; nella riga "Stato" tra le cose da concordare c'è il blocco occasionale della suite `api` segnalato da Antonio
 - **Punti delicati**: `create_room` dentro Flask (P26); rating come `Decimal` (P27); con il turno corto nei test la carta che chiude una presa si vede solo in `last_trick` (P25)
-- **Cosa devono fare gli altri**: **Giuseppe** e **Antonio**: aggiornate voi l'intestazione dei vostri file (`giuseppe.md`, `antonio.md`), che dice ancora "Christian lo legge e da qui aggiorna i documenti condivisi": ora li aggiorna chi è di turno, e quando siete di turno voi il riepilogo dell'aggiornamento va nel vostro file, nel branch `docs/…` (quindi nello schema il branch può essere anche `docs/…`). Non l'ho fatto io per non creare conflitti git con i vostri branch. Da ora nei branch dei punti scrivete solo il vostro riepilogo, e aggiornate i documenti solo quando il gruppo vi sceglie. Prossimi punti: Giuseppe **P55**, Antonio **P28**, io **P57** e poi **P30**
+- **Cosa devono fare gli altri**: **Giuseppe** e **Antonio**: aggiornate voi l'intestazione dei vostri file (`giuseppe.md`, `antonio.md`), che dice ancora "Christian lo legge e da qui aggiorna i documenti condivisi": ora li aggiorna chi è di turno, e quando siete di turno voi il riepilogo dell'aggiornamento va nel vostro file, nel branch `docs/…` (quindi nello schema il branch può essere anche `docs/…`). Non l'ho fatto io per non creare conflitti git con i vostri branch. Da ora nei branch dei punti scrivete solo il vostro riepilogo, e aggiornate i documenti solo quando il gruppo vi sceglie. **P55** (Giuseppe, arrivato in `dev` durante questo aggiornamento): spuntato, punto delicato in `CLAUDE.md`. Prossimi punti: Antonio **P28**, poi P29; Giuseppe P44 e P47 aspettano P29 (intanto `auth.js` o un aiuto ad Antonio); io **P57**, poi **P30** e **P56**
 
 ### P46 — Pannello amici e finestra chat; registrato P25 (28/09/2026)
 
