@@ -9,7 +9,11 @@
  *   game:play_card e game:sing, con la version della vista su cui si è deciso;
  *   finché non arriva la risposta carte e pulsanti restano disattivati.
  * - Se la partita si apre in un'altra scheda (game:replaced, D14) questa si ferma.
- * "Esci" con game:leave (abbandono), timer e riconnessione: P25.
+ * - P25: "Esci", dopo la conferma, manda game:leave (la partita è persa per abbandono)
+ *   e poi torna alla home; a partita finita torna alla home senza chiedere.
+ *   I secondi del turno e quelli per rientrare di chi è scollegato arrivano con la
+ *   vista; la pagina li fa scendere da sola (contratto 1.1), contando dal momento in
+ *   cui la vista è arrivata.
  */
 
 import { initLayout } from '../core/layout.js';
@@ -27,9 +31,11 @@ const demo = Boolean(root.dataset.demoUrl);
 const NO_MOVES = Object.freeze({ play: [], sing: [] });
 
 let view = null;
+let viewAt = 0; // quando è arrivata la vista (performance.now), per far scendere i secondi
 let status = '';
 let waiting = false; // una mossa è partita e si aspetta la risposta
 let replaced = false; // la partita è aperta in un'altra scheda
+let leaving = false; // "Esci" confermato: si aspetta la risposta a game:leave
 
 function showMessage(text) {
   root.replaceChildren();
@@ -40,13 +46,41 @@ function showMessage(text) {
   root.append(message);
 }
 
+/**
+ * La vista con i secondi (turno e rientro) scesi dal momento in cui è arrivata.
+ * Nella prova (?demo=) la vista finta è una fotografia: i secondi restano fermi.
+ */
+function timed(current) {
+  if (demo) return current;
+  const elapsed = (performance.now() - viewAt) / 1000;
+  const later = (seconds) => Math.max(0, seconds - elapsed);
+  return {
+    ...current,
+    turn: current.turn && { ...current.turn, seconds_left: later(current.turn.seconds_left) },
+    players: current.players.map((player) => (player.reconnect_seconds_left == null
+      ? player
+      : { ...player, reconnect_seconds_left: later(player.reconnect_seconds_left) })),
+  };
+}
+
 /** Ridisegna il tavolo dalla vista. È l'unico punto che tocca il DOM del tavolo. */
 function render(next) {
-  view = next;
+  if (next !== view) {
+    view = next;
+    viewAt = performance.now();
+  }
   // Mentre si aspetta la risposta a una mossa nessuna carta e nessun canto sono attivi
-  const shown = waiting ? { ...view, legal: NO_MOVES } : view;
+  const shown = timed(waiting || leaving ? { ...view, legal: NO_MOVES } : view);
   root.replaceChildren(Table(shown, { onPlay, onSing, onLeave }, status));
 }
+
+// Chi è scollegato: "scollegato · 48 s" scende ogni secondo, senza aspettare il server
+setInterval(() => {
+  if (!demo && view && !replaced && view.status === 'playing'
+      && view.players.some((player) => player.reconnect_seconds_left != null)) {
+    render(view);
+  }
+}, 1000);
 
 function setStatus(text) {
   status = text;
@@ -81,6 +115,12 @@ function onSing(suit) {
 }
 
 async function onLeave() {
+  if (leaving) return;
+  // Partita finita, o aperta altrove: si torna alla home senza abbandonare niente
+  if (replaced || (view && view.status === 'finished')) {
+    window.location.assign('/');
+    return;
+  }
   const ok = await confirmModal({
     title: 'Vuoi uscire dalla partita?',
     message: view && view.mode === '2v2'
@@ -89,9 +129,21 @@ async function onLeave() {
     confirmLabel: 'Esci',
     danger: true,
   });
-  if (!ok) return;
-  // P25: game:leave (abbandono immediato), poi la home
-  window.location.assign('/');
+  if (!ok || leaving) return;
+  if (demo) {
+    window.location.assign('/');
+    return;
+  }
+  leaving = true;
+  if (view) render(view);
+  const answer = await send(EVENTS.GAME_LEAVE, { game_id: gameId });
+  if (answer.ok) {
+    window.location.assign('/');
+    return;
+  }
+  // Per esempio senza connessione (no_connection): si resta al tavolo e lo si dice
+  leaving = false;
+  setStatus(answer.error.message);
 }
 
 async function loadDemo(url) {

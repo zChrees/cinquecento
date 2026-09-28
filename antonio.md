@@ -24,6 +24,28 @@
 
 <!-- Il più recente in cima. File creato da Christian il 28/09/2026 con lo schema; da qui in poi lo scrive solo Antonio. Il riepilogo di P16 (punto di Antonio fatto da Giuseppe) è in giuseppe.md, quello di P5 (fatto da Christian) in christian.md. -->
 
+### P25 — Timer, riconnessione, abbandono (28/09/2026)
+
+Punto di Giuseppe, fatto da Antonio con il suo permesso. Prima di cominciare: nessun branch di P25 su GitHub né sul PC.
+
+- **Branch**: feature/p25-timer
+- **File**: modificati `app/realtime/room.py`, `app/sockets/game_events.py` (P24), `app/sockets/connection_events.py` (P23), `app/static/js/pages/game.js` (P24); creato `tests/sockets/test_timer_riconnessione.py`. Nessun file fuori elenco
+- **Controlli**: 980 PASS in tutto (17 nuovi, nella suite `sockets`; i test di P25 rilanciati 3 volte di fila senza errori), `ruff check .` pulito
+- **Decisioni prese**: **chi non arriva mai al tavolo non ha limite di tempo** (scelta (b) di Antonio; Claude consigliava 60 secondi dall'inizio): non parte nessun conto alla rovescia e la mossa automatica gioca per lui finché la partita non finisce. Il conto alla rovescia di 60 secondi parte solo quando si scollega la scheda che era al tavolo
+- **Scelte tecniche**:
+  - **timer del turno** (D12): in `room.py`, un `threading.Timer` per stanza che riparte a ogni cambio di turno e gioca `auto_move` del motore sotto il lock della stanza. Porta un numero di turno (`_turn_token`): se il giocatore ha già giocato, il timer arrivato in ritardo non fa niente. Dopo un canto il turno resta allo stesso giocatore e il suo tempo continua; il timer continua anche se il giocatore è scollegato;
+  - **scollegamento**: `connection_events.on_disconnect` chiama `room.disconnect(sid)` per le stanze dell'utente. Conta solo la scheda al tavolo: una scheda della home o una già sostituita (D14) non scollega il posto. Rientro con `game:join` entro `RECONNECT_SECONDS`; oltre, abbandono;
+  - **abbandono** (`game:leave` o rientro fuori tempo): `room.abandon(seat)`. La vista diventa `status: "finished"`, `turn: null`, `legal` vuoto, `result` = `{"reason": "abandon", "winner_team": <l'altra squadra>, "abandoned_seats": [seat], "scores"}`; nel 2v2 perde tutta la squadra (D13). `room.finished` vale anche per l'abbandono, quindi `find_room_of_user` non trova più la partita. `game:leave` a partita finita risponde `ok` senza cambiare niente; da una scheda non al tavolo risponde `not_allowed`;
+  - a partita finita (per punteggio o per abbandono) le mosse rispondono `not_allowed` "La partita è finita." (prima, per punteggio, era `illegal_move` dal motore);
+  - i tempi si leggono da `TURN_SECONDS` e `RECONNECT_SECONDS` di `room.py` quando la partita parte (`room.turn_seconds`, `room.reconnect_seconds`): i test li riducono prima di creare la stanza, senza cambiare `config.py`. `turn.seconds_total` della vista è quello della stanza;
+  - **pagina**: "Esci" manda `game:leave` dopo la conferma e poi va alla home; se la risposta è un errore (per esempio senza connessione) resta al tavolo e lo dice. A partita finita "Esci" va alla home senza chiedere. I secondi del turno e quelli per rientrare scendono da soli, contati dall'arrivo della vista; nella prova (`?demo=`) restano fermi, perché la vista finta è una fotografia (lo controlla `test_pagina_tavolo.py` di Christian).
+- **Domande nuove**: nessuna
+- **Punti delicati**:
+  - una stanza finita resta nell'elenco `rooms` (come in P24): non occupa timer, ma nessuno la toglie. Con meno di 50 utenti non pesa; se serve, toglierla dopo il salvataggio (P26) o dopo qualche minuto;
+  - `on_join`, `on_play_card` e `on_sing` (P24) vogliono sempre un argomento: un evento mandato senza dati risponde `server_error` invece di `invalid_data`. `on_leave` ha `data=None`; per gli altri è una correzione di una riga, non fatta qui;
+  - il conto alla rovescia nella pagina non è stato provato nel browser con una partita vera (solo la logica del server con i test).
+- **Note per il contratto o per gli altri**: nessun cambiamento al contratto. **Giuseppe**: P25 è fatto; i punti in cui la partita finisce sono due, `Room._apply` (per punteggio) e `Room.abandon` (per abbandono). **Antonio** (P26): la chiamata al salvataggio va in quei due punti. **Christian** (P57): la fine partita per abbandono usa il riquadro `Result` di `Table.js` che c'era già.
+
 ### P45 — Amicizie (28/09/2026)
 
 - **Branch**: feature/p45-amicizie

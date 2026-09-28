@@ -7,7 +7,11 @@
 - D14: l'ultima scheda che fa game:join prende il posto; quella di prima riceve
   game:replaced e le sue mosse sono rifiutate (`not_allowed`).
 - Dopo ogni cambiamento ogni giocatore riceve la propria vista (game:state).
-Timer, riconnessione, abbandono (game:leave): P25. Frasi del tavolo: P55.
+- P25: game:leave = abbandono immediato (nel 2v2 perde la squadra, D13); a partita
+  finita (per punteggio o per abbandono) le mosse si rifiutano. Il timer del turno e
+  il rientro entro RECONNECT_SECONDS stanno in room.py; lo scollegamento arriva da
+  connection_events.py.
+Frasi del tavolo: P55.
 """
 
 from flask import request
@@ -77,6 +81,8 @@ def _check_move(room, seat, version):
     """Controlli comuni alle mosse, sotto il lock della stanza."""
     if not room.is_table_connection(seat, request.sid):
         raise EventError("not_allowed", "La partita è aperta in un'altra scheda.")
+    if room.finished:
+        raise EventError("not_allowed", "La partita è finita.")
     if version != room.version:
         room.send_state(seat)
         raise EventError("stale_state")
@@ -135,7 +141,26 @@ def on_sing(data):
     room.run(sing)
 
 
+@handler
+def on_leave(data=None):
+    """ "Esci" dal tavolo, dopo la conferma nella pagina: la partita è persa per abbandono.
+
+    A partita già finita risponde ok senza cambiare niente.
+    """
+    room, seat = _table(data)
+    sid = request.sid
+
+    def leave():
+        if not room.is_table_connection(seat, sid):
+            raise EventError("not_allowed", "La partita è aperta in un'altra scheda.")
+        if room.abandon(seat):
+            room.broadcast_states()
+
+    room.run(leave)
+
+
 def register(socketio):
     socketio.on_event("game:join", on_join)
     socketio.on_event("game:play_card", on_play_card)
     socketio.on_event("game:sing", on_sing)
+    socketio.on_event("game:leave", on_leave)
