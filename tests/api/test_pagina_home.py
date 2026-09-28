@@ -16,6 +16,8 @@ Se né Chrome né Edge sono installati i controlli nel browser si saltano.
 Non serve MySQL: l'utente con il login è finto (un cookie dei soli test).
 """
 
+import base64
+import hashlib
 import json
 import os
 import re
@@ -41,9 +43,11 @@ DEV = STATIC / "dev"
 INDEX = ROOT / "app" / "templates" / "main" / "index.html"
 PORT = 5099
 TEST_COOKIE = ("prova_utente", "mario")
-# Cache del browser fuori dal progetto, tenuta tra un giro e l'altro: il font delle icone
-# (Material Symbols, circa 5 MB da Google Fonts) si scarica una volta sola
-BROWSER_CACHE = Path(tempfile.gettempdir()) / "cinquecento-test-browser-cache"
+# Font e icone di Google Fonts (base.html): il test li serve al browser da una copia fuori
+# dal progetto, tenuta tra un giro e l'altro. Il font delle icone (Material Symbols, circa
+# 5 MB, D40) si scarica una volta sola e i giri dopo non dipendono dalla rete.
+FONT_CACHE = Path(tempfile.gettempdir()) / "cinquecento-test-font-cache"
+FONT_ORIGINS = ("https://fonts.googleapis.com/*", "https://fonts.gstatic.com/*")
 BROWSER_PATHS = (
     r"C:\Program Files\Google\Chrome\Application\chrome.exe",
     r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
@@ -234,8 +238,7 @@ class Browser:
     def __init__(self, path, profile):
         self.process = subprocess.Popen(
             [path, "--headless=new", "--disable-gpu", "--no-first-run", "--no-default-browser-check",
-             "--remote-debugging-port=0", f"--user-data-dir={profile}", f"--disk-cache-dir={BROWSER_CACHE}",
-             "about:blank"],
+             "--remote-debugging-port=0", f"--user-data-dir={profile}", "about:blank"],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         )
         port_file = Path(profile) / "DevToolsActivePort"
@@ -245,6 +248,7 @@ class Browser:
         self.ws = websocket.create_connection(targets[0]["webSocketDebuggerUrl"], timeout=30,
                                               suppress_origin=True)
         self.next_id = 0
+        self.send("Fetch.enable", patterns=[{"urlPattern": origin} for origin in FONT_ORIGINS])
 
     @staticmethod
     def _pages(port):
@@ -254,15 +258,47 @@ class Browser:
         except OSError:
             return None
 
-    def send(self, method, **params):
+    def _post(self, method, **params):
+        """Manda un comando senza aspettare la risposta (che poi send() ignora)."""
         self.next_id += 1
         self.ws.send(json.dumps({"id": self.next_id, "method": method, "params": params}))
+        return self.next_id
+
+    def send(self, method, **params):
+        waiting = self._post(method, **params)
         while True:
             message = json.loads(self.ws.recv())
-            if message.get("id") == self.next_id:
+            if message.get("method") == "Fetch.requestPaused":
+                self._serve_font(message["params"])
+            elif message.get("id") == waiting:
                 if "error" in message:
                     raise RuntimeError(f"{method}: {message['error']}")
                 return message.get("result", {})
+
+    def _serve_font(self, paused):
+        """Risponde a una richiesta a Google Fonts con la copia salvata (scaricata la prima volta)."""
+        request = paused["request"]
+        key = hashlib.sha256(f"{request['url']} {request['headers'].get('User-Agent', '')}".encode()).hexdigest()
+        body, kind = FONT_CACHE / key, FONT_CACHE / f"{key}.type"
+        try:
+            if not body.is_file():
+                download = urllib.request.Request(request["url"], headers={
+                    "User-Agent": request["headers"].get("User-Agent", ""),
+                    "Accept": request["headers"].get("Accept", "*/*"),
+                })
+                with urllib.request.urlopen(download, timeout=120) as response:
+                    data = response.read()
+                    content_type = response.headers.get("Content-Type", "application/octet-stream")
+                FONT_CACHE.mkdir(exist_ok=True)
+                kind.write_text(content_type, encoding="utf-8")
+                body.write_bytes(data)   # per ultimo: un file a metà non resta nella copia
+            self._post("Fetch.fulfillRequest", requestId=paused["requestId"], responseCode=200,
+                       responseHeaders=[{"name": "Content-Type", "value": kind.read_text(encoding="utf-8")},
+                                        {"name": "Access-Control-Allow-Origin", "value": "*"}],
+                       body=base64.b64encode(body.read_bytes()).decode("ascii"))
+        except OSError:
+            # Senza rete: il font manca e la pagina usa quelli di riserva
+            self._post("Fetch.failRequest", requestId=paused["requestId"], errorReason="InternetDisconnected")
 
     def js(self, expression):
         result = self.send("Runtime.evaluate", expression=expression, returnByValue=True, awaitPromise=True)
@@ -321,8 +357,8 @@ def server():
 @pytest.fixture(scope="module")
 def browser(server, tmp_path_factory):
     b = Browser(_browser(), tmp_path_factory.mktemp("chrome"))
-    # Prima apertura: può servire tempo per scaricare font e icone (poi restano nella cache)
-    b.open(f"{server}/", 390, 844, timeout=150)
+    # Prima apertura: la prima volta si scaricano font e icone (poi restano in FONT_CACHE)
+    b.open(f"{server}/", 390, 844, timeout=100)
     yield b
     b.close()
 
