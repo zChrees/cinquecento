@@ -22,6 +22,32 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### P48 — Chat tra amici (28/09/2026)
+
+Punto di Antonio, fatto da Giuseppe con il suo permesso. Prima di cominciare: nessun branch di P48 su GitHub.
+
+- **Branch**: feature/p48-chat
+- **File**: creati `app/services/chat_service.py`, `app/repositories/chat_repo.py`, `tests/sockets/test_chat.py`; modificati `app/sockets/chat_events.py`, `app/static/js/components/ChatWindow.js`. **Fuori elenco, con l'ok di Giuseppe**: `app/static/js/components/FriendsPanel.js` (la chat vera al posto di quella di prova), `app/static/js/core/events.js` (i nomi `CHAT_*`); creato `tests/frontend/test_chat_vera.py`
+- **Controlli**: **1228 PASS e 2 FAIL** su 1230, in 7 suite, dopo il rebase su P35, P42 e sulla correzione di Christian dei test della home di P47. 25 nuovi nella suite `sockets` (3 volte senza errori), 3 nella suite `frontend` (3 volte), `ruff check .` pulito. I **2 FAIL attesi** sono test di Christian del pannello amici (vedi "Note per gli altri")
+- **Decisioni prese** (scelte di Giuseppe):
+  - **chi è stato bloccato lo vede nella chat**: "Bloccato: non potete più scrivervi." e il campo chiuso (vale per tutti e due); fuori dalla chat non riceve nessun avviso (P47);
+  - **aggiunta al contratto 5.4, da approvare in tre**: la risposta di `chat:history` ha anche **`cannot_write`**: `null` se si può scrivere, altrimenti `"not_friends"` (amicizia finita) o `"blocked"` (un blocco in una delle due direzioni). Senza, la pagina sapeva solo `can_write: false` e non poteva dire "bloccato". È un campo in più: chi non lo legge non si rompe.
+- **Scelte tecniche**:
+  - `chat:send`: testo non vuoto né fatto di spazi, al massimo 1000 caratteri, salvato così com'è (`invalid_data` altrimenti); al massimo 1 messaggio al secondo per utente (`too_fast` con `retry_after` in secondi interi; un messaggio rifiutato non conta); `request_id` con `RecentRequests` (lo stesso tentativo non salva e non recapita due volte); a sé stessi → `invalid_data`; utente inesistente → `not_found`;
+  - amicizia e blocchi si controllano **nella stessa transazione della scrittura**, dopo aver bloccato le righe dei due utenti, in READ COMMITTED (come `friend_service`, P45): un blocco appena salvato da un'altra scheda si vede;
+  - `chat:message` va al destinatario (tutte le schede) e alle **altre** schede di chi scrive; quella che ha scritto lo ha nella risposta;
+  - `chat:history`: al massimo 50 messaggi dal più vecchio al più nuovo, `has_more`, `before_id` per i precedenti; con `before_id` null (apertura della chat) segna come letti i messaggi ricevuti; `chat:read` segna quelli arrivati con la chat aperta;
+  - pagina: "Messaggi precedenti" in cima alla chat quando `has_more`; un messaggio arrivato con la chat aperta si aggiunge e si segna letto, altrimenti si aggiorna il contatore dei non letti; se `chat:send` risponde `blocked` o `not_friends` la scrittura si chiude con il motivo; un messaggio già mostrato (stesso `id`) non si ripete.
+- **Domande nuove**:
+  - **conversazioni con ex amici**: il contratto dice che dopo la fine dell'amicizia o un blocco la conversazione "resta visibile", ma il pannello mostra la chat solo dalla lista degli amici: un ex amico non c'è più, quindi la conversazione si vede solo se era già aperta. Se serve, va aggiunto nel pannello un posto per le conversazioni con chi non è più amico (punto nuovo, di Christian).
+- **Punti delicati**:
+  - il limite di frequenza è in memoria (`chat_service.rate_limit`) e si ricorda l'ultimo messaggio di ogni utente anche tra un test e l'altro: i test che lo provano lo azzerano (`give_back`);
+  - **la suite `frontend` non prepara il database**: i test del browser che lo usano lo trovavano pronto solo perché la suite `sockets` gira prima. `test_chat_vera.py` lo svuota e lo ricrea da sé (come `tests/sockets/conftest.py`), così funziona anche lanciato da solo.
+- **Note per il contratto o per gli altri**:
+  - **tutti**: `cannot_write` in `chat:history` (sopra) va scritto nel contratto 5.4 da chi è di turno, se siete d'accordo;
+  - **Antonio**: P48 è fatto. Ti restano P38 e P39 (aspettano P37 di Christian);
+  - **Christian**: con la chat vera due tuoi test di `tests/frontend/test_pannello_amici.py` non passano più. `test_chat_di_prova_testo_come_testo` prova la "Chat di prova" con i dati finti, che non c'è più; `test_indietro_ed_esc_chiudono` apre la chat con l'amico finto 44, che non esiste nel database dei test, quindi la chat non si apre (il server risponde "Questo utente non esiste."). Il flusso vero è provato da `tests/sockets/test_chat.py` e nel browser da `tests/frontend/test_chat_vera.py` (con utenti veri nel database dei test: puoi usare lo stesso modo per aprire la chat nel test di "indietro" ed Esc). Il file è tuo: decidi tu se riscriverli o toglierli. Nel template resta `data-chat-demo-url`, che il pannello non usa più: si può togliere quando sistemi i test.
+
 ### P47 — Amici online e inviti a partita (28/09/2026)
 
 - **Branch**: feature/p47-inviti

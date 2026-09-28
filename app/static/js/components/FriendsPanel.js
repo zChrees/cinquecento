@@ -18,24 +18,23 @@
  * friends:presence (un amico entra, esce, comincia o finisce una partita) e con
  * friends:changed (richieste, amicizie e blocchi) si rilegge GET /friends/
  * (contratto 5.2: la forma della lista resta una sola).
- * La chat (ChatWindow.js) per ora usa i dati finti di app/static/dev/ in
- * sviluppo e nei test (data-chat-demo-url): quella vera arriva con P48.
+ * La chat (ChatWindow.js) è quella vera (P48, contratto 5.4): chat:history
+ * all'apertura (e "Messaggi precedenti"), chat:send, chat:read, chat:message.
+ * Con un blocco o senza più amicizia si legge ma non si scrive, e la chat lo dice.
  * Si chiude con la X, con Esc, toccando fuori e con "indietro" del browser o del
  * telefono (dalla chat, "indietro" torna alla lista).
  * Tutti i testi degli utenti entrano come testo, mai come HTML.
  */
 
 import { el, icon } from '../utils/dom.js';
-import { on } from '../core/socket.js';
+import { on, send } from '../core/socket.js';
 import { EVENTS } from '../core/events.js';
 import { confirmModal, openModal } from './Modal.js';
-import { ChatWindow } from './ChatWindow.js';
+import { ChatWindow, appendMessage } from './ChatWindow.js';
 
 const PRESENCE_LABEL = { online: 'Online', in_game: 'In partita', offline: 'Offline' };
 const GROUPS = [['online', 'Online'], ['in_game', 'In partita'], ['offline', 'Offline']];
 
-// Nei dati finti della chat (amici_esempio.json) l'utente collegato è il 12 e l'amico il 44
-const DEMO_ME = 12;
 
 // ------------------------------------------------------------
 // Richieste HTTP (contratto 1.2, 1.3, 1.5 e 2.2)
@@ -162,15 +161,12 @@ function group(title, items, { data = {}, empty = '' } = {}) {
 export function initFriendsPanel(button) {
   if (!button?.dataset.friendsUrl) return;
   const baseUrl = button.dataset.friendsUrl.replace(/\/$/, '');
-  const demoChatUrl = button.dataset.chatDemoUrl || null;
   const meId = Number(document.body.dataset.userId);
   const badge = button.querySelector('[data-friends-badge]');
 
   let overview = null;     // ultima risposta di GET /friends/
   let loadSeq = 0;         // solo l'ultima lettura ridisegna
   let loadError = '';
-  let demoChat = null;     // dati finti della chat (promessa)
-  const sentInDemo = new Map();   // messaggi mandati nella chat di prova, per amico
 
   // --- Struttura (una volta sola) ---
   const notice = el('p', { class: 'friends-notice', attrs: { role: 'status', hidden: true }, data: { friendsNotice: '' } });
@@ -401,44 +397,43 @@ export function initFriendsPanel(button) {
     if (dialog.open) renderList();
   }
 
-  // --- Chat (dati finti finché non c'è P48) ---
-  async function demoConversation(friend) {
-    if (!demoChat) {
-      demoChat = fetch(demoChatUrl, { headers: { Accept: 'application/json' } })
-        .then((r) => (r.ok ? r.json() : Promise.reject(new Error('dati finti non disponibili'))))
-        .then((data) => data['chat:history (risposta)']);
-    }
-    const history = await demoChat;
-    // Nei dati finti la conversazione è tra l'utente 12 e l'amico 44: si rigira su chi è collegato adesso
-    const messages = history.messages.map((m) => ({
-      ...m,
-      from_user_id: m.from_user_id === DEMO_ME ? meId : friend.user_id,
-      to_user_id: m.from_user_id === DEMO_ME ? friend.user_id : meId,
-    }));
-    return { messages: [...messages, ...(sentInDemo.get(friend.user_id) ?? [])], canWrite: history.can_write };
+  // --- Chat vera (P48, contratto 5.4) ---
+  const CHAT_CLOSED = {
+    blocked: 'Bloccato: non potete più scrivervi.',
+    not_friends: 'Non siete più amici: puoi leggere la conversazione, ma non scrivere.',
+  };
+
+  function chatError(answer) {
+    const error = new Error(answer.error?.message ?? 'Qualcosa non ha funzionato: riprova.');
+    error.closesChat = answer.error?.code === 'blocked' || answer.error?.code === 'not_friends';
+    return error;
   }
 
   async function openChat(friend) {
-    let conversation = { messages: [], canWrite: false };
-    let chatNotice = 'La chat arriva presto.';
-    if (demoChatUrl) {
-      try {
-        conversation = await demoConversation(friend);
-        chatNotice = 'Chat di prova: i messaggi non si salvano (la chat vera arriva con P48).';
-      } catch {
-        chatNotice = 'Chat non disponibile. Riprova tra poco.';
-      }
+    const answer = await send(EVENTS.CHAT_HISTORY, { user_id: friend.user_id, before_id: null });
+    if (!answer.ok) {
+      setNotice(answer.error.message, 'error');
+      return;
     }
+    const conversation = answer.data;
+    let oldest = conversation.messages[0]?.id ?? null;
     chatView = ChatWindow({
       friend,
       meId,
       messages: conversation.messages,
-      canWrite: conversation.canWrite,
-      notice: chatNotice,
+      canWrite: conversation.can_write,
+      notice: CHAT_CLOSED[conversation.cannot_write] ?? '',
+      hasMore: conversation.has_more,
       onSend: async (text) => {
-        const message = { id: Date.now(), from_user_id: meId, to_user_id: friend.user_id, text, sent_at: new Date().toISOString() };
-        sentInDemo.set(friend.user_id, [...(sentInDemo.get(friend.user_id) ?? []), message]);
-        return message;
+        const reply = await send(EVENTS.CHAT_SEND, { request_id: newRequestId(), user_id: friend.user_id, text });
+        if (!reply.ok) throw chatError(reply);
+        return reply.data.message;
+      },
+      onLoadMore: async () => {
+        const reply = await send(EVENTS.CHAT_HISTORY, { user_id: friend.user_id, before_id: oldest });
+        if (!reply.ok) throw chatError(reply);
+        oldest = reply.data.messages[0]?.id ?? oldest;
+        return reply.data;
       },
       onBack: () => backToList(),
       onClose: () => requestClose(),
@@ -449,13 +444,26 @@ export function initFriendsPanel(button) {
     history.pushState({ friendsPanel: 'chat' }, '');
     const messages = chatView.querySelector('[data-chat-messages]');
     messages.scrollTop = messages.scrollHeight;
-    if (conversation.canWrite) chatView.querySelector('#chat-input').focus();
-    // Aprire la chat segna come letti i messaggi (contratto 5.4); con P48 lo fa il server
+    if (conversation.can_write) chatView.querySelector('#chat-input').focus();
+    // Aprire la chat ha segnato come letti i messaggi ricevuti (lo fa il server): contatore aggiornato
     if (overview && friend.unread > 0) {
       overview.counters.unread_messages = Math.max(0, overview.counters.unread_messages - friend.unread);
       friend.unread = 0;
       renderBadge();
       renderList();
+    }
+  }
+
+  // Messaggio arrivato (o mandato da un'altra scheda): nella chat aperta con quell'amico
+  // si aggiunge e si segna come letto; altrimenti si aggiorna il contatore dei non letti.
+  function onChatMessage({ message } = {}) {
+    if (!message) return;
+    const other = message.from_user_id === meId ? message.to_user_id : message.from_user_id;
+    if (chatView && Number(chatView.dataset.chatWith) === other) {
+      appendMessage(chatView, message, meId);
+      if (message.from_user_id !== meId) send(EVENTS.CHAT_READ, { user_id: other });
+    } else if (message.from_user_id !== meId) {
+      load();
     }
   }
 
@@ -532,4 +540,5 @@ export function initFriendsPanel(button) {
   load();   // contatore sull'icona appena si apre la pagina
   on(EVENTS.FRIENDS_PRESENCE, () => load());   // P47
   on(EVENTS.FRIENDS_CHANGED, () => load());
+  on(EVENTS.CHAT_MESSAGE, onChatMessage);   // P48
 }

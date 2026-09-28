@@ -34,6 +34,11 @@ export const EVENTS = Object.freeze({
   INVITE_CANCEL: 'invite:cancel',
   INVITE_START: 'invite:start',
   INVITE_UPDATE: 'invite:update',
+  // Chat tra amici (5.4)
+  CHAT_HISTORY: 'chat:history',
+  CHAT_SEND: 'chat:send',
+  CHAT_READ: 'chat:read',
+  CHAT_MESSAGE: 'chat:message',
 });
 
 /** Motivo del rifiuto della connessione per chi non ha fatto il login (contratto 1.4). */

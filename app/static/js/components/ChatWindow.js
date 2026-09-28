@@ -3,15 +3,18 @@
  * pannello amici (FriendsPanel.js), che su telefono è a tutto schermo. Stile in
  * css/components/chat.css.
  *
- *   const chat = ChatWindow({ friend, meId, messages, canWrite, notice, onSend, onBack, onClose });
+ *   const chat = ChatWindow({ friend, meId, messages, canWrite, notice, hasMore,
+ *                             onSend, onLoadMore, onBack, onClose });
  *   appendMessage(chat, message, meId);
+ *   disableWriting(chat, 'Bloccato: non potete più scrivervi.');
  *
  * I messaggi hanno la forma del contratto (5.4): { id, from_user_id, to_user_id,
  * text, sent_at }. Il testo entra SEMPRE come testo (textContent), mai come HTML,
- * e si mostra così com'è. La chat vera (chat:history, chat:send, chat:message) la
- * collega P48: qui il componente non parla con il server, chiama onSend(text),
- * che restituisce una promessa (risolta con il messaggio salvato, o rifiutata con
- * un Error il cui message si mostra sotto il campo).
+ * e si mostra così com'è. Il componente non parla con il server (lo fa
+ * FriendsPanel.js, P48): chiama onSend(text), che restituisce una promessa
+ * (risolta con il messaggio salvato, o rifiutata con un Error il cui message si
+ * mostra sotto il campo; se l'Error ha `closesChat`, la scrittura si chiude), e
+ * onLoadMore(), per "Messaggi precedenti" (risolta con { messages, has_more }).
  */
 
 import { el, icon } from '../utils/dom.js';
@@ -38,12 +41,27 @@ function emptyItem() {
   return el('li', { class: 'chat__empty', data: { chatEmpty: '' }, text: 'Nessun messaggio: scrivi tu per primo.' });
 }
 
-/** Aggiunge un messaggio in fondo e scorre fino a lui. */
+/** Aggiunge un messaggio in fondo e scorre fino a lui (una volta sola per id). */
 export function appendMessage(chat, message, meId) {
   const list = chat.querySelector('[data-chat-messages]');
+  if (list.querySelector(`[data-message-id="${CSS.escape(String(message.id))}"]`)) return;
   list.querySelector('[data-chat-empty]')?.remove();
   list.append(messageItem(message, meId));
   list.scrollTop = list.scrollHeight;
+}
+
+/** Chiude la scrittura (amicizia finita o blocco, D24) e dice perché in cima. */
+export function disableWriting(chat, text) {
+  const input = chat.querySelector('#chat-input');
+  input.disabled = true;
+  input.placeholder = 'Non puoi più scrivere a questo utente';
+  chat.querySelector('[data-chat-form] button[type="submit"]').disabled = true;
+  let notice = chat.querySelector('[data-chat-notice]');
+  if (!notice) {
+    notice = el('p', { class: 'chat__notice', data: { chatNotice: '' } });
+    chat.querySelector('[data-chat-messages]').before(notice);
+  }
+  notice.textContent = text;
 }
 
 /**
@@ -52,15 +70,45 @@ export function appendMessage(chat, message, meId) {
  * @param {number} options.meId        id dell'utente collegato
  * @param {Array} options.messages     messaggi, dal più vecchio al più nuovo
  * @param {boolean} options.canWrite   false: si legge ma non si scrive (D24)
- * @param {string} [options.notice]    avviso in cima (per esempio "chat di prova")
+ * @param {string} [options.notice]    avviso in cima (per esempio "Bloccato: …")
+ * @param {boolean} [options.hasMore]  ci sono messaggi più vecchi da caricare
  * @param {Function} options.onSend    (text) => Promise<message>
+ * @param {Function} [options.onLoadMore] () => Promise<{ messages, has_more }> (i più vecchi)
  * @param {Function} options.onBack    torna alla lista degli amici
  * @param {Function} options.onClose   chiude il pannello
  * @returns {HTMLElement}
  */
-export function ChatWindow({ friend, meId, messages, canWrite, notice = '', onSend, onBack, onClose }) {
+export function ChatWindow({
+  friend, meId, messages, canWrite, notice = '', hasMore = false, onSend, onLoadMore, onBack, onClose,
+}) {
   const list = el('ol', { class: 'chat__messages', attrs: { 'aria-live': 'polite' }, data: { chatMessages: '' } },
     messages.length ? messages.map((m) => messageItem(m, meId)) : [emptyItem()]);
+
+  // "Messaggi precedenti" (contratto 5.4: before_id = il più vecchio già caricato)
+  const more = el('li', { class: 'chat__empty', attrs: { hidden: !hasMore } }, [
+    el('button', {
+      class: 'btn btn--ghost btn--small', text: 'Messaggi precedenti', attrs: { type: 'button' },
+      data: { chatMore: '' }, on: { click: () => loadMore() },
+    }),
+  ]);
+  list.prepend(more);
+
+  async function loadMore() {
+    const button = more.querySelector('button');
+    if (button.disabled || !onLoadMore) return;
+    button.disabled = true;
+    try {
+      const older = await onLoadMore();
+      const height = list.scrollHeight;
+      more.after(...older.messages.map((m) => messageItem(m, meId)));
+      list.scrollTop += list.scrollHeight - height;   // resta sul messaggio che si stava leggendo
+      more.hidden = !older.has_more;
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      button.disabled = false;
+    }
+  }
 
   const input = el('input', {
     class: 'input',
@@ -111,9 +159,15 @@ export function ChatWindow({ friend, meId, messages, canWrite, notice = '', onSe
       appendMessage(chat, message, meId);
     } catch (err) {
       showError(err.message);
+      if (err.closesChat) {
+        disableWriting(chat, err.message);
+        return;
+      }
     } finally {
-      send.disabled = false;
-      input.focus();
+      if (!input.disabled) {
+        send.disabled = false;
+        input.focus();
+      }
     }
   });
 
