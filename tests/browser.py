@@ -78,6 +78,18 @@ def find_browser():
     pytest.skip("Chrome o Edge non trovati: controlli nel browser saltati")
 
 
+def read_devtools_port(port_file):
+    """La porta scritta da Chrome in DevToolsActivePort (prima riga), o None se non è ancora
+    pronta: il file non c'è, non è completo (Chrome scrive la porta e poi una seconda riga),
+    o Chrome lo sta scrivendo (su Windows è bloccato e leggerlo dà PermissionError: prima
+    questo faceva fallire a caso i test nel browser)."""
+    try:
+        lines = port_file.read_text().splitlines()
+    except (FileNotFoundError, PermissionError):
+        return None
+    return lines[0].strip() if len(lines) >= 2 and lines[0].strip() else None
+
+
 def wait(condition, timeout, what):
     """Aspetta che condition() sia vera, controllando spesso; fallisce dopo timeout secondi."""
     end = time.monotonic() + timeout
@@ -129,8 +141,7 @@ class Browser:
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         )
         port_file = Path(profile) / "DevToolsActivePort"
-        wait(lambda: port_file.is_file() and port_file.read_text().strip(), 30, "avvio del browser")
-        port = port_file.read_text().splitlines()[0]
+        port = wait(lambda: read_devtools_port(port_file), 30, "avvio del browser")
         targets = wait(lambda: self._pages(port), 15, "pagina del browser")
         self.ws = websocket.create_connection(targets[0]["webSocketDebuggerUrl"], timeout=30,
                                               suppress_origin=True)
