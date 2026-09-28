@@ -355,7 +355,9 @@ def test_partita_veloce_apre_e_annulla_la_coda(logged_in, server):
       return {mode: o.dataset.mode, target: o.dataset.targetScore, text: o.textContent,
               seconds: o.querySelector('[data-queue-seconds]').textContent}; })()""")
     assert overlay["mode"] == "1v1" and overlay["target"] == "150"
-    assert "Cerco un avversario" in overlay["text"] and "tra 1340 e 1740" in overlay["text"]
+    # Da P28 la Partita Veloce 1v1 usa la coda vera: l'utente di prova non ha rating
+    # (1500), quindi l'intervallo è 1500 ± 100 (D16), non quello dei dati finti
+    assert "Cerco un avversario" in overlay["text"] and "tra 1400 e 1600" in overlay["text"]
     assert re.fullmatch(r"\d+:\d\d", overlay["seconds"])
     # Esc vale come "Annulla"
     logged_in.send("Input.dispatchKeyEvent", type="keyDown", key="Escape", code="Escape", windowsVirtualKeyCode=27)
