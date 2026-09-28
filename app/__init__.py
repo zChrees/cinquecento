@@ -32,7 +32,40 @@ def create_app(config_name=None):
     register_error_handlers(app)
     _register_blueprints(app)
     register_handlers(socketio)
+    app.after_request(_security_headers)
     return app
+
+
+# Intestazioni di sicurezza su ogni risposta (P32). La CSP dice al browser da dove può
+# caricare le risorse: script e connessioni (anche il websocket) solo da questo sito,
+# stili anche da Google Fonts, font da fonts.gstatic.com (le sole risorse esterne,
+# caricate da base.html), nessuna cornice. Nei template non ci sono script né stili
+# scritti dentro la pagina; gli stili che il JS imposta con element.style sono ammessi.
+CSP_DIRECTIVES = (
+    "default-src 'self'",
+    "script-src 'self'",
+    "style-src 'self' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com",
+    "img-src 'self' data:",
+    "connect-src 'self'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+)
+CONTENT_SECURITY_POLICY = "; ".join(CSP_DIRECTIVES)
+SECURITY_HEADERS = {
+    "Content-Security-Policy": CONTENT_SECURITY_POLICY,
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "same-origin",
+}
+
+
+def _security_headers(response):
+    for name, value in SECURITY_HEADERS.items():
+        response.headers.setdefault(name, value)
+    return response
 
 
 def _register_blueprints(app):

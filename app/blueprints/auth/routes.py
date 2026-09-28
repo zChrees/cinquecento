@@ -11,6 +11,7 @@ from flask_login import current_user, login_user, logout_user
 from app.blueprints.auth import bp
 from app.blueprints.auth.forms import LoginForm, RegisterForm
 from app.extensions import login_manager
+from app.realtime.presence import disconnect_user
 from app.services import auth_service
 from app.services.auth_service import AuthError
 
@@ -53,6 +54,8 @@ def register():
 
 @bp.post("/logout")
 def logout():
+    if current_user.is_authenticated:
+        disconnect_user(current_user.id)  # P32: anche le altre schede smettono di agire come lui
     logout_user()
     return redirect(url_for("main.index"))
 

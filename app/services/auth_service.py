@@ -26,6 +26,9 @@ from sqlalchemy.exc import IntegrityError
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from app.extensions import db
+from app.realtime.invites import invites
+from app.realtime.matchmaking import matchmaker
+from app.realtime.presence import disconnect_user
 from app.realtime.room_manager import find_room_of_user
 from app.repositories import user_repo
 from app.services import avatars
@@ -173,6 +176,11 @@ def delete_account(user, password):
     if find_room_of_user(user_id) is not None:
         raise AuthError(DELETE_IN_GAME)
 
+    # P32: prima di cancellare, quando l'utente è ancora riconosciuto, si chiudono le sue
+    # schede collegate; poi esce dalla coda e i suoi inviti si annullano (anche senza schede)
+    disconnect_user(user_id)
+    matchmaker.leave(user_id)
+    invites.cancel_all_of(user_id)
     user_repo.delete(user)
     db.session.commit()
     limiter.reset(username)

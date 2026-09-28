@@ -12,6 +12,8 @@ Un solo processo (DECISIONI.md): basta un dizionario sotto un lock.
 
 import threading
 
+from app.extensions import socketio
+
 
 class Presence:
     def __init__(self):
@@ -50,5 +52,22 @@ class Presence:
         with self._lock:
             return len(self._tabs)
 
+    def tabs_of(self, user_id):
+        with self._lock:
+            return list(self._tabs.get(user_id, ()))
+
 
 presence = Presence()
+
+
+def disconnect_user(user_id):
+    """Scollega tutte le schede di quell'utente (P32: "Esci" e cancellazione dell'account).
+
+    Ogni scollegamento passa da connection_events.on_disconnect, come quando si chiude
+    una scheda: con l'ultima l'utente esce dalla coda e i suoi inviti si annullano, e al
+    tavolo parte il tempo per rientrare. Va chiamata quando l'utente ha ancora il login:
+    on_disconnect fa la pulizia solo per un utente riconosciuto. Il client Socket.IO non
+    si ricollega da solo dopo uno scollegamento deciso dal server.
+    """
+    for sid in presence.tabs_of(user_id):
+        socketio.server.disconnect(sid, namespace="/")

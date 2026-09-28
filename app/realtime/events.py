@@ -9,6 +9,12 @@ Gli errori vanno solo a chi ha mandato la richiesta: sono la risposta, mai un ev
 
 import functools
 import logging
+import math
+import threading
+import time
+
+from flask import current_app, request
+from flask_login import current_user
 
 log = logging.getLogger(__name__)
 
@@ -66,11 +72,53 @@ def error(code, message=None, **extra):
     return {"ok": False, "error": {"code": code, "message": message or ERRORS[code], **extra}}
 
 
+class EventLimiter:
+    """Limite di frequenza per scheda (P32): un secchio da `burst` gettoni che si riempie
+    di `rate` gettoni al secondo; ogni evento ne usa uno. Un solo processo: in memoria."""
+
+    PRUNE_EVERY = 256  # ogni tanto si dimenticano le schede ferme da più di un minuto
+    IDLE_SECONDS = 60
+
+    def __init__(self, clock=time.monotonic):
+        self._clock = clock
+        self._lock = threading.Lock()
+        self._buckets = {}  # sid -> (gettoni, ultimo aggiornamento)
+        self._hits = 0
+
+    def hit(self, sid, burst, rate):
+        """None se l'evento può passare, altrimenti i secondi interi da aspettare."""
+        with self._lock:
+            now = self._clock()
+            self._hits += 1
+            if self._hits % self.PRUNE_EVERY == 0:
+                self._buckets = {k: v for k, v in self._buckets.items() if now - v[1] < self.IDLE_SECONDS}
+            tokens, last = self._buckets.get(sid, (burst, now))
+            tokens = min(burst, tokens + (now - last) * rate)
+            if tokens < 1:
+                self._buckets[sid] = (tokens, now)
+                return max(1, math.ceil((1 - tokens) / rate))
+            self._buckets[sid] = (tokens - 1, now)
+            return None
+
+
+limiter = EventLimiter()
+
+
 def handler(fn):
-    """Decoratore per i gestori degli eventi: restituisce sempre una risposta del contratto."""
+    """Decoratore per i gestori degli eventi: restituisce sempre una risposta del contratto.
+
+    Prima del gestore (P32): l'utente deve avere ancora il login (un account cancellato
+    risulta anonimo) e la scheda non deve superare il limite di frequenza.
+    """
 
     @functools.wraps(fn)
     def wrapper(*args, **kwargs):
+        if not current_user.is_authenticated:
+            return error("not_logged_in")
+        config = current_app.config
+        wait = limiter.hit(request.sid, config["EVENT_BURST"], config["EVENT_RATE_PER_SECOND"])
+        if wait is not None:
+            return error("too_fast", retry_after=wait)
         try:
             return ok(fn(*args, **kwargs))
         except EventError as exc:

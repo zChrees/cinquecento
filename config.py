@@ -82,6 +82,12 @@ class BaseConfig:
     CHAT_MIN_INTERVAL_SECONDS = 1
     INVITE_SECONDS = 60
 
+    # Eventi in tempo reale (P32): per ogni scheda fino a EVENT_BURST eventi di fila, poi
+    # EVENT_RATE_PER_SECOND al secondo; oltre, too_fast con retry_after. Una persona
+    # che gioca non ci arriva mai.
+    EVENT_BURST = 20
+    EVENT_RATE_PER_SECOND = 10
+
     # Log e backup (conservazione provvisoria, D10)
     LOG_DIR = BASE_DIR / "logs"
     BACKUP_DIR = BASE_DIR / "backups"

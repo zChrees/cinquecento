@@ -5,6 +5,7 @@ Si importano con `from tests.e2e.helpers import ...` (come tests/browser.py).
 
 import re
 import threading
+import time
 import uuid
 
 import requests
@@ -55,6 +56,16 @@ class Tab:
         if data is None:
             return self.client.call(event, timeout=WAIT)
         return self.client.call(event, data, timeout=WAIT)
+
+    def call_patiently(self, event, data):
+        """Come call, ma se il server risponde too_fast (limite degli eventi, P32) aspetta
+        i secondi che dice e riprova: così gioca chi clicca più veloce di una persona."""
+        for _ in range(10):
+            answer = self.call(event, data)
+            if answer.get("ok") or answer["error"]["code"] != "too_fast":
+                return answer
+            time.sleep(answer["error"]["retry_after"])  # il server dice quanto aspettare
+        raise AssertionError(f"{event}: sempre too_fast")
 
     def received(self, event):
         with self._cond:
@@ -203,11 +214,11 @@ def play_to_the_end(game_id, seats, version):
         view = views[turn]
         assert all(v["legal"] == {"play": [], "sing": []} for i, v in enumerate(views) if i != turn)
         if view["legal"]["sing"]:
-            answer = seats[turn].call("game:sing", {"game_id": game_id, "version": version,
-                                                   "suit": view["legal"]["sing"][0]})
+            answer = seats[turn].call_patiently("game:sing", {"game_id": game_id, "version": version,
+                                                             "suit": view["legal"]["sing"][0]})
         else:
-            answer = seats[turn].call("game:play_card", {"game_id": game_id, "version": version,
-                                                        "card": view["legal"]["play"][0]})
+            answer = seats[turn].call_patiently("game:play_card", {"game_id": game_id, "version": version,
+                                                                  "card": view["legal"]["play"][0]})
         assert answer == {"ok": True}, answer
         version += 1
     raise AssertionError("la partita non finisce")

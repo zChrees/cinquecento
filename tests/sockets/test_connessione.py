@@ -5,9 +5,12 @@
 - Le risposte hanno sempre la forma del contratto (1.2), anche con un errore imprevisto.
 """
 
+from types import SimpleNamespace
+
 import pytest
 import socketio as sio_client
 
+from app.realtime import events
 from app.realtime.events import EventError, error, handler, ok
 
 WAIT = 5
@@ -77,7 +80,11 @@ def test_errore_imprevisto_diventa_server_error(connect):
 # --- Forma delle risposte (senza server) ---
 
 
-def test_forma_delle_risposte():
+def test_forma_delle_risposte(monkeypatch):
+    # Fuori da una connessione: il decoratore (P32) legge utente, scheda e limite da qui
+    monkeypatch.setattr(events, "current_user", SimpleNamespace(is_authenticated=True))
+    monkeypatch.setattr(events, "request", SimpleNamespace(sid="scheda-di-prova"))
+    monkeypatch.setattr(events, "current_app", SimpleNamespace(config={"EVENT_BURST": 5, "EVENT_RATE_PER_SECOND": 1}))
     assert ok() == {"ok": True}
     assert ok({"a": 1}) == {"ok": True, "data": {"a": 1}}
     assert error("too_fast", retry_after=2.5) == {

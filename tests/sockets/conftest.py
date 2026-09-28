@@ -154,6 +154,9 @@ def _register_test_events(probe):
 @pytest.fixture(scope="session")
 def server():
     app = create_app("testing")
+    # I test giocano partite intere alla massima velocità: senza questo li fermerebbe il
+    # limite di frequenza degli eventi (P32), che test_validazione_eventi.py prova a parte
+    app.config["EVENT_BURST"] = app.config["EVENT_RATE_PER_SECOND"] = 1_000_000
     user_ids = _reset_database(app)
     probe = LockProbe()
     _register_test_events(probe)
