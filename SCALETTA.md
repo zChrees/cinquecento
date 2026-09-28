@@ -35,7 +35,7 @@ Una web-app per giocare online a **Cinquecento**, variante siciliana, con le car
 - [x] P2 (Fase 1): `.gitignore` completo — `.gitignore` — *26/09: aggiunti segreti (`.env`, `.env.*` tranne `.env.example`), `PRODUZIONE`, `backups/`, `logs/`, `*.sql.gz`, `*.dump`, file di sistema ed editor; provato con file finti*
 - [x] P3 (Fase 1): riga "Stato" e regola di consegna — `CLAUDE.md` — *28/09: spuntato; la riga "Stato" e i passi di "Consegna" esistono dal primo CLAUDE.md, adattati il 27/09 al lavoro in tre (D22)*
 - [x] P4 (Fase 1): scheletro del progetto con tutti i file "segnaposto" — `run.py`, `config.py`, `app/`, `requirements*.txt`, `.env.example` — *27/09: 36 file dell'elenco, 39 librerie fissate con `==`, 31 test PASS (`python -m pytest tests/api/test_avvio.py`, finché P6 non aggiunge `conftest.py`), `ruff check .` pulito (D4); il controllo di MySQL sta in `run.py`, così i test di P4 non richiedono MySQL*
-- [ ] P5 (Fase 1): database e prima migrazione — `scripts/setup_db.sql`, `migrations/001_init.sql`, `scripts/migrate.py`, `app/models/`
+- [x] P5 (Fase 1): database e prima migrazione — `scripts/setup_db.sql`, `migrations/001_init.sql`, `scripts/migrate.py`, `app/models/` — *28/09 (Christian al posto di Antonio, commit `976dec5`): 55 test nuovi, 658 PASS in tutto; le colonne `VIRTUAL` delle amicizie funzionano, quindi "una riga per coppia" resta nel database e non passa a P45; le 4 colonne a elenco senza valore predefinito sono testo esatto con un `CHECK` invece di `ENUM` (modifica a D38); la password dell'utente MySQL `cinquecento` la genera MySQL; `docs/proposta-tabelle.sql` cancellata. Ognuno, dopo il pull, lancia una volta `setup_db.sql` e `migrate.py` (`README.md`, Installazione)*
 - [ ] P6 (Fase 1): runner dei test — `tests/esegui_tutti.py`, `tests/conftest.py`
 - [ ] P7 (Fase 1): log ed errori di base — `app/logging_config.py`, `app/errors.py`, `app/templates/errors/`
 - [x] P8 (Fase 1): contratto tra server e pagine — `docs/CONTRATTO-SOCKET.md`, `app/static/dev/*.json` — *28/09: contratto approvato dai tre (eventi socket, richieste HTTP, vista di gioco, dati di home, statistiche e amici) e 5 file di esempio, controllati con uno script; in `dev` dopo un rebase su P10 e P11; 106 test PASS*
@@ -47,8 +47,8 @@ Una web-app per giocare online a **Cinquecento**, variante siciliana, con le car
 - [x] P11 (Fase 2, A): chi vince la presa — `app/game/engine/trick.py` — *28/09 (Giuseppe, commit `121aea7`): 30 test nuovi (tutte le coppie di carte e 2.000 prese da 4), 106 PASS in tutto; `trick_winner` restituisce la posizione nella presa, P13 la trasforma nel giocatore*
 - [x] P12 (Fase 2, A): cantare 40 e 20 — `app/game/engine/singing.py` — *28/09 (Giuseppe, commit `b5d7123`): 23 test nuovi, 129 PASS in tutto; fuori elenco, con l'ok di Giuseppe, `errors.py` (suo, P10) con `NotYourTurnError`, così P24 risponde `not_your_turn` come chiede il contratto*
 - [x] P13 (Fase 2, A): svolgimento di una mano, 1v1 e 2v2 — `app/game/engine/state.py`, `actions.py`, `game.py` — *28/09 (Giuseppe, commit `448da13`): 283 test nuovi (mani intere con 100 semi fissi per modalità), 412 PASS in tutto; `legal_actions(stato, posto)` in `game.py`; `new_hand` riceve mazzo mescolato e chi comincia (mescolare e D11 spettano a P14)*
-- [ ] P14 (Fase 2, A): partita fino al punteggio scelto (150, 300, 500), pareggio, mazziere — `app/game/engine/game.py`, `state.py`
-- [ ] P15 (Fase 2, A): vista per giocatore, mosse legali, mossa automatica — `app/game/engine/views.py`, `auto_move.py`
+- [x] P14 (Fase 2, A): partita fino al punteggio scelto (150, 300, 500), pareggio, mazziere — `app/game/engine/game.py`, `state.py` — *28/09 (Giuseppe, commit `2092904`): 108 test nuovi, 533 PASS in tutto; il mazziere non si salva, si ricava da chi comincia; a fine mano la mano dopo parte subito (la pausa del riepilogo spetta alla stanza, P24); l'abbandono resta a P24/P25*
+- [x] P15 (Fase 2, A): vista per giocatore, mosse legali, mossa automatica — `app/game/engine/views.py`, `auto_move.py` — *28/09 (Giuseppe, commit `6f7517e`): 70 test nuovi, 603 PASS in tutto; `player_view(partita, posto)` dà i campi di gioco del contratto (3.3), i campi della stanza (elencati in `ROOM_FIELDS`, `ROOM_PLAYER_FIELDS`, `ROOM_TURN_FIELDS`) li aggiunge P24/P25; la conversione da `{"suit", "rank"}` a carta per le azioni della pagina la fa P24*
 - [ ] P16 (Fase 2, B): registrazione, login, logout — `app/blueprints/auth/`, `auth_service.py`, `user_repo.py`, `app/templates/auth/`
 - [ ] P17 (Fase 2, B): impostazioni: avatar e cancellazione dell'account — `app/blueprints/profile/`, `app/templates/profile/`, `app/services/avatars.py`
 - [ ] P18 (Fase 2, B): backup e ripristino — `scripts/backup.py`, `scripts/ripristina.py`
@@ -177,7 +177,7 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 - *Fatto quando*: `python run.py` mostra la pagina "ok" su `http://localhost:5000` [T]; con una versione di Python diversa dalla 3.14 l'avvio si rifiuta; `pytest tests/api/test_avvio.py` passa.
 - *Dipende da*: P1, P2.
 
-**P5 — Database** · medio · decisione: **D6, D7, D23, D24, D26, D38 prese il 27/09/2026** (le tabelle approvate sono in `docs/proposta-tabelle.sql`)
+**P5 — Database** · medio · decisione: **D6, D7, D23, D24, D26, D38 prese il 27/09/2026** (le tabelle approvate erano in `docs/proposta-tabelle.sql`; dal 28/09 sono in `migrations/001_init.sql`) — **fatto il 28/09/2026**
 - *Cosa e perché*: `setup_db.sql` crea i database `cinquecento_dev` e `cinquecento_test` con un utente MySQL dedicato, in `utf8mb4`/InnoDB. `001_init.sql` crea **tutte** le tabelle della prima versione, con i nomi in italiano (D38): `utenti`, `rating`, `partite`, `giocatori_partita`, `mosse_partita`, `amicizie`, `blocchi`, `messaggi`, `versione_schema`. **Parte da `docs/proposta-tabelle.sql`** (approvata il 27/09/2026, aggiornata il 28/09 con il salvataggio a fine partita) e la cancella. Il comportamento alla cancellazione di un utente (D6) sta nelle chiavi esterne del file. `migrate.py` applica le migrazioni mancanti. I modelli Python rispecchiano le tabelle.
 - *File* — crea: `scripts/setup_db.sql`, `migrations/001_init.sql`, `scripts/migrate.py`, `app/models/user.py`, `app/models/rating.py`, `app/models/match.py`, `app/models/friendship.py`, `app/models/chat_message.py`, `tests/db/test_migrate.py`. Certezza: **sicuro**. Il modello dei blocchi (D23) va in `app/models/friendship.py`.
 - *Nota*: nella prima versione nessun altro punto aggiunge migrazioni. Se ne serve una, è un punto nuovo da concordare.
@@ -623,10 +623,10 @@ Due studenti che lavorano in parallelo non toccano mai gli stessi file. Vale anc
 
 **Christian (Studente 3) — interfaccia e documenti:** P3, P52, P8, P9, P19, P40, P20, P21, P22, P46, P56, P30, P36, P37 (più P33, P34, P35, P42, P43 e P53 in 9.2)
 
-**Da dove si parte** (aggiornato il 28/09/2026, con P1, P2, P3, P4 e P52 già fatti) [L]:
-- **Giuseppe**: P10 → P11 → P12 → P13 subito; P14 (D11 decisa); **P6 appena P5 è in `dev`** (è piccolo e sblocca Antonio: conviene interrompere il motore); P15 quando P8 è in `dev` (D12 decisa).
-- **Antonio**: **P5 subito**, partendo dalle tabelle approvate in `docs/proposta-tabelle.sql` (D38): per prima cosa verifica su MySQL il punto incerto delle amicizie (commento nel file); P7 quando P6 e P19 sono in `dev`; P18 quando P5 e P6 sono in `dev`.
-- **Christian**: P8 (il contratto si approva in tre prima del merge: lo usano P15, P21, P22, P23 e P46), poi P19, poi P40.
+**Da dove si parte** (aggiornato il 28/09/2026 sera: in `dev` ci sono P1–P5, P8, P10–P15, P19 e P52) [L]:
+- **Giuseppe**: **P6 subito** (P5 è in `dev`; sblocca P7 e P18 di Antonio); poi la correzione di `app/checks.py` (vedi `christian.md`, P5), se la vuole fare lui. Dopo P6 i suoi punti aspettano altri: P23 attende P16 (Antonio), P24 attende P21 (Christian) e P23.
+- **Antonio**: P5 l'ha fatto Christian. **P7 e P18 appena P6 è in `dev`**; poi P16 (attende P5, P7, P19), che sblocca P23 di Giuseppe.
+- **Christian**: **P40**, poi P20, poi P21 (serve a P24 di Giuseppe) e P22.
 
 | Punto | Chi | File condivisi con punti di altri studenti | Attende (già in `dev`) |
 |---|---|---|---|

@@ -76,7 +76,6 @@ cinquecento/
 │
 ├── docs/
 │   ├── REGOLE-GIOCO.md        regolamento del gioco (riferimento unico)
-│   ├── proposta-tabelle.sql   tabelle del database approvate (D38): la usa P5, poi si cancella
 │   ├── CONTRATTO-SOCKET.md    eventi scambiati tra pagine e server, formato della "vista"
 │   ├── DEMO.md                lista di controllo per il giorno della demo
 │   ├── prototipo/             prototipo approvato della home (P52), riferimento grafico
@@ -219,10 +218,18 @@ La tabella "file → punto della scaletta" (chi crea e chi modifica ogni file) �
    .venv\Scripts\activate
    pip install -r requirements.txt -r requirements-dev.txt
    ```
-5. **Configura**: copia `.env.example` in `.env` e compila i valori (password del database, chiave segreta). Il file `.env` non va mai caricato su git.
-6. **Prepara il database** (una volta sola), poi applica le tabelle:
+5. **Configura**: copia `.env.example` in `.env` e compila i valori (chiave segreta; la password del database arriva al passo 6). Il file `.env` non va mai caricato su git.
+6. **Prepara il database** (una volta sola). In PowerShell, dalla cartella del progetto (chiede la password di `root`):
    ```
-   mysql -u root -p < scripts/setup_db.sql
+   & "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p --table -e "source scripts/setup_db.sql"
+   ```
+   Crea i database `cinquecento_dev` e `cinquecento_test` e l'utente MySQL `cinquecento`, e mostra **una sola volta** la sua password nella colonna `generated password`. Copiala nel `.env`, tra apici singoli:
+   ```
+   DB_USER=cinquecento
+   DB_PASSWORD='la-password-mostrata'
+   ```
+   Poi crea le tabelle (rilanciato, non fa niente):
+   ```
    python scripts/migrate.py
    ```
 7. **Avvia**: `python run.py`, poi apri `http://localhost:5000`.
