@@ -11,7 +11,9 @@
   finita (per punteggio o per abbandono) le mosse si rifiutano. Il timer del turno e
   il rientro entro RECONNECT_SECONDS stanno in room.py; lo scollegamento arriva da
   connection_events.py.
-Frasi del tavolo: P55.
+- P55: game:send_phrase manda una frase pronta (D24) a tutti al tavolo (game:phrase);
+  l'elenco arriva a chi entra con game:phrases. Si possono mandare anche a partita
+  finita ("Bella partita!"). Codice e testo non vanno mai nel log.
 """
 
 from flask import request
@@ -21,6 +23,7 @@ from flask_socketio import join_room, leave_room
 from app.extensions import socketio
 from app.game.engine.cards import Card, Rank, Suit
 from app.game.engine.errors import InvalidMoveError, NotYourTurnError
+from app.realtime import table_phrases
 from app.realtime.events import EventError, handler
 from app.realtime.room_manager import rooms
 
@@ -108,6 +111,7 @@ def on_join(data=None):
         if replaced is not None:
             socketio.emit("game:replaced", {"game_id": room.id}, to=replaced)
             leave_room(room.channel, sid=replaced)
+        socketio.emit("game:phrases", table_phrases.phrases_event(), to=sid)  # prima della vista (contratto 3.2)
         room.broadcast_states()
 
     room.run(join)
@@ -159,8 +163,25 @@ def on_leave(data=None):
     room.run(leave)
 
 
+@handler
+def on_send_phrase(data=None):
+    """Frase pronta (D24): a tutti i giocatori del tavolo, al massimo una ogni 3 secondi. Non si salva."""
+    room, seat = _table(data)
+    code = table_phrases.check_code(data.get("code"))
+    sid = request.sid
+
+    def send():
+        if not room.is_table_connection(seat, sid):
+            raise EventError("not_allowed", "Siediti al tavolo per mandare una frase.")
+        table_phrases.take_turn(room, seat)
+        socketio.emit("game:phrase", {"seat": seat, "code": code}, to=room.channel)
+
+    room.run(send)
+
+
 def register(socketio):
     socketio.on_event("game:join", on_join)
     socketio.on_event("game:play_card", on_play_card)
     socketio.on_event("game:sing", on_sing)
     socketio.on_event("game:leave", on_leave)
+    socketio.on_event("game:send_phrase", on_send_phrase)

@@ -31,20 +31,26 @@ EXAMPLE = json.loads((BASE_DIR / "app" / "static" / "dev" / "vista_1v1.json").re
 
 @pytest.fixture(scope="module")
 def users(server):
-    """Gli utenti di conftest.py più "Quarto", registrato come farebbe il browser (serve al 2v2)."""
-    session = requests.Session()
-    page = session.get(f"{server['url']}/auth/register", timeout=WAIT).text
-    token = re.search(r'name="csrf_token" type="hidden" value="([^"]+)"', page)[1]
-    response = session.post(f"{server['url']}/auth/register", data={
-        "csrf_token": token, "username": "Quarto", "email": "quarto@esempio.it",
-        "password": PASSWORD, "confirm": PASSWORD,
-    }, allow_redirects=False, timeout=WAIT)
-    assert response.status_code == 302
+    """Gli utenti di conftest.py più "Quarto", registrato come farebbe il browser (serve al 2v2).
+
+    Solo se non c'è già: anche altri file della suite (P25, P55) lo registrano.
+    """
     # Niente create_app qui: una seconda app nello stesso processo ricollegherebbe socketio altrove.
     engine = sa.create_engine(load_config("testing").SQLALCHEMY_DATABASE_URI)
     try:
         with engine.connect() as conn:
             quarto = conn.execute(sa.text("SELECT id FROM utenti WHERE nome_utente = 'Quarto'")).scalar()
+        if quarto is None:
+            session = requests.Session()
+            page = session.get(f"{server['url']}/auth/register", timeout=WAIT).text
+            token = re.search(r'name="csrf_token" type="hidden" value="([^"]+)"', page)[1]
+            response = session.post(f"{server['url']}/auth/register", data={
+                "csrf_token": token, "username": "Quarto", "email": "quarto@esempio.it",
+                "password": PASSWORD, "confirm": PASSWORD,
+            }, allow_redirects=False, timeout=WAIT)
+            assert response.status_code == 302
+            with engine.connect() as conn:
+                quarto = conn.execute(sa.text("SELECT id FROM utenti WHERE nome_utente = 'Quarto'")).scalar()
     finally:
         engine.dispose()
     return {**server["user_ids"], "Quarto": quarto}

@@ -52,6 +52,7 @@ class BaseConfig:
     TARGET_SCORES = (150, 300, 500)
     TURN_SECONDS = 30
     RECONNECT_SECONDS = 60
+    TABLE_PHRASE_MIN_INTERVAL_SECONDS = 3  # frasi del tavolo: una ogni 3 secondi per giocatore (D24, P55)
 
     # Matchmaking (deciso, D16): intervallo di rating che si allarga col tempo
     MATCH_RANGE_START = 100

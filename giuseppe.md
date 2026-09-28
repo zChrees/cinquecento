@@ -22,6 +22,24 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### P55 — Frasi del tavolo in tempo reale (28/09/2026)
+
+- **Branch**: feature/p55-frasi
+- **File**: creati `app/realtime/table_phrases.py`, `tests/sockets/test_frasi_tavolo.py`; modificati `app/sockets/game_events.py`, `config.py` (una chiave, `TABLE_PHRASE_MIN_INTERVAL_SECONDS = 3`). **Fuori elenco, con l'ok di Giuseppe**: `app/realtime/room.py` (un solo campo, `phrase_times`, e una riga nella descrizione) e `tests/sockets/test_partita.py` (P24: il fixture `users` registra "Quarto" solo se non c'è, come quello di P25; senza, con il file nuovo che gira prima, 28 test davano errore)
+- **Controlli**: 1054 PASS in tutto, in 7 suite (23 nuovi, nella suite `sockets`), `ruff check .` pulito
+- **Decisioni prese**: nessuna sul gioco. Scelte tecniche:
+  - elenco delle 19 frasi di D24 in `table_phrases.PHRASES` (codice → testo, nell'ordine di D24), unico: la pagina lo riceve con `game:phrases`;
+  - `game:join` manda `game:phrases` a chi entra **prima** di `game:state` (contratto 3.2), a ogni ingresso;
+  - `game:send_phrase` `{game_id, code}`: sotto il lock della stanza; solo dalla scheda al tavolo (D14), altrimenti `not_allowed`; codice fuori elenco `invalid_data` "Frase non valida."; poi `game:phrase` `{seat, code}` a tutti al tavolo, anche a chi l'ha mandata e agli avversari nel 2v2;
+  - limite per giocatore: `too_fast` con `retry_after` in **secondi interi arrotondati per eccesso** (3 subito dopo una frase); un rifiuto non conta per il limite;
+  - **le frasi si possono mandare anche a partita finita** ("Bella partita!"), finché la stanza esiste;
+  - l'ora dell'ultima frase sta nella stanza (`room.phrase_times`, `time.monotonic`), mai il testo; codice e testo non vanno nel log né nel database (c'è un test).
+- **Domande nuove**: nessuna
+- **Punti delicati**:
+  - il limite si legge da `table_phrases.MIN_INTERVAL_SECONDS` al momento della frase: i test lo riducono con `monkeypatch`, senza cambiare `config.py`;
+  - più file della suite `sockets` registrano l'utente "Quarto": ogni fixture deve registrarlo **solo se non c'è**.
+- **Note per il contratto o per gli altri**: nessun cambiamento al contratto. **Christian** (P56): l'elenco arriva con `game:phrases` a ogni `game:join` (anche al rientro); `game:phrase` porta `seat` e `code`, il testo si prende dall'elenco; `retry_after` è in secondi interi. Il pulsante resta disattivato 3 secondi dopo l'invio; se arriva comunque `too_fast`, `retry_after` dice quanto aspettare
+
 ### Correzione — Test instabile di P25 ed eventi di gioco senza dati (28/09/2026)
 
 - **Branch**: fix/p25-timer-e-dati

@@ -31,6 +31,9 @@ si ricorda l'applicazione Flask quando la partita parte. Senza applicazione (per
 esempio una stanza creata dai test fuori da Flask) non si salva e lo si scrive nel
 log. Se il salvataggio fallisce i giocatori vedono comunque il risultato; l'errore
 va nel log.
+
+P55: la stanza tiene solo l'ora dell'ultima frase del tavolo di ogni posto
+(phrase_times, per il limite di table_phrases.py); le frasi non si salvano.
 """
 
 import logging
@@ -113,6 +116,9 @@ class Room:
         self._started_at = None
         self._moves = []  # MoveRecord, nell'ordine della partita
         self._saved = False
+
+        # Frasi del tavolo (P55): posto -> ora (time.monotonic) dell'ultima frase; mai il testo
+        self.phrase_times = {}
 
     # --- Lock e membri (P23) ---
 
