@@ -22,6 +22,21 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### P58 — Ultima presa della mano nella vista (28/09/2026)
+
+- **Branch**: feature/p58-ultima-presa-mano
+- **File**: modificati `app/game/engine/state.py` (campo `last_trick` in `HandResult`), `game.py` (`hand_result` lo riempie), `views.py` (`last_hand.last_trick`, funzione `_last_trick` usata anche per `last_trick`), `docs/CONTRATTO-SOCKET.md` (3.3, riga di `last_hand`), `app/static/dev/vista_1v1.json` (esempio e `_nota`; `vista_2v2.json` ha `last_hand` null e non cambia), `tests/engine/test_partita.py`, `tests/engine/test_viste.py`. Nessun file fuori elenco
+- **Controlli**: **1243 PASS e 2 FAIL** su 1245, in 7 suite (10 nuovi nella suite `engine`), `ruff check .` pulito. I 2 FAIL sono quelli già noti di `tests/frontend/test_pannello_amici.py` (P48, di Christian)
+- **Decisioni prese**: nessuna nuova (la modifica al contratto era approvata dai tre). Forma: `last_hand.last_trick` = `{"winner_seat", "cards": [{"seat", "card"}]}`, identica a `last_trick`; c'è sempre quando `last_hand` non è null
+- **Domande nuove**: nessuna
+- **Punti delicati**:
+  - `HandResult.last_trick` è obbligatorio: una mano finita ha sempre almeno una presa chiusa, quindi `hand_result` non controlla più se `last_trick` è `None`;
+  - il test "la vista non mostra mai carte nascoste" ora controlla `last_hand` **a parte**: il mazzo si rimescola a ogni mano, quindi una carta dell'ultima presa della mano prima può essere adesso in mano a un altro. Non è una fuga (carta già giocata e vista da tutti), e il test controlla che in `last_hand` ci siano esattamente le carte di quella presa e nient'altro;
+  - test nuovo: in partite intere a caso (5 semi, 1v1 e 2v2) la presa di `last_hand` è quella in corso più la carta che ha chiuso la mano, la vince chi dice `trick_winner` con la briscola di quella mano, e la mano nuova parte con `last_trick` a `null`.
+- **Note per il contratto o per gli altri**:
+  - **Christian**: ora `game.js` può mostrare le carte dell'ultima presa prima del riepilogo: quando `hand_number` sale, le carte sono in `next.last_hand.last_trick` (stessa forma di `last_trick`, quindi `data-last-trick` può riusare lo stesso disegno); a fine partita `last_trick` della mano finita c'è già, ed è uguale a `last_hand.last_trick`. `test_momenti_tavolo.py` costruisce `last_hand` senza `last_trick`: finché la pagina non lo legge non si rompe;
+  - **chi è di turno sui documenti**: spuntare P58.
+
 ### Documenti: registrati P28–P30, P35, P42, P44, P47, P48, P56, P57 e metà di P38 (28/09/2026)
 
 - **Branch**: docs/registra-p28-p57

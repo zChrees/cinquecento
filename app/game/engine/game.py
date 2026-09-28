@@ -165,13 +165,15 @@ def hand_result(state: HandState, rules: RuleSet = MARIANNA) -> HandResult:
     """Punti della mano per squadra: carte prese più canti. L'ultima presa non dà bonus."""
     if not state.finished:
         raise EngineError("La mano non è ancora finita.")
+    # Una mano finita ha sempre almeno una presa chiusa: le mani si vuotano solo giocando
     card_points = [sum(card.points for card in taken) for taken in state.captured]
-    if state.last_trick is not None:
-        card_points[team_of(state.last_trick.winner_seat)] += rules.last_trick_bonus
+    card_points[team_of(state.last_trick.winner_seat)] += rules.last_trick_bonus
     sing_points = [0] * TEAMS
     for done in state.sings:
         sing_points[team_of(done.seat)] += done.points
-    return HandResult(card_points=tuple(card_points), sing_points=tuple(sing_points))
+    return HandResult(
+        card_points=tuple(card_points), sing_points=tuple(sing_points), last_trick=state.last_trick
+    )
 
 
 def new_game(

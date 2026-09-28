@@ -183,7 +183,7 @@ Esempi completi: `vista_1v1.json` e `vista_2v2.json`. La vista contiene **solo q
 | `deck_count` | carte rimaste nel mazzo |
 | `sings` | canti della mano in corso: `{"seat", "suit", "points"}` (40 o 20), in ordine |
 | `scores` | per ogni squadra: `{"team", "total"}`, i punti delle mani **già finite** |
-| `last_hand` | riepilogo dell'ultima mano finita: `hand_number` e, per ogni squadra, `card_points`, `sing_points`, `hand_total`; `null` nella prima mano |
+| `last_hand` | riepilogo dell'ultima mano finita: `hand_number`, per ogni squadra `card_points`, `sing_points`, `hand_total`, e `last_trick`, la presa che ha chiuso la mano, con la stessa forma di `last_trick` (P58: la mano nuova parte con `last_trick` a `null`, quindi la carta che chiude la mano si vede solo qui); `null` nella prima mano |
 | `turn` | `{"seat", "seconds_total", "seconds_left"}`: di chi è il turno e quanto tempo gli resta (30 secondi); `null` a partita finita |
 | `legal` | le tue mosse ammesse adesso: `play` (carte giocabili) e `sing` (semi che puoi cantare); **liste vuote quando non è il tuo turno** |
 | `result` | `null` durante la partita; a partita finita: `reason` (`"score"` o `"abandon"`), `winner_team` (0, 1, oppure `null` per il pareggio), `abandoned_seats` (posti di chi ha abbandonato) e `scores` finali |

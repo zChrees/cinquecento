@@ -1,5 +1,5 @@
 {
-  "_nota": "Vista di Mario (posto 0), 1v1 a 500, terza mano, suo turno. Turi ha cantato 40 a coppe (briscola) e ha aperto la presa. Mario può cantare 20 a spade. Contratto: docs/CONTRATTO-SOCKET.md, 3.3.",
+  "_nota": "Vista di Mario (posto 0), 1v1 a 500, terza mano, suo turno. Turi ha cantato 40 a coppe (briscola) e ha aperto la presa. Mario può cantare 20 a spade. L'ultima presa della mano 2 l'ha vinta Mario con l'Asso di spade (last_hand.last_trick). Contratto: docs/CONTRATTO-SOCKET.md, 3.3.",
   "game_id": "a1b2c3d4",
   "version": 57,
   "mode": "1v1",
@@ -120,7 +120,26 @@
         "sing_points": 0,
         "hand_total": 50
       }
-    ]
+    ],
+    "last_trick": {
+      "winner_seat": 0,
+      "cards": [
+        {
+          "seat": 1,
+          "card": {
+            "suit": "spade",
+            "rank": 7
+          }
+        },
+        {
+          "seat": 0,
+          "card": {
+            "suit": "spade",
+            "rank": 1
+          }
+        }
+      ]
+    }
   },
   "turn": {
     "seat": 0,

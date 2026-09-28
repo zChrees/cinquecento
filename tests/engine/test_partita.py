@@ -14,6 +14,7 @@ from app.game.engine.deck import full_deck
 from app.game.engine.errors import EngineError, InvalidMoveError
 from app.game.engine.game import apply_game, game_legal_actions, new_game, new_hand
 from app.game.engine.rules import MARIANNA
+from app.game.engine.trick import trick_winner
 
 TARGETS = MARIANNA.target_scores
 MODES = (2, 4)
@@ -207,6 +208,39 @@ def test_a_partita_finita_niente_mosse():
         assert legal.play == () and legal.sing == ()
     with pytest.raises(InvalidMoveError, match="La partita è finita."):
         apply_game(game, PlayCardAction(0, full_deck()[0]))
+
+
+# --- Ultima presa della mano (P58) -------------------------------------------------
+
+
+@pytest.mark.parametrize("seed", range(5))
+@pytest.mark.parametrize("players", MODES)
+def test_il_riepilogo_tiene_l_ultima_presa_della_mano(players, seed):
+    """La mano dopo parte con last_trick None: la presa che ha chiuso la mano resta in last_hand."""
+    rng = random.Random(seed)
+    game = new_game(players, 500, rng=rng)
+    closed = 0
+    while not game.finished:
+        before = game
+        move = random_move(game, rng)
+        game = apply_game(game, move, rng=rng)
+        if game.hand_number == before.hand_number and not game.finished:
+            continue
+        # La mossa ha chiuso la mano: l'ultima presa è quella in corso più la carta appena giocata
+        last = game.last_hand.last_trick
+        assert [(play.seat, play.card) for play in last.plays] == [
+            *((play.seat, play.card) for play in before.hand.trick),
+            (move.seat, move.card),
+        ]
+        assert len(last.plays) == players
+        winner = trick_winner([play.card for play in last.plays], before.hand.trump)
+        assert last.winner_seat == last.plays[winner].seat
+        if not game.finished:
+            assert game.hand.last_trick is None and game.hand.trick == ()
+        else:
+            assert game.hand.last_trick == last
+        closed += 1
+    assert closed == game.hand_number
 
 
 # --- Partite intere ----------------------------------------------------------------

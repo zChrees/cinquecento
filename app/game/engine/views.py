@@ -11,7 +11,7 @@ from app.game.engine.cards import Card
 from app.game.engine.errors import EngineError
 from app.game.engine.game import game_legal_actions
 from app.game.engine.rules import MARIANNA, RuleSet
-from app.game.engine.state import TEAMS, GameState, HandResult, team_of
+from app.game.engine.state import TEAMS, GameState, HandResult, LastTrick, team_of
 
 MODES = {2: "1v1", 4: "2v2"}
 
@@ -43,11 +43,7 @@ def player_view(game: GameState, seat: int, rules: RuleSet = MARIANNA) -> dict:
         ],
         "hand": [card_to_dict(card) for card in hand.hands[seat]],
         "trick": {"leader_seat": hand.leader_seat, "cards": _plays(hand.trick)},
-        "last_trick": (
-            None
-            if hand.last_trick is None
-            else {"winner_seat": hand.last_trick.winner_seat, "cards": _plays(hand.last_trick.plays)}
-        ),
+        "last_trick": None if hand.last_trick is None else _last_trick(hand.last_trick),
         "trump": None if hand.trump is None else hand.trump.value,
         "deck_count": len(hand.deck),
         "sings": [{"seat": done.seat, "suit": done.suit.value, "points": done.points} for done in hand.sings],
@@ -75,6 +71,10 @@ def _plays(plays) -> list[dict]:
     return [{"seat": play.seat, "card": card_to_dict(play.card)} for play in plays]
 
 
+def _last_trick(last: LastTrick) -> dict:
+    return {"winner_seat": last.winner_seat, "cards": _plays(last.plays)}
+
+
 def _scores(scores: tuple[int, ...]) -> list[dict]:
     return [{"team": team, "total": scores[team]} for team in range(TEAMS)]
 
@@ -96,4 +96,6 @@ def _last_hand(game: GameState) -> dict | None:
             }
             for team in range(TEAMS)
         ],
+        # Carte già giocate e viste da tutti: la pagina le mostra prima del riepilogo (P58)
+        "last_trick": _last_trick(done.last_trick),
     }

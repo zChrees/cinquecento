@@ -77,13 +77,24 @@ def test_la_vista_non_mostra_mai_carte_nascoste(players, seed):
         for seat in range(players):
             view = player_view(game, seat)
             own = as_keys(hand.hands[seat])
-            assert set(cards_in(view)) <= own | public
+            # last_hand parla della mano prima, con il mazzo mescolato di nuovo: le sue carte
+            # possono essere adesso in mano a un altro, quindi si controlla a parte (P58)
+            current = {key: value for key, value in view.items() if key != "last_hand"}
+            assert set(cards_in(current)) <= own | public
             assert {(c["suit"], c["rank"]) for c in view["hand"]} == own
             # Nessuna carta degli altri, del mazzo o delle prese chiuse (tranne l'ultima)
             hidden = as_keys(
                 card for other in range(players) if other != seat for card in hand.hands[other]
             ) | as_keys(hand.deck)
-            assert not set(cards_in(view)) & (hidden - public)
+            assert not set(cards_in(current)) & (hidden - public)
+            # In last_hand solo le carte della presa che ha chiuso la mano prima, già viste da tutti
+            if game.last_hand is None:
+                assert view["last_hand"] is None
+            else:
+                shown = list(cards_in(view["last_hand"]))
+                assert sorted(shown) == sorted(
+                    (play.card.suit.value, play.card.rank.value) for play in game.last_hand.last_trick.plays
+                )
             assert [p["cards_in_hand"] for p in view["players"]] == [len(h) for h in hand.hands]
             assert view["deck_count"] == len(hand.deck)
             json.dumps(view)  # si può mandare così com'è
@@ -202,7 +213,14 @@ def test_riepilogo_dell_ultima_mano():
              "hand_total": done.totals[team]}
             for team in (0, 1)
         ],
+        "last_trick": {
+            "winner_seat": done.last_trick.winner_seat,
+            "cards": [{"seat": play.seat, "card": card_to_dict(play.card)} for play in done.last_trick.plays],
+        },
     }
+    # La mano nuova parte senza last_trick: la carta che ha chiuso la mano si vede solo qui (P58)
+    assert view["last_trick"] is None
+    assert len(view["last_hand"]["last_trick"]["cards"]) == 2
     assert view["scores"] == [{"team": team, "total": second.scores[team]} for team in (0, 1)]
     # I punti delle carte prese nella mano in corso non si vedono
     later = next(game for game in states if game.hand_number == 2 and game.hand.last_trick is not None)

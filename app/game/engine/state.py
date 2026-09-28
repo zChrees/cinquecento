@@ -60,6 +60,7 @@ class HandState:
 class HandResult:
     card_points: tuple[int, ...]  # per squadra
     sing_points: tuple[int, ...]  # per squadra
+    last_trick: LastTrick  # la presa che ha chiuso la mano (P58): la mano dopo parte con last_trick None
 
     @property
     def totals(self) -> tuple[int, ...]:
