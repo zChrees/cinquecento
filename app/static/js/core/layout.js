@@ -5,13 +5,15 @@
  *   import { initLayout } from '../core/layout.js';
  *   initLayout();
  *
- * Il markup sta in partials/navbar.html. Più avanti qui si aggancia anche il
- * pannello amici (P46).
+ * Il markup sta in partials/navbar.html. Il pannello amici (P46) lo crea
+ * components/FriendsPanel.js: qui si aggancia al pulsante degli amici, che c'è
+ * solo con il login e mai al tavolo (lì la navbar è nascosta).
  */
 
 import { clear } from '../utils/dom.js';
 import { openLoginPrompt } from '../components/LoginPrompt.js';
 import { StatsPanel, StatsMessage, fetchStats } from '../components/StatsPanel.js';
+import { initFriendsPanel } from '../components/FriendsPanel.js';
 
 function reduceMotion() {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -180,11 +182,12 @@ function initLogo() {
 
 let started = false;
 
-/** Avvia navbar, pannello statistiche, logo e finestra di accesso. Da chiamare una volta per pagina. */
+/** Avvia navbar, pannello statistiche, pannello amici, logo e finestra di accesso. Da chiamare una volta per pagina. */
 export function initLayout() {
   if (started) return;
   started = true;
   initStats();
+  initFriendsPanel(document.querySelector('[data-friends-button]'));
   initLoginPrompt();
   initLogo();
 }

@@ -119,6 +119,16 @@ Accettare, rifiutare o togliere una seconda volta la stessa cosa risponde `ok` s
 
 Nella lista, `presence` di un amico è `"online"`, `"in_game"` oppure `"offline"`. Non c'è "visto 2 ore fa" del prototipo: il database non salva l'ultimo accesso. `unread` è il numero di messaggi non letti da quell'amico. `counters.requests_in` e `counters.unread_messages` servono al contatore sull'icona degli amici, che ne mostra la somma. Per privacy, un utente che ti ha bloccato risponde come uno inesistente (`not_found`).
 
+**Dettagli fissati con P45** (aggiunti il 28/09/2026 con l'accordo dei tre):
+
+- `blocked` è un elenco di `{"user_id", "username", "avatar"}`.
+- Ordine della lista: prima gli amici `online`, poi `in_game`, poi `offline`, e dentro ogni gruppo per username; `requests_in` e `requests_out` dalla richiesta più recente.
+- `counters.unread_messages` conta tutti i messaggi non letti ricevuti, anche da chi non è più amico (la conversazione resta visibile, D24).
+- `POST /friends/requests` risponde con `data` = la richiesta mandata (`{"user_id", "username", "avatar", "sent_at"}`), come un elemento di `requests_out`.
+- Errori: richiesta o blocco verso sé stessi → `invalid_data`; già amici o richiesta già mandata → `already_exists`; l'altro ti ha già mandato una richiesta → `request_from_them`; più di 100 amici (tuoi o suoi) → `limit_reached`; username di un utente che hai bloccato → `blocked`; accettare una richiesta che non c'è → `not_found`. Bloccare di nuovo lo stesso utente risponde `ok`, senza doppioni.
+- Senza login ogni richiesta risponde `not_logged_in` (401) in JSON, non con il rimando alla pagina di accesso. Una richiesta senza il codice CSRF riceve il 400 di Flask-WTF in HTML: per la pagina basta il codice 400.
+- `request_id` (1.3): il server ricorda la risposta per 10 minuti, per utente e per azione.
+
 ---
 
 ## 3. Partita

@@ -16,44 +16,19 @@ Se né Chrome né Edge sono installati i controlli nel browser si saltano.
 Non serve MySQL: l'utente con il login è finto (un cookie dei soli test).
 """
 
-import base64
-import hashlib
 import json
-import os
 import re
-import shutil
-import socket
-import subprocess
-import tempfile
-import threading
-import time
-import urllib.request
 from pathlib import Path
 
 import pytest
-import websocket
-from werkzeug.serving import make_server
 
 from app import create_app
-from app.extensions import login_manager
+from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
 
 ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"
 DEV = STATIC / "dev"
 INDEX = ROOT / "app" / "templates" / "main" / "index.html"
-PORT = 5099
-TEST_COOKIE = ("prova_utente", "mario")
-# Font e icone di Google Fonts (base.html): il test li serve al browser da una copia fuori
-# dal progetto, tenuta tra un giro e l'altro. Il font delle icone (Material Symbols, circa
-# 5 MB, D40) si scarica una volta sola e i giri dopo non dipendono dalla rete.
-FONT_CACHE = Path(tempfile.gettempdir()) / "cinquecento-test-font-cache"
-FONT_ORIGINS = ("https://fonts.googleapis.com/*", "https://fonts.gstatic.com/*")
-BROWSER_PATHS = (
-    r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-    r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
-    r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-    r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
-)
 TILES = [("veloce", "1v1"), ("veloce", "2v2"), ("amico", "1v1"), ("amico", "2v2")]
 PAGE_CSS = ("pages/home", "components/card-background", "components/mode-modal", "components/queue-overlay")
 COMPONENTS = ("ModeModal", "CardBackground", "QueueOverlay", "ResumeBanner")
@@ -63,21 +38,6 @@ NO_SCROLL_SIZES = [(360, 640), (375, 667), (390, 844), (412, 915), (768, 1024), 
                    (1280, 720), (1440, 900), (1920, 1080)]
 MODAL_SIZES = [(1920, 1080), (1440, 900), (1366, 657), (1536, 730), (360, 560), (360, 640),
                (390, 844), (412, 915), (844, 390), (667, 375)]
-
-
-class FakeUser:
-    """Utente con il login, con i nomi che base.html e la navbar leggono (P16)."""
-
-    is_authenticated = True
-    is_active = True
-    is_anonymous = False
-
-    def __init__(self, username):
-        self.username = username
-        self.avatar = None
-
-    def get_id(self):
-        return "7"
 
 
 @pytest.fixture
@@ -206,157 +166,27 @@ def test_consigli_del_modal_dal_regolamento():
 # --- Nel browser ---------------------------------------------------------------
 
 
-def _browser():
-    path = os.environ.get("CHROME_PATH")
-    if path and Path(path).is_file():
-        return path
-    for name in ("chrome", "msedge", "google-chrome", "chromium"):
-        found = shutil.which(name)
-        if found:
-            return found
-    for candidate in BROWSER_PATHS:
-        if Path(candidate).is_file():
-            return candidate
-    pytest.skip("Chrome o Edge non trovati: controlli della home nel browser saltati")
+# La home è pronta quando c'è la cascata e, con i dati finti, "giocatori online" o l'avviso di rientro
+HOME_READY = ("document.querySelector('[data-bg-cards]')?.children.length > 0"
+              " && (!document.querySelector('[data-demo-home-url]')"
+              "     || !document.querySelector('[data-online]').hidden"
+              "     || !document.querySelector('[data-resume-slot]').hidden)")
 
 
-def _wait(condition, timeout, what):
-    """Aspetta che condition() sia vera, controllando spesso; fallisce dopo timeout secondi."""
-    end = time.monotonic() + timeout
-    while True:
-        value = condition()
-        if value:
-            return value
-        if time.monotonic() > end:
-            pytest.fail(f"Tempo scaduto: {what}", pytrace=False)
-        time.sleep(0.05)
-
-
-class Browser:
-    """Chrome o Edge senza finestra, pilotato con il protocollo DevTools (websocket-client)."""
-
-    def __init__(self, path, profile):
-        self.process = subprocess.Popen(
-            [path, "--headless=new", "--disable-gpu", "--no-first-run", "--no-default-browser-check",
-             "--remote-debugging-port=0", f"--user-data-dir={profile}", "about:blank"],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-        )
-        port_file = Path(profile) / "DevToolsActivePort"
-        _wait(lambda: port_file.is_file() and port_file.read_text().strip(), 30, "avvio del browser")
-        port = port_file.read_text().splitlines()[0]
-        targets = _wait(lambda: self._pages(port), 15, "pagina del browser")
-        self.ws = websocket.create_connection(targets[0]["webSocketDebuggerUrl"], timeout=30,
-                                              suppress_origin=True)
-        self.next_id = 0
-        self.send("Fetch.enable", patterns=[{"urlPattern": origin} for origin in FONT_ORIGINS])
-
-    @staticmethod
-    def _pages(port):
-        try:
-            with urllib.request.urlopen(f"http://127.0.0.1:{port}/json/list", timeout=5) as response:
-                return [t for t in json.load(response) if t["type"] == "page"]
-        except OSError:
-            return None
-
-    def _post(self, method, **params):
-        """Manda un comando senza aspettare la risposta (che poi send() ignora)."""
-        self.next_id += 1
-        self.ws.send(json.dumps({"id": self.next_id, "method": method, "params": params}))
-        return self.next_id
-
-    def send(self, method, **params):
-        waiting = self._post(method, **params)
-        while True:
-            message = json.loads(self.ws.recv())
-            if message.get("method") == "Fetch.requestPaused":
-                self._serve_font(message["params"])
-            elif message.get("id") == waiting:
-                if "error" in message:
-                    raise RuntimeError(f"{method}: {message['error']}")
-                return message.get("result", {})
-
-    def _serve_font(self, paused):
-        """Risponde a una richiesta a Google Fonts con la copia salvata (scaricata la prima volta)."""
-        request = paused["request"]
-        key = hashlib.sha256(f"{request['url']} {request['headers'].get('User-Agent', '')}".encode()).hexdigest()
-        body, kind = FONT_CACHE / key, FONT_CACHE / f"{key}.type"
-        try:
-            if not body.is_file():
-                download = urllib.request.Request(request["url"], headers={
-                    "User-Agent": request["headers"].get("User-Agent", ""),
-                    "Accept": request["headers"].get("Accept", "*/*"),
-                })
-                with urllib.request.urlopen(download, timeout=120) as response:
-                    data = response.read()
-                    content_type = response.headers.get("Content-Type", "application/octet-stream")
-                FONT_CACHE.mkdir(exist_ok=True)
-                kind.write_text(content_type, encoding="utf-8")
-                body.write_bytes(data)   # per ultimo: un file a metà non resta nella copia
-            self._post("Fetch.fulfillRequest", requestId=paused["requestId"], responseCode=200,
-                       responseHeaders=[{"name": "Content-Type", "value": kind.read_text(encoding="utf-8")},
-                                        {"name": "Access-Control-Allow-Origin", "value": "*"}],
-                       body=base64.b64encode(body.read_bytes()).decode("ascii"))
-        except OSError:
-            # Senza rete: il font manca e la pagina usa quelli di riserva
-            self._post("Fetch.failRequest", requestId=paused["requestId"], errorReason="InternetDisconnected")
-
-    def js(self, expression):
-        result = self.send("Runtime.evaluate", expression=expression, returnByValue=True, awaitPromise=True)
-        if "exceptionDetails" in result:
-            raise AssertionError(f"Errore JS: {result['exceptionDetails']}")
-        return result["result"].get("value")
-
-    def wait_js(self, expression, what, timeout=15):
-        return _wait(lambda: self.js(expression), timeout, what)
-
+class HomeBrowser(Browser):
     def open(self, url, width, height, timeout=15):
-        self.send("Emulation.setDeviceMetricsOverride", width=width, height=height, deviceScaleFactor=1, mobile=False)
-        # "Riduci movimento": la carta-modal compare subito e la cascata sta ferma
-        self.send("Emulation.setEmulatedMedia", features=[{"name": "prefers-reduced-motion", "value": "reduce"}])
-        self.send("Page.navigate", url=url)
-        self.wait_js("document.readyState === 'complete' && document.fonts.status === 'loaded'"
-                     " && document.querySelector('[data-bg-cards]')?.children.length > 0"
-                     " && (!document.querySelector('[data-demo-home-url]')"
-                     "     || !document.querySelector('[data-online]').hidden"
-                     "     || !document.querySelector('[data-resume-slot]').hidden)",
-                     f"home disegnata a {width}x{height}", timeout)
-
-    def close(self):
-        try:
-            self.ws.close()
-        finally:
-            self.process.terminate()
-            try:
-                self.process.wait(timeout=10)
-            except subprocess.TimeoutExpired:
-                self.process.kill()
+        super().open(url, width, height, HOME_READY, timeout)
 
 
 @pytest.fixture(scope="module")
 def server():
-    with socket.socket() as probe:
-        if probe.connect_ex(("127.0.0.1", PORT)) == 0:
-            pytest.fail(f"La porta {PORT} è occupata: chiudi il server che la usa e rilancia.", pytrace=False)
-    app = create_app("testing")
-
-    # Utente finto per i soli test: con il cookie di prova la pagina è quella di chi ha fatto il login
-    def load_test_user(request):
-        return FakeUser("Mario") if request.cookies.get(TEST_COOKIE[0]) == TEST_COOKIE[1] else None
-
-    previous = login_manager._request_callback
-    login_manager.request_loader(load_test_user)
-    srv = make_server("127.0.0.1", PORT, app, threaded=True)
-    thread = threading.Thread(target=srv.serve_forever, daemon=True)
-    thread.start()
-    yield f"http://127.0.0.1:{PORT}"
-    srv.shutdown()
-    thread.join(timeout=5)
-    login_manager._request_callback = previous
+    with running_server(create_app("testing"), FakeUser("Mario")) as url:
+        yield url
 
 
 @pytest.fixture(scope="module")
 def browser(server, tmp_path_factory):
-    b = Browser(_browser(), tmp_path_factory.mktemp("chrome"))
+    b = HomeBrowser(find_browser(), tmp_path_factory.mktemp("chrome"))
     # Prima apertura: la prima volta si scaricano font e icone (poi restano in FONT_CACHE)
     b.open(f"{server}/", 390, 844, timeout=100)
     yield b

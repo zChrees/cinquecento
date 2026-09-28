@@ -1,0 +1,98 @@
+/*
+ * Finestra chat (P46), dal prototipo di P52 (".chat"): si apre dentro il
+ * pannello amici, che su telefono è a tutto schermo. Scorre solo l'elenco dei
+ * messaggi; il campo di scrittura resta sempre visibile in fondo.
+ * La crea js/components/ChatWindow.js; il testo dei messaggi è sempre testo.
+ */
+
+.chat {
+  overflow: hidden;   /* scorre solo l'elenco dei messaggi */
+}
+
+.chat__presence {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.chat__title {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.chat__title .drawer__title {
+  font-size: 1.3rem;
+}
+
+/* Avviso in cima (chat di prova, conversazione in sola lettura) */
+.chat__notice {
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-m);
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.chat__messages {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+  padding: 8px 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.chat__empty {
+  margin: auto;
+  color: var(--muted);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.chat__msg {
+  max-width: 80%;
+  padding: 8px 12px;
+  border-radius: 18px 18px 18px 6px;
+  background: var(--surface-2);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;   /* il testo si mostra così com'è */
+}
+
+.chat__msg--mine {
+  align-self: flex-end;
+  border-radius: 18px 18px 6px 18px;
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.chat__time {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.7rem;
+  opacity: 0.75;
+  text-align: right;
+}
+
+.chat__form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.chat__form .input {
+  flex: 1;
+}
+
+.chat__error {
+  width: 100%;
+  color: var(--red-strong);
+  font-size: 0.85rem;
+  font-weight: 700;
+}

@@ -414,37 +414,11 @@
   to { transform: rotate(360deg); }
 }
 
-/* Avatar piccoli nella lista da invitare: iniziale, colori a rotazione */
-.mini-avatar {
-  display: inline-grid;
-  place-items: center;
-  flex: none;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  color: var(--on-primary);
-  font-weight: 800;
-  font-size: 0.95rem;
-}
-
-.mini-avatar--0 { background: var(--red); }
-.mini-avatar--1 { background: var(--green); }
-.mini-avatar--2 { background: var(--yellow); color: var(--text); }
-.mini-avatar--3 { background: var(--blue); }
-
-.mini-avatar__wrap {
-  position: relative;
-  display: inline-flex;
-}
-
-.mini-avatar__status {
-  position: absolute;
-  right: -1px;
-  bottom: -1px;
-  width: 12px;
-  height: 12px;
-  border: 2px solid var(--surface);
-  border-radius: 50%;
+/*
+ * Avatar piccoli: le regole .mini-avatar stanno in friends-panel.css (P46), caricato
+ * su tutte le pagine; nella lista da invitare ci sono solo amici online.
+ */
+.invite__item .mini-avatar__status {
   background: var(--online);
 }
 
