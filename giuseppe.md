@@ -22,6 +22,33 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### P47 — Amici online e inviti a partita (28/09/2026)
+
+- **Branch**: feature/p47-inviti
+- **File**: creati `app/realtime/invites.py`, `tests/sockets/test_inviti.py`; modificati `app/sockets/friends_events.py`, `app/static/js/components/FriendsPanel.js`. **Non toccato**, anche se nell'elenco: `ModeModal.js` (filtrava già gli amici "online" e annullava l'invito alla chiusura). **Fuori elenco, con l'ok di Giuseppe**: creati `app/static/js/components/InviteDialog.js` (l'invito ricevuto, vedi sotto) e `tests/frontend/test_invito_ricevuto.py`; modificati `app/static/js/pages/home.js`, `app/realtime/room.py` e `app/realtime/room_manager.py` (`start_listeners`), `app/sockets/connection_events.py`, `app/sockets/home_events.py`, `app/static/js/core/events.js` (miei); `app/services/friend_service.py` e `tests/api/test_amicizie.py` (di Antonio, con il suo permesso: vedi sotto)
+- **Controlli**: **1195 PASS e 2 FAIL** su 1197, in 7 suite, dopo il rebase su P56 e sulla correzione di Christian del test di P44. 27 nuovi nella suite `sockets` (rilanciata 3 volte senza errori) e 4 nella suite `frontend` (3 volte), `ruff check .` pulito. **2 FAIL attesi** in `tests/api/test_pagina_home.py` (di Christian): vedi "Note per gli altri"
+- **Decisioni prese** (scelte di Giuseppe):
+  - **l'invito ricevuto si vede solo nella home**, in una finestra nuova (`InviteDialog.js`, con lo stile di `modal.css`, niente CSS nuovo): "*Nome* ti invita a giocare contro di te nel 1v1 / in squadra con te nel 2v2, a N punti", conto alla rovescia, "Rifiuta" e "Accetta"; dopo "Accetta": "Hai accettato: aspettiamo che *Nome* avvii la partita…" (e "Esci" per rifiutare); X ed Esc valgono "Rifiuta"; gli stati finali mostrano il motivo e la finestra si chiude dopo 4 secondi (o con la X);
+  - **dopo "Accetta" l'invito non scade più**: resta aperto finché chi ha invitato preme "Gioca", lo annulla, l'invitato rifiuta o uno dei due chiude tutte le schede; l'invitato può rifiutare anche dopo aver accettato;
+  - **chi viene bloccato non lo sa**: riceve solo `friends:changed` `"friend_removed"` (la sua lista si aggiorna in silenzio); `"blocked"` va solo alle schede di chi blocca. **Per la chat (P48, Antonio)**: quando chi è stato bloccato apre la chat con chi l'ha bloccato deve vedere che è bloccato e non poter scrivere (scelta di Giuseppe).
+  - **un amico alla volta** (D27, contratto 5.3): l'idea di invitare più amici (vedi la domanda nel riepilogo di P28) resta aperta; se il gruppo la approva, si aggiunge dopo.
+- **Scelte tecniche**:
+  - `invites.py`: inviti in memoria sotto un lock; stati `pending` → `accepted` | `declined` | `expired` | `cancelled`, `accepted` → `started` | `declined` | `cancelled`; scadenza con un timer di `INVITE_SECONDS` (60, `config.py`) solo per `pending`; `invite_id` casuale (`inv_…`); ogni cambio chiama `on_change` (→ `invite:update` a tutti e due);
+  - `invite:send`: solo a un amico (`not_friends`), collegato (`offline`), né lui né chi invita in partita, in coda o con un altro invito aperto, mandato o ricevuto (`busy`); `request_id` con `RecentRequests`; se stessi → `invalid_data`;
+  - `invite:start` (sotto il lock degli inviti, così un doppio clic non avvia due partite): 1v1 → `create_room(..., rated=False)` e `game:start` a tutti e due; 2v2 → `matchmaker.join_pair` e la risposta è lo stato della coda; poi `started`. Prima di "accepted" → `not_allowed`; solo chi ha invitato (`not_found` per gli altri);
+  - `friends:presence` agli amici collegati quando uno entra online, esce (`connection_events`), comincia o finisce una partita (`start_listeners` e `finish_listeners`, in un thread con l'app, perché serve il database); un errore nell'avviso va nel log e non ferma il collegamento;
+  - `friends:changed` da `friend_service.py` dopo ogni cambiamento **vero** (le funzioni interne ora dicono se hanno cambiato qualcosa): richiesta → `request_received`; accettata → `request_accepted`; rifiutata o **annullata da chi l'aveva mandata** → `request_declined` (il contratto non ha un motivo per l'annullamento: la pagina ricarica comunque la lista); amicizia tolta → `friend_removed`; blocco come sopra. Togliere l'amicizia o bloccare annulla l'invito aperto tra i due;
+  - `friend_service.presence` ora legge "online" da `presence.py` (P44) invece dei canali di Socket.IO: un solo elenco di chi è online;
+  - pagina: la lista degli amici da invitare viene da `GET /friends/` e si rilegge con `friends:presence` e `friends:changed` (anche nel pannello amici); se la carta si chiude mentre `invite:send` aspetta la risposta, l'invito si annulla appena arriva.
+- **Domande nuove**: nessuna
+- **Punti delicati**:
+  - `start_listeners` li chiama `create_room` **dopo** aver registrato la stanza (se li chiamasse `Room.start`, "in partita" non la troverebbe ancora); le funzioni ricevono `(user_id, app)`: con `app` None (stanza creata fuori da Flask, nei test) gli avvisi che leggono il database non partono;
+  - `invites.lock` è rientrante e resta preso mentre `invite:start` crea la partita o mette la coppia in coda: nessun altro lock prende quello degli inviti, quindi non ci sono blocchi a vicenda;
+  - `test_inviti.py` crea le amicizie con `friend_service` dentro l'app dei test e le toglie alla fine.
+- **Note per il contratto o per gli altri**: nessun cambiamento al contratto.
+  - **Antonio**: ho toccato `friend_service.py` (avvisi `friends:changed`, "online" da `presence.py`, inviti annullati con amicizia tolta o blocco) e una riga di `tests/api/test_amicizie.py` (`test_presenza_degli_amici` sostituiva `_is_connected`, che non c'è più: ora sostituisce `online_users.is_online`). Per **P48**: la decisione sulla chat con chi ti ha bloccato qui sopra.
+  - **Christian**: con P47 la home usa gli amici e gli inviti veri, quindi due tuoi test di `tests/api/test_pagina_home.py` provano un comportamento che non c'è più: `test_invito_finto_poi_gioca_e_coda_con_il_compagno` (l'amico finto che accetta dopo 2 secondi) e `test_con_un_amico_1v1_messaggio_di_prova` (il messaggio "Prova: qui comincerebbe la partita…"). Il flusso vero è provato da `tests/sockets/test_inviti.py` (server e client simulati) e l'invito ricevuto da `tests/frontend/test_invito_ricevuto.py` (nel browser). **Proposta**: toglierli, oppure riscriverli sul flusso vero (per esempio facendo arrivare `invite:update` dal server come fa `test_invito_ricevuto.py`). Il file è tuo: decidi tu. Anche `DECISIONI.md` (P22, "Home con dati finti") va aggiornata da chi è di turno: amici e inviti non sono più finti.
+
 ### P44 — Home con dati reali (28/09/2026)
 
 - **Branch**: feature/p44-home-reale

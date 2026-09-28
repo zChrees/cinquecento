@@ -35,10 +35,12 @@ va nel log.
 P55: la stanza tiene solo l'ora dell'ultima frase del tavolo di ogni posto
 (phrase_times, per il limite di table_phrases.py); le frasi non si salvano.
 
-P44: quando la partita finisce (una volta sola, insieme al salvataggio) la stanza
-chiama le funzioni di `finish_listeners` con i giocatori: home_events.py manda loro
-home:status, così l'avviso di rientro sparisce. Si chiamano in un thread a parte,
-fuori dal lock della stanza (lo stato della home guarda anche le altre stanze).
+P44, P47: quando la partita finisce (una volta sola, insieme al salvataggio) la
+stanza chiama le funzioni di `finish_listeners` con i giocatori e l'app Flask (o None):
+home_events.py manda loro home:status (l'avviso di rientro sparisce), friends_events.py
+avvisa i loro amici (friends:presence). Quando comincia le chiama `create_room`
+(room_manager.py) con `start_listeners`. Si chiamano in un thread a parte, fuori dal
+lock della stanza (guardano anche le altre stanze e il database).
 """
 
 import logging
@@ -69,8 +71,15 @@ RECONNECT_SECONDS = BaseConfig.RECONNECT_SECONDS
 SING_SHOW_SECONDS = 3  # D15: per quanto la pagina mostra Re e Cavallo cantati
 MODE_OF_PLAYERS = {n: mode for mode, n in MODES.items()}
 
-# P44: funzioni chiamate a fine partita con i user_id dei giocatori (fuori dal lock)
+# P44, P47: funzioni chiamate con (user_id dei giocatori, app) a inizio e fine partita,
+# in un thread a parte (fuori dal lock)
+start_listeners = []
 finish_listeners = []
+
+
+def notify(listeners, user_ids, app):
+    for listener in listeners:
+        socketio.start_background_task(listener, tuple(user_ids), app)
 
 
 def utc_now():
@@ -325,9 +334,7 @@ class Room:
         if self._saved:
             return
         self._saved = True
-        members = tuple(p.user_id for p in self.players)
-        for listener in finish_listeners:
-            socketio.start_background_task(listener, members)
+        notify(finish_listeners, (p.user_id for p in self.players), self._app)
         if self._app is None:
             log.warning("Partita della stanza %s non salvata: nessuna applicazione Flask", self.id)
             return

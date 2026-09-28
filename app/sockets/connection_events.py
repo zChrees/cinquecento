@@ -16,6 +16,9 @@ abbinato a una partita a cui non arriverebbe.
 P44: ogni scheda collegata entra in presence.py; appena collegata riceve home:status.
 Quando un utente entra online (prima scheda) o esce (ultima scheda), tutti gli altri
 utenti collegati ricevono home:status con il numero nuovo.
+
+P47: in quei due momenti anche gli amici collegati ricevono friends:presence; chi
+chiude l'ultima scheda perde i suoi inviti aperti ("cancelled").
 """
 
 import logging
@@ -25,10 +28,11 @@ from flask_login import current_user
 from flask_socketio import ConnectionRefusedError, emit, join_room
 
 from app.realtime.events import NOT_LOGGED_IN, user_channel
+from app.realtime.invites import invites
 from app.realtime.matchmaking import matchmaker
 from app.realtime.presence import presence
 from app.realtime.room_manager import rooms
-from app.sockets import home_events
+from app.sockets import friends_events, home_events
 
 log = logging.getLogger(__name__)
 
@@ -42,6 +46,7 @@ def on_connect(auth=None):
     emit("home:status", home_events.home_status(current_user.id))
     if arrived:
         home_events.broadcast_status(exclude=current_user.id)
+        friends_events.notify_presence([current_user.id])
     queue = matchmaker.queue.status(current_user.id)
     if queue is not None:
         emit("queue:status", queue)
@@ -55,7 +60,9 @@ def on_disconnect(reason=None):
             room.run(_leave_table, room, request.sid)
         if last_tab:
             matchmaker.leave(current_user.id, reason="cancelled")
+            invites.cancel_all_of(current_user.id)
             home_events.broadcast_status()
+            friends_events.notify_presence([current_user.id])
 
 
 def _leave_table(room, sid):

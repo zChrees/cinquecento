@@ -40,7 +40,11 @@ def broadcast_status(exclude=None):
     send_status(u for u in presence.online_users() if u != exclude)
 
 
+def _game_finished(user_ids, _app):
+    send_status(user_ids)
+
+
 def register(socketio):
     """Nessun evento dalla pagina; a fine partita i giocatori ricevono lo stato nuovo."""
-    if send_status not in room_module.finish_listeners:
-        room_module.finish_listeners.append(send_status)
+    if _game_finished not in room_module.finish_listeners:
+        room_module.finish_listeners.append(_game_finished)

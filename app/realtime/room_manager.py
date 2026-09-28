@@ -13,6 +13,7 @@ import threading
 
 from app.extensions import socketio
 from app.game.engine.errors import EngineError
+from app.realtime import room as room_module
 from app.realtime.events import user_channel
 from app.realtime.room import MODES, Player, Room
 
@@ -63,6 +64,7 @@ class RoomManager:
             except EngineError as exc:
                 raise RoomError(str(exc)) from None
             self._rooms[room.id] = room
+        room_module.notify(room_module.start_listeners, (p.user_id for p in players), room._app)  # P47
         if announce:
             for player in players:
                 socketio.emit("game:start", {"game_id": room.id, "url": f"/game/{room.id}"},

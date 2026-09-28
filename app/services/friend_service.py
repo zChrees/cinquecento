@@ -14,8 +14,13 @@
 - Le richieste che creano qualcosa portano `request_id` (contratto 1.3): la stessa
   richiesta ripetuta riceve la risposta della prima volta (RecentRequests, in memoria).
 - `presence` degli amici: "in_game" se ha una partita in corso (room_manager, P24),
-  "online" se ha almeno una scheda collegata in tempo reale (canale user:<id>, P23),
-  altrimenti "offline". Gli avvisi quando cambia li manda P47.
+  "online" se ha almeno una scheda collegata in tempo reale (presence.py, P44),
+  altrimenti "offline". Gli avvisi quando cambia li manda friends_events.py (P47).
+- P47: dopo ogni cambiamento vero l'altro utente riceve friends:changed {"reason"} e la
+  sua pagina ricarica la lista. Chi viene bloccato riceve "friend_removed", mai
+  "blocked" (non deve sapere di essere stato bloccato: scelta di Giuseppe); "blocked" va
+  solo alle schede di chi blocca. Togliere l'amicizia o bloccare annulla l'invito a
+  partita aperto tra i due.
 Nei log solo numeri di utente, mai username o email.
 """
 
@@ -27,6 +32,8 @@ from flask import current_app
 
 from app.extensions import db, socketio
 from app.realtime.events import EventError, user_channel
+from app.realtime.invites import invites
+from app.realtime.presence import presence as online_users
 from app.realtime.room_manager import find_room_of_user
 from app.repositories import friend_repo, user_repo
 
@@ -141,14 +148,12 @@ def overview(user_id):
 def presence(user_id):
     if find_room_of_user(user_id) is not None:
         return "in_game"
-    return "online" if _is_connected(user_id) else "offline"
+    return "online" if online_users.is_online(user_id) else "offline"
 
 
-def _is_connected(user_id):
-    server = socketio.server
-    if server is None:
-        return False
-    return any(True for _ in server.manager.get_participants("/", user_channel(user_id)))
+def _changed(user_id, reason):
+    """friends:changed (contratto 5.2) a tutte le schede di quell'utente (P47)."""
+    socketio.emit("friends:changed", {"reason": reason}, to=user_channel(user_id))
 
 
 def _user(user):
@@ -166,29 +171,47 @@ def iso_utc(moment):
 def send_request(user_id, request_id, username):
     check_request_id(request_id)
     check_username(username)
-    return recent.run(user_id, "request", request_id, lambda: _write(_send_request, user_id, username))
+    return recent.run(user_id, "request", request_id, lambda: _sent(_write(_send_request, user_id, username)))
+
+
+def _sent(result):
+    _changed(result["user_id"], "request_received")
+    return result
 
 
 def accept_request(user_id, other_id):
-    _write(_accept_request, user_id, check_user_id(other_id))
+    if _write(_accept_request, user_id, check_user_id(other_id)):
+        _changed(other_id, "request_accepted")
 
 
 def decline_request(user_id, other_id):
-    _write(_delete_pending, user_id, other_id, user_id)
+    if _write(_delete_pending, user_id, other_id, user_id):
+        _changed(other_id, "request_declined")
 
 
 def cancel_request(user_id, other_id):
-    _write(_delete_pending, user_id, user_id, other_id)
+    if _write(_delete_pending, user_id, user_id, other_id):
+        _changed(other_id, "request_declined")  # la richiesta che aveva ricevuto non c'è più
 
 
 def remove_friend(user_id, other_id):
-    _write(_remove_friend, user_id, other_id)
+    if _write(_remove_friend, user_id, other_id):
+        invites.cancel_all_of(user_id, only_with=other_id)
+        _changed(other_id, "friend_removed")
 
 
 def block(user_id, request_id, other_id):
     check_request_id(request_id)
     check_user_id(other_id)
-    return recent.run(user_id, "block", request_id, lambda: _write(_block, user_id, other_id))
+    return recent.run(user_id, "block", request_id, lambda: _blocked(user_id, other_id))
+
+
+def _blocked(user_id, other_id):
+    removed = _write(_block, user_id, other_id)
+    invites.cancel_all_of(user_id, only_with=other_id)
+    if removed:
+        _changed(other_id, "friend_removed")  # sparisce dalla sua lista, senza sapere del blocco
+    _changed(user_id, "blocked")  # le altre schede di chi blocca
 
 
 def unblock(user_id, other_id):
@@ -246,12 +269,13 @@ def _accept_request(user_id, other_id):
     friend_repo.lock_users(user_id, other_id)
     row = friend_repo.get_pair(user_id, other_id)
     if row is not None and row.status == friend_repo.ACCEPTED:
-        return  # già amici: seconda volta, niente da fare
+        return False  # già amici: seconda volta, niente da fare
     if row is None or row.requester_id != other_id:
         raise EventError("not_found", NO_REQUEST)
     _check_limits(user_id, other_id)
     friend_repo.accept(row)
     log.info("Amicizia accettata tra %s e %s", other_id, user_id)
+    return True
 
 
 def _delete_pending(user_id, requester_id, addressee_id):
@@ -259,6 +283,8 @@ def _delete_pending(user_id, requester_id, addressee_id):
     row = friend_repo.get_pair(requester_id, addressee_id)
     if row is not None and row.status == friend_repo.PENDING and row.requester_id == requester_id:
         friend_repo.delete(row)
+        return True
+    return False
 
 
 def _remove_friend(user_id, other_id):
@@ -267,6 +293,8 @@ def _remove_friend(user_id, other_id):
     if row is not None and row.status == friend_repo.ACCEPTED:
         friend_repo.delete(row)
         log.info("Amicizia tolta tra %s e %s", user_id, other_id)
+        return True
+    return False
 
 
 def _block(user_id, other_id):
@@ -280,6 +308,8 @@ def _block(user_id, other_id):
     row = friend_repo.get_pair(user_id, other_id)
     if row is not None:
         friend_repo.delete(row)  # il blocco toglie amicizia e richieste (D23)
+        return True  # l'altro aveva l'amicizia o una richiesta: la sua lista cambia
+    return False
 
 
 def _unblock(user_id, other_id):

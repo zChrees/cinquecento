@@ -23,6 +23,17 @@ export const EVENTS = Object.freeze({
   QUEUE_LEFT: 'queue:left',
   // Home (5.1)
   HOME_STATUS: 'home:status',
+  // Amici online (5.2)
+  FRIENDS_PRESENCE: 'friends:presence',
+  FRIENDS_CHANGED: 'friends:changed',
+  // Inviti a partita (5.3)
+  INVITE_SEND: 'invite:send',
+  INVITE_RECEIVED: 'invite:received',
+  INVITE_ACCEPT: 'invite:accept',
+  INVITE_DECLINE: 'invite:decline',
+  INVITE_CANCEL: 'invite:cancel',
+  INVITE_START: 'invite:start',
+  INVITE_UPDATE: 'invite:update',
 });
 
 /** Motivo del rifiuto della connessione per chi non ha fatto il login (contratto 1.4). */

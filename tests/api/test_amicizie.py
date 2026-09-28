@@ -471,7 +471,8 @@ def test_presenza_degli_amici(mario, nina, toto, monkeypatch):
     befriend(mario, toto)
     assert {f["presence"] for f in mario.overview()["friends"]} == {"offline"}
     monkeypatch.setattr(friend_service, "find_room_of_user", lambda uid: object() if uid == nina.id else None)
-    monkeypatch.setattr(friend_service, "_is_connected", lambda uid: uid in (nina.id, toto.id))
+    # P47: "online" viene da presence.py (P44), non più dai canali di Socket.IO
+    monkeypatch.setattr(friend_service.online_users, "is_online", lambda uid: uid in (nina.id, toto.id))
     friends = mario.overview()["friends"]
     assert [(f["username"], f["presence"]) for f in friends] == [("Toto", "online"), ("Nina", "in_game")]
 

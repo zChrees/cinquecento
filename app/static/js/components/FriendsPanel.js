@@ -14,6 +14,10 @@
  * non letti, "Chatta" e "Altro" (rimuovi, blocca, con conferma); richieste
  * mandate (annulla); bloccati (sblocca). Gli inviti a partita stanno solo nella
  * carta-modal della home (DECISIONI.md, P46).
+ * P47: la lista si aggiorna da sola, senza ricaricare la pagina: con
+ * friends:presence (un amico entra, esce, comincia o finisce una partita) e con
+ * friends:changed (richieste, amicizie e blocchi) si rilegge GET /friends/
+ * (contratto 5.2: la forma della lista resta una sola).
  * La chat (ChatWindow.js) per ora usa i dati finti di app/static/dev/ in
  * sviluppo e nei test (data-chat-demo-url): quella vera arriva con P48.
  * Si chiude con la X, con Esc, toccando fuori e con "indietro" del browser o del
@@ -22,6 +26,8 @@
  */
 
 import { el, icon } from '../utils/dom.js';
+import { on } from '../core/socket.js';
+import { EVENTS } from '../core/events.js';
 import { confirmModal, openModal } from './Modal.js';
 import { ChatWindow } from './ChatWindow.js';
 
@@ -524,4 +530,6 @@ export function initFriendsPanel(button) {
 
   button.addEventListener('click', open);
   load();   // contatore sull'icona appena si apre la pagina
+  on(EVENTS.FRIENDS_PRESENCE, () => load());   // P47
+  on(EVENTS.FRIENDS_CHANGED, () => load());
 }

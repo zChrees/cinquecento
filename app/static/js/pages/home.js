@@ -16,12 +16,17 @@
  * - Stato vero della home (P44): home:status arriva appena la pagina si collega e
  *   a ogni cambiamento (utenti online, partita in corso finita) e prende sempre il
  *   posto di quello dei dati finti. Senza login la pagina non si collega.
+ * - Inviti a partita (P47, contratto 5.3): la lista degli amici da invitare viene
+ *   da GET /friends/ e si rilegge con friends:presence e friends:changed. "Invita"
+ *   manda invite:send; invite:update aggiorna la carta-modal (setInviteStatus);
+ *   chiudere la carta con un invito aperto manda invite:cancel; "Gioca" dopo
+ *   l'accettazione manda invite:start (1v1: arriva game:start; 2v2: la risposta è
+ *   lo stato della coda con il compagno). L'invito ricevuto si apre in una
+ *   finestra (components/InviteDialog.js) con "Rifiuta" e "Accetta".
  * - Il resto per ora viene dai dati finti di app/static/dev/ (attributi
- *   data-demo-*, solo in sviluppo e nei test): amici da invitare e rating finché
- *   non ci sono P47 e i dati veri, e lo stato della home finché non arriva quello
- *   vero. Con ?demo=rientro l'avviso di rientro resta quello finto (si prova senza
- *   una partita vera). Senza dati finti (demo vera) "Gioca con un amico" avvisa
- *   che la ricerca non è ancora attiva.
+ *   data-demo-*, solo in sviluppo e nei test): i rating di "In breve", e lo stato
+ *   della home e gli amici finché non arrivano quelli veri. Con ?demo=rientro
+ *   l'avviso di rientro resta quello finto (si prova senza una partita vera).
  * - Carte-pulsante: senza login aprono "Accedi o registrati" (P40); con il login
  *   la carta-modal della modalità (components/ModeModal.js).
  */
@@ -32,6 +37,7 @@ import { EVENTS } from '../core/events.js';
 import { openLoginPrompt } from '../components/LoginPrompt.js';
 import { initCardBackground } from '../components/CardBackground.js';
 import { openModeModal, setInviteStatus } from '../components/ModeModal.js';
+import { openInviteDialog } from '../components/InviteDialog.js';
 import { QueueOverlay, enableQueueCancel, setQueueSeconds } from '../components/QueueOverlay.js';
 import { ResumeBanner } from '../components/ResumeBanner.js';
 import { el, icon } from '../utils/dom.js';
@@ -124,17 +130,88 @@ function showMessage(text, kind = 'info') {
 // Azioni: carta-pulsante, inviti, Gioca, Annulla
 // ------------------------------------------------------------
 
-let demoData = null;     // home_esempio.json
-let inviteTimer = null;
+// ------------------------------------------------------------
+// Inviti a partita (P47, contratto 5.3)
+// ------------------------------------------------------------
 
-// Dati finti: l'amico accetta dopo 2 secondi, come nel prototipo. Gli inviti veri arrivano con P47.
-function sendInvite({ friend }) {
-  clearTimeout(inviteTimer);
-  inviteTimer = setTimeout(() => setInviteStatus(friend.user_id, 'accepted'), 2000);
+let outgoing = null;     // invito mandato e aperto: { id, friendId, status }
+let incoming = null;     // finestra dell'invito ricevuto (InviteDialog)
+let realFriends = false; // è arrivata la lista vera: i dati finti non la sostituiscono più
+let sending = false;     // invite:send in attesa di risposta
+let cancelAfterSend = false;   // la carta si è chiusa prima della risposta: si annulla appena arriva
+
+async function sendInvite({ friend, mode, targetScore }) {
+  sending = true;
+  cancelAfterSend = false;
+  const answer = await send(EVENTS.INVITE_SEND, {
+    request_id: newRequestId(), user_id: friend.user_id, mode, target_score: targetScore,
+  });
+  sending = false;
+  if (answer.ok && cancelAfterSend) {
+    send(EVENTS.INVITE_CANCEL, { invite_id: answer.data.invite_id });
+    return;
+  }
+  if (!answer.ok) {
+    showMessage(answer.error.message, 'error');
+    setInviteStatus(friend.user_id, 'cancelled');   // si può invitare di nuovo
+    return;
+  }
+  outgoing = { id: answer.data.invite_id, friendId: friend.user_id, status: answer.data.status };
 }
 
 function cancelInvite() {
-  clearTimeout(inviteTimer);
+  if (sending) cancelAfterSend = true;
+  if (!outgoing) return;
+  send(EVENTS.INVITE_CANCEL, { invite_id: outgoing.id });
+  outgoing = null;
+}
+
+async function startInvite() {
+  if (!outgoing || outgoing.status !== 'accepted') return;
+  const answer = await send(EVENTS.INVITE_START, { invite_id: outgoing.id });
+  if (!answer.ok) {
+    showMessage(answer.error.message, 'error');
+    return;
+  }
+  outgoing = null;
+  if (answer.data) showQueue(answer.data);   // 2v2: la coppia è in coda; 1v1: arriva game:start
+}
+
+function onInviteReceived(invite) {
+  if (starting || !invite?.invite_id) return;
+  incoming?.close();
+  incoming = openInviteDialog(invite, {
+    onAccept: () => send(EVENTS.INVITE_ACCEPT, { invite_id: invite.invite_id }),
+    onDecline: () => send(EVENTS.INVITE_DECLINE, { invite_id: invite.invite_id }),
+  });
+}
+
+function onInviteUpdate({ invite_id: id, status } = {}) {
+  if (outgoing && outgoing.id === id) {
+    outgoing.status = status;
+    if (status !== 'started') setInviteStatus(outgoing.friendId, status);
+    if (status !== 'pending' && status !== 'accepted') outgoing = null;
+  }
+  if (incoming && incoming.inviteId === id) {
+    incoming.setStatus(status);
+    if (status !== 'pending' && status !== 'accepted') incoming = null;
+  }
+}
+
+async function loadFriends() {
+  const url = document.querySelector('[data-friends-button]')?.dataset.friendsUrl;
+  if (!url) return;
+  try {
+    const response = await fetch(`${url.replace(/\/$/, '')}/`, {
+      headers: { Accept: 'application/json' }, credentials: 'same-origin',
+    });
+    const body = await response.json();
+    if (!body.ok) return;
+    realFriends = true;
+    state.friends = body.data.friends;
+  } catch {
+    // senza lista nuova resta quella di prima
+  }
 }
 
 // ------------------------------------------------------------
@@ -205,30 +282,13 @@ function goToTable({ url } = {}) {
   window.location.assign(url);
 }
 
-function play({ kind, mode, targetScore, invitee }) {
-  clearTimeout(inviteTimer);
+function play({ kind, mode, targetScore }) {
   if (!navigator.onLine) {
     showMessage('Sei offline: potrai giocare appena torna la connessione.', 'error');
     return;
   }
-  if (kind === 'veloce') {
-    joinQueue(mode, targetScore);
-    return;
-  }
-  if (!demo || !demoData) {
-    // Gli inviti arrivano con P47
-    showMessage('La ricerca della partita non è ancora attiva.', 'info');
-    return;
-  }
-  if (kind === 'amico' && mode === '1v1') {
-    showMessage(`Prova: qui comincerebbe la partita contro ${invitee.username}.`, 'info');
-    return;
-  }
-  // Dati finti: con un amico nel 2v2 si entra subito in coda (fino a P47)
-  const example = demoData['queue:status 2v2 con un amico'];
-  const partner = { user_id: invitee.user_id, username: invitee.username, avatar: invitee.avatar };
-  state.queue = { ...example, mode, target_score: targetScore, partner };
-  render(state);
+  if (kind === 'veloce') joinQueue(mode, targetScore);
+  else startInvite();   // "Gioca con un amico": si attiva solo dopo l'accettazione
 }
 
 // "Annulla": con la coda vera queue:leave, e la schermata si chiude con la risposta;
@@ -309,11 +369,11 @@ async function loadDemo() {
     fetchJson(demoHomeUrl), fetchJson(demoFriendsUrl), fetchJson(demoStatsUrl),
   ]);
   if (home.status === 'fulfilled') {
-    demoData = home.value;
+    const demoData = home.value;
     if (demoState === 'rientro') state.status = demoData['home:status con partita in corso'];
     else if (!realStatus) state.status = demoData['home:status'];
   }
-  if (friends.status === 'fulfilled') state.friends = friends.value['GET /friends/']?.friends ?? [];
+  if (friends.status === 'fulfilled' && !realFriends) state.friends = friends.value['GET /friends/']?.friends ?? [];
   if (stats.status === 'fulfilled') state.ratings = stats.value.ratings ?? null;
   render(state);
 }
@@ -325,6 +385,11 @@ if (isLoggedIn()) {
   on(EVENTS.QUEUE_STATUS, showQueue);
   on(EVENTS.QUEUE_LEFT, onQueueLeft);
   on(EVENTS.GAME_START, goToTable);
+  on(EVENTS.INVITE_RECEIVED, onInviteReceived);
+  on(EVENTS.INVITE_UPDATE, onInviteUpdate);
+  on(EVENTS.FRIENDS_PRESENCE, loadFriends);
+  on(EVENTS.FRIENDS_CHANGED, loadFriends);
   connect();
+  loadFriends();
 }
 if (demo) loadDemo();
