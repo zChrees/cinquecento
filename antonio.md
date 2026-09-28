@@ -24,6 +24,28 @@
 
 <!-- Il più recente in cima. File creato da Christian il 28/09/2026 con lo schema; da qui in poi lo scrive solo Antonio. Il riepilogo di P16 (punto di Antonio fatto da Giuseppe) è in giuseppe.md, quello di P5 (fatto da Christian) in christian.md. -->
 
+### P45 — Amicizie (28/09/2026)
+
+- **Branch**: feature/p45-amicizie
+- **File**: modificato `app/blueprints/friends/routes.py` (segnaposto di P4); creati `app/services/friend_service.py`, `app/repositories/friend_repo.py`, `tests/api/test_amicizie.py`. `app/blueprints/friends/__init__.py` era nell'elenco ma non è servito toccarlo
+- **Controlli**: 925 PASS in tutto (59 nuovi, nella suite `api`), `ruff check .` pulito
+- **Decisioni prese**: **`presence` calcolata già in P45** (scelta di Antonio sulla raccomandazione di Claude): `"in_game"` se `find_room_of_user` (P24) trova una partita in corso, `"online"` se l'utente ha almeno una scheda nel canale `user:<id>` (P23), altrimenti `"offline"`. Nessun file né stato in più; a P47 restano gli avvisi quando cambia (`friends:presence`, `friends:changed`)
+- **Scelte tecniche** (il contratto 2.2 non le fissava):
+  - `blocked` nella lista: `{"user_id", "username", "avatar"}`;
+  - `counters.unread_messages`: tutti i messaggi non letti ricevuti, anche da chi non è più amico (la conversazione resta visibile, D24);
+  - ordine: amici online, poi in partita, poi offline, e dentro ogni gruppo per username; richieste dalla più recente;
+  - `POST /friends/requests` risponde con `data` = la richiesta mandata (`user_id`, `username`, `avatar`, `sent_at`), nella forma di `requests_out`;
+  - codici: richiesta a sé stessi o blocco di sé stessi `invalid_data`; già amici o richiesta già mandata `already_exists`; accettare una richiesta che non c'è `not_found`; bloccare di nuovo lo stesso utente risponde `ok`, senza doppioni;
+  - senza login le richieste rispondono `not_logged_in` (401, in JSON), non con il rimando alla pagina di accesso;
+  - `request_id` (contratto 1.3): la risposta si ricorda in memoria per 10 minuti, per utente e per azione (`RecentRequests` in `friend_service.py`), sia per gli `ok` sia per gli errori del contratto; le richieste di uno stesso utente con `request_id` passano una alla volta.
+- **Domande nuove**: nessuna
+- **Punti delicati**:
+  - **lettura dei dati dentro le scritture**: con il livello predefinito di MySQL (REPEATABLE READ) una transazione continua a vedere i dati com'erano alla prima lettura, che in una richiesta con il login avviene già quando Flask-Login carica l'utente. Così, anche dopo aver bloccato i due utenti (`SELECT ... FOR UPDATE`), il servizio non vedeva la richiesta appena salvata da un'altra scheda. Provato: due richieste incrociate contemporanee davano `Duplicate entry` (errore 500), e due accettazioni contemporanee superavano il limite di amici. Correzione: ogni scrittura chiude le letture precedenti e lavora in READ COMMITTED (`_write` in `friend_service.py`). **Vale anche per P48** (limite di 1 messaggio al secondo) e per ogni controllo "prima di scrivere" fatto con MySQL;
+  - le date si scrivono da Python in UTC, non con `CURRENT_TIMESTAMP` di MySQL, che userebbe il fuso orario del server;
+  - un modulo senza codice CSRF riceve il 400 di Flask-WTF in HTML, non in JSON (per la pagina basta sapere che è 400);
+  - `RecentRequests` è una piccola classe riutilizzabile: se serve anche a P28, P47 o P48, conviene spostarla in un file comune (proposta di punto nuovo, non fatta qui).
+- **Note per il contratto o per gli altri**: nessun cambiamento ai nomi del contratto; le scelte sopra completano i dettagli che mancavano (**Christian**: se vanno bene, aggiungile al contratto 2.2 per P46). **Giuseppe** (P47): la presenza la calcola `friend_service.presence(user_id)`; gli avvisi `friends:changed` dopo richieste, accettazioni, rimozioni e blocchi li devi mandare tu, e le funzioni di `friend_service` sono i punti in cui farlo.
+
 ### P17 — Impostazioni: avatar e cancellazione dell'account (28/09/2026)
 
 - **Branch**: feature/p17-impostazioni
