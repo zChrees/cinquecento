@@ -22,6 +22,28 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### P38 — Installazione demo separata e backup pianificato: la parte nel repository (28/09/2026)
+
+Punto di Antonio, fatto da Giuseppe con il suo permesso. **Fatto a metà, per scelta di Giuseppe**: c'è la parte nel repository (guida e script); l'installazione sul PC della demo aspetta D20. P38 dipendeva da P37 solo per l'ordine (la demo si prepara alla fine): l'unica dipendenza tecnica, P18 (backup), è in `dev`.
+
+- **Branch**: feature/p38-demo
+- **File**: creati `docs/DEMO.md`, `scripts/pianifica_backup.ps1` (i due file di 9.2: "sicuro" e "probabile"), `tests/db/test_demo.py`
+- **Controlli**: **1233 PASS e 2 FAIL** su 1235, in 7 suite (5 nuovi nella suite `db`), `ruff check .` pulito. I 2 FAIL sono gli stessi di P48 (test di Christian del pannello amici)
+- **Decisioni prese** (scelte di Giuseppe):
+  - **backup pianificato con uno script** (`scripts/pianifica_backup.ps1`, la scelta che 9.2 lasciava all'inizio del punto): crea l'attività di Windows "Cinquecento - backup della demo", ogni giorno alle 3:00 (`-Ora` per cambiarla), che lancia `python scripts\backup.py` e aggiunge il risultato a `logs\backup.log`; se il PC è spento all'ora giusta parte appena si riaccende; si rifiuta senza il file `PRODUZIONE`; non serve essere amministratore;
+  - la guida `docs/DEMO.md` vale anche per **la parte scritta di P39** (rete, firewall solo per le reti private, lista di controllo del giorno della demo); la **prova generale** di P39 (tre telefoni e un PC, un 2v2 completo) si fa l'ultimo giorno, sul codice finale.
+- **Domande nuove** (per chi è di turno sui documenti: vanno in `DA-DECIDERE.md`, D20):
+  - **quale PC ospita la demo**;
+  - **come si collegano gli altri**: stessa rete Wi-Fi (consigliato) o un tunnel come ngrok (il passo 11 di `DEMO.md` vale solo per la stessa rete);
+  - **da quale branch si installa la demo**: `dev` finché `main` non viene aggiornato (portare `dev` in `main` lo decide il gruppo).
+  In `DEMO.md` ci sono i segnaposti da riempire.
+- **Cosa resta di P38** (sul PC della demo, dopo D20): seguire `DEMO.md` dal passo 1 al 9 e i tre controlli [T] del "Fatto quando": il runner si rifiuta nella cartella della demo, il backup pianificato produce un file, il ripristino di prova su `cinquecento_test` funziona. **Il punto non va spuntato finché non sono fatti.**
+- **Punti delicati**:
+  - `pianifica_backup.ps1` deve restare **solo ASCII**: Windows PowerShell 5.1 legge un `.ps1` senza BOM con la codifica di sistema e le lettere accentate diventerebbero sbagliate (c'è un test); per questo nei commenti ci sono "attivita'" e "piu'";
+  - la cartella della demo va **fuori da OneDrive** (un file bloccato dalla sincronizzazione può fermare server o backup) e ha i backup in `backups\`: vanno copiati anche fuori dal PC;
+  - l'utente MySQL `cinquecento` scrive solo in `cinquecento_dev` e `cinquecento_test`: per la demo serve il `GRANT` su `cinquecento` (passo 5 di `DEMO.md`, come root).
+- **Note per gli altri**: **Christian**: le tre domande di D20 qui sopra, per `DA-DECIDERE.md`; in `SCALETTA.md` P38 è "fatto a metà" (non spuntarlo) e il file probabile di 9.2 (`scripts/pianifica_backup.ps1`) ora è deciso. **Antonio**: P38 è quasi tutto scritto; resta l'installazione sul PC della demo, quando il gruppo decide D20.
+
 ### P48 — Chat tra amici (28/09/2026)
 
 Punto di Antonio, fatto da Giuseppe con il suo permesso. Prima di cominciare: nessun branch di P48 su GitHub.
