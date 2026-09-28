@@ -107,7 +107,8 @@ def test_i_css_della_base_esistono(app, home):
     base_css = re.findall(r"url_for\('static', filename='(css/[^']+)'\)", (TEMPLATES / "base.html").read_text(encoding="utf-8"))
     assert len(base_css) == 11
     paths = re.findall(r'href="(/static/[^"]+)"', home)
-    assert paths[:11] == [f"/static/{name}" for name in base_css]
+    css = [path for path in paths if path.startswith("/static/css/")]  # prima ci sono le icone (P42)
+    assert css[:11] == [f"/static/{name}" for name in base_css]
     for path in paths:
         response = client.get(path)
         assert response.status_code == 200, path

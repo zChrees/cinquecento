@@ -7,6 +7,7 @@
   - page_class: classi in più per <main> (es. "page--form" per i moduli);
   - content: il contenuto.
   - navbar: predefinito partials/navbar.html (P40); una pagina senza navbar lo svuota.
+  L'icona della scheda (P42) è in img/favicon.svg, con le copie PNG accanto.
   Le risorse esterne (font e icone da Google Fonts) si caricano SOLO qui e sono
   solo quelle elencate in docs/prototipo/LEGGIMI.md.
   Gli attributi data-user-* del <body> e il meta csrf-token sono fissati dal
@@ -18,6 +19,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>{% block title %}Cinquecento{% endblock %}</title>
+
+  {# Icona della scheda (P42): SVG per i browser moderni, PNG per gli altri e per la schermata Home del telefono #}
+  <link rel="icon" href="{{ url_for('static', filename='img/favicon.svg') }}" type="image/svg+xml">
+  <link rel="icon" href="{{ url_for('static', filename='img/favicon-32.png') }}" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/apple-touch-icon.png') }}">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

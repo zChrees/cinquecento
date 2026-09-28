@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P42 — Logo vero e icona della scheda (28/09/2026)
+
+- **Branch**: feature/p42-logo
+- **File**: creati `app/static/img/favicon.svg`, `favicon-32.png`, `apple-touch-icon.png`, `tests/frontend/test_logo.py`; modificati `app/templates/base.html` (tre `<link>` per l'icona) e, fuori elenco, mio (P19), `tests/frontend/test_base.py` (si aspettava che i primi collegamenti della pagina fossero i CSS); questo file. `navbar.html` e `navbar.css` non sono cambiati
+- **Controlli**: 1202 PASS in 7 suite (8 nuovi), `ruff check .` pulito. È anche il primo giro completo con P47 e P35 insieme: tutto PASS
+- **Decisioni prese** (mie, sulle raccomandazioni di Claude):
+  - **il logo della navbar resta quello di P40** (due carte vere che si girano, "Cinque**cento**" in Fredoka): è già alto 34 px sul telefono e 44 su computer, nitido, e porta alla home; niente scritta ridisegnata in SVG;
+  - **icona della scheda**: una carta rossa (il dorso) dietro e una crema davanti con un denaro giallo, nei colori della palette; SVG per i browser moderni, PNG da 32 px per gli altri, PNG da 180 px su panno verde per la schermata Home di iPhone e Android. Le PNG le ha fatte Chrome dall'SVG (nessuno strumento nuovo nel progetto). Prima il browser chiedeva `/favicon.ico` e riceveva 404
+- **Domande nuove**: nessuna
+- **Punti delicati**: nei commenti dell'SVG non si scrive il doppio trattino (un nome di variabile CSS come `--red`): l'SVG diventa non valido e non si vede; lo controlla `test_logo.py`. Se cambia l'SVG, vanno rifatte le due PNG
+- **Cosa devono fare gli altri**: **Chi è di turno sui documenti**: spuntare P42 e registrare le due decisioni in `DECISIONI.md` (Interfaccia). **Giuseppe**: niente
+
 ### Correzione — Test della home dopo P47 (28/09/2026)
 
 - **Branch**: feature/p35-carte-vere (commit a parte, dopo il rebase su P47)
