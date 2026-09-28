@@ -22,6 +22,31 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: P21, P23 e D18 (28/09/2026)
+
+- **Branch**: docs/p21-p23
+- **File**: modificati `SCALETTA.md` (P21 e P23 spuntati, "Da dove si parte"), `DECISIONI.md` (D18, tavolo, client Socket.IO), `DA-DECIDERE.md` (D18 chiusa), `CLAUDE.md` (riga "Stato", numero di test, punti delicati di P21 e P23), questo file
+- **Controlli**: nessun codice cambiato; 761 PASS restano quelli di P21
+- **Decisioni prese**: registrate quelle di P21 e di P23 (dal riepilogo di Giuseppe)
+- **Domande nuove**: nessuna
+- **Punti delicati**: **correzione**: nei riepiloghi di P20 avevo scritto `legal.cards`, ma nel contratto le carte giocabili sono `legal.play`; corretto qui sotto, in `SCALETTA.md` e nei commenti del codice
+- **Cosa devono fare gli altri**: niente in più di quanto scritto in P21
+
+### P21 — Tavolo di gioco con le viste finte (28/09/2026)
+
+- **Branch**: feature/p21-tavolo (commit `450bb53`, in `dev` e su GitHub dopo un rebase su P23, senza conflitti)
+- **File**: creati `app/templates/game/table.html`, `app/static/js/pages/game.js`, `app/static/js/components/Table.js`, `Trick.js`, `Scoreboard.js`, `Timer.js`, `SingButtons.js`, `app/static/css/components/table.css`, `trick.css`, `scoreboard.css`, `timer.css`, `app/static/css/pages/game.css`, `tests/api/test_pagina_tavolo.py`; modificato `app/blueprints/game/routes.py`. Fuori elenco, solo commenti: `Hand.js`, `app/static/dev/carte.html` (`legal.play`)
+- **Controlli**: 761 PASS in tutto (13 nuovi), `ruff check .` pulito; foto a 360×640, 1366×657, 1440×900 e 1920×1080
+- **Cosa fa**:
+  - `/game/<game_id>` (l'indirizzo di `game:start`) con il login; `?demo=1v1` e `?demo=2v2` disegnano le viste finte, solo in sviluppo e nei test;
+  - `game.js` ha un'unica `render(vista)` che ridisegna tutto il tavolo; in prova carte e "Canta" mostrano solo una scritta, "Esci" chiede conferma e torna alla home;
+  - navbar nascosta; tu in basso e gli altri verso destra (nel 2v2 compagno in alto); anello del tempo attorno all'avatar; presa, mazzo e briscola al centro; canti come icone accanto al nome; "compagno", "mazziere", "scollegato · 48 s" sotto il nome.
+- **Decisioni prese**: D18 chiusa (stesso panno della home); navbar nascosta al tavolo; anello del tempo; mazzo con il numero e briscola con l'Asso del seme.
+- **Domande nuove**: nessuna
+- **Punti delicati**: l'etichetta "Canta 40 / 20" la ricava la pagina (40 se `sings` è vuoto): se si preferisce che la mandi il server, va cambiato il contratto. Il test del tavolo nel browser usa la porta 5099, come la suite `sockets`.
+- **Cosa devono fare gli altri**:
+  - **Giuseppe** (P24): in `game.js` i punti da collegare sono segnati con "P24:"; a ogni `game:state` basta chiamare `render(vista)`; `onPlay` riceve la carta già come `{suit, rank}` (il campo `card` di `game:play_card`), `onSing` il seme; mentre si aspetta la risposta vanno disattivati i pulsanti (con un messaggio nella riga di stato, `setStatus`). Restano a P24/P25: ultima presa per un momento, riepilogo di fine mano, carte del canto per 3 secondi (`game:sang`).
+
 ### Documenti: P20, D39, P16 e correzione di `migrate.py` (28/09/2026)
 
 - **Branch**: docs/p20-d39-p16
@@ -39,14 +64,14 @@
 - **Controlli**: 736 PASS in tutto (17 nuovi: 16 di P20 e 1 di D39), `ruff check .` pulito; foto a 360×640 e 1440×900
 - **Cosa fa**:
   - `Card(carta)` disegna una carta scoperta, `Card(carta, { onPlay, playable })` una carta-pulsante della mano, `CardBack()` il dorso; ogni carta ha `data-suit` e `data-rank`;
-  - `Hand(carte, { playable, onPlay })` mette le carte in fila dritta e rende giocabili solo quelle di `legal.cards`; `HiddenHand(n)` mostra n carte coperte (per `cards_in_hand` degli avversari);
+  - `Hand(carte, { playable, onPlay })` mette le carte in fila dritta e rende giocabili solo quelle di `legal.play`; `HiddenHand(n)` mostra n carte coperte (per `cards_in_hand` degli avversari);
   - la pagina di prova `http://localhost:5000/static/dev/carte.html` mostra le 40 carte, il dorso, una mano da 5 e 3 carte coperte.
 - **Decisioni prese**: faccia con valore e Asso del seme, mano in fila dritta, pagina di prova con i font di Google; D39 chiusa (crediti anche nella finestra di accesso).
 - **Domande nuove**: nessuna
 - **Punti delicati**: queste carte si vedono **in gioco** finché P35 non porta quelle vere; P35 cambia solo la faccia (`Card.js`, `card.css`).
 - **Proposta importante per le carte vere (P35, D19)**: le immagini che usiamo già (Cavallo, Re, Asso e Tre) sono ritagli delle scansioni di **Matsoftware** su Wikimedia Commons, un foglio per seme, con licenza **CC BY-SA 3.0**. Probabilmente ogni foglio contiene tutte le 10 carte del seme: si potrebbero ritagliare da lì **tutte le 40 carte**, con la riga dei crediti che c'è già. **Non è ancora verificato**: va controllato all'inizio di P35 aprendo le quattro scansioni. Se avete immagini vostre da proporre, ditelo (D19).
 - **Cosa devono fare gli altri**:
-  - **Giuseppe** (P24): la mano del tavolo si costruisce con `Hand(view.hand, { playable: view.legal.cards, onPlay })`; la carta toccata arriva come `{suit, rank}`, già nella forma del campo `card` di `game:play_card`;
+  - **Giuseppe** (P24): la mano del tavolo si costruisce con `Hand(view.hand, { playable: view.legal.play, onPlay })`; la carta toccata arriva come `{suit, rank}`, già nella forma del campo `card` di `game:play_card`;
   - **Giuseppe** (grafica di P16): senza uno script di pagina, nelle pagine di accesso e registrazione la navbar non si apre ("Da concordare" in `SCALETTA.md`).
 
 ### Documenti: P40, P6 e correzione di `checks.py` (28/09/2026)

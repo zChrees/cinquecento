@@ -23,7 +23,6 @@ Per D8 e D10, `config.py` (P4) usa già il valore consigliato, con il commento "
 
 ## Interfaccia
 
-- [ ] **D18 — Colore del tavolo di gioco**: colori e stile delle pagine vengono dal prototipo scritto da Claude (P52, stile siciliano; per ora solo tema chiaro, il tema scuro è P53). Resta da decidere il tavolo, che il prototipo non comprende: consigliato il verde classico, accostato alla palette del prototipo, con una versione per il tema scuro quando arriva P53.
 - [ ] **D19 — Immagini delle carte**: da dove vengono le vostre immagini e con che licenza? Serve saperlo per usarle nella versione finale (punto P35). Fino ad allora in gioco si vedono le carte segnaposto di P20.
   **Proposta per la fonte (28/09/2026, da verificare)**: le carte già nel progetto (`app/static/img/cards-bg/`: Cavallo, Re, Asso e Tre) sono ritagli delle scansioni di **Matsoftware** su Wikimedia Commons, un foglio per seme (`Carte_da_gioco_siciliane_-_<seme>.jpg`), con licenza **CC BY-SA 3.0**. Probabilmente ogni foglio contiene tutte le 10 carte del seme: in quel caso si ritagliano da lì tutte le 40 carte, con la stessa licenza e la riga dei crediti che c'è già (D37, D39). Da controllare all'inizio di P35, aprendo le quattro scansioni.
 - [ ] **D29 — Set di avatar**: deciso il 28/09/2026 che sono 12 in SVG, con i 4 semi e 8 figure siciliane (vedi `DECISIONI.md`). Restano aperti: quali 8 figure (Re, Cavallo e Fante di quali semi), chi li disegna o da dove si prendono, e con che licenza.
