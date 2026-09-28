@@ -75,15 +75,15 @@ Una web-app per giocare online a **Cinquecento**, variante siciliana, con le car
 - [x] P56 (Fase 2, C): frasi del tavolo nella pagina — `TablePhrases.js`, `table-phrases.css`, `pages/game.js` — *28/09 (Christian, commit `9e6c098`): 12 test nuovi in `tests/frontend/test_frasi_pagina.py` (non `test_frasi_tavolo.py`: il nome c'è già in `tests/sockets/`), 1131 PASS; pulsante "Frasi" in alto a destra, elenco a pillole, fumetto per 4 secondi accanto all'avatar, pulsante spento 3 secondi dopo l'invio, frasi anche a partita finita. Fuori elenco, con l'ok di Christian: `Table.js`, `table.html`, `test_momenti_tavolo.py`*
 - [x] P57 (Fase 2, C): momenti del tavolo: ultima presa, riepilogo di fine mano, carte del canto — `HandSummary.js`, `Table.js`, `pages/game.js` — *28/09 (Christian, commit `449eb0a`): 12 test nuovi (`tests/frontend/test_momenti_tavolo.py`), 1066 PASS; ultima presa al centro per 1,5 secondi, riepilogo di fine mano per 5 secondi (o "Ok"), fine partita dopo l'ultima presa, carte del canto per `show_seconds`; mai alla prima vista. L'ultima presa della mano non arriva alla pagina: la porta P58. Fuori elenco, con l'ok di Christian: `table.html`*
 - [x] P30 (Fase 2, B+C): pannello statistiche con dati reali — `stats_service.py`, `stats_repo.py`, `StatsPanel.js` — *28/09 (Christian, commit `3419247`): 14 test nuovi (`tests/api/test_statistiche.py`), 1119 PASS; `GET /stats/me` sempre, anche in sviluppo; "provvisorio" contato da `giocatori_partita` e `partite.conta_per_rating`; nel 2v2 la partita in cui il compagno abbandona non conta per il "provvisorio" di chi resta. Fuori elenco, con l'ok di Christian: `navbar.html` (`data-stats-url`), `tests/frontend/test_navbar.py`*
-- [ ] P58 (Fase 2, A): ultima presa della mano nella vista — `app/game/engine/state.py`, `game.py`, `views.py`, `docs/CONTRATTO-SOCKET.md` (3.3), `app/static/dev/vista_*.json` — *aggiunto il 28/09/2026, approvato dai tre*
+- [x] P58 (Fase 2, A): ultima presa della mano nella vista — `app/game/engine/state.py`, `game.py`, `views.py`, `docs/CONTRATTO-SOCKET.md` (3.3), `app/static/dev/vista_*.json` — *aggiunto il 28/09/2026, approvato dai tre. 28/09 (Giuseppe, commit `4dd9e5e`): `HandResult.last_trick`, `last_hand.last_trick` nella vista con la stessa forma di `last_trick`, contratto 3.3 ed esempio 1v1 (`vista_2v2.json` ha `last_hand` null); 10 test nuovi nella suite `engine`, 1243 PASS e 2 FAIL (quelli noti di Christian); il test "nessuna carta nascosta" ora controlla `last_hand` a parte (il mazzo si rimescola: una carta dell'ultima presa può essere adesso in mano a un altro). Resta a Christian: `game.js` mostra quelle carte prima del riepilogo*
 - [ ] P59 (Fase 2, I): 2v2 con più amici invitati — **file non tutti sicuri, vedi sezione 9.2** — *aggiunto il 28/09/2026, approvato dai tre*
 - [ ] ~~P49 (Fase 2, B+C): classifica~~ — **tolto il 27/09/2026** per decisione dell'utente (vedi `DECISIONI.md`, Progetto e tempi)
 - [ ] ~~P50 (Fase 2, B+C): pagina "Partite" (storico)~~ — **tolto il 27/09/2026** per decisione dell'utente (vedi `DECISIONI.md`, Progetto e tempi)
 - [ ] ~~P51 (Fase 2, C): pagina "Regole" con mini-tutorial~~ — **tolto il 27/09/2026** per decisione dell'utente (vedi `DECISIONI.md`, Progetto e tempi)
 
 ### Fase 3 — Robustezza
-- [ ] P31 (Fase 3): test end-to-end con client simulati — `tests/e2e/`
-- [ ] P32 (Fase 3): sicurezza di base — `config.py`, `app/__init__.py`, altri **da definire**
+- [x] P31 (Fase 3): test end-to-end con client simulati — `tests/e2e/` — *29/09 (Giuseppe, commit `7378ef9`, più `c9e1aaa` per le correzioni): suite nuova `e2e`, 12 test; il server è un **processo a parte** (`python run.py` con `APP_ENV=testing`) e i test passano solo dagli ingressi veri (moduli con CSRF, rotte degli amici, Socket.IO, `GET /stats/me`); partite intere 1v1 e 2v2 dalla coda senza carte altrui nelle viste, amicizia, chat, blocco, inviti 1v1 e 2v2 (con abbandono), casi limite. In più `tests/e2e/helpers.py` (aiuti comuni, importati come `tests.e2e.helpers`). **Tre bug trovati e corretti** (commit a parte): amici "in partita" per sempre dopo una partita (`room.notify`), ora dei messaggi di chat e delle richieste di amicizia diversa tra risposta e liste (MySQL arrotonda i decimali: `chat_repo` e `friend_repo` ora tagliano l'ora alla precisione della colonna). 1255 PASS e 2 FAIL*
+- [x] P32 (Fase 3): sicurezza di base — `config.py`, `app/__init__.py`, altri (lista in 9.2) — *29/09 (Giuseppe, commit `b38c56b`): intestazioni di sicurezza con CSP su ogni risposta; limite di frequenza per scheda sugli eventi in tempo reale (20 di fila, poi 10 al secondo); "Esci" e cancellazione dell'account scollegano tutte le schede (la cancellazione toglie anche dalla coda e annulla gli inviti); `not_logged_in` a una scheda di un account che non esiste più. I gestori validavano già tutto: 15 eventi × 18 dati sbagliati, mai `server_error`. 46 test nuovi (`tests/api/test_sicurezza.py`, `tests/sockets/test_validazione_eventi.py`, `tests/frontend/test_csp.py`), 1301 PASS e 2 FAIL (quelli noti di Christian)*
 - [ ] P33 (Fase 3): errori e connessione nell'interfaccia — `Banner.js`, `app/static/js/core/socket.js`, altri **da definire**
 
 ### Fase 4 — Rifiniture e revisione
@@ -112,7 +112,8 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 | `app/__init__.py`, `config.py` | P4 → P55 → P32 | Dopo P4: P55 (Giuseppe) aggiunge una chiave a `config.py`, concordata nel punto; poi solo P32. Il 28/09/2026 Christian ha aggiornato commenti e chiavi di `config.py` alle decisioni prese, prima che partissero i punti; lo stesso giorno, dopo D9, D16, D26 e D27, ha aggiornato di nuovo i commenti (solo i commenti, non i valori) |
 | `requirements.txt`, `requirements-dev.txt`, `.env.example`, `app/extensions.py` | P4 | Una libreria o una chiave nuova richiede di fermarsi e concordarla |
 | `app/sockets/__init__.py` | P4 → P23 → P44 | Giuseppe (P28 non l'ha toccato) |
-| `app/realtime/room.py` | P23 → P24 → P25 → P26 → P55 → P44 → P47 | Giuseppe; P25 e P26 li ha fatti Antonio (salvataggio ed elenco delle mosse, `_moves`); P55 `phrase_times`, P44 `finish_listeners`, P47 `start_listeners` |
+| `app/realtime/room.py` | P23 → P24 → P25 → P26 → P55 → P44 → P47 → P31 | Giuseppe; P25 e P26 li ha fatti Antonio (salvataggio ed elenco delle mosse, `_moves`); P55 `phrase_times`, P44 `finish_listeners`, P47 `start_listeners`, P31 la correzione di `notify` |
+| `app/realtime/events.py`, `app/realtime/presence.py` | P23 → P44 → P32 | Giuseppe (P32: controllo del login e limite nel decoratore `handler`, `disconnect_user`) |
 | `app/realtime/room_manager.py` | P23 → P24 → P47 | Giuseppe. P28, P29 e P44 **usano** le funzioni che P24 espone; P47 ha aggiunto `start_listeners` |
 | `app/sockets/connection_events.py` | P4 → P23 → P25 → P28 → P44 → P47 | Giuseppe |
 | `app/sockets/lobby_events.py` | P4 → P28 → P29 | Giuseppe, sui punti di Antonio (niente stanze private) |
@@ -129,9 +130,10 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 | `app/static/js/core/layout.js` | P40 → P46 | Christian |
 | `app/static/js/core/socket.js` | P23 → P33 | — |
 | `app/game/engine/game.py`, `state.py`, `views.py` | P13 → P14 → P15 → P58 | Giuseppe |
-| `app/services/auth_service.py`, `app/repositories/user_repo.py` | P16 → P17 | Antonio |
+| `app/services/auth_service.py`, `app/repositories/user_repo.py` | P16 → P17 → P32 | Giuseppe (P16), Antonio (P17), Giuseppe (P32: cancellazione dell'account con coda e inviti) |
 | `app/services/match_service.py` | P26 → P27 | Antonio |
 | `app/services/friend_service.py` | P45 → P47 | Antonio, poi Giuseppe con il suo permesso |
+| `app/repositories/chat_repo.py`, `friend_repo.py` | P48, P45 → P31 | Giuseppe (P31: l'ora tagliata alla precisione della colonna) |
 | `tests/browser.py` | P46 → P29 | Christian; Giuseppe ha corretto l'attesa della porta di Chrome (P29, commit a parte) |
 | `app/blueprints/*/routes.py` e `__init__.py` | P4 (segnaposto) → un solo punto per blueprint | `main/routes.py`: solo P22 (Christian) |
 | `app/templates/base.html` | P19 → P40 → P46 → P42 → P33 | Christian |
@@ -659,10 +661,10 @@ Due studenti che lavorano in parallelo non toccano mai gli stessi file. Vale anc
 
 **Christian (Studente 3) — interfaccia e documenti:** P3, P52, P8, P9, P19, P40, P20, P21, P22, P46, P56, P57, P30, P60, P36, P37 (più P33, P34, P35, P42, P43 e P53 in 9.2)
 
-**Da dove si parte** (aggiornato il 28/09/2026, notte: in `dev` ci sono P1–P8, P10–P30, P35, P40, P42, P44–P48, P52, P55–P57, metà di P38, più le correzioni di `app/checks.py`, `scripts/migrate.py`, `tests/browser.py` e dei test della home) [L]:
-- **Giuseppe**: **P58** (ultima presa della mano, piccolo, lo aspetta Christian per `game.js`), poi **P31** (P25, P29, P47 e P48 sono in `dev`) e **P32**; **P59** (2v2 con più amici) quando c'è tempo, dopo P31 e P32 (non si tagliano mai, D31), oppure prima di P31 se il gruppo lo preferisce, perché cambia gli inviti che P31 prova. **P38** (installazione sul PC della demo) aspetta D20; **P39** l'ultimo giorno.
-- **Antonio**: nessun punto aperto (vedi sopra).
-- **Christian**: prima i **2 test di `tests/frontend/test_pannello_amici.py`** che non passano più dopo P48 (`test_chat_di_prova_testo_come_testo`, `test_indietro_ed_esc_chiudono`: provano la chat finta; nel template resta `data-chat-demo-url`, non più usato); poi `game.js` per l'ultima presa della mano quando P58 è in `dev`; poi **P33** (P25, P29, P44, P47 e P48 sono in `dev`), P34, P43, P53, **P60**, e dopo P31, P32 e P33 la review **P36**.
+**Da dove si parte** (aggiornato il 29/09/2026: in `dev` ci sono P1–P8, P10–P32, P35, P40, P42, P44–P48, P52, P55–P58, metà di P38, più le correzioni di `app/checks.py`, `scripts/migrate.py`, `tests/browser.py`, dei test della home e le tre di P31) [L]:
+- **Giuseppe**: P58, P31 e P32 fatti; resta **P59** (2v2 con più amici: i dettagli si fissano all'inizio del punto, con il contratto 5.3 e il gruppo), poi `js/pages/auth.js` se il gruppo lo conferma (sotto); **P38** (installazione sul PC della demo) aspetta D20; **P39** l'ultimo giorno.
+- **Antonio**: nessun punto aperto.
+- **Christian**: prima i **2 test di `tests/frontend/test_pannello_amici.py`** che non passano più dopo P48 (`test_chat_di_prova_testo_come_testo`, `test_indietro_ed_esc_chiudono`: provano la chat finta; nel template resta `data-chat-demo-url`, non più usato); poi `game.js` per l'ultima presa della mano (**P58 è in `dev`**: le carte sono in `last_hand.last_trick`); poi **P33** (P25, P29, P44, P47, P48 e P32 sono in `dev`: dopo "Esci" le altre schede sono scollegate dal server e non si ricollegano da sole; ogni evento può rispondere `too_fast`), P34, P43, P53, **P60**, e la review **P36** (P31, P32 sono in `dev`; manca P33). Con P32 vale la **CSP**: niente script, stili o `onclick=` scritti nell'HTML, e ogni risorsa esterna nuova va anche in `CSP_DIRECTIVES` di `app/__init__.py`.
 - **Da concordare**: le pagine di accesso e registrazione (P16) non hanno ancora uno script di pagina, quindi lì la navbar non si apre. Serve un `js/pages/auth.js` che importa `core/layout.js` e chiama `initLayout()`: non è nell'elenco di nessun punto; proposta: lo aggiunge Giuseppe con la grafica delle due pagine.
 
 | Punto | Chi | File condivisi con punti di altri studenti | Attende (già in `dev`) |
@@ -720,8 +722,9 @@ Due studenti che lavorano in parallelo non toccano mai gli stessi file. Vale anc
 
 Per questi punti non posso dire adesso con certezza quali file verranno toccati. Per ognuno indico i file che penso tocchi, perché non sono sicuro, e a chi lo assegnerei. **Regola:** all'inizio del punto chi lo fa scrive qui la lista definitiva dei file e la comunica agli altri. Se uno di quei file è in uso da un altro studente, aspetta che l'altro abbia finito e fatto il merge in `dev`.
 
-**P32 — Sicurezza di base** · proposto: Giuseppe (giorno 7)
-- *Sicuri*: `config.py`, `app/__init__.py` (creati da P4), `tests/api/test_sicurezza.py`, `tests/sockets/test_validazione_eventi.py`.
+**P32 — Sicurezza di base** · proposto: Giuseppe (giorno 7) — **fatto il 29/09/2026**
+- *Lista definitiva* (confermata da Giuseppe prima di cominciare): modificati `config.py`, `app/__init__.py`, `app/realtime/events.py`, `app/realtime/presence.py`, `app/blueprints/auth/routes.py`, `app/services/auth_service.py`; creati `tests/api/test_sicurezza.py`, `tests/sockets/test_validazione_eventi.py`, `tests/frontend/test_csp.py`; modificati `tests/sockets/conftest.py`, `tests/sockets/test_connessione.py`, `tests/e2e/helpers.py`. Non toccati i gestori degli eventi, `auth/forms.py`, `friends/routes.py` e i template: validavano già tutto.
+- *Sicuri* (previsti all'inizio): `config.py`, `app/__init__.py` (creati da P4), `tests/api/test_sicurezza.py`, `tests/sockets/test_validazione_eventi.py`.
 - *Probabili*: `app/sockets/connection_events.py`, `lobby_events.py`, `game_events.py`, `friends_events.py`, `chat_events.py`, `home_events.py`; `app/blueprints/auth/forms.py`; `app/blueprints/friends/routes.py`; forse `app/templates/auth/*.html`; `app/services/auth_service.py` (la cancellazione dell'account controlla solo la partita in corso, non la coda né un invito aperto [L], punto delicato di P17).
 - *Perché non sono sicuro*: il punto corregge **quello che manca** nel codice scritto da P16–P56. Se i gestori validano già bene i dati, non vanno toccati; se no, sì. Lo si sa solo leggendo il codice quando esiste. I punti di Antonio che toccavano quei file sono tutti in `dev` (P28, P29 e P48 li ha fatti Giuseppe).
 

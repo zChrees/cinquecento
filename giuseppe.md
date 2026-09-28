@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### Documenti: registrati P58, P31 e P32 (29/09/2026)
+
+- **Branch**: docs/registra-p58-p31-p32
+- **File**: modificati `SCALETTA.md` (tracker, sezione 3, "Da dove si parte", 9.2 di P32), `DECISIONI.md` (Sicurezza; Processo), `CLAUDE.md` (riga "Stato", punti delicati, numero dei controlli), questo file. `DA-DECIDERE.md` non cambia
+- **Controlli**: nessuno (soli documenti); 1301 PASS e 2 FAIL su 1303 dall'ultimo giro di Giuseppe (P32)
+- **Registrati**: di Giuseppe P58, P31 (con le tre correzioni) e P32. Di Christian e di Antonio niente di nuovo dopo l'ultimo aggiornamento (fermi a P42 e P27)
+- **Decisioni registrate**: le quattro di P32 (limite di frequenza, CSP, "Esci" che scollega tutte le schede, cancellazione dell'account con coda e inviti) in Sicurezza; il server della suite `e2e` come processo a parte (P31) in Processo
+- **Domande nuove**: nessuna
+- **Punti delicati**: aggiunti in `CLAUDE.md` quelli di P31 (suite `e2e`, ore arrotondate da MySQL, `room.notify`) e di P32 (CSP, decoratore `handler`, `disconnect_user`); quello di P17 su coda e inviti ora dice che è risolto
+- **Note per gli altri**: **Christian**: in "Da dove si parte" il tuo ordine resta quello del mio aggiornamento di ieri, con P58 già in `dev` (puoi adattare `game.js`) e le novità di P32 da tenere presenti in P33 (schede scollegate dopo "Esci", `too_fast` su ogni evento, CSP)
+
 ### P32 — Sicurezza di base (29/09/2026)
 
 - **Branch**: feature/p32-sicurezza
