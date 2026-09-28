@@ -121,13 +121,29 @@ def finished_by_abandon(view):
 # --- Timer del turno (D12) ---
 
 
+def shorten_turn(room, seconds):
+    """Turno ridotto dopo che tutti sono seduti: il timer riparte adesso, sotto il lock.
+
+    Con il turno corto già alla creazione, le mosse automatiche partono mentre i client
+    si collegano: se tocca a chi risponde, la sua carta chiude la presa, va in
+    last_trick e non compare mai in trick (test instabile, P25).
+    """
+    def _shorten():
+        room.turn_seconds = seconds
+        room._start_turn()
+
+    room.run(_shorten)
+
+
 def test_turno_scaduto_il_server_gioca_la_mossa_automatica(connect, new_room):
-    room = new_room(["Primo", "Secondo"], turn=0.3)
+    room = new_room(["Primo", "Secondo"], turn=30)
     seats = sit(connect, room, ["Primo", "Secondo"])
     first = seats[0].last
+    assert first["trick"]["cards"] == []  # nessuna mossa prima del timer: chi ha il turno apre la presa
     turn = first["turn"]["seat"]
     legal = seats[turn].last["legal"]["play"]
-    assert first["turn"]["seconds_total"] == 0.3
+    shorten_turn(room, 0.3)
+    assert room.view_for(0)["turn"]["seconds_total"] == 0.3
 
     after = seats[0].wait_for(lambda v: any(c["seat"] == turn for c in v["trick"]["cards"]))
     played = next(c["card"] for c in after["trick"]["cards"] if c["seat"] == turn)

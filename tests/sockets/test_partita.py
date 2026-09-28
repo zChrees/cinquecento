@@ -288,6 +288,13 @@ def test_richiesta_che_non_e_un_oggetto_rifiutata(connect):
     assert answer["error"]["code"] == "invalid_data"
 
 
+@pytest.mark.parametrize("event", ["game:join", "game:play_card", "game:sing"])
+def test_evento_senza_dati_rifiutato(connect, event):
+    """Un evento mandato senza dati è invalid_data, non server_error (come game:leave, P25)."""
+    answer = connect("Primo").call(event, timeout=WAIT)
+    assert answer["ok"] is False and answer["error"]["code"] == "invalid_data", answer
+
+
 def test_seme_non_valido_rifiutato(connect, new_room):
     room = new_room(["Primo", "Secondo"], "1v1")
     seats, version = sit(connect, room, ["Primo", "Secondo"])

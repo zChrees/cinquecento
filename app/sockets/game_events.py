@@ -98,7 +98,7 @@ def _engine_errors(move):
 
 
 @handler
-def on_join(data):
+def on_join(data=None):
     room, seat = _table(data)
     sid = request.sid
 
@@ -114,7 +114,7 @@ def on_join(data):
 
 
 @handler
-def on_play_card(data):
+def on_play_card(data=None):
     room, seat = _table(data)
     version, card = _version(data), _card(data)
 
@@ -127,7 +127,7 @@ def on_play_card(data):
 
 
 @handler
-def on_sing(data):
+def on_sing(data=None):
     room, seat = _table(data)
     version, suit = _version(data), _suit(data.get("suit"))
 

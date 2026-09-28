@@ -22,6 +22,19 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### Correzione — Test instabile di P25 ed eventi di gioco senza dati (28/09/2026)
+
+- **Branch**: fix/p25-timer-e-dati
+- **File**: modificati `app/sockets/game_events.py` (P24), `tests/sockets/test_timer_riconnessione.py` (P25), `tests/sockets/test_partita.py` (P24). Nessun file fuori elenco; `room.py` non toccato
+- **Controlli**: 1031 PASS in tutto, in 7 suite (3 nuovi, nella suite `sockets`), `ruff check .` pulito. Il test instabile: prima 1 fallimento su 15 giri, dopo la correzione 0 su 20
+- **Decisioni prese**: nessuna
+- **Domande nuove**: nessuna
+- **Cosa è cambiato**:
+  - **test instabile** `test_turno_scaduto_il_server_gioca_la_mossa_automatica`: l'errore era nel test, non nel server. Con il turno da 0,3 s già alla creazione della stanza, le mosse automatiche partivano mentre i client si collegavano (è giusto così: chi non è seduto riceve la mossa automatica, scelta di P25). Se alla prima vista il turno era di chi risponde, la sua carta chiudeva la presa e finiva in `last_trick`, senza comparire mai in `trick`: il test aspettava 5 secondi e falliva (l'ipotesi di Christian era giusta). Ora i giocatori si siedono con un turno di 30 s, poi il test porta il turno a 0,3 s e fa ripartire il timer sotto il lock della stanza (`shorten_turn`);
+  - **`on_join`, `on_play_card`, `on_sing`** hanno `data=None`, come `on_leave`: un evento senza dati risponde `invalid_data` invece di `server_error` (correzione proposta da Antonio in P25; test nuovo `test_evento_senza_dati_rifiutato`).
+- **Punti delicati**: nei test con il turno corto, le viste arrivate **prima** del timer possono contenere già mosse automatiche; la carta che chiude una presa si vede solo in `last_trick`. Gli altri due test di P25 con il turno corto lo tengono già in conto
+- **Note per il contratto o per gli altri**: nessun cambiamento al contratto. **Christian**: il test di P25 che falliva sul tuo PC è corretto; il numero dei controlli è 1031
+
 ### P24 — Stanze e partita completa (28/09/2026)
 
 - **Branch**: feature/p24-partita (la parte server è partita prima che P21 fosse in `dev`; `game.js` l'ho toccato solo dopo, con P21 in `dev`)
