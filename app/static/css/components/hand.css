@@ -1,0 +1,35 @@
+/*
+ * Mano del giocatore (P20), creata da js/components/Hand.js: carte in fila
+ * dritta, affiancate, larghe quanto permette lo spazio (fino a --hand-card-max).
+ * A 360 px, con i margini della pagina, cinque carte sono larghe circa 60 px.
+ */
+
+.hand {
+  --hand-gap: 6px;
+  --hand-card-max: 96px;
+  display: flex;
+  justify-content: center;
+  gap: var(--hand-gap);
+  width: 100%;
+  padding-top: 10px;   /* spazio per la carta che si alza passandoci sopra */
+}
+
+.hand > .card {
+  flex: 0 1 var(--hand-card-max);
+  width: auto;
+  min-width: 0;
+}
+
+/* Carte coperte di un avversario: più piccole, a ogni larghezza di schermo */
+.hand.hand--hidden {
+  --hand-card-max: 44px;
+  --hand-gap: 4px;
+  padding-top: 0;
+}
+
+@media (min-width: 640px) {
+  .hand {
+    --hand-gap: 10px;
+    --hand-card-max: 104px;
+  }
+}

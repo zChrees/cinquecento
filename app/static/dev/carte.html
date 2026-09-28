@@ -1,0 +1,49 @@
+<!doctype html>
+<!--
+  Pagina di prova delle carte (P20): solo per sviluppo, non fa parte del sito.
+  Si apre con il server acceso: http://localhost:5000/static/dev/carte.html
+  Mostra le 40 carte, il dorso, una mano da 5 giocabile e le carte coperte di un
+  avversario. Carica gli stessi font di base.html (docs/prototipo/LEGGIMI.md).
+-->
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Carte · prova</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block">
+
+  <link rel="stylesheet" href="../css/base/reset.css">
+  <link rel="stylesheet" href="../css/base/variables.css">
+  <link rel="stylesheet" href="../css/base/typography.css">
+  <link rel="stylesheet" href="../css/components/card.css">
+  <link rel="stylesheet" href="../css/components/hand.css">
+  <link rel="stylesheet" href="carte.css">
+  <script type="module" src="carte.js"></script>
+</head>
+<body>
+  <main class="dev-cards">
+    <h1>Carte siciliane (segnaposto, P20)</h1>
+
+    <section>
+      <h2>La tua mano</h2>
+      <p class="dev-cards__note">Giocabili: Asso di coppe, Re di coppe e 3 di bastoni (come <code>legal.cards</code> della vista); le altre sono spente.</p>
+      <div data-demo-hand></div>
+      <p class="dev-cards__status" data-demo-status role="status" aria-live="polite"></p>
+    </section>
+
+    <section>
+      <h2>Carte coperte di un avversario</h2>
+      <div data-demo-hidden></div>
+    </section>
+
+    <section>
+      <h2>Le 40 carte</h2>
+      <div data-demo-deck></div>
+    </section>
+  </main>
+</body>
+</html>

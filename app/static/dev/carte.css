@@ -1,0 +1,45 @@
+/*
+ * Pagina di prova delle carte (P20): solo per sviluppo. A differenza delle pagine
+ * vere questa scorre, perché le 40 carte non stanno in uno schermo.
+ */
+
+body {
+  background: var(--felt);
+  color: var(--on-navbar);
+}
+
+.dev-cards {
+  display: grid;
+  gap: 28px;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 16px 16px 40px;
+}
+
+.dev-cards h1 {
+  font-size: 1.4rem;
+}
+
+.dev-cards h2 {
+  margin-bottom: 8px;
+  font-size: 1.1rem;
+}
+
+.dev-cards__note,
+.dev-cards__status {
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.dev-cards__status {
+  min-height: 1.5em;
+  margin-top: 8px;
+  font-weight: 700;
+}
+
+.dev-cards__suit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
