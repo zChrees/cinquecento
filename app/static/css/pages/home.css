@@ -1,0 +1,585 @@
+/*
+ * Home (P22), dal prototipo approvato (docs/prototipo/prototipo.css, "Home").
+ * Mobile-first: le regole di base sono per il telefono, i @media allargano.
+ * La cascata di carte sta in components/card-background.css, la carta-modal in
+ * mode-modal.css, la schermata di coda in queue-overlay.css.
+ * Colori solo tramite variabili (variables.css): luce e ombra con color-mix su
+ * --on-tile (bianco) e --ink (nero).
+ */
+
+/*
+ * --tile-h è l'altezza massima di una carta-pulsante: lo schermo meno tutto il resto
+ * (navbar, giocatori online, titoli, spazi). Così le carte si rimpiccioliscono
+ * sugli schermi bassi e la pagina non scorre mai.
+ */
+.home {
+  --tile-h: calc((100vh - 262px) / 2);
+  display: block;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 12px 16px;
+}
+
+@supports (height: 100dvh) {
+  .home {
+    --tile-h: calc((100dvh - 262px) / 2);
+  }
+}
+
+/* Il contenitore con i dati per lo script non conta nell'impaginazione */
+.home__view {
+  display: contents;
+}
+
+/*
+ * Spazio di "giocatori online" e dell'avviso di rientro: alto sempre uguale,
+ * così la pagina non salta quando arrivano i dati.
+ */
+.home__status {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 36px;
+}
+
+/* Giocatori online: centrato, scritta in rilievo sul tavolo come la navbar (.felt-text) */
+.online {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-title);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  font-size: 1rem;
+}
+
+.online__dot {
+  position: relative;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--online-light);
+}
+
+.online__dot::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border: 2px solid var(--online-light);
+  border-radius: 50%;
+  animation: pulse 2.2s ease-out infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.6); opacity: 0.8; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+/*
+ * Avviso "Hai una partita in corso": scritto sul panno come "giocatori online"
+ * (niente pillole sotto le scritte, come nel prototipo) e alto quanto quella riga.
+ * Tutto l'avviso è il collegamento; "Rientra" è una pillola rossa come i pulsanti.
+ */
+.home__resume {
+  display: flex;
+  justify-content: center;
+  max-width: 100%;
+}
+
+.resume {
+  max-width: 100%;
+}
+
+.resume__link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-title);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+}
+
+.resume__icon {
+  flex: none;
+  color: var(--yellow);
+  font-size: 22px;
+}
+
+.resume__text {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 8px;
+  min-width: 0;
+  line-height: 1.15;
+}
+
+.resume__detail {
+  font-family: var(--font-text);
+  font-weight: 700;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+/* Pillola "Rientra": come .btn--primary, ma bassa quanto la riga (il tocco vale su tutto l'avviso) */
+.resume__btn {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  background: var(--primary);
+  color: var(--on-primary);
+  box-shadow: 0 3px 0 var(--primary-strong);
+  font-family: var(--font-text);
+  font-weight: 800;
+  font-size: 0.9rem;
+  letter-spacing: 0;
+  text-shadow: none;
+  transition: filter 0.12s ease;
+}
+
+.resume__btn .icon {
+  font-size: 18px;
+}
+
+.resume__link:hover .resume__btn,
+.resume__link:focus-visible .resume__btn {
+  filter: brightness(1.06);
+}
+
+.home__sections {
+  display: grid;
+  gap: 16px;
+  margin-top: 14px;
+}
+
+/*
+ * Titolo direttamente sul tavolo, centrato sopra le sue due carte, scritto come
+ * il logo (.felt-text): resta leggibile anche quando dietro passa una carta.
+ */
+.mode-section__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  margin: 0 auto 10px;
+  padding: 5px 16px 5px 12px;
+  border-radius: var(--radius-pill);
+  font-weight: 700;
+  letter-spacing: 0.025em;
+  font-size: 1.35rem;
+}
+
+/* Icona del titolo: in rilievo come la scritta; cresce con il titolo */
+.mode-section__title .icon {
+  color: var(--on-navbar);
+  font-size: 1.1em;
+  text-shadow: var(--relief-text);
+}
+
+.mode-section__tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  justify-items: center;
+  gap: 14px;
+}
+
+/*
+ * Pulsante modalità disegnato come una carta da gioco stampata, in rilievo:
+ * - colore della carta in --tile, con una versione chiara e una scura calcolate;
+ * - la superficie ha i dettagli di una stampa, nello stesso stile dell'Asso:
+ *   grana della carta, tratteggio fine a incisione, trama a rombi leggera,
+ *   un medaglione di luce dietro l'Asso e i margini appena consumati;
+ * - cornice doppia sbalzata come l'Asso (::before);
+ * - sotto: lo spessore della carta, un bordo crema pieno visibile solo in basso
+ *   (--edge); sotto quel bordo non c'è nient'altro.
+ * Con il mouse la carta si solleva e si inclina verso il puntatore (--rx, --ry
+ * da home.js) e un riflesso di luce la segue (--gx, --gy).
+ */
+.mode-tile {
+  --tile-light: color-mix(in srgb, var(--tile) 92%, var(--on-tile));
+  --tile-dark: color-mix(in srgb, var(--tile) 70%, var(--ink));
+  --rx: 0deg;
+  --ry: 0deg;
+  --lift: 0px;
+  --edge: 2px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: min(100%, var(--tile-h) * 0.61);
+  aspect-ratio: var(--card-ratio);
+  padding: 12px 8px;
+  border: 0;
+  border-radius: var(--radius-l);
+  color: var(--on-tile);
+  text-align: center;
+  cursor: pointer;
+  background:
+    /* grana della carta stampata */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E"),
+    /* luce dall'alto */
+    radial-gradient(120% 70% at 30% 0%, color-mix(in srgb, var(--on-tile) 14%, transparent), transparent 60%),
+    /* medaglione di luce dietro l'Asso */
+    radial-gradient(ellipse 40% 30% at 50% 50%, color-mix(in srgb, var(--on-tile) 10%, transparent), transparent 72%),
+    /* margini appena consumati */
+    radial-gradient(ellipse 90% 80% at 50% 50%, transparent 62%, color-mix(in srgb, var(--ink) 8%, transparent) 100%),
+    /* tratteggio fine a incisione */
+    repeating-linear-gradient(135deg, color-mix(in srgb, var(--on-tile) 4%, transparent) 0 1px, transparent 1px 3.5px),
+    /* trama a rombi, leggera */
+    repeating-conic-gradient(from 45deg, color-mix(in srgb, var(--on-tile) 4%, transparent) 0 25%, transparent 0 50%) 50% 50% / 20px 20px,
+    linear-gradient(165deg, var(--tile-light), var(--tile) 50%, var(--tile-dark));
+  /* Spessore della carta: il bordo crema si vede solo sotto, e sotto non c'è altro */
+  box-shadow: 0 var(--edge) 0 var(--card-face);
+  transform: perspective(800px) translateY(var(--lift)) rotateX(var(--rx)) rotateY(var(--ry));
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+/* Cornice doppia sbalzata: luce sopra e ombra sotto */
+.mode-tile::before {
+  content: "";
+  position: absolute;
+  inset: 10px;
+  border: 4px double var(--on-tile);
+  border-radius: calc(var(--radius-l) - 9px);
+  filter:
+    drop-shadow(0 -1px 0 color-mix(in srgb, var(--on-tile) 40%, transparent))
+    drop-shadow(0 1.5px 1px color-mix(in srgb, var(--ink) 40%, transparent));
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Riflesso di luce che segue il puntatore */
+.mode-tile::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at var(--gx, 50%) var(--gy, 0%), color-mix(in srgb, var(--on-tile) 35%, transparent), transparent 55%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.mode-tile:hover,
+.mode-tile:focus-visible {
+  --lift: -6px;
+  --edge: 3px;
+}
+
+.mode-tile:hover::after,
+.mode-tile:focus-visible::after {
+  opacity: 1;
+}
+
+/* Premuta: la carta scende e lo spessore si schiaccia */
+.mode-tile:active {
+  --lift: 4px;
+  --edge: 1px;
+}
+
+.mode-tile--red { --tile: var(--red); }
+.mode-tile--purple { --tile: var(--purple); }
+.mode-tile--yellow { --tile: var(--yellow-card); }
+.mode-tile--blue { --tile: var(--blue); }
+
+/*
+ * Asso grande dietro le scritte, come una sagoma sbalzata nella carta: senza i
+ * dettagli del disegno, solo la forma (brightness(0) invert(1) la rende tutta
+ * bianca), con una luce sul bordo alto e un'ombra sotto. soft-light la fonde con
+ * il colore della carta: la sagoma è appena più chiara, il bordo alto più luminoso
+ * e quello basso più scuro, come un rilievo sulla superficie.
+ * L'immagine è uno sfondo (contain, centrata): stesso aspetto dell'<img> del prototipo.
+ */
+.mode-tile__suit {
+  position: absolute;
+  top: 18%;
+  left: 20%;
+  width: 60%;
+  height: 64%;
+  background: center / contain no-repeat;
+  filter:
+    brightness(0) invert(1)
+    drop-shadow(0 -2px 0 var(--on-tile))
+    drop-shadow(0 3px 1.5px var(--ink));
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+}
+
+.mode-tile__suit--coppe { background-image: url("../../img/cards-bg/asso-coppe-figura.webp"); }
+.mode-tile__suit--spade { background-image: url("../../img/cards-bg/asso-spade-figura.webp"); }
+.mode-tile__suit--denari { background-image: url("../../img/cards-bg/asso-denari-figura.webp"); }
+.mode-tile__suit--bastoni { background-image: url("../../img/cards-bg/asso-bastoni-figura.webp"); }
+
+.mode-tile__icon {
+  font-size: 34px;
+}
+
+.mode-tile__label,
+.mode-tile__sub,
+.mode-tile__icon {
+  position: relative;
+  /*
+   * Scritte in leggero rilievo, con bordi netti come il logo: spessore nel colore
+   * scuro della carta (strati pieni a mezzo pixel), linea scura alla base e un
+   * alone scuro leggero che le stacca dall'Asso dietro.
+   */
+  text-shadow:
+    0 0.5px 0 var(--tile-dark),
+    0 1px 0 var(--tile-dark),
+    0 1.5px 0 var(--tile-dark),
+    0 2px 0 color-mix(in srgb, var(--ink) 35%, transparent),
+    0 0 8px color-mix(in srgb, var(--ink) 28%, transparent),
+    0 4px 10px color-mix(in srgb, var(--ink) 25%, transparent);
+}
+
+/* Il sottotitolo è piccolo: rilievo più sottile */
+.mode-tile__sub {
+  text-shadow:
+    0 0.5px 0 var(--tile-dark),
+    0 1px 0 var(--tile-dark),
+    0 1.5px 0 color-mix(in srgb, var(--ink) 35%, transparent),
+    0 0 6px color-mix(in srgb, var(--ink) 30%, transparent);
+}
+
+.mode-tile__label {
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: 2.4rem;
+  line-height: 1.05;
+}
+
+.mode-tile__sub {
+  font-weight: 800;
+  font-size: 0.9rem;
+  line-height: 1.25;
+}
+
+/* A capo che vale solo sul telefono (vedi sotto) */
+.mode-tile__br {
+  display: none;
+}
+
+/*
+ * Telefono in verticale: "giocatori online" (o l'avviso di rientro) in fondo,
+ * centrato. L'altezza delle carte-pulsante (--tile-h) non cambia: lo spazio si
+ * sposta, ma occupa la stessa altezza.
+ */
+@media (max-width: 639px) {
+  /*
+   * Più spazio tra gli elementi: navbar e primo titolo, titolo e carte, le due
+   * sezioni, le due carte affiancate e "giocatori online". --tile-h sottrae anche
+   * questi spazi in più, così le carte si rimpiccioliscono e la pagina non scorre.
+   */
+  .home {
+    --tile-h: calc((100vh - 280px) / 2);
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    padding-top: 18px;
+    padding-bottom: calc(14px + env(safe-area-inset-bottom));
+  }
+
+  @supports (height: 100dvh) {
+    .home {
+      --tile-h: calc((100dvh - 280px) / 2);
+    }
+  }
+
+  .mode-section__title {
+    margin-bottom: 14px;
+  }
+
+  .mode-section__tiles {
+    gap: 20px;
+  }
+
+  .home__status {
+    order: 1;
+    margin-top: auto;
+  }
+
+  .home__sections {
+    gap: 26px;
+    margin-top: 0;
+  }
+
+  /* "Sfida" e a capo "un amico": su una riga sola uscirebbe dalla cornice */
+  .mode-tile__br {
+    display: inline;
+  }
+
+  /* Avviso di rientro: scritta sopra e dettaglio sotto, su due righe strette */
+  .resume__text {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .resume__text strong {
+    font-size: 0.95rem;
+  }
+}
+
+/* Tablet: carte di larghezza massima 220 px, sezioni centrate */
+@media (min-width: 640px) {
+  .home {
+    --tile-h: calc((100vh - 292px) / 2);
+    max-width: 720px;
+    padding: 16px 24px;
+  }
+
+  @supports (height: 100dvh) {
+    .home {
+      --tile-h: calc((100dvh - 292px) / 2);
+    }
+  }
+
+  .home__sections {
+    gap: 28px;
+    margin-top: 20px;
+  }
+
+  .mode-section {
+    width: fit-content;
+    margin: 0 auto;
+  }
+
+  .mode-section__tiles {
+    grid-template-columns: repeat(2, 220px);
+    gap: 20px;
+  }
+}
+
+/* Tablet largo: le due sezioni affiancate, come su computer */
+@media (min-width: 900px) {
+  .home {
+    --tile-h: calc(100vh - 270px);
+    max-width: var(--content-max);
+  }
+
+  @supports (height: 100dvh) {
+    .home {
+      --tile-h: calc(100dvh - 270px);
+    }
+  }
+
+  .home__sections {
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+  }
+
+  .mode-section {
+    width: auto;
+    margin: 0;
+  }
+
+  .mode-section__tiles {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Computer: carte più grandi e più distanziate (la navbar la allarga navbar.css) */
+@media (min-width: 1024px) {
+  .home {
+    --tile-h: calc(100vh - 290px);   /* 270 px come da 900 px, più i 20 px della navbar più alta */
+    padding: 24px 32px;
+  }
+
+  @supports (height: 100dvh) {
+    .home {
+      --tile-h: calc(100dvh - 290px);
+    }
+  }
+
+  .home__sections {
+    gap: 64px;
+    margin-top: 36px;
+  }
+
+  .mode-section__title {
+    font-size: 1.7rem;
+    margin-bottom: 20px;
+  }
+
+  .mode-section__tiles {
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+  }
+
+  .mode-tile {
+    gap: 6px;
+  }
+
+  .mode-tile__icon {
+    font-size: 48px;
+  }
+
+  .mode-tile__label {
+    font-size: 3.6rem;
+  }
+
+  .mode-tile__sub {
+    font-size: 1.05rem;
+  }
+}
+
+/* Telefono in orizzontale: schermo basso, quindi le quattro carte su una sola fila */
+@media (orientation: landscape) and (max-height: 520px) {
+  .home {
+    --tile-h: calc(100vh - 190px);
+    max-width: none;
+    padding: 8px 16px;
+  }
+
+  @supports (height: 100dvh) {
+    .home {
+      --tile-h: calc(100dvh - 190px);
+    }
+  }
+
+  .home__sections {
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 8px;
+  }
+
+  .mode-section {
+    width: auto;
+    margin: 0;
+  }
+
+  .mode-section__title {
+    margin-bottom: 6px;
+    font-size: 1.1rem;
+  }
+
+  .mode-section__tiles {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .mode-tile__icon {
+    font-size: 26px;
+  }
+
+  .mode-tile__label {
+    font-size: 1.8rem;
+  }
+
+  .mode-tile__sub {
+    font-size: 0.8rem;
+  }
+}

@@ -72,6 +72,13 @@
   --halo: rgb(0 0 0 / 0.26);          /* (P40) alone scuro dietro le scritte sul panno */
   --halo-logo: rgb(0 0 0 / 0.24);     /* (P40) alone scuro dietro il logo */
   --avatar-glow: rgb(255 194 26 / 0.55);   /* (P40) anello dell'avatar illuminato al passaggio */
+  /*
+   * (P22) Luce e ombra delle carte-pulsante, della carta-modal e della cascata:
+   * i CSS le usano con color-mix (per esempio color-mix(in srgb, var(--ink) 35%,
+   * transparent) = nero al 35%), così non servono colori scritti a mano.
+   */
+  --on-tile: #ffffff;                 /* (P22) scritte, cornice e luce delle carte-pulsante */
+  --ink: #000000;                     /* (P22) ombre e tinte scure */
 
   /* Ruoli usati dai componenti */
   --primary: var(--red);

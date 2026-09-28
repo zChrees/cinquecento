@@ -1,0 +1,178 @@
+/*
+ * Schermata di attesa in coda (P22, DECISIONI.md: "Attesa in coda a tutto
+ * schermo"). La crea js/components/QueueOverlay.js: è un <dialog> che copre tutto
+ * lo schermo; il panno e la cascata restano visibili sotto, scuriti. Le scritte
+ * sono sul panno come "giocatori online" (.felt-text); tre carte di dorso si
+ * mescolano mentre si aspetta (ferme con "riduci movimento").
+ */
+
+.queue-overlay {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: 24px var(--gutter) calc(24px + env(safe-area-inset-bottom));
+  background: transparent;
+  color: var(--on-navbar);
+  overflow: hidden;
+}
+
+.queue-overlay[open] {
+  display: grid;
+  place-items: center;
+}
+
+.queue-overlay::backdrop {
+  background:
+    radial-gradient(ellipse 80% 70% at 50% 45%, color-mix(in srgb, var(--felt-dark) 86%, transparent), color-mix(in srgb, var(--felt-edge) 96%, transparent));
+}
+
+.queue-overlay[open]::backdrop {
+  animation: backdrop-in 0.3s ease;
+}
+
+.queue-overlay__body {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+}
+
+/* Tre carte di dorso a ventaglio: quella in mezzo si alza e torna giù, come a mescolare */
+.queue-overlay__cards {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  height: 112px;
+  margin-bottom: 10px;
+}
+
+.queue-overlay__cards img {
+  width: 66px;
+  max-width: none;
+  aspect-ratio: var(--card-ratio);
+  border-radius: 7px;
+  object-fit: cover;
+  box-shadow: 0 6px 14px color-mix(in srgb, var(--ink) 35%, transparent);
+}
+
+.queue-overlay__cards img:nth-child(1) {
+  transform: rotate(-12deg) translate(14px, 6px);
+  animation: queue-left 2.4s ease-in-out infinite;
+}
+
+.queue-overlay__cards img:nth-child(2) {
+  position: relative;
+  z-index: 1;
+  animation: queue-middle 2.4s ease-in-out infinite;
+}
+
+.queue-overlay__cards img:nth-child(3) {
+  transform: rotate(12deg) translate(-14px, 6px);
+  animation: queue-right 2.4s ease-in-out infinite;
+}
+
+@keyframes queue-middle {
+  0%, 100% { transform: none; }
+  40% { transform: translateY(-22px) rotate(-4deg); }
+  60% { transform: translateY(-22px) rotate(4deg); }
+}
+
+@keyframes queue-left {
+  0%, 100% { transform: rotate(-12deg) translate(14px, 6px); }
+  50% { transform: rotate(-18deg) translate(4px, 10px); }
+}
+
+@keyframes queue-right {
+  0%, 100% { transform: rotate(12deg) translate(-14px, 6px); }
+  50% { transform: rotate(18deg) translate(-4px, 10px); }
+}
+
+/* Partita Veloce · 1v1 · 500 punti (senza maiuscolo: "2v2" resta com'è) */
+.queue-overlay__kicker {
+  font-weight: 800;
+  font-size: 0.95rem;
+  letter-spacing: 0.03em;
+}
+
+.queue-overlay__title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* Tempo trascorso, grande */
+.queue-overlay__time {
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: 3.2rem;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.queue-overlay__range {
+  font-weight: 700;
+}
+
+.queue-overlay__hint {
+  font-size: 0.9rem;
+}
+
+/* Compagno di squadra nel 2v2 con un amico */
+.queue-overlay__partner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+}
+
+.queue-overlay__partner .avatar {
+  width: 36px;
+  height: 36px;
+  font-size: 1rem;
+  text-shadow: none;
+}
+
+/* Il pulsante non eredita il rilievo delle scritte sul panno */
+.queue-overlay__cancel.btn {
+  min-width: 180px;
+  margin-top: 14px;
+  text-shadow: none;
+}
+
+@media (min-width: 1024px) {
+  .queue-overlay__title {
+    font-size: 2rem;
+  }
+
+  .queue-overlay__time {
+    font-size: 4rem;
+  }
+}
+
+/* Telefono in orizzontale: schermo basso, carte e spazi più piccoli */
+@media (max-height: 520px) {
+  .queue-overlay__body {
+    gap: 6px;
+  }
+
+  .queue-overlay__cards {
+    height: 76px;
+    margin-bottom: 4px;
+  }
+
+  .queue-overlay__cards img {
+    width: 44px;
+  }
+
+  .queue-overlay__time {
+    font-size: 2.4rem;
+  }
+
+  .queue-overlay__cancel.btn {
+    margin-top: 6px;
+  }
+}

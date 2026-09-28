@@ -1,15 +1,90 @@
 {% extends "base.html" %}
 {#
-  Home provvisoria (P19): usa già base.html e il panno del prototipo.
-  La home vera (carte-pulsante, modal, cascata di carte) la scrive P22.
-  js/pages/home.js per ora avvia solo navbar e pannelli (P40).
-  data-stato="ok" resta finché serve al test di avvio di P4.
+  Home (P22), dal prototipo approvato (docs/prototipo/index.html, P52).
+  Qui c'è solo il markup: stile in css/pages/home.css e nei CSS dei componenti,
+  comportamento in js/pages/home.js (unica funzione render). La carta-modal della
+  modalità e la schermata di coda le creano ModeModal.js e QueueOverlay.js.
+
+  - La cascata di carte ([data-bg-cards]) la riempie CardBackground.js e passa
+    dietro a tutto (z-index -1, nessun contenitore crea un nuovo livello).
+  - "giocatori online" e l'avviso di rientro stanno nello stesso spazio
+    ([data-status-slot]): in alto, e sul telefono in verticale in fondo.
+  - Gli Assi delle carte-pulsante sono immagini di sfondo in home.css (sagoma
+    fatta solo con il CSS), come nel prototipo.
+  - data-demo-*: dati finti di app/static/dev/, solo in sviluppo e nei test
+    (blueprints/main/routes.py).
+  - data-stato="ok" resta per il test di avvio di P4.
 #}
 
 {% block page_name %}home{% endblock %}
+{% block page_class %}home{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/home.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components/card-background.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components/mode-modal.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components/queue-overlay.css') }}">
+{% endblock %}
 
 {% block page_script %}<script type="module" src="{{ url_for('static', filename='js/pages/home.js') }}"></script>{% endblock %}
 
 {% block content %}
 <p class="visually-hidden" data-stato="ok">ok</p>
+
+<div class="bg-deco" aria-hidden="true" data-bg-cards data-img-base="{{ url_for('static', filename='img/cards-bg/') }}"></div>
+
+<div class="home__view" data-home
+  {%- if demo_urls %} data-demo-home-url="{{ demo_urls.home }}" data-demo-friends-url="{{ demo_urls.friends }}" data-demo-stats-url="{{ demo_urls.stats }}"{% endif %}
+  {%- if demo_state %} data-demo-state="{{ demo_state }}"{% endif %}>
+
+  <div class="home__status" data-status-slot>
+    <p class="online felt-text" data-online hidden>
+      <span class="online__dot" aria-hidden="true"></span>
+      <span><strong data-online-count></strong> giocatori online</span>
+    </p>
+    <div class="home__resume" data-resume-slot hidden></div>
+  </div>
+
+  <div class="home__sections">
+    <section class="mode-section" aria-labelledby="titolo-veloce">
+      <h2 class="mode-section__title felt-text" id="titolo-veloce">
+        <span class="icon" aria-hidden="true">bolt</span>Partita Veloce
+      </h2>
+      <div class="mode-section__tiles">
+        <button class="mode-tile mode-tile--red" type="button" data-tile data-kind="veloce" data-mode="1v1" aria-haspopup="dialog">
+          <span class="mode-tile__suit mode-tile__suit--coppe" aria-hidden="true"></span>
+          <span class="icon mode-tile__icon" aria-hidden="true">person</span>
+          <span class="mode-tile__label">1v1</span>
+          <span class="mode-tile__sub">Uno contro uno</span>
+        </button>
+        <button class="mode-tile mode-tile--purple" type="button" data-tile data-kind="veloce" data-mode="2v2" aria-haspopup="dialog">
+          <span class="mode-tile__suit mode-tile__suit--spade" aria-hidden="true"></span>
+          <span class="icon mode-tile__icon" aria-hidden="true">groups</span>
+          <span class="mode-tile__label">2v2</span>
+          <span class="mode-tile__sub">A coppie</span>
+        </button>
+      </div>
+    </section>
+
+    <section class="mode-section" aria-labelledby="titolo-amico">
+      <h2 class="mode-section__title felt-text" id="titolo-amico">
+        <span class="icon" aria-hidden="true">favorite</span>Gioca con un amico
+      </h2>
+      <div class="mode-section__tiles">
+        <button class="mode-tile mode-tile--yellow" type="button" data-tile data-kind="amico" data-mode="1v1" aria-haspopup="dialog">
+          <span class="mode-tile__suit mode-tile__suit--denari" aria-hidden="true"></span>
+          <span class="icon mode-tile__icon" aria-hidden="true">person</span>
+          <span class="mode-tile__label">1v1</span>
+          <span class="mode-tile__sub">Sfida<br class="mode-tile__br"> un amico</span>
+        </button>
+        <button class="mode-tile mode-tile--blue" type="button" data-tile data-kind="amico" data-mode="2v2" aria-haspopup="dialog">
+          <span class="mode-tile__suit mode-tile__suit--bastoni" aria-hidden="true"></span>
+          <span class="icon mode-tile__icon" aria-hidden="true">groups</span>
+          <span class="mode-tile__label">2v2</span>
+          <span class="mode-tile__sub">Fai squadra</span>
+        </button>
+      </div>
+    </section>
+  </div>
+</div>
 {% endblock %}
