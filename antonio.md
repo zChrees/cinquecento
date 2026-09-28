@@ -24,6 +24,27 @@
 
 <!-- Il più recente in cima. File creato da Christian il 28/09/2026 con lo schema; da qui in poi lo scrive solo Antonio. Il riepilogo di P16 (punto di Antonio fatto da Giuseppe) è in giuseppe.md, quello di P5 (fatto da Christian) in christian.md. -->
 
+### P17 — Impostazioni: avatar e cancellazione dell'account (28/09/2026)
+
+- **Branch**: feature/p17-impostazioni
+- **File**: modificati `app/blueprints/profile/routes.py` (segnaposto di P4), `app/services/auth_service.py`, `app/repositories/user_repo.py` (P16); creati `app/services/avatars.py`, `app/templates/profile/settings.html`, `app/static/js/pages/profile.js`, `app/static/css/pages/profile.css`, `tests/api/test_impostazioni.py`. Nessun file fuori elenco
+- **Controlli**: 866 PASS in tutto (30 nuovi, nella suite `api`), `ruff check .` pulito; foto con Chrome a 360 px di larghezza e a 1440×900
+- **Decisioni prese** (scelte di Antonio sulle raccomandazioni di Claude):
+  - **D29, i 12 avatar** (resta aperto solo chi disegna le immagini e con che licenza, per P43): i 4 semi `coppe`, `denari`, `spade`, `bastoni`; i 4 Re `re_coppe`, `re_denari`, `re_spade`, `re_bastoni`; `cavallo_coppe`, `cavallo_bastoni`; `fante_denari`, `fante_spade`. Ogni seme ha 3 avatar e ci sono tutte e tre le figure. I nomi mostrati sono "Coppe", "Re di denari", "Fante di spade"…; l'elenco sta in `app/services/avatars.py` (`AVATARS`, codice → nome);
+  - **per cancellare l'account si riscrive la password**, in una finestra nella pagina (`Modal.js`). Le password sbagliate contano come gli errori di login (stesso limite di 5 e stesso blocco di 5 minuti, che vale anche per il login).
+- **Scelte tecniche**:
+  - indirizzi: `GET /profile/settings` (pagina), `POST /profile/avatar` (campo `avatar`), `POST /profile/delete` (campo `password`), tutti con il login e il codice CSRF;
+  - nella griglia c'è anche "Iniziale" (valore vuoto = nessun avatar, `avatar` a `NULL`); ogni codice fuori elenco si rifiuta con "Avatar non valido: scegline uno dell'elenco.";
+  - dopo la cancellazione si esce dall'account e si torna alla home con "Account cancellato…". Il resto lo fa MySQL con le chiavi esterne (D6): rating, amicizie, blocchi e messaggi spariscono, nelle partite resta "utente eliminato" (c'è un test);
+  - **chi ha una partita in corso non si può cancellare** ("Hai una partita in corso: finiscila prima…"), con `find_room_of_user` di P24, usata senza modificarla: a fine partita il salvataggio (P26) cercherebbe un utente che non c'è più.
+- **Domande nuove**: nessuna
+- **Punti delicati**:
+  - il controllo "partita in corso" non è nella stessa transazione della cancellazione: se una partita partisse proprio tra il controllo e la cancellazione, P26 troverebbe un utente cancellato. È una finestra di pochi millesimi di secondo; quando P28 (coda) e P47 (inviti) aggiungono altri stati ("in coda", "invito in sospeso"), vanno controllati anche loro prima di cancellare;
+  - le schede già collegate in tempo reale di un utente cancellato non vengono chiuse subito; al prossimo evento il login non dovrebbe più valere, perché l'utente non si trova più nel database (dedotto, non provato);
+  - un codice di avatar già scelto da qualcuno non si cambia più (resterebbe nel database): P43 aggiunge solo le immagini, una per codice;
+  - la pagina usa la classe `page--form`: su telefono la parte "Cancella l'account" scorre dentro il riquadro, come deciso per le pagine con un modulo.
+- **Note per il contratto o per gli altri**: nessun cambiamento al contratto. **Christian**: D29 si può chiudere per la parte "quali figure" (codici sopra); P43 mostra le immagini nella griglia di `settings.html` (ogni riquadro ha `data-avatar="<codice>"`). **Giuseppe**: nessuna modifica ai tuoi file; `auth_service.py` ora importa `find_room_of_user` da `app/realtime/room_manager.py`.
+
 ### P18 — Backup e ripristino (28/09/2026)
 
 - **Branch**: feature/p18-backup

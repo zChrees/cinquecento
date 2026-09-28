@@ -9,6 +9,12 @@
   password giusta. Il conteggio sta in memoria (un solo processo, DECISIONI.md):
   si azzera con un login riuscito o al riavvio del server.
 - Nei log non finiscono mai password né hash.
+
+Impostazioni (P17):
+- Avatar: solo un codice di app/services/avatars.py, oppure vuoto (iniziale del nome).
+- Cancellazione dell'account: serve la password; gli errori contano come quelli del
+  login (stesso limite, stesso blocco). Chi ha una partita in corso non si può
+  cancellare: a fine partita il salvataggio (P26) cercherebbe un utente che non c'è più.
 """
 
 import logging
@@ -20,7 +26,9 @@ from sqlalchemy.exc import IntegrityError
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from app.extensions import db
+from app.realtime.room_manager import find_room_of_user
 from app.repositories import user_repo
+from app.services import avatars
 
 log = logging.getLogger(__name__)
 
@@ -28,6 +36,10 @@ LOGIN_FAILED = "Username o password non corretti."
 LOGIN_LOCKED = "Troppi tentativi sbagliati: riprova tra qualche minuto."
 USERNAME_TAKEN = "Questo username è già usato: scegline un altro."
 EMAIL_TAKEN = "Questa email è già usata da un altro account."
+AVATAR_INVALID = "Avatar non valido: scegline uno dell'elenco."
+DELETE_NO_PASSWORD = "Scrivi la password per cancellare l'account."
+DELETE_WRONG_PASSWORD = "Password non corretta: l'account non è stato cancellato."
+DELETE_IN_GAME = "Hai una partita in corso: finiscila prima di cancellare l'account."
 
 # Hash di una password qualsiasi: con uno username inesistente si fa lo stesso
 # controllo, così il tempo di risposta non rivela se l'account esiste.
@@ -132,6 +144,39 @@ def authenticate(username, password):
 
     limiter.reset(username)
     return user
+
+
+def set_avatar(user, code):
+    """Salva l'avatar scelto; "" = nessun avatar (iniziale). Un codice fuori elenco → AuthError."""
+    if code == "":
+        code = None
+    elif not avatars.is_valid(code):
+        raise AuthError(AVATAR_INVALID, "avatar")
+    user_repo.set_avatar(user, code)
+    db.session.commit()
+
+
+def delete_account(user, password):
+    """Cancella l'account dopo aver controllato la password; altrimenti AuthError."""
+    config = current_app.config
+    username, user_id = user.username, user.id
+    if not isinstance(password, str) or not password:
+        raise AuthError(DELETE_NO_PASSWORD, "password")
+    if limiter.is_locked(username):
+        raise AuthError(LOGIN_LOCKED)
+    if not check_password_hash(user.password_hash, password):
+        locked = limiter.record_failure(username, config["LOGIN_MAX_ATTEMPTS"], config["LOGIN_LOCK_SECONDS"])
+        if locked:
+            log.warning("Cancellazione dell'account bloccata per troppi tentativi sbagliati")
+            raise AuthError(LOGIN_LOCKED)
+        raise AuthError(DELETE_WRONG_PASSWORD, "password")
+    if find_room_of_user(user_id) is not None:
+        raise AuthError(DELETE_IN_GAME)
+
+    user_repo.delete(user)
+    db.session.commit()
+    limiter.reset(username)
+    log.info("Account cancellato (id %s)", user_id)
 
 
 def load_user(user_id):

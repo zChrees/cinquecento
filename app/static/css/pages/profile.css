@@ -1,0 +1,124 @@
+/*
+ * Pagina delle impostazioni (P17). Struttura:
+ *   <main class="page page--form">
+ *     <section class="panel settings">
+ *       <h1 class="settings__title">
+ *       <form class="form"> <fieldset class="settings__group"> con .avatar-grid di .avatar-choice </form>
+ *       <section class="settings__group settings__danger"> cancellazione dell'account </section>
+ *       <p class="settings__back"> link alla home </p>
+ *     </section>
+ *   </main>
+ * Finché non ci sono le immagini (P43), ogni avatar è un riquadro con il nome.
+ * Colori solo dalle variabili di variables.css.
+ */
+
+.settings {
+  display: grid;
+  gap: 20px;
+  max-width: 520px;
+}
+
+.settings__title {
+  font-size: 1.7rem;
+  text-align: center;
+}
+
+.settings__group {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.settings__subtitle {
+  padding: 0;
+  font-family: var(--font-title);
+  font-size: 1.2rem;
+}
+
+.settings__text {
+  color: var(--muted);
+}
+
+.settings__danger {
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.settings__back {
+  text-align: center;
+}
+
+.avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.avatar-choice {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 64px;
+  padding: 8px 6px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-m);
+  background: var(--surface-2);
+  text-align: center;
+  cursor: pointer;
+}
+
+/* Il pallino del radio resta per la tastiera e i lettori di schermo, ma non si vede */
+.avatar-choice__input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.avatar-choice__face {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-family: var(--font-title);
+  font-weight: 600;
+}
+
+.avatar-choice__name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.avatar-choice:hover {
+  border-color: var(--primary);
+}
+
+.avatar-choice:has(.avatar-choice__input:checked) {
+  border-color: var(--primary);
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+}
+
+.avatar-choice:has(.avatar-choice__input:focus-visible) {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+
+@media (min-width: 640px) {
+  .settings {
+    padding: 32px 30px;
+  }
+
+  .avatar-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
