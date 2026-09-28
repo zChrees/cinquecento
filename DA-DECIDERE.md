@@ -26,6 +26,7 @@ Per D8 e D10, `config.py` (P4) usa già il valore consigliato, con il commento "
 - [ ] **D18 — Colore del tavolo di gioco**: colori e stile delle pagine vengono dal prototipo scritto da Claude (P52, stile siciliano; per ora solo tema chiaro, il tema scuro è P53). Resta da decidere il tavolo, che il prototipo non comprende: consigliato il verde classico, accostato alla palette del prototipo, con una versione per il tema scuro quando arriva P53.
 - [ ] **D19 — Immagini delle carte**: da dove vengono le vostre immagini e con che licenza? Serve saperlo per usarle nella versione finale (punto P35).
 - [ ] **D29 — Set di avatar**: deciso il 28/09/2026 che sono 12 in SVG, con i 4 semi e 8 figure siciliane (vedi `DECISIONI.md`). Restano aperti: quali 8 figure (Re, Cavallo e Fante di quali semi), chi li disegna o da dove si prendono, e con che licenza.
+- [ ] **D39 — Crediti delle immagini per chi non ha fatto il login**: la riga "Immagini delle carte: Matsoftware, CC BY-SA 3.0…" sta nel pannello statistiche (D37), che si apre solo con il login, ma le carte si vedono già nel logo della navbar (e con P22 nella home). Consigliato aggiungere la stessa riga, piccola, in fondo alla finestra "Accedi o registrati" (P40), così è visibile a tutti.
 
 ## Tempi
 

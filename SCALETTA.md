@@ -36,7 +36,7 @@ Una web-app per giocare online a **Cinquecento**, variante siciliana, con le car
 - [x] P3 (Fase 1): riga "Stato" e regola di consegna — `CLAUDE.md` — *28/09: spuntato; la riga "Stato" e i passi di "Consegna" esistono dal primo CLAUDE.md, adattati il 27/09 al lavoro in tre (D22)*
 - [x] P4 (Fase 1): scheletro del progetto con tutti i file "segnaposto" — `run.py`, `config.py`, `app/`, `requirements*.txt`, `.env.example` — *27/09: 36 file dell'elenco, 39 librerie fissate con `==`, 31 test PASS (`python -m pytest tests/api/test_avvio.py`, finché P6 non aggiunge `conftest.py`), `ruff check .` pulito (D4); il controllo di MySQL sta in `run.py`, così i test di P4 non richiedono MySQL*
 - [x] P5 (Fase 1): database e prima migrazione — `scripts/setup_db.sql`, `migrations/001_init.sql`, `scripts/migrate.py`, `app/models/` — *28/09 (Christian al posto di Antonio, commit `976dec5`): 55 test nuovi, 658 PASS in tutto; le colonne `VIRTUAL` delle amicizie funzionano, quindi "una riga per coppia" resta nel database e non passa a P45; le 4 colonne a elenco senza valore predefinito sono testo esatto con un `CHECK` invece di `ENUM` (modifica a D38); la password dell'utente MySQL `cinquecento` la genera MySQL; `docs/proposta-tabelle.sql` cancellata. Ognuno, dopo il pull, lancia una volta `setup_db.sql` e `migrate.py` (`README.md`, Installazione)*
-- [ ] P6 (Fase 1): runner dei test — `tests/esegui_tutti.py`, `tests/conftest.py`
+- [x] P6 (Fase 1): runner dei test — `tests/esegui_tutti.py`, `tests/conftest.py` — *28/09 (Giuseppe, commit `c69f5ed`): 13 test nuovi, 671 PASS in tutto; `python tests/esegui_tutti.py` (solo alcune suite: `python tests/esegui_tutti.py engine db`), 120 s al massimo per suite, file protetti ripristinati dopo ogni suite con controllo dell'hash, uscita 0 / 1 / 2 (tutto PASS / almeno un FAIL / rifiuto); `conftest.py` ripete i rifiuti anche per chi lancia `pytest` a mano. Lo stesso giorno, fuori scaletta, `fix/checks-database` (commit `47d2aee`): il controllo di MySQL all'avvio non si collega più a `DB_NAME` (`url._replace(database=None)`), 1 test nuovo, 672 PASS*
 - [ ] P7 (Fase 1): log ed errori di base — `app/logging_config.py`, `app/errors.py`, `app/templates/errors/`
 - [x] P8 (Fase 1): contratto tra server e pagine — `docs/CONTRATTO-SOCKET.md`, `app/static/dev/*.json` — *28/09: contratto approvato dai tre (eventi socket, richieste HTTP, vista di gioco, dati di home, statistiche e amici) e 5 file di esempio, controllati con uno script; in `dev` dopo un rebase su P10 e P11; 106 test PASS*
 - [ ] P9 (Fase 1): guida di installazione verificata — `README.md`
@@ -53,7 +53,7 @@ Una web-app per giocare online a **Cinquecento**, variante siciliana, con le car
 - [ ] P17 (Fase 2, B): impostazioni: avatar e cancellazione dell'account — `app/blueprints/profile/`, `app/templates/profile/`, `app/services/avatars.py`
 - [ ] P18 (Fase 2, B): backup e ripristino — `scripts/backup.py`, `scripts/ripristina.py`
 - [x] P19 (Fase 2, C): base grafica mobile-first — `app/templates/base.html`, `app/static/css/base/` — *28/09 (Christian, commit `03648ef`): `base.html`, messaggi flash, CSS di base e dei componenti dal prototipo (colori solo in `variables.css`, uguali al prototipo), `Modal.js` e `dom.js`; 13 test nuovi, 425 PASS in tutto dopo il rebase su P12 e P13; foto a 360×640, 360×560 e 1440×900*
-- [ ] P40 (Fase 2, C): navbar, pannello statistiche con dati finti, finestra "Accedi o registrati" — `partials/navbar.html`, `app/static/js/core/layout.js`, `StatsPanel.js`
+- [x] P40 (Fase 2, C): navbar, pannello statistiche con dati finti, finestra "Accedi o registrati" — `partials/navbar.html`, `app/static/js/core/layout.js`, `StatsPanel.js` — *28/09 (Christian, commit `9e9d445`): 15 test nuovi, 687 PASS in tutto dopo il rebase su P6; senza login avatar e amici aprono "Accedi o registrati"; "Esci" è un modulo POST con il token CSRF verso `/auth/logout`, "Accedi" e "Registrati" portano a `/auth/login` e `/auth/register` (P16), "Impostazioni" a `/profile/settings` (P17); 21 immagini in `app/static/img/cards-bg/`, identiche al prototipo, con `LICENZA.md`. Fuori elenco, con l'ok di Christian: `pages/home.js` (minimo: avvia `layout.js`; P22 lo modifica invece di crearlo) e `main/index.html` che lo carica, 6 variabili "(P40)" in `variables.css`, 2 controlli di `test_base.py` (9 CSS in `base.html`; link `<a href>` esterni ammessi nei template, le risorse esterne restano solo in `base.html`). Foto a 360×640, 1366×657, 1440×900 e 1920×1080*
 - [ ] P20 (Fase 2, C): componenti carta e mano — `app/static/js/components/Card.js`, `Hand.js`
 - [ ] P21 (Fase 2, C): tavolo di gioco con dati finti — `app/templates/game/table.html`, `app/static/js/pages/game.js`
 - [ ] P22 (Fase 2, C): home con dati finti (carte-pulsante, modal, coda, rientro, online, sfondo) — `app/templates/main/index.html`, `app/static/js/pages/home.js`, `ModeModal.js`, `CardBackground.js`
@@ -116,7 +116,7 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 | `app/sockets/friends_events.py` | P4 → P47 | Giuseppe |
 | `app/sockets/chat_events.py` | P4 → P48 | Antonio |
 | `app/static/js/pages/game.js` | P21 → P24 → P25 → P56 | Christian, poi Giuseppe dopo che P21 è in `dev`, poi Christian (P56) dopo che P55 è in `dev` |
-| `app/static/js/pages/home.js` | P22 → P28 → P29 → P44 | Christian → Antonio → Giuseppe, ciascuno dopo che il punto precedente è in `dev` |
+| `app/static/js/pages/home.js` | P40 → P22 → P28 → P29 → P44 | Christian → Antonio → Giuseppe, ciascuno dopo che il punto precedente è in `dev` |
 | `app/static/js/components/ModeModal.js` | P22 → P28 → P47 | Christian → Antonio (collega "Gioca" alla coda) → Giuseppe (lista amici e inviti), ciascuno dopo che il punto precedente è in `dev` |
 | `app/static/js/components/StatsPanel.js` | P40 → P30 | Christian (dati finti, poi dati veri) |
 | `app/static/js/components/FriendsPanel.js` | P46 → P47 | Christian, poi Giuseppe dopo che P46 è in `dev` |
@@ -340,7 +340,7 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
   - per chi non ha fatto il login, il tocco su una carta-pulsante apre la finestra "Accedi o registrati" (P40).
 
   Tutto funziona con `app/static/dev/home_esempio.json`. In `index.html` resta **solo il markup della home**, che estende `base.html`; niente blocchi `<style>` né codice JS nella pagina. Le immagini dello sfondo hanno licenza CC BY-SA 3.0: la riga di crediti sta in fondo al pannello statistiche (P40).
-- *File* — crea: `app/static/js/pages/home.js`, `app/static/css/pages/home.css`, `app/static/js/components/ModeModal.js`, `app/static/css/components/mode-modal.css`, `app/static/js/components/CardBackground.js`, `app/static/css/components/card-background.css`, `app/static/js/components/QueueOverlay.js`, `app/static/css/components/queue-overlay.css`, `app/static/js/components/ResumeBanner.js`, `tests/api/test_pagina_home.py`. Usa le immagini di `app/static/img/cards-bg/` (P40). Modifica: `app/templates/main/index.html` (P19), `app/blueprints/main/routes.py` (P4). Certezza: **sicuro**.
+- *File* — crea: `app/static/css/pages/home.css`, `app/static/js/components/ModeModal.js`, `app/static/css/components/mode-modal.css`, `app/static/js/components/CardBackground.js`, `app/static/css/components/card-background.css`, `app/static/js/components/QueueOverlay.js`, `app/static/css/components/queue-overlay.css`, `app/static/js/components/ResumeBanner.js`, `tests/api/test_pagina_home.py`. Usa le immagini di `app/static/img/cards-bg/` (P40). Modifica: `app/templates/main/index.html` (P19, P40), `app/static/js/pages/home.js` (P40: per ora avvia solo `layout.js`), `app/blueprints/main/routes.py` (P4). Certezza: **sicuro**.
 - *Fatto quando*: la home ha l'aspetto del prototipo a 360 px, su tablet e su computer; la pagina non scorre a nessuna misura (stesse misure controllate in `docs/prototipo/LEGGIMI.md`); il modal si apre da ogni carta-pulsante e in tutte e quattro le modalità ogni parte, "Gioca" compreso, sta dentro la cornice della carta senza sovrapporsi alle altre, alle misure controllate in `LEGGIMI.md` (portatili come 1366×657 e 1536×730, telefoni da 360×560 a 412×915, telefono in orizzontale 844×390 e 667×375); "Gioca" con un amico resta disattivato finché l'invito finto non è accettato; senza login il tocco apre la finestra di accesso; la schermata di coda si apre e si annulla; l'avviso di rientro compare solo se i dati finti lo prevedono; le carte dello sfondo passano sempre dietro a navbar, titoli, "giocatori online" e carte-pulsante, e le scritte restano leggibili anche con una carta chiara dietro; il test controlla che `index.html` non contenga blocchi `<style>` né script scritti nella pagina.
 - *Dipende da*: P8, P40, P52.
 
@@ -543,10 +543,10 @@ Chi crea ogni file. I file creati da P4 come segnaposto e poi riempiti da altri 
 | `app/services/avatars.py`, `app/templates/profile/*`, `pages/profile.js`, `pages/profile.css` | P17 |
 | `scripts/backup.py`, `scripts/ripristina.py` | P18 |
 | `base.html`, `partials/flash.html`, `css/base/*`, `button/form/modal.css`, `Modal.js`, `utils/dom.js` | P19 |
-| `partials/navbar.html`, `navbar.css`, `stats-panel.css`, `core/layout.js`, `StatsPanel.js`, `LoginPrompt.js`, `img/cards-bg/*` | P40 |
+| `partials/navbar.html`, `navbar.css`, `stats-panel.css`, `core/layout.js`, `StatsPanel.js`, `LoginPrompt.js`, `img/cards-bg/*`, `pages/home.js` (poi P22) | P40 |
 | `Card.js`, `Hand.js`, `card.css`, `hand.css`, `static/dev/carte.*` | P20 |
 | `game/table.html`, `pages/game.js`, `Table/Trick/Scoreboard/Timer/SingButtons.js` e relativi CSS | P21 |
-| `pages/home.js`, `pages/home.css`, `ModeModal.js`, `mode-modal.css`, `CardBackground.js`, `card-background.css`, `QueueOverlay.js`, `queue-overlay.css`, `ResumeBanner.js` | P22 |
+| `pages/home.css`, `ModeModal.js`, `mode-modal.css`, `CardBackground.js`, `card-background.css`, `QueueOverlay.js`, `queue-overlay.css`, `ResumeBanner.js` | P22 |
 | `friend_service.py`, `friend_repo.py` | P45 |
 | `FriendsPanel.js`, `ChatWindow.js`, `friends-panel.css`, `chat.css` | P46 |
 | `app/realtime/events.py`, `room.py`, `room_manager.py`, `js/core/socket.js`, `js/core/events.js`, `js/vendor/*` | P23 |
@@ -623,10 +623,11 @@ Due studenti che lavorano in parallelo non toccano mai gli stessi file. Vale anc
 
 **Christian (Studente 3) — interfaccia e documenti:** P3, P52, P8, P9, P19, P40, P20, P21, P22, P46, P56, P30, P36, P37 (più P33, P34, P35, P42, P43 e P53 in 9.2)
 
-**Da dove si parte** (aggiornato il 28/09/2026 sera: in `dev` ci sono P1–P5, P8, P10–P15, P19 e P52) [L]:
-- **Giuseppe**: **P6 subito** (P5 è in `dev`; sblocca P7 e P18 di Antonio); poi la correzione di `app/checks.py` (vedi `christian.md`, P5), se la vuole fare lui. Dopo P6 i suoi punti aspettano altri: P23 attende P16 (Antonio), P24 attende P21 (Christian) e P23.
-- **Antonio**: P5 l'ha fatto Christian. **P7 e P18 appena P6 è in `dev`**; poi P16 (attende P5, P7, P19), che sblocca P23 di Giuseppe.
-- **Christian**: **P40**, poi P20, poi P21 (serve a P24 di Giuseppe) e P22.
+**Da dove si parte** (aggiornato il 28/09/2026 sera: in `dev` ci sono P1–P6, P8, P10–P15, P19, P40 e P52, più la correzione di `app/checks.py`) [L]:
+- **Giuseppe**: P6 e la correzione di `app/checks.py` sono fatti. I suoi prossimi punti aspettano altri: P23 attende P16 (Antonio), P24 attende P21 (Christian) e P23. Nel frattempo può correggere `scripts/migrate.py` (vedi sotto), se è d'accordo.
+- **Antonio**: **P7 e P18 subito** (P6 è in `dev`); poi P16 (attende P5, P7, P19), che sblocca P23 di Giuseppe; poi P17, che non aspetta più P40.
+- **Christian**: **P20**, poi P21 (serve a P24 di Giuseppe) e P22.
+- **Da assegnare**: `scripts/migrate.py` (P5), se MySQL rifiuta utente o password, esce con un traceback invece del suo messaggio in italiano, perché `engine.raw_connection()` lancia l'errore di PyMySQL e non quello di SQLAlchemy che il `main` aspetta (trovato da Giuseppe con P6). Correzione piccola, su un branch `fix/…`.
 
 | Punto | Chi | File condivisi con punti di altri studenti | Attende (già in `dev`) |
 |---|---|---|---|
@@ -647,7 +648,7 @@ Due studenti che lavorano in parallelo non toccano mai gli stessi file. Vale anc
 | P40 | Christian | nessuno di altri studenti (`base.html` è di Christian) | P19 |
 | P20 | Christian | nessuno | P19 |
 | P21 | Christian | `blueprints/game/routes.py` (P4); crea `pages/game.js` che poi modifica P24 | P8, P20, P40 |
-| P22 | Christian | `blueprints/main/routes.py` (P4); crea `pages/home.js` (poi P28, P29, P44) e `ModeModal.js` (poi P28, P47) | P8, P40, P52 |
+| P22 | Christian | `blueprints/main/routes.py` (P4); modifica `pages/home.js` (creato da P40; poi P28, P29, P44), crea `ModeModal.js` (poi P28, P47) | P8, P40, P52 |
 | P45 | Antonio | `blueprints/friends/*` (segnaposto di P4) | P5, P16 |
 | P46 | Christian | crea `FriendsPanel.js` (poi P47) e `ChatWindow.js` (poi P48) | P8, P40 |
 | P23 | Giuseppe | `sockets/__init__.py`, `connection_events.py` (P4) | P8, P16 |
