@@ -22,6 +22,16 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: file dei riepiloghi di Antonio (28/09/2026)
+
+- **Branch**: docs/antonio-md
+- **File**: creato `antonio.md` (intestazione e schema, nessun riepilogo); modificati `CLAUDE.md` ("Prima di lavorare" punto 5, "Processo di lavoro", "Consegna" punto 9, riga "Stato"), `SCALETTA.md` (nota in cima e tabella dei file condivisi), `DECISIONI.md` (decisione nuova, quella su `giuseppe.md` aggiornata), questo file; in `giuseppe.md` solo l'intestazione (ora dice che lo leggono Christian e Antonio), su richiesta esplicita di Christian: i riepiloghi non sono toccati e il file resta scritto solo da Giuseppe
+- **Controlli**: nessun codice cambiato; 790 PASS restano quelli di P24
+- **Decisioni prese**: Antonio scrive i suoi riepiloghi in **`antonio.md`**, come Giuseppe in `giuseppe.md`. Ognuno scrive solo il proprio file e legge gli altri due dopo il pull di `dev`: io leggo `giuseppe.md` e `antonio.md` e ne ricavo gli aggiornamenti dei documenti condivisi; Giuseppe legge `christian.md` e `antonio.md`; Antonio legge `christian.md` e `giuseppe.md`
+- **Domande nuove**: nessuna
+- **Punti delicati**: nessuno
+- **Cosa devono fare gli altri**: **Antonio**: a fine punto aggiungi il riepilogo in cima ad `antonio.md`, nel branch del punto e nello stesso commit, invece di mandarmelo per messaggio; dopo ogni pull leggi `christian.md` e `giuseppe.md`. **Giuseppe**: dopo il pull leggi anche `antonio.md`; nell'intestazione di `giuseppe.md` ho cambiato solo la frase sui lettori (eccezione unica, chiesta da Christian): se hai un branch che tocca l'intestazione, fai il pull prima
+
 ### Documenti: P24 (28/09/2026)
 
 - **Branch**: docs/p24

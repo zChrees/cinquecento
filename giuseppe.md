@@ -1,6 +1,6 @@
 # Riepiloghi di Giuseppe
 
-> **Questo file lo scrive solo Giuseppe** (Studente 1: motore e tempo reale). Christian lo legge dopo il `git pull` di `dev` e da qui aggiorna i documenti condivisi (`SCALETTA.md`, `CLAUDE.md`, `DECISIONI.md`, `DA-DECIDERE.md`). Nessun altro lo modifica, nemmeno per correggere un errore: si segnala a Giuseppe.
+> **Questo file lo scrive solo Giuseppe** (Studente 1: motore e tempo reale). Lo leggono Christian e Antonio dopo il `git pull` di `dev`: Christian da qui aggiorna i documenti condivisi (`SCALETTA.md`, `CLAUDE.md`, `DECISIONI.md`, `DA-DECIDERE.md`), Antonio ci trova le modifiche al progetto e le informazioni utili al suo lavoro. Nessun altro lo modifica, nemmeno per correggere un errore: si segnala a Giuseppe.
 >
 > **Come si aggiorna** (regola in `CLAUDE.md`, "Consegna"): a fine punto, nel branch del punto (`feature/…`, `fix/…`), Giuseppe aggiunge il riepilogo **in cima** alla sezione "Riepiloghi", nello stesso commit del punto; così arriva in `dev` con il merge. Il numero del commit non si scrive: lo si trova con `git log -- giuseppe.md`.
 

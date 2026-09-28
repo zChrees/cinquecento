@@ -1,6 +1,6 @@
 # Scaletta — Cinquecento
 
-> **Tracker attivo.** Ogni punto si fa su un **branch nuovo creato da `dev`**. Si spunta solo dopo l'ok dell'utente, il commit e il merge in `dev`. I documenti condivisi (questo file, la riga "Stato" di `CLAUDE.md`, `DECISIONI.md`, `DA-DECIDERE.md`) li aggiorna **solo Christian**, su un branch `docs/…` (D22): Giuseppe e Antonio, finito un punto, gli mandano un breve riepilogo. Accanto al punto si aggiunge una breve nota del lotto (data e cosa è stato fatto). **Chi fa cosa** è nella sezione 9.
+> **Tracker attivo.** Ogni punto si fa su un **branch nuovo creato da `dev`**. Si spunta solo dopo l'ok dell'utente, il commit e il merge in `dev`. I documenti condivisi (questo file, la riga "Stato" di `CLAUDE.md`, `DECISIONI.md`, `DA-DECIDERE.md`) li aggiorna **solo Christian**, su un branch `docs/…` (D22): Giuseppe e Antonio, finito un punto, scrivono un breve riepilogo nel proprio file (`giuseppe.md`, `antonio.md`). Accanto al punto si aggiunge una breve nota del lotto (data e cosa è stato fatto). **Chi fa cosa** è nella sezione 9.
 >
 > **Regola sui file:** chi lavora a un punto crea e modifica **solo i file elencati in quel punto**. Se serve toccarne un altro, ci si ferma e lo si concorda: è così che si evitano i conflitti tra i lavori dei tre membri. Dove l'elenco dei file **non è sicuro** lo dice il punto stesso.
 >
@@ -137,7 +137,8 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 | `docs/DEMO.md` | P38 → P39 | Antonio |
 | `README.md` | P9 → P37 | Christian |
 | `docs/prototipo/*` | P52 | Dopo P52 nessuno lo modifica: P19, P40 e P22 lo **leggono** soltanto (il 28/09/2026 Christian ha corretto solo un rimando nel `LEGGIMI.md`: le immagini arrivano con P40) |
-| `SCALETTA.md`, `CLAUDE.md` (riga Stato), `DECISIONI.md`, `DA-DECIDERE.md` | Christian | **Solo Christian** li aggiorna, su un branch `docs/…` da `dev` (D22). Nei branch dei punti non si toccano; Giuseppe e Antonio gli mandano un riepilogo di ogni punto |
+| `SCALETTA.md`, `CLAUDE.md` (riga Stato), `DECISIONI.md`, `DA-DECIDERE.md` | Christian | **Solo Christian** li aggiorna, su un branch `docs/…` da `dev` (D22). Nei branch dei punti non si toccano; Giuseppe e Antonio scrivono il riepilogo di ogni punto nel proprio file |
+| `christian.md`, `giuseppe.md`, `antonio.md` | ciascuno il suo | Ognuno scrive **solo** il proprio file di riepiloghi, nel branch del punto; gli altri due lo leggono dopo il pull di `dev` |
 
 ## 4. Fasi e dettaglio dei punti
 
