@@ -22,6 +22,29 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### P31 — Test end-to-end, e tre correzioni trovate dai test (29/09/2026)
+
+- **Branch**: feature/p31-e2e (due commit: prima le correzioni, poi i test)
+- **File**: creati `tests/e2e/conftest.py`, `test_partita_1v1.py`, `test_partita_2v2.py`, `test_amici_inviti_chat.py`, `test_casi_limite.py` (i cinque dell'elenco) e, in più, `tests/e2e/helpers.py` (utenti, schede e aiuti per le partite, importati come `tests.e2e.helpers`, come `tests/browser.py`: importarli da `conftest.py` avrebbe caricato due volte il file). **Correzioni** (commit a parte, con l'ok di Giuseppe; la nota di P31 dice che sono punti nuovi): `app/realtime/room.py`, `app/repositories/chat_repo.py`, `app/repositories/friend_repo.py` (di Antonio, con il suo permesso)
+- **Controlli**: **1255 PASS e 2 FAIL** su 1257, in 8 suite (12 nuovi nella suite nuova `e2e`, 5 giri di fila senza errori, circa 12 secondi), `ruff check .` pulito. I 2 FAIL sono quelli noti di `tests/frontend/test_pannello_amici.py` (P48, di Christian)
+- **Decisioni prese** (scelta di Giuseppe sulla raccomandazione di Claude): **il server della suite `e2e` è un processo a parte**, avviato come lo avvia un utente (`python run.py` con `APP_ENV=testing`: porta 5099, `cinquecento_test`), e i test passano **solo dagli ingressi veri**: registrazione e login dai moduli con il CSRF, amici con le rotte HTTP e l'intestazione `X-CSRFToken`, coda, inviti, chat e partite con Socket.IO, statistiche con `GET /stats/me`. Non vedono la memoria del server; i tempi restano quelli veri (30 s di turno, 60 s per rientrare), quindi scadenze e abbandono per tempo restano provati dalla suite `sockets`
+- **Cosa provano**:
+  - partite intere dalla coda, 1v1 e 2v2 fino a 150, con utenti appena registrati: a ogni vista **nessuno vede carte in mano agli altri** (confrontando le viste dei giocatori tra loro; `last_hand` a parte, vedi P58), la home propone il rientro durante la partita e non più dopo, le statistiche contano la partita e il rating sale a chi vince;
+  - amicizia (richiesta, avvisi, accettazione), presenza online / offline / in partita, chat (testo con `<script>` salvato così com'è, stesso `request_id` senza doppioni, 1 messaggio al secondo, non letti), blocco che chiude la chat;
+  - invito 1v1 con partita intera che non conta per il rating; invito 2v2 con la coppia in coda e due singoli, poi abbandono: perde la squadra, il rating scende solo a chi è uscito (D13, P30);
+  - casi limite: doppio clic (una sola carta), fuori turno e dati sbagliati (la partita continua), stesso utente in due schede al tavolo (D14) e in coda (`busy`, stesso `request_id`, "Annulla" vale per tutte e due), disconnessione e rientro con la stessa mano, collegamento senza login rifiutato
+- **Bug trovati e corretti** [T] (ognuno riprodotto da un test `e2e` prima della correzione):
+  1. **amici "in partita" per sempre** (P47): a fine partita gli amici non ricevevano `friends:presence` "online". `room.notify` faceva `tuple(user_ids)` dentro il ciclo e `_save()` gli passa un generatore: lo leggeva solo il primo ascoltatore (la home), il secondo (gli amici) riceveva un elenco vuoto. Ora la tupla si fa prima del ciclo;
+  2. **ora dei messaggi di chat diversa di un millesimo** (P48) tra la risposta di `chat:send` e `chat:history`: Python tronca i millesimi, MySQL li arrotonda salvando in `DATETIME(3)`. Ora `chat_repo.utc_now()` restituisce l'ora già ai millesimi;
+  3. **ora delle richieste di amicizia diversa fino a un secondo** (P45) tra la risposta di `POST /friends/requests` e `GET /friends/`: la colonna è `DATETIME` senza decimali e MySQL arrotonda (le 09.554 diventavano le 10.000). Ora `friend_repo.utc_now()` restituisce l'ora già al secondo (vale anche per risposte e blocchi)
+- **Domande nuove**: nessuna
+- **Punti delicati**:
+  - con MySQL un'ora con più decimali della colonna **si arrotonda**, non si tronca: chi salva un'ora e la rimanda subito alla pagina deve prima tagliarla alla precisione della colonna (come fanno ora `chat_repo` e `friend_repo`);
+  - in `helpers.py`, `Tab.wait_for` trova il **primo** evento adatto mai arrivato: per aspettare qualcosa che succede dopo un certo punto si usa `since=tab.mark()` (esempio: "home senza rientro a fine partita" trovava lo stato iniziale, di prima della partita; e prima che tutti siano seduti un giocatore risulta scollegato senza conto alla rovescia, com'è giusto per P25);
+  - ogni test registra utenti nuovi (`Utente01`, `Utente02`, …): code, rating e amicizie di un test non toccano gli altri; se un test lascia un utente in coda, la chiusura delle schede lo fa uscire;
+  - nella chat il limite di 1 al secondo si controlla prima del blocco: subito dopo un messaggio, `chat:send` verso chi ti ha bloccato risponde `too_fast`, non `blocked` (comportamento di P48, lasciato com'è)
+- **Note per il contratto o per gli altri**: nessun cambiamento al contratto. **Chi è di turno sui documenti**: spuntare P31 e registrare le tre correzioni; la suite `e2e` c'era già nell'elenco del runner (`SUITES`); il numero di controlli è 1257; punto delicato sulle ore arrotondate da MySQL per `CLAUDE.md`. **Christian**: la suite `e2e` usa anche la porta 5099, come le altre: chiudi il server prima di un giro completo
+
 ### P58 — Ultima presa della mano nella vista (28/09/2026)
 
 - **Branch**: feature/p58-ultima-presa-mano
