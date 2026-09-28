@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{#
+  Pagina "non trovata" (P7). Senza navbar: le pagine di errore non hanno uno script
+  di pagina (js/pages/), e senza quello la navbar non si apre. Classi di layout.css,
+  button.css, form.css e css/pages/auth.css (P19), senza modificarne i file.
+#}
+
+{% block title %}Pagina non trovata · Cinquecento{% endblock %}
+{% block navbar %}{% endblock %}
+{% block page_class %}page--form{% endblock %}
+{% block page_name %}error{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/auth.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="panel auth" data-error="404">
+  <h1 class="auth__title">Pagina non trovata</h1>
+  <p class="auth__subtitle">Questa pagina non esiste o non esiste più.</p>
+  <div class="form__actions">
+    <a class="btn btn--primary btn--big" href="{{ url_for('main.index') }}">Torna alla home</a>
+  </div>
+</section>
+{% endblock %}
