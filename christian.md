@@ -22,15 +22,16 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
-### P22 — Home con dati finti; registrati P7 e P18 (28/09/2026)
+### P22 — Home con dati finti; registrati P7, P18 e P17 (28/09/2026)
 
-- **Branch**: feature/p22-home (codice, commit `4449269` dopo il rebase su P7 e P18), poi docs/p22 (documenti e correzione del test, commit `67edef7`)
+- **Branch**: feature/p22-home (codice), poi docs/p22 (documenti e correzione del test); dopo i rebase su P7, P18 e P17 i commit sono `9ae2f99` (P22) e `09a184d` (test)
 - **File**: creati `css/pages/home.css`, `css/components/card-background.css`, `mode-modal.css`, `queue-overlay.css`, `js/components/ModeModal.js`, `CardBackground.js`, `QueueOverlay.js`, `ResumeBanner.js`, `tests/api/test_pagina_home.py`; modificati `templates/main/index.html`, `js/pages/home.js`, `blueprints/main/routes.py`; fuori elenco, con il mio ok, `css/base/variables.css` (2 variabili) e `tests/frontend/test_base.py` (conta solo i CSS di `base.html`). Documenti: `SCALETTA.md`, `DECISIONI.md`, `DA-DECIDERE.md`, `CLAUDE.md`, questo file
-- **Controlli**: 874 PASS in tutto dopo il rebase su P7 e P18 (38 nuovi), `ruff check .` pulito; la home confrontata con il prototipo a 360×640 (uguale, tranne il contatore degli amici di P46)
+- **Controlli**: 904 PASS in tutto dopo il rebase su P7, P18 e P17 (38 nuovi), `ruff check .` pulito; la home confrontata con il prototipo a 360×640 (uguale, tranne il contatore degli amici di P46)
 - **Decisioni prese**: dati finti solo in sviluppo e nei test, `?demo=rientro` per l'avviso di rientro; aspetto della schermata di coda e dell'avviso di rientro (il prototipo non li aveva); "uno contro uno" al posto di "tu contro lui"; `--on-tile` e `--ink` in `variables.css` (tutto in `DECISIONI.md`, Interfaccia)
 - **Domande nuove**: **D40**, il font delle icone pesa 5,4 MB: caricare solo le icone usate?
 - **P7 di Antonio** (dal suo riepilogo in `antonio.md`): spuntato in `SCALETTA.md`, decisione su log ed errori in `DECISIONI.md` (Tecnologia), punto delicato e riga "Stato" in `CLAUDE.md`. Pagine 404 e 500 senza navbar: per ora va bene così
 - **P18 di Antonio** (dal suo riepilogo): spuntato in `SCALETTA.md`; in `CLAUDE.md` riga "Stato", punto delicato e "Comandi utili" (conferma con il nome del database, programmi `mysqldump` e `mysql`). Nessuna decisione nuova; D10 resta aperta
+- **P17 di Antonio** (dal suo riepilogo): spuntato in `SCALETTA.md`; in `DECISIONI.md` la cancellazione dell'account e i 12 codici degli avatar (D29 aggiornata: resta aperto solo chi disegna le immagini e con che licenza, per P43); punto delicato e riga "Stato" in `CLAUDE.md`
 - **Punti delicati**: la home non scorre grazie a `--tile-h` (`home.css`): qualunque cosa si aggiunga alla home va misurata, e `test_pagina_home.py` lo fa in Chrome o Edge senza finestra alle misure di `LEGGIMI.md` (porta 5099, saltato senza browser). Il test serve i font di Google da una copia in una cartella temporanea: la prima volta scarica il font delle icone (5,4 MB), poi la suite `api` sta sotto il minuto
 - **Cosa devono fare gli altri**: **Antonio** (P28): "Gioca" arriva a `play(...)` in `home.js`; al posto dei dati finti manda `queue:join` e, con la risposta o con `queue:status`, metti lo stato in `state.queue` e chiama `render(state)`: la schermata di coda si apre da sola, conta i secondi e con "Annulla" chiama `leaveQueue()` (lì va `queue:leave`). Il modal non va toccato per la coda. **Giuseppe** (P47): gli inviti passano da `sendInvite` e `cancelInvite` in `home.js`; il risultato (`invite:update`) si dà al modal con `setInviteStatus(user_id, status)` di `ModeModal.js`; la lista degli amici è `state.friends` (forma di `GET /friends/`). (P44): `home:status` va in `state.status`, poi `render(state)`
 
