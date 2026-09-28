@@ -41,6 +41,7 @@
   justify-items: center;
   gap: 8px;
   min-height: 0;
+  position: relative; /* il riepilogo di fine mano (P57) sta sopra il centro */
 }
 
 .table__board--1v1 {
@@ -133,6 +134,70 @@
   width: 18px;
   height: 18px;
   object-fit: contain;
+}
+
+/*
+ * Re e Cavallo appena cantati (P57, D15): accanto a chi ha cantato, verso il
+ * centro del tavolo (i tuoi sopra la tua riga, mai sopra la mano), per
+ * show_seconds secondi; poi resta l'icona fissa qui sopra.
+ */
+.seat {
+  position: relative;
+}
+
+.sang {
+  position: absolute;
+  z-index: 4;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  pointer-events: none;
+}
+
+.sang--top { top: 100%; left: 50%; transform: translateX(-50%); }
+.sang--bottom { bottom: 100%; left: 50%; transform: translateX(-50%); }
+.sang--left { top: 50%; left: 100%; transform: translateY(-50%); }
+.sang--right { top: 50%; right: 100%; transform: translateY(-50%); }
+
+.sang__cards {
+  display: flex;
+  animation: sang-in 0.3s ease-out;
+}
+
+.sang .card {
+  --card-w: 34px;
+  box-shadow: var(--shadow-2);
+}
+
+.sang .card:first-child {
+  transform: rotate(-7deg);
+}
+
+.sang .card + .card {
+  margin-left: -10px;
+  transform: rotate(7deg);
+}
+
+.sang__points {
+  padding: 0 8px;
+  border-radius: var(--radius-pill);
+  background: var(--yellow);
+  color: var(--text);
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 18px;
+  white-space: nowrap;
+  text-shadow: none;
+}
+
+@keyframes sang-in {
+  from { opacity: 0; transform: scale(0.6); }
+}
+
+@media (min-width: 640px) {
+  .sang .card {
+    --card-w: 44px;
+  }
 }
 
 /* Carte coperte degli avversari: piccole e sovrapposte, così stanno anche ai lati */

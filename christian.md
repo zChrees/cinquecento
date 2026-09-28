@@ -22,6 +22,24 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P57 — Momenti del tavolo: ultima presa, fine mano, carte del canto (28/09/2026)
+
+- **Branch**: feature/p57-momenti-tavolo
+- **File**: creati `js/components/HandSummary.js`, `css/components/hand-summary.css`, `tests/frontend/test_momenti_tavolo.py`; modificati `js/pages/game.js`, `js/components/Table.js`, `Trick.js`, `css/components/table.css`, `trick.css`; fuori elenco, con il mio ok, `templates/game/table.html` (una riga `<link>` per `hand-summary.css`); questo file
+- **Controlli**: 1066 PASS in 7 suite (12 nuovi), `ruff check .` pulito
+- **Decisioni prese** (mie, sulle raccomandazioni di Claude):
+  - **ultima presa**: quando una presa si chiude, le carte restano al centro per **1,5 secondi** con "Prende *nome*" ("Prendi tu") e la carta di chi ha preso in risalto, poi scivolano verso di lui; spariscono subito se nel frattempo qualcuno gioca la prima carta della presa nuova; la mano non si blocca mai;
+  - **riepilogo di fine mano**: riquadro sopra il centro del tavolo (mai sopra la mano, che resta giocabile), "Mano N finita", righe Carte prese / Canti / Mano / Punteggio, la tua squadra per prima ("Tu" e il nome nel 1v1, "Noi / Loro" nel 2v2); si chiude **da solo dopo 5 secondi** o con "Ok". Per quei secondi può coprire la prima carta della mano nuova (rischio accettato);
+  - **fine partita**: prima si vede l'ultima presa, poi il riquadro "Hai vinto / Hai perso" con dentro il riepilogo dell'ultima mano (solo se la partita è finita a punti, non per abbandono);
+  - **carte del canto** (D15): Re e Cavallo accanto a chi ha cantato, verso il centro (le tue sopra la tua riga), con "Canta 40/20", per `show_seconds`; si vedono anche a chi ha cantato; la frase nella riga di stato resta, per i lettori di schermo;
+  - i momenti partono solo confrontando due viste: **mai alla prima vista** (apertura della pagina o rientro);
+  - **solo nella prova** (`?demo=`) la pagina accetta gli eventi del browser `demo:state` e `demo:sang` su `[data-table]`: li usano i test e si possono mandare dalla console.
+- **Domande nuove**:
+  - **ultima presa di ogni mano** (per Giuseppe e il gruppo, cambia il contratto): quando l'ultima presa chiude la mano, il motore comincia subito la mano nuova con `last_trick` a `null` (`game.py`, `apply_game`), quindi la pagina non riceve mai quelle carte, e la carta che chiude la mano non si vede. Per ora si passa direttamente al riepilogo (scelta mia). Proposta: aggiungere l'ultima presa a `last_hand` (per esempio `last_hand.last_trick`), in `views.py` e nel contratto 3.3; la pagina va poi adattata con poche righe. Va decisa in tre (contratto);
+  - **parametro `?demo=` a fine progetto** (per chi è di turno sui documenti): non voglio lasciare nella versione consegnata le prove nell'indirizzo (`?demo=` del tavolo e della home). Propongo un punto nuovo, mio, in fondo alla scaletta (prima di P36): togliere o spostare le viste finte, con le suite che le usano (`test_pagina_tavolo.py`, `test_pagina_home.py`, `test_momenti_tavolo.py`) da adattare
+- **Punti delicati**: `game.js` decide i momenti in `noticeMoments(prima, dopo)` dentro `render`; i timer ridisegnano con `redraw()`, che non fa niente se la partita è aperta altrove (D14). `Table(view, handlers, status, moments)` riceve i momenti già decisi e li disegna soltanto. Marcatori: `data-last-trick` (con `data-winner-seat`), `data-hand-summary` (con `data-hand-number`) e `data-hand-summary-close`, `data-sang-seat` (con `data-suit`, `data-points`). `.seat` ora ha `position: relative` (le carte del canto si posizionano da lì). `HandSummary.js` ha una copia di `teamName` di `Scoreboard.js` (tre righe), per non toccare un file fuori elenco
+- **Cosa devono fare gli altri**: **Giuseppe**: leggere la domanda sull'ultima presa di ogni mano qui sopra. **Chi è di turno sui documenti**: spuntare P57, registrare le decisioni qui sopra in `DECISIONI.md` (Interfaccia), le due domande in `DA-DECIDERE.md` e il punto delicato di P57 in `CLAUDE.md`; 1066 controlli. **Antonio**: niente
+
 ### Documenti: regola dei documenti a turno; registrati P26, P27, la correzione di P25 e P55 (28/09/2026)
 
 - **Branch**: docs/regola-documenti

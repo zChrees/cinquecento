@@ -14,6 +14,18 @@
  *   I secondi del turno e quelli per rientrare di chi è scollegato arrivano con la
  *   vista; la pagina li fa scendere da sola (contratto 1.1), contando dal momento in
  *   cui la vista è arrivata.
+ * - P57, momenti del tavolo, decisi confrontando la vista nuova con quella di prima
+ *   (mai alla prima vista, né dopo un rientro nella pagina):
+ *   - presa appena chiusa (last_trick cambiato nella stessa mano): resta al centro
+ *     per LAST_TRICK_MS, o finché qualcuno gioca la prima carta della presa nuova;
+ *     la mano non si blocca mai. L'ultima presa di una mano non arriva (il motore
+ *     comincia subito la mano nuova, con last_trick null): si vede il riepilogo;
+ *   - riepilogo di fine mano (hand_number salito): SUMMARY_MS, o fino a "Ok";
+ *   - carte del canto (game:sang, D15): accanto a chi ha cantato per show_seconds.
+ *   Con "riduci movimento" i tempi sono gli stessi, senza animazioni.
+ * - Solo nella prova (?demo=): la pagina accetta gli eventi del browser "demo:state"
+ *   (una vista nuova) e "demo:sang" (un canto) sull'elemento [data-table], per i
+ *   test e per provare i momenti dalla console.
  */
 
 import { initLayout } from '../core/layout.js';
@@ -29,6 +41,8 @@ const root = document.querySelector('[data-table]');
 const gameId = root.dataset.gameId;
 const demo = Boolean(root.dataset.demoUrl);
 const NO_MOVES = Object.freeze({ play: [], sing: [] });
+const LAST_TRICK_MS = 1500;
+const SUMMARY_MS = 5000;
 
 let view = null;
 let viewAt = 0; // quando è arrivata la vista (performance.now), per far scendere i secondi
@@ -36,6 +50,13 @@ let status = '';
 let waiting = false; // una mossa è partita e si aspetta la risposta
 let replaced = false; // la partita è aperta in un'altra scheda
 let leaving = false; // "Esci" confermato: si aspetta la risposta a game:leave
+
+// Momenti del tavolo (P57): cosa si vede adesso e il timer che lo toglie
+let lastTrick = null;
+let lastTrickTimer = 0;
+let summary = null;
+let summaryTimer = 0;
+const sang = {}; // posto → { event, timer }
 
 function showMessage(text) {
   root.replaceChildren();
@@ -63,15 +84,56 @@ function timed(current) {
   };
 }
 
+/** Ridisegna, se c'è una vista e la partita non è aperta altrove (per i timer). */
+function redraw() {
+  if (view && !replaced) render(view);
+}
+
+function hideLastTrick() {
+  clearTimeout(lastTrickTimer);
+  lastTrick = null;
+}
+
+function closeSummary() {
+  clearTimeout(summaryTimer);
+  summary = null;
+}
+
+/** Momenti che cominciano con la vista nuova (P57): presa appena chiusa, fine mano. */
+function noticeMoments(previous, next) {
+  if (!previous) return; // prima vista: niente da mostrare "per un momento"
+  if (next.hand_number !== previous.hand_number) hideLastTrick();
+  if (next.last_trick && next.hand_number === previous.hand_number
+      && JSON.stringify(next.last_trick) !== JSON.stringify(previous.last_trick)) {
+    hideLastTrick();
+    lastTrick = next.last_trick;
+    lastTrickTimer = setTimeout(() => { lastTrick = null; redraw(); }, LAST_TRICK_MS);
+  }
+  if (next.hand_number > previous.hand_number && next.last_hand) {
+    closeSummary();
+    summary = next.last_hand;
+    summaryTimer = setTimeout(() => { summary = null; redraw(); }, SUMMARY_MS);
+  }
+}
+
 /** Ridisegna il tavolo dalla vista. È l'unico punto che tocca il DOM del tavolo. */
 function render(next) {
   if (next !== view) {
+    noticeMoments(view, next);
     view = next;
     viewAt = performance.now();
   }
+  // La presa chiusa lascia il posto alla presa nuova appena qualcuno gioca
+  if (lastTrick && view.trick.cards.length) hideLastTrick();
   // Mentre si aspetta la risposta a una mossa nessuna carta e nessun canto sono attivi
   const shown = timed(waiting || leaving ? { ...view, legal: NO_MOVES } : view);
-  root.replaceChildren(Table(shown, { onPlay, onSing, onLeave }, status));
+  const moments = {
+    lastTrick,
+    summary,
+    onCloseSummary: () => { closeSummary(); redraw(); },
+    sang: Object.fromEntries(Object.entries(sang).map(([seat, { event }]) => [seat, event])),
+  };
+  root.replaceChildren(Table(shown, { onPlay, onSing, onLeave }, status, moments));
 }
 
 // Chi è scollegato: "scollegato · 48 s" scende ogni secondo, senza aspettare il server
@@ -166,22 +228,38 @@ async function join() {
   }
 }
 
+function onState(next) {
+  // Le viste arrivano in ordine di version: una più vecchia di quella mostrata si ignora
+  if (replaced || (view && next.version < view.version)) return;
+  render(next);
+}
+
+/**
+ * D15: Re e Cavallo cantati restano accanto a chi ha cantato per show_seconds
+ * secondi (P57); la frase nella riga di stato, per i lettori di schermo, dura
+ * uguale se nel frattempo non arriva un altro messaggio.
+ */
+function onSang(event) {
+  if (replaced) return;
+  const seconds = event.show_seconds * 1000;
+  clearTimeout(sang[event.seat]?.timer);
+  const timer = setTimeout(() => {
+    if (sang[event.seat]?.event === event) delete sang[event.seat];
+    redraw();
+  }, seconds);
+  sang[event.seat] = { event, timer };
+
+  const who = view && view.players[event.seat] ? view.players[event.seat].username : 'Un giocatore';
+  const text = `${who} ha cantato ${event.points} a ${event.suit}.`;
+  setStatus(text);
+  setTimeout(() => {
+    if (status === text) setStatus('');
+  }, seconds);
+}
+
 function startGame() {
-  on(EVENTS.GAME_STATE, (next) => {
-    // Le viste arrivano in ordine di version: una più vecchia di quella mostrata si ignora
-    if (replaced || (view && next.version < view.version)) return;
-    render(next);
-  });
-  on(EVENTS.GAME_SANG, (sang) => {
-    if (replaced) return;
-    const who = view && view.players[sang.seat] ? view.players[sang.seat].username : 'Un giocatore';
-    const text = `${who} ha cantato ${sang.points} a ${sang.suit}.`;
-    setStatus(text);
-    // D15: il canto si mostra per show_seconds secondi (se nel frattempo non c'è un altro messaggio)
-    setTimeout(() => {
-      if (status === text) setStatus('');
-    }, sang.show_seconds * 1000);
-  });
+  on(EVENTS.GAME_STATE, onState);
+  on(EVENTS.GAME_SANG, onSang);
   on(EVENTS.GAME_REPLACED, () => {
     replaced = true;
     showMessage('Questa partita è aperta in un\'altra scheda o su un altro dispositivo.');
@@ -201,6 +279,9 @@ function startGame() {
 }
 
 if (demo) {
+  // Solo nella prova: viste e canti finti mandati dai test o dalla console (P57)
+  root.addEventListener('demo:state', (event) => onState(event.detail));
+  root.addEventListener('demo:sang', (event) => onSang(event.detail));
   loadDemo(root.dataset.demoUrl);
 } else {
   showMessage('In attesa della partita…');

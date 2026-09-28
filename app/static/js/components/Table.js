@@ -12,15 +12,21 @@
  *
  * La pagina non calcola regole: le carte giocabili sono legal.play e i canti
  * legal.sing (entrambi vuoti quando non è il tuo turno).
- * Stile in css/components/table.css e css/pages/game.css.
+ *
+ * I momenti del tavolo (P57) arrivano in `moments`, già decisi da pages/game.js,
+ * che sa quando cominciano e quando finiscono: la presa appena chiusa, il
+ * riepilogo di fine mano e le carte del canto (D15). Qui si disegnano soltanto.
+ * Stile in css/components/table.css, trick.css, hand-summary.css e css/pages/game.css.
  */
 
 import { el, icon } from '../utils/dom.js';
+import { Card } from './Card.js';
 import { Hand, HiddenHand } from './Hand.js';
+import { HandSummary } from './HandSummary.js';
 import { Scoreboard } from './Scoreboard.js';
 import { SingButtons } from './SingButtons.js';
 import { Timer } from './Timer.js';
-import { DeckAndTrump, Trick } from './Trick.js';
+import { DeckAndTrump, LastTrick, Trick } from './Trick.js';
 
 const IMG_BASE = new URL('../../img/cards-bg/', import.meta.url).href;
 const POSITIONS = {
@@ -50,8 +56,23 @@ function SingBadges(view, seat) {
   ));
 }
 
+/**
+ * Re e Cavallo appena cantati (game:sang, D15), accanto a chi ha cantato, verso il
+ * centro del tavolo; spariscono dopo show_seconds (lo decide pages/game.js).
+ */
+function SangCards(sang, position) {
+  return el('div', {
+    class: `sang sang--${position}`,
+    data: { sangSeat: sang.seat, suit: sang.suit, points: sang.points },
+    attrs: { 'aria-hidden': 'true' }, // lo annuncia già la riga di stato
+  }, [
+    el('div', { class: 'sang__cards' }, sang.cards.map((card) => Card(card))),
+    el('span', { class: 'sang__points', text: `Canta ${sang.points}` }),
+  ]);
+}
+
 /** Un giocatore al tavolo: avatar (con l'anello del tempo se tocca a lui), nome, stato. */
-function Seat(view, player, position) {
+function Seat(view, player, position, sang = null) {
   const isTurn = view.turn !== null && view.turn.seat === player.seat;
   const isMe = player.seat === view.you.seat;
   const partner = view.mode === '2v2' && !isMe && player.team === view.players[view.you.seat].team;
@@ -82,21 +103,36 @@ function Seat(view, player, position) {
     label,
     SingBadges(view, player.seat),
     isMe ? null : HiddenHand(player.cards_in_hand),
+    sang ? SangCards(sang, position) : null,
   ]);
 }
 
-/** Riquadro di fine partita (result della vista). */
+/**
+ * Riquadro di fine partita (result della vista). Se la partita è finita a punti,
+ * sotto c'è il riepilogo dell'ultima mano (P57); dopo un abbandono no, perché
+ * last_hand sarebbe quello di una mano precedente.
+ */
 function Result(view) {
   const myTeam = view.players[view.you.seat].team;
   const { winner_team: winner, reason } = view.result;
   let title = 'Pareggio';
   if (winner !== null) title = winner === myTeam ? 'Hai vinto!' : 'Hai perso';
   const text = reason === 'abandon' ? 'La partita è finita per abbandono.' : 'La partita è finita.';
+  const summary = reason === 'score' && view.last_hand && view.last_hand.hand_number === view.hand_number
+    ? HandSummary(view, view.last_hand)
+    : null;
   return el('div', { class: 'table__result panel', data: { result: reason }, attrs: { role: 'status' } }, [
     el('h2', { text: title }),
     el('p', { text }),
+    summary,
     el('a', { class: 'btn btn--primary', text: 'Torna alla home', attrs: { href: '/' } }),
   ]);
+}
+
+/** "Prendi tu", "Prende Turi". */
+function winnerText(view, seat) {
+  if (seat === view.you.seat) return 'Prendi tu';
+  return `Prende ${view.players[seat]?.username ?? 'un giocatore'}`;
 }
 
 /**
@@ -106,9 +142,15 @@ function Result(view) {
  * @param {function} handlers.onSing seme da cantare
  * @param {function} handlers.onLeave pulsante "Esci"
  * @param {string} [status] messaggio sotto la mano (es. risposta del server)
+ * @param {object} [moments] momenti del tavolo da mostrare adesso (P57)
+ * @param {object|null} [moments.lastTrick] la presa appena chiusa (last_trick)
+ * @param {object|null} [moments.summary] il riepilogo di fine mano (last_hand)
+ * @param {function} [moments.onCloseSummary] pulsante "Ok" del riepilogo
+ * @param {object} [moments.sang] posto → evento game:sang da mostrare
  * @returns {HTMLElement}
  */
-export function Table(view, { onPlay, onSing, onLeave }, status = '') {
+export function Table(view, { onPlay, onSing, onLeave }, status = '', moments = {}) {
+  const { lastTrick = null, summary = null, onCloseSummary = null, sang = {} } = moments;
   const positionOf = positionFn(view);
   const me = view.players.find((player) => player.seat === view.you.seat);
   const others = view.players.filter((player) => player.seat !== view.you.seat);
@@ -124,22 +166,27 @@ export function Table(view, { onPlay, onSing, onLeave }, status = '') {
   ]);
 
   const board = el('div', { class: `table__board table__board--${view.mode}` }, [
-    ...others.map((player) => Seat(view, player, positionOf(player.seat))),
+    ...others.map((player) => Seat(view, player, positionOf(player.seat), sang[player.seat])),
     el('div', { class: 'table__center' }, [
-      Trick(view.trick, positionOf),
+      lastTrick
+        ? LastTrick(lastTrick, positionOf, winnerText(view, lastTrick.winner_seat))
+        : Trick(view.trick, positionOf),
       DeckAndTrump(view.deck_count, view.trump),
     ]),
+    summary ? HandSummary(view, summary, { onClose: onCloseSummary }) : null,
   ]);
 
   const mine = el('div', { class: 'table__mine' }, [
-    Seat(view, me, 'bottom'),
+    Seat(view, me, 'bottom', sang[me.seat]),
     SingButtons(view.legal.sing, view.sings, onSing),
     Hand(view.hand, { playable: view.legal.play, onPlay }),
     el('p', { class: 'table__status', text: status, data: { tableStatus: '' }, attrs: { role: 'status', 'aria-live': 'polite' } }),
   ]);
 
+  // A fine partita il riquadro arriva dopo che si è vista l'ultima presa
+  const result = view.result && !lastTrick ? Result(view) : null;
   return el('div', {
     class: 'table__inner',
     data: { mode: view.mode, version: view.version, status: view.status },
-  }, [topbar, board, mine, view.result ? Result(view) : null]);
+  }, [topbar, board, mine, result]);
 }
