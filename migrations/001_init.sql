@@ -1,9 +1,11 @@
 -- =====================================================================
--- Cinquecento: PROPOSTA delle tabelle del database (D38)
+-- Cinquecento: migrazione 001, tutte le tabelle della prima versione (P5)
 -- =====================================================================
--- Stato: proposta di Claude, APPROVATA dal gruppo il 27/09/2026 (D38).
--- Non la lancia nessuno script: Antonio la usa come base di
--- migrations/001_init.sql (punto P5), e poi questo file si cancella.
+-- Sono le tabelle approvate dal gruppo il 27/09/2026 (D38), prima in
+-- docs/proposta-tabelle.sql. La lancia solo scripts/migrate.py, che la
+-- registra in versione_schema: non modificarla dopo che è stata applicata.
+-- Una modifica alle tabelle si fa con una migrazione nuova (002_...sql),
+-- da concordare nel gruppo (SCALETTA.md, P5).
 --
 -- Decisioni di cui tiene conto (dettagli in DECISIONI.md):
 --   D6  account cancellato: le partite restano, con "utente eliminato"
@@ -32,6 +34,13 @@
 --     e numero di partite giocate si calcolano da giocatori_partita.
 --   - I valori iniziali del rating (1500, 350, 0,06) stanno in
 --     config.py, non qui.
+--   - Colonne con un elenco fisso di valori: testo esatto (utf8mb4_0900_bin,
+--     distingue maiuscole, accenti e spazi finali) con un CHECK sui valori
+--     ammessi, non ENUM.
+--     Un ENUM NOT NULL scritto senza valore prende in silenzio il primo
+--     dell'elenco (es. risultato 'vittoria'); così invece MySQL rifiuta
+--     la riga (P5, 28/09/2026). Fa eccezione amicizie.stato, che ha un
+--     valore predefinito voluto ('in_attesa').
 --   - "Chiave esterna" = collegamento a una riga di un'altra tabella;
 --     ON DELETE dice cosa succede a questa riga se l'altra si cancella.
 -- =====================================================================
@@ -62,12 +71,13 @@ CREATE TABLE utenti (
 -- ---------------------------------------------------------------------
 CREATE TABLE rating (
     utente_id       INT UNSIGNED NOT NULL,
-    modalita        ENUM('1v1', '2v2') NOT NULL,
-    valore          DOUBLE NOT NULL,                       -- il rating: parte da 1500
+    modalita        VARCHAR(3) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_bin NOT NULL,  -- '1v1' o '2v2'
+    valore         DOUBLE NOT NULL,                       -- il rating: parte da 1500
     deviazione      DOUBLE NOT NULL,                       -- quanto il sistema è incerto: parte da 350 e scende giocando
     volatilita      DOUBLE NOT NULL,                       -- quanto il rating oscilla: parte da 0,06
     aggiornato_il   DATETIME NOT NULL,                     -- ultima partita che l'ha cambiato
     PRIMARY KEY (utente_id, modalita),
+    CONSTRAINT ck_rating_modalita CHECK (modalita IN ('1v1', '2v2')),
     CONSTRAINT fk_rating_utente FOREIGN KEY (utente_id)
         REFERENCES utenti (id) ON DELETE CASCADE          -- account cancellato: il suo rating sparisce
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -78,16 +88,18 @@ CREATE TABLE rating (
 -- ---------------------------------------------------------------------
 CREATE TABLE partite (
     id                  INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    modalita            ENUM('1v1', '2v2') NOT NULL,
+    modalita            VARCHAR(3) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_bin NOT NULL,  -- '1v1' o '2v2'
     punti_per_vincere   SMALLINT UNSIGNED NOT NULL,        -- solo 150, 300 o 500
     conta_per_rating    BOOLEAN NOT NULL,                  -- no per il 1v1 contro un amico (D36)
     iniziata_il         DATETIME NOT NULL,
     finita_il           DATETIME NOT NULL,
-    motivo_fine         ENUM('punteggio', 'abbandono') NOT NULL,
+    motivo_fine         VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_bin NOT NULL,  -- 'punteggio' o 'abbandono'
     squadra_vincente    TINYINT UNSIGNED NULL,             -- 0 o 1; vuota = pareggio
     punti_squadra_0     SMALLINT UNSIGNED NOT NULL,        -- punti finali della squadra 0
     punti_squadra_1     SMALLINT UNSIGNED NOT NULL,
     PRIMARY KEY (id),
+    CONSTRAINT ck_partite_modalita CHECK (modalita IN ('1v1', '2v2')),
+    CONSTRAINT ck_partite_motivo CHECK (motivo_fine IN ('punteggio', 'abbandono')),
     CONSTRAINT ck_partite_punti CHECK (punti_per_vincere IN (150, 300, 500)),
     CONSTRAINT ck_partite_vincente CHECK (squadra_vincente IS NULL OR squadra_vincente IN (0, 1)),
     CONSTRAINT ck_partite_date CHECK (finita_il >= iniziata_il)
@@ -104,11 +116,12 @@ CREATE TABLE giocatori_partita (
     posto           TINYINT UNSIGNED NOT NULL,             -- 0-1 nel 1v1, 0-3 nel 2v2 (i compagni uno di fronte all'altro)
     squadra         TINYINT UNSIGNED NOT NULL,             -- 0 o 1
     utente_id       INT UNSIGNED NULL,                     -- vuoto = "utente eliminato" (D6)
-    risultato       ENUM('vittoria', 'sconfitta', 'pareggio') NOT NULL,
+    risultato       VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_bin NOT NULL,  -- 'vittoria', 'sconfitta' o 'pareggio'
     ha_abbandonato  BOOLEAN NOT NULL DEFAULT FALSE,        -- non è rientrato entro 60 secondi
     PRIMARY KEY (partita_id, posto),
     UNIQUE KEY uq_giocatori_utente (partita_id, utente_id),  -- lo stesso utente non siede due volte (i vuoti non contano)
     KEY ix_giocatori_utente (utente_id),                   -- per le statistiche di un utente
+    CONSTRAINT ck_giocatori_risultato CHECK (risultato IN ('vittoria', 'sconfitta', 'pareggio')),
     CONSTRAINT ck_giocatori_posto CHECK (posto <= 3),
     CONSTRAINT ck_giocatori_squadra CHECK (squadra IN (0, 1)),
     CONSTRAINT fk_giocatori_partita FOREIGN KEY (partita_id)
@@ -150,9 +163,9 @@ CREATE TABLE amicizie (
     richiesta_il    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     risposta_il     DATETIME NULL,                         -- vuota finché è in attesa
     -- La coppia in ordine (il numero più piccolo prima): serve solo a
-    -- garantire "una riga per coppia". Da verificare in P5 su MySQL: se
-    -- non viene accettata insieme alle chiavi esterne qui sotto, il
-    -- controllo passa al servizio (P45), dentro la transazione.
+    -- garantire "una riga per coppia". Verificato in P5 (28/09/2026):
+    -- MySQL 8.0 accetta queste colonne insieme alle chiavi esterne qui
+    -- sotto e rifiuta la seconda riga della stessa coppia, anche al contrario.
     utente_minore   INT UNSIGNED AS (LEAST(richiedente_id, destinatario_id)) VIRTUAL,
     utente_maggiore INT UNSIGNED AS (GREATEST(richiedente_id, destinatario_id)) VIRTUAL,
     PRIMARY KEY (richiedente_id, destinatario_id),
