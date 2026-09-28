@@ -388,7 +388,9 @@ def test_senza_login_la_carta_apre_la_finestra_di_accesso(browser, server):
 def test_avviso_di_rientro_solo_se_previsto(logged_in, server):
     logged_in.open(f"{server}/", 1440, 900)
     assert logged_in.js("document.querySelector('[data-resume]')") is None
-    assert logged_in.js("document.querySelector('[data-online-count]').textContent") == "24"
+    # Da P44 il numero degli online è quello vero (solo l'utente del test: 1); all'apertura
+    # può comparire per un attimo quello finto, quindi si aspetta quello vero
+    logged_in.wait_js("document.querySelector('[data-online-count]').textContent === '1'", "numero vero degli online")
 
     for width, height in [(1440, 900), (360, 640), (844, 390)]:
         logged_in.open(f"{server}/?demo=rientro", width, height)

@@ -22,6 +22,15 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Correzione — Test della home dopo P44 (28/09/2026)
+
+- **Branch**: feature/p56-frasi-tavolo (commit a parte, dopo il rebase su P29 e P44)
+- **File**: modificato `tests/api/test_pagina_home.py`: `test_avviso_di_rientro_solo_se_previsto` ora aspetta il numero vero degli online ("1"), come proposto da Giuseppe in P44, invece di leggere subito il "24" dei dati finti
+- **Controlli**: 1166 PASS in 7 suite (dopo il rebase su P44), `ruff check .` pulito
+- **Decisioni prese**: nessuna
+- **Domande nuove**: nessuna. La proposta di Giuseppe sull'ultima presa di ogni mano (`last_hand.last_trick`, riepilogo di P44) aspetta la risposta di Christian
+- **Cosa devono fare gli altri**: **Giuseppe**: il test l'ho corretto io, come per P28
+
 ### P56 — Frasi del tavolo nella pagina (28/09/2026)
 
 - **Branch**: feature/p56-frasi-tavolo
