@@ -22,6 +22,28 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### P24 — Stanze e partita completa (28/09/2026)
+
+- **Branch**: feature/p24-partita (la parte server è partita prima che P21 fosse in `dev`; `game.js` l'ho toccato solo dopo, con P21 in `dev`)
+- **File**: modificati app/realtime/room.py, room_manager.py (P23), app/sockets/game_events.py (P4), app/static/js/pages/game.js (P21); creato tests/sockets/test_partita.py
+- **Controlli**: 790 PASS in tutto (29 nuovi, nella suite `sockets`), `ruff check .` pulito. Provato anche una volta in Chrome senza finestra (script fuori dal progetto): il tavolo si disegna dalla partita vera, un clic su una carta arriva al server e l'avversario riceve la vista nuova, D14 mostra "partita aperta in un'altra scheda"
+- **Decisioni prese** (tecniche, nessuna sul gioco):
+  - `create_room(giocatori, modalità, punteggio, rated=True)` in `room_manager.py`: i giocatori si passano **nell'ordine dei posti** (nel 2v2 i posti 0 e 2 sono una squadra, contratto 3.1), come `User` o `Player`; rifiuta con `RoomError` modalità, numero di giocatori, punteggio non validi, lo stesso utente due volte e chi è già in una partita in corso. Manda `game:start` a ogni giocatore (`url` = `/game/<game_id>`);
+  - `find_room_of_user(user_id)`: la stanza della partita **in corso** di quell'utente, o `None`;
+  - `version` parte da 1 e sale a ogni mossa e a ogni cambio della scheda al tavolo; `turn.seconds_left` si calcola da quando è cominciato il turno (il timer che gioca da solo è di P25); `connected` = il posto ha una scheda al tavolo; `reconnect_seconds_left` sempre `null` fino a P25;
+  - D14: ogni posto ha una sola scheda al tavolo, l'ultima che ha fatto `game:join`; la precedente riceve `game:replaced` e le sue mosse ricevono `not_allowed`, come quelle di chi non ha fatto `game:join`;
+  - `game:sang` porta Re (rank 10) e Cavallo (rank 9) del seme, `show_seconds` 3 (D15).
+- **Domande nuove**: nessuna
+- **Punti delicati**:
+  - **mai due `create_app()` nello stesso processo con il tempo reale acceso**: `socketio` è un oggetto unico e si ricollega all'ultima app, così il server già avviato non riceve più gli eventi giusti (successo nei test: ogni evento rispondeva `('', 400)`);
+  - ordine dei controlli di una mossa: dati → partita e posto → scheda al tavolo → `version` → motore (`not_your_turn`, `illegal_move`); con `stale_state` la pagina riceve anche la vista attuale;
+  - la vista si confronta nei test con le chiavi di `app/static/dev/vista_1v1.json`: se il contratto cambia, quel test lo segnala;
+  - le viste di `game:state` partono dentro il gestore, prima della risposta: la pagina può ricevere `game:state` prima dell'`ok` di `game:join` (per l'ordine vale `version`).
+- **Note per gli altri**:
+  - **Antonio** (P28, P29) e **Giuseppe** (P47): per creare una partita `create_room(...)`; **P44**: `find_room_of_user(...)`. Tutte e due in `app/realtime/room_manager.py`, senza modificarlo;
+  - **`game.js`** (P24): in prova (`?demo=`) non si collega al server; in partita fa `game:join` a ogni collegamento (anche dopo una riconnessione), chiama `render(vista)` a ogni `game:state` (ignorando le viste con `version` più vecchia), manda le mosse con la `version` della vista e, finché non arriva la risposta, disegna la vista con `legal` vuoto (carte e "Canta" disattivati); un errore va nella riga di stato (`setStatus`); `game:sang` scrive "X ha cantato 40 a coppe" per 3 secondi; con `game:replaced` il tavolo si ferma con un messaggio;
+  - **Christian**: restano da disegnare (P25 o un punto dell'interfaccia) l'ultima presa per un momento, il riepilogo di fine mano e le due carte del canto per 3 secondi: per ora il canto è solo una scritta. "Esci" torna alla home senza `game:leave`: l'abbandono è di P25.
+
 ### P23 — Collegamento in tempo reale (28/09/2026)
 
 - **Branch**: feature/p23-realtime
