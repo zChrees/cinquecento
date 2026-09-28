@@ -1,0 +1,140 @@
+/*
+ * Presa in corso, mazzo e briscola al centro del tavolo (P21), creati da
+ * js/components/Trick.js. Ogni carta della presa sta dal lato di chi l'ha
+ * giocata, un po' ruotata come su un tavolo vero.
+ */
+
+.table__center {
+  --trick-card: 48px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.trick {
+  position: relative;
+  flex: none;
+  width: calc(var(--trick-card) * 2.4);
+  height: calc(var(--trick-card) / var(--card-ratio) * 1.75);
+}
+
+/* Nel 1v1 le carte sono solo in alto e in basso: la presa è più stretta */
+.table__board--1v1 .trick {
+  width: calc(var(--trick-card) * 1.6);
+}
+
+.trick__card {
+  position: absolute;
+}
+
+.trick__card .card {
+  --card-w: var(--trick-card);
+  box-shadow: var(--shadow-2);
+}
+
+.trick__card--bottom {
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%) rotate(-3deg);
+}
+
+.trick__card--top {
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%) rotate(4deg);
+}
+
+.trick__card--left {
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%) rotate(-8deg);
+}
+
+.trick__card--right {
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%) rotate(7deg);
+}
+
+/* Mazzo coperto con le carte rimaste, e sotto la briscola */
+.deck-trump {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  color: var(--on-navbar);
+  text-shadow: var(--relief-text);
+}
+
+.deck {
+  position: relative;
+}
+
+.deck .card {
+  --card-w: 40px;
+}
+
+.deck__count {
+  position: absolute;
+  right: -8px;
+  bottom: -6px;
+  min-width: 24px;
+  padding: 0 6px;
+  border-radius: var(--radius-pill);
+  background: var(--text);
+  color: var(--bg);
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 20px;
+  text-align: center;
+  text-shadow: none;
+}
+
+.deck--empty {
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.trump {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.trump__suit {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px var(--halo));
+}
+
+.trump__text {
+  display: grid;
+  font-family: var(--font-title);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.trump__text small {
+  font-family: var(--font-text);
+  font-size: 0.7rem;
+}
+
+.trump--none .trump__text {
+  font-size: 0.85rem;
+}
+
+/* Tablet e computer: carte della presa più grandi, ma più piccole sugli schermi bassi */
+@media (min-width: 640px) {
+  .table__center {
+    --trick-card: clamp(48px, 10vh, 80px);
+    gap: 20px;
+  }
+
+  .deck .card {
+    --card-w: 52px;
+  }
+}
+

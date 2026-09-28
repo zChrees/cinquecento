@@ -1,0 +1,47 @@
+/*
+ * Punteggio in alto al tavolo (P21), creato da js/components/Scoreboard.js:
+ * la tua squadra a sinistra (in giallo), l'altra a destra; sotto il punteggio
+ * per vincere e il numero della mano. Scritte sul panno come la navbar.
+ */
+
+.scoreboard {
+  color: var(--on-navbar);
+  text-align: center;
+  text-shadow: var(--relief-text);
+}
+
+.scoreboard__teams {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-title);
+  font-weight: 700;
+}
+
+.score {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.score__name {
+  overflow: hidden;
+  max-width: 7em;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.score__total {
+  font-size: 1.4rem;
+}
+
+.score--mine .score__total {
+  color: var(--yellow);
+}
+
+.scoreboard__info {
+  font-size: 0.75rem;
+  font-weight: 700;
+}

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{#
+  Tavolo di gioco (P21). Al tavolo la navbar è nascosta: tutto lo schermo va al
+  gioco (in alto "Esci" e il punteggio). Il tavolo lo disegna js/pages/game.js con
+  un'unica funzione render(vista), a partire dalla vista del contratto (3.3).
+  - data-game-id: il codice della stanza (P24 lo usa per game:join);
+  - data-demo-url: solo con ?demo=1v1 o ?demo=2v2, la vista finta da disegnare.
+#}
+
+{% block title %}Partita · Cinquecento{% endblock %}
+{% block navbar %}{% endblock %}
+{% block page_class %}page--game{% endblock %}
+{% block page_name %}game{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components/card.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components/hand.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components/table.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components/trick.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components/scoreboard.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components/timer.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/game.css') }}">
+{% endblock %}
+
+{% block page_script %}<script type="module" src="{{ url_for('static', filename='js/pages/game.js') }}"></script>{% endblock %}
+
+{% block content %}
+<div class="table" data-table data-game-id="{{ game_id }}"{% if demo_url %} data-demo-url="{{ demo_url }}"{% endif %}>
+  <p class="table__message" data-table-message>Caricamento della partita…</p>
+</div>
+{% endblock %}

@@ -1,0 +1,41 @@
+/*
+ * Tempo del turno (P21), creato da js/components/Timer.js: un anello attorno
+ * all'avatar di chi deve giocare. JS scrive i secondi rimasti (--timer-left) e la
+ * parte di anello ancora piena (--timer-start, da 0 a 1); da lì un'animazione
+ * CSS svuota l'anello e, a 10 secondi dalla fine, lo fa diventare rosso.
+ * Con "riduci movimento" (reset.css) l'anello resta fermo com'era all'arrivo.
+ */
+
+@property --timer-p {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+.timer {
+  --timer-color: var(--yellow);
+  --timer-p: var(--timer-start, 1);
+  position: absolute;
+  inset: -8px;   /* fuori dal bordo chiaro dell'avatar (3 px) */
+  border-radius: 50%;
+  background: conic-gradient(var(--timer-color) calc(var(--timer-p) * 1turn), transparent 0);
+  /* Solo il bordo del cerchio: il centro resta trasparente sopra l'avatar */
+  mask: radial-gradient(farthest-side, transparent calc(100% - 4px), var(--text) calc(100% - 4px));
+  pointer-events: none;
+  animation:
+    timer-run calc(var(--timer-left, 30) * 1s) linear forwards,
+    timer-warn 0s linear calc((var(--timer-left, 30) - 10) * 1s) forwards;
+}
+
+.timer--warn {
+  --timer-color: var(--red);
+}
+
+@keyframes timer-run {
+  from { --timer-p: var(--timer-start, 1); }
+  to { --timer-p: 0; }
+}
+
+@keyframes timer-warn {
+  to { --timer-color: var(--red); }
+}

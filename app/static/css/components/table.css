@@ -1,0 +1,224 @@
+/*
+ * Tavolo di gioco (P21), creato da js/components/Table.js. Tre fasce che
+ * riempiono lo schermo senza scorrere: in alto "Esci" e il punteggio, al centro
+ * gli altri giocatori attorno alla presa, in basso tu, i pulsanti "Canta" e la
+ * tua mano. Le scritte sul panno sono come quelle della navbar (--relief-text).
+ */
+
+.table__inner {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+}
+
+/* In alto: Esci a sinistra, punteggio al centro */
+.table__top {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+.table__leave {
+  justify-self: start;
+}
+
+/*
+ * Al centro: nel 2v2 il compagno in alto, gli avversari a destra e a sinistra,
+ * la presa in mezzo; nel 1v1 l'avversario in alto e la presa sotto.
+ */
+.table__board {
+  display: grid;
+  grid-template-areas:
+    ".    top    ."
+    "left center right";
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  align-items: center;
+  justify-items: center;
+  gap: 8px;
+  min-height: 0;
+}
+
+.table__board--1v1 {
+  grid-template-areas:
+    "top"
+    "center";
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.seat--top { grid-area: top; }
+.seat--left { grid-area: left; }
+.seat--right { grid-area: right; }
+.table__center { grid-area: center; }
+
+/* Un giocatore: avatar (con l'anello del tempo), nome, canti, carte coperte */
+.seat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+  color: var(--on-navbar);
+  text-shadow: var(--relief-text);
+  text-align: center;
+}
+
+.seat__avatar {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+}
+
+/* Al tavolo l'avatar ha solo il bordo chiaro: l'anello giallo o rosso è quello del tempo */
+.seat .avatar {
+  box-shadow: 0 0 0 3px var(--surface);
+}
+
+.seat--offline .avatar {
+  opacity: 0.55;
+  filter: grayscale(1);
+}
+
+.seat__label {
+  display: grid;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.seat__name {
+  overflow: hidden;
+  max-width: 100%;
+  font-family: var(--font-title);
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.seat__note {
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.seat--offline .seat__note {
+  color: var(--yellow);
+}
+
+/* Canti fatti nella mano: icona fissa accanto al nome (D15) */
+.seat__sings {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+}
+
+.sing-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 6px 1px 2px;
+  border-radius: var(--radius-pill);
+  background: var(--card-face);
+  color: var(--text);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-shadow: none;
+}
+
+.sing-badge img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+/* Carte coperte degli avversari: piccole e sovrapposte, così stanno anche ai lati */
+.seat .hand--hidden {
+  width: auto;
+  gap: 0;
+}
+
+.seat .hand--hidden > .card {
+  flex: 0 0 22px;
+  margin-left: -10px;
+  box-shadow: none;
+}
+
+.seat .hand--hidden > .card:first-child {
+  margin-left: 0;
+}
+
+/* Tu, in basso: avatar e nome in riga, poi i pulsanti Canta e la mano */
+.table__mine {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
+
+.seat--bottom {
+  flex-direction: row;
+  gap: 10px;
+}
+
+.seat--bottom .seat__label {
+  text-align: left;
+}
+
+.sing-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.sing-buttons:empty {
+  display: none;
+}
+
+.table__mine .hand {
+  max-width: 560px;
+}
+
+/* Su tablet e computer la mano si rimpicciolisce sugli schermi bassi, così il tavolo non scorre */
+@media (min-width: 640px) {
+  .table__mine .hand {
+    --hand-card-max: clamp(60px, 13vh, 104px);
+  }
+}
+
+.table__status {
+  min-height: 1.3em;
+  color: var(--on-navbar);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: center;
+  text-shadow: var(--relief-text);
+}
+
+/* Fine partita: riquadro al centro, sopra il tavolo */
+.table__result {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  gap: 12px;
+  width: min(100%, 360px);
+  text-align: center;
+  transform: translate(-50%, -50%);
+}
+
+@media (min-width: 1024px) {
+  .seat .avatar {
+    width: 54px;
+    height: 54px;
+    font-size: 1.5rem;
+  }
+
+  .seat .hand--hidden > .card {
+    flex-basis: 30px;
+    margin-left: -14px;
+  }
+}

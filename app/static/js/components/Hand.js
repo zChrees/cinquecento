@@ -2,10 +2,10 @@
  * Mano del giocatore (P20): le carte in fila dritta, affiancate, grandi quanto
  * permette lo schermo (a 360 px cinque carte stanno in una riga).
  *
- * Le mosse ammesse le decide il server (legal.cards nella vista, contratto 3.3):
+ * Le mosse ammesse le decide il server (legal.play nella vista, contratto 3.3):
  * la mano rende giocabili solo quelle, le altre restano visibili ma spente.
  *
- *   Hand(view.hand, { playable: view.legal.cards, onPlay: (card) => ... })
+ *   Hand(view.hand, { playable: view.legal.play, onPlay: (card) => ... })
  *   Hand(cards)                     // sola lettura (es. pagina di prova)
  *   HiddenHand(3)                   // carte coperte di un avversario
  *
