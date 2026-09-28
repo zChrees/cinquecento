@@ -22,6 +22,29 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### P44 — Home con dati reali (28/09/2026)
+
+- **Branch**: feature/p44-home-reale
+- **File**: creati `app/realtime/presence.py`, `app/sockets/home_events.py`, `tests/sockets/test_home_stato.py`; modificati `app/sockets/__init__.py`, `app/sockets/connection_events.py`, `app/static/js/pages/home.js`. **Fuori elenco, miei, con l'ok di Giuseppe**: `app/realtime/room.py` (P24–P26: `finish_listeners`, chiamati a fine partita, vedi sotto) e `app/static/js/core/events.js` (P23: il nome `HOME_STATUS`)
+- **Controlli**: 1153 PASS e **1 FAIL** su 1154, in 7 suite (8 nuovi nella suite `sockets`, rilanciata 3 volte di fila senza errori), `ruff check .` pulito. Il FAIL è `tests/api/test_pagina_home.py::test_avviso_di_rientro_solo_se_previsto` (P22, di Christian): vedi "Note per gli altri"
+- **Decisioni prese** (scelte di Giuseppe sulle raccomandazioni di Claude):
+  - **a fine partita la home lo sa subito**: i giocatori ricevono `home:status` con `resume: null` e l'avviso "rientra" sparisce anche nelle altre schede (contratto 5.1, "a ogni cambiamento");
+  - **dati veri sempre nella home** (anche in sviluppo e nei test): `home:status` vero prende il posto di quello finto; resta finto solo con **`?demo=rientro`**, per provare l'avviso senza una partita vera. Senza login la pagina non si collega e restano i dati finti (in sviluppo) o niente (demo vera).
+- **Scelte tecniche**:
+  - `presence.py`: utente → schede collegate, in memoria sotto un lock; `add` e `remove` dicono se l'utente è appena entrato o uscito; due schede contano una volta;
+  - `home:status` a ogni scheda appena collegata; a **tutti** gli utenti collegati quando uno entra online (prima scheda) o esce (ultima scheda); ai giocatori di una partita appena finita (per punteggio o abbandono);
+  - `resume` = `{game_id, url, mode, target_score}` da `find_room_of_user`, oppure `null`;
+  - la fine partita arriva da `room.py`: `finish_listeners` (lista di funzioni) chiamati una volta sola, insieme al salvataggio, **in un thread a parte, fuori dal lock della stanza**: lo stato della home guarda anche le altre stanze, e farlo sotto il lock di una stanza potrebbe bloccarne due a vicenda. `home_events.register` si aggiunge alla lista una volta sola;
+  - l'uscita dalla coda con l'ultima scheda (P28) ora usa `presence` invece di contare le schede nel canale `user:<id>`; in `on_disconnect` la scheda si toglie da `presence` per prima cosa, così un errore dopo non lascia l'utente "online".
+- **Domande nuove**: nessuna
+- **Punti delicati**:
+  - `online_count` viene da `presence`, non dai canali di Socket.IO: ogni scheda collegata deve passare da `connection_events` (è così per tutte le pagine);
+  - `friend_service.presence` (P45) conta ancora gli utenti online dai canali `user:<id>`: in P47 lo porto su `presence.is_online`, così c'è un solo elenco;
+  - `test_home_stato.py` aspetta che non ci sia nessuna scheda collegata prima di ogni prova (quelle delle prove precedenti si chiudono in modo asincrono).
+- **Note per il contratto o per gli altri**: nessun cambiamento al contratto.
+  - **Christian**: come con P28, un tuo test aspetta i dati finti. In `test_avviso_di_rientro_solo_se_previsto` (`tests/api/test_pagina_home.py`, riga 391) il numero degli online ora è quello vero, **"1"** (solo l'utente del test è collegato), non "24". Siccome all'apertura la pagina può mostrare per un attimo il "24" finto prima che arrivi quello vero, conviene **aspettare** il numero vero invece di leggerlo subito: per esempio `logged_in.wait_js("document.querySelector('[data-online-count]').textContent === '1'", "numero vero degli online")`. Con questa riga il test passa tutto, compreso l'avviso con `?demo=rientro` (provato con una copia temporanea, poi cancellata). Non ho toccato il tuo file: lo correggi tu, come per P28?
+  - **Christian e Antonio, proposta sull'ultima presa di ogni mano** (la domanda di Christian in P57): aggiungere a `last_hand` della vista il campo **`last_trick`**, con la stessa forma di `last_trick` della mano in corso (le carte dell'ultima presa e chi l'ha presa), in `app/game/engine/views.py` e nel contratto 3.3. Serve anche una piccola modifica al motore: oggi il risultato della mano (`HandResult`, in `state.py`) tiene solo i punti, quindi gli si aggiunge l'ultima presa, riempita da `hand_result` quando la mano si chiude (`game.py`). La pagina (P57) mostra quelle carte prima del riepilogo di fine mano. Cambia il contratto, quindi serve l'ok di tutti e tre: se siete d'accordo lo faccio io come lotto piccolo (motore, vista, contratto, test), poi Christian adatta `game.js`.
+
 ### P29 — Matchmaking 2v2 (28/09/2026)
 
 Punto di Antonio, fatto da Giuseppe con il suo permesso, subito dopo P28.

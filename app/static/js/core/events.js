@@ -21,6 +21,8 @@ export const EVENTS = Object.freeze({
   QUEUE_LEAVE: 'queue:leave',
   QUEUE_STATUS: 'queue:status',
   QUEUE_LEFT: 'queue:left',
+  // Home (5.1)
+  HOME_STATUS: 'home:status',
 });
 
 /** Motivo del rifiuto della connessione per chi non ha fatto il login (contratto 1.4). */

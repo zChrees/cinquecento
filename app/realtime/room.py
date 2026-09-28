@@ -34,6 +34,11 @@ va nel log.
 
 P55: la stanza tiene solo l'ora dell'ultima frase del tavolo di ogni posto
 (phrase_times, per il limite di table_phrases.py); le frasi non si salvano.
+
+P44: quando la partita finisce (una volta sola, insieme al salvataggio) la stanza
+chiama le funzioni di `finish_listeners` con i giocatori: home_events.py manda loro
+home:status, così l'avviso di rientro sparisce. Si chiamano in un thread a parte,
+fuori dal lock della stanza (lo stato della home guarda anche le altre stanze).
 """
 
 import logging
@@ -63,6 +68,9 @@ TURN_SECONDS = BaseConfig.TURN_SECONDS
 RECONNECT_SECONDS = BaseConfig.RECONNECT_SECONDS
 SING_SHOW_SECONDS = 3  # D15: per quanto la pagina mostra Re e Cavallo cantati
 MODE_OF_PLAYERS = {n: mode for mode, n in MODES.items()}
+
+# P44: funzioni chiamate a fine partita con i user_id dei giocatori (fuori dal lock)
+finish_listeners = []
 
 
 def utc_now():
@@ -317,6 +325,9 @@ class Room:
         if self._saved:
             return
         self._saved = True
+        members = tuple(p.user_id for p in self.players)
+        for listener in finish_listeners:
+            socketio.start_background_task(listener, members)
         if self._app is None:
             log.warning("Partita della stanza %s non salvata: nessuna applicazione Flask", self.id)
             return

@@ -13,11 +13,15 @@
  *   stesso utente); "Annulla" manda queue:leave e la schermata si chiude con
  *   queue:left (con "partner_left" un messaggio dice che il compagno è uscito);
  *   game:start porta al tavolo.
+ * - Stato vero della home (P44): home:status arriva appena la pagina si collega e
+ *   a ogni cambiamento (utenti online, partita in corso finita) e prende sempre il
+ *   posto di quello dei dati finti. Senza login la pagina non si collega.
  * - Il resto per ora viene dai dati finti di app/static/dev/ (attributi
- *   data-demo-*, solo in sviluppo e nei test; con ?demo=rientro c'è l'avviso di
- *   rientro): home:status (P44) e gli inviti veri (P47). Senza dati finti (demo
- *   vera) "giocatori online" resta nascosto e "Gioca con un amico" avvisa che la
- *   ricerca non è ancora attiva.
+ *   data-demo-*, solo in sviluppo e nei test): amici da invitare e rating finché
+ *   non ci sono P47 e i dati veri, e lo stato della home finché non arriva quello
+ *   vero. Con ?demo=rientro l'avviso di rientro resta quello finto (si prova senza
+ *   una partita vera). Senza dati finti (demo vera) "Gioca con un amico" avvisa
+ *   che la ricerca non è ancora attiva.
  * - Carte-pulsante: senza login aprono "Accedi o registrati" (P40); con il login
  *   la carta-modal della modalità (components/ModeModal.js).
  */
@@ -182,6 +186,19 @@ function onQueueLeft({ reason } = {}) {
   closeQueue();
 }
 
+// ------------------------------------------------------------
+// Stato vero della home (P44, contratto 5.1)
+// ------------------------------------------------------------
+
+let realStatus = false;   // è arrivato home:status: i dati finti non lo sostituiscono più
+
+function showStatus(status) {
+  if (root.dataset.demoState === 'rientro') return;   // prova dell'avviso con i dati finti
+  realStatus = true;
+  state.status = status;
+  render(state);
+}
+
 function goToTable({ url } = {}) {
   if (typeof url !== 'string' || !url.startsWith('/game/')) return;
   starting = true;
@@ -293,7 +310,8 @@ async function loadDemo() {
   ]);
   if (home.status === 'fulfilled') {
     demoData = home.value;
-    state.status = demoState === 'rientro' ? demoData['home:status con partita in corso'] : demoData['home:status'];
+    if (demoState === 'rientro') state.status = demoData['home:status con partita in corso'];
+    else if (!realStatus) state.status = demoData['home:status'];
   }
   if (friends.status === 'fulfilled') state.friends = friends.value['GET /friends/']?.friends ?? [];
   if (stats.status === 'fulfilled') state.ratings = stats.value.ratings ?? null;
@@ -303,6 +321,7 @@ async function loadDemo() {
 initCardBackground(background);
 render(state);
 if (isLoggedIn()) {
+  on(EVENTS.HOME_STATUS, showStatus);
   on(EVENTS.QUEUE_STATUS, showQueue);
   on(EVENTS.QUEUE_LEFT, onQueueLeft);
   on(EVENTS.GAME_START, goToTable);

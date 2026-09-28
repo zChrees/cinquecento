@@ -5,10 +5,11 @@ from app.sockets import (
     connection_events,
     friends_events,
     game_events,
+    home_events,
     lobby_events,
 )
 
-MODULES = (connection_events, lobby_events, game_events, friends_events, chat_events)
+MODULES = (connection_events, lobby_events, game_events, home_events, friends_events, chat_events)
 
 
 def register_handlers(socketio):
