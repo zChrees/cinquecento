@@ -63,7 +63,7 @@ def test_eventi_finti_solo_nella_prova():
     start = code.index("if (demo) {\n  // Solo nella prova")
     block = code[start:code.index("} else {", start)]
     assert "'demo:state'" in block and "'demo:sang'" in block
-    assert code.count("addEventListener('demo:") == 2
+    assert code.count("addEventListener('demo:") == 4  # più demo:phrases e demo:phrase (P56)
 
 
 # --- Nel browser -------------------------------------------------------------------

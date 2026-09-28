@@ -23,9 +23,18 @@
  *   - riepilogo di fine mano (hand_number salito): SUMMARY_MS, o fino a "Ok";
  *   - carte del canto (game:sang, D15): accanto a chi ha cantato per show_seconds.
  *   Con "riduci movimento" i tempi sono gli stessi, senza animazioni.
+ * - P56, frasi del tavolo (D24): l'elenco arriva con game:phrases a ogni game:join
+ *   (la pagina non ne tiene una copia sua; senza elenco il pulsante non c'è). Una
+ *   frase scelta parte con game:send_phrase; dopo l'invio il pulsante resta spento
+ *   PHRASE_PAUSE_MS, o i retry_after secondi di too_fast. game:phrase {seat, code}
+ *   mostra il fumetto accanto a chi ha parlato per BUBBLE_MS (anche il proprio: il
+ *   server lo rimanda a tutti). Si mandano anche a partita finita, per i saluti.
+ *   L'elenco si chiude con una frase, con Esc o toccando fuori.
  * - Solo nella prova (?demo=): la pagina accetta gli eventi del browser "demo:state"
- *   (una vista nuova) e "demo:sang" (un canto) sull'elemento [data-table], per i
- *   test e per provare i momenti dalla console.
+ *   (una vista nuova), "demo:sang" (un canto), "demo:phrases" (l'elenco delle frasi)
+ *   e "demo:phrase" (una frase detta) sull'elemento [data-table], per i test e per
+ *   provare dalla console; una frase scelta nella prova mostra subito il proprio
+ *   fumetto, senza server.
  */
 
 import { initLayout } from '../core/layout.js';
@@ -43,6 +52,8 @@ const demo = Boolean(root.dataset.demoUrl);
 const NO_MOVES = Object.freeze({ play: [], sing: [] });
 const LAST_TRICK_MS = 1500;
 const SUMMARY_MS = 5000;
+const PHRASE_PAUSE_MS = 3000; // come TABLE_PHRASE_MIN_INTERVAL_SECONDS del server (P55)
+const BUBBLE_MS = 4000;
 
 let view = null;
 let viewAt = 0; // quando è arrivata la vista (performance.now), per far scendere i secondi
@@ -57,6 +68,14 @@ let lastTrickTimer = 0;
 let summary = null;
 let summaryTimer = 0;
 const sang = {}; // posto → { event, timer }
+
+// Frasi del tavolo (P56)
+let phrases = null; // elenco di game:phrases: [{code, text}]
+let phrasesOpen = false;
+let phraseSending = false; // una frase è partita e si aspetta la risposta
+let phrasePausedUntil = 0; // performance.now() fino a cui il pulsante resta spento
+let phrasePauseTimer = 0;
+const bubbles = {}; // posto → { text, timer }
 
 function showMessage(text) {
   root.replaceChildren();
@@ -133,8 +152,99 @@ function render(next) {
     onCloseSummary: () => { closeSummary(); redraw(); },
     sang: Object.fromEntries(Object.entries(sang).map(([seat, { event }]) => [seat, event])),
   };
-  root.replaceChildren(Table(shown, { onPlay, onSing, onLeave }, status, moments));
+  const phrasesShown = phrases && {
+    list: phrases,
+    open: phrasesOpen,
+    disabled: phraseSending || performance.now() < phrasePausedUntil,
+    onToggle: () => { phrasesOpen = !phrasesOpen; redraw(); },
+    onPick: sendPhrase,
+    bubbles: Object.fromEntries(Object.entries(bubbles).map(([seat, { text }]) => [seat, text])),
+  };
+  // Il tavolo si ridisegna tutto: chi stava usando le frasi con la tastiera resta dov'era
+  const focused = document.activeElement;
+  const focusKey = root.contains(focused) && (focused.dataset.phraseCode ?? ('phrasesButton' in focused.dataset ? '' : null));
+  root.replaceChildren(Table(shown, { onPlay, onSing, onLeave }, status, moments, phrasesShown));
+  if (typeof focusKey === 'string') {
+    const selector = focusKey ? `[data-phrase-code="${CSS.escape(focusKey)}"]` : '[data-phrases-button]';
+    root.querySelector(selector)?.focus();
+  }
 }
+
+// --- Frasi del tavolo (P56) ---
+
+function closePhrases() {
+  if (!phrasesOpen) return;
+  phrasesOpen = false;
+  redraw();
+}
+
+/** Spegne il pulsante delle frasi per `ms` millisecondi (dopo l'invio, o con too_fast). */
+function pausePhrases(ms) {
+  clearTimeout(phrasePauseTimer);
+  phrasePausedUntil = performance.now() + ms;
+  phrasePauseTimer = setTimeout(redraw, ms);
+}
+
+function showBubble(seat, text) {
+  clearTimeout(bubbles[seat]?.timer);
+  const entry = { text };
+  entry.timer = setTimeout(() => {
+    if (bubbles[seat] === entry) delete bubbles[seat];
+    redraw();
+  }, BUBBLE_MS);
+  bubbles[seat] = entry;
+  redraw();
+}
+
+async function sendPhrase(code) {
+  if (phraseSending || !view || replaced || performance.now() < phrasePausedUntil) return;
+  phrasesOpen = false;
+  if (demo) {
+    pausePhrases(PHRASE_PAUSE_MS);
+    onPhrase({ seat: view.you.seat, code });
+    return;
+  }
+  phraseSending = true;
+  redraw();
+  const answer = await send(EVENTS.GAME_SEND_PHRASE, { game_id: gameId, code });
+  phraseSending = false;
+  if (answer.ok) {
+    pausePhrases(PHRASE_PAUSE_MS);
+  } else if (answer.error.code === 'too_fast') {
+    pausePhrases(answer.error.retry_after * 1000);
+  } else {
+    setStatus(answer.error.message); // per esempio senza connessione (no_connection)
+    return;
+  }
+  redraw();
+}
+
+/** game:phrases: l'elenco delle frasi, a ogni ingresso nella stanza. */
+function onPhrases(data) {
+  if (replaced || !data || !Array.isArray(data.phrases)) return;
+  phrases = data.phrases.filter((phrase) => phrase
+    && typeof phrase.code === 'string' && typeof phrase.text === 'string');
+  redraw();
+}
+
+/** game:phrase: il fumetto accanto a chi ha parlato; il testo si prende dall'elenco. */
+function onPhrase(data) {
+  if (replaced || !phrases || !data) return;
+  const phrase = phrases.find((item) => item.code === data.code);
+  if (!phrase || !view || !view.players[data.seat]) return;
+  showBubble(data.seat, phrase.text);
+}
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && phrasesOpen) {
+    closePhrases();
+    root.querySelector('[data-phrases-button]')?.focus();
+  }
+});
+
+document.addEventListener('pointerdown', (event) => {
+  if (phrasesOpen && !event.target.closest('[data-phrases-menu], [data-phrases-button]')) closePhrases();
+});
 
 // Chi è scollegato: "scollegato · 48 s" scende ogni secondo, senza aspettare il server
 setInterval(() => {
@@ -260,6 +370,8 @@ function onSang(event) {
 function startGame() {
   on(EVENTS.GAME_STATE, onState);
   on(EVENTS.GAME_SANG, onSang);
+  on(EVENTS.GAME_PHRASES, onPhrases);
+  on(EVENTS.GAME_PHRASE, onPhrase);
   on(EVENTS.GAME_REPLACED, () => {
     replaced = true;
     showMessage('Questa partita è aperta in un\'altra scheda o su un altro dispositivo.');
@@ -282,6 +394,8 @@ if (demo) {
   // Solo nella prova: viste e canti finti mandati dai test o dalla console (P57)
   root.addEventListener('demo:state', (event) => onState(event.detail));
   root.addEventListener('demo:sang', (event) => onSang(event.detail));
+  root.addEventListener('demo:phrases', (event) => onPhrases(event.detail));
+  root.addEventListener('demo:phrase', (event) => onPhrase(event.detail));
   loadDemo(root.dataset.demoUrl);
 } else {
   showMessage('In attesa della partita…');

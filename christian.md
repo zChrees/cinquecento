@@ -22,6 +22,22 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P56 — Frasi del tavolo nella pagina (28/09/2026)
+
+- **Branch**: feature/p56-frasi-tavolo
+- **File**: creati `js/components/TablePhrases.js`, `css/components/table-phrases.css`, `tests/frontend/test_frasi_pagina.py` (non `test_frasi_tavolo.py` come in scaletta: c'è già in `tests/sockets/`, di P55, e due file con lo stesso nome fermano un `pytest` lanciato su tutte le cartelle); modificati `js/pages/game.js`, `templates/game/table.html`; fuori elenco, con il mio ok, `js/components/Table.js` (il pulsante sta nella barra in alto, i fumetti sugli avatar) e `tests/frontend/test_momenti_tavolo.py` (conta gli eventi `demo:` della prova, ora 4); questo file
+- **Controlli**: 1131 PASS in 7 suite (12 nuovi), `ruff check .` pulito
+- **Decisioni prese** (mie, sulle raccomandazioni di Claude):
+  - **pulsante in alto a destra** (icona del fumetto, etichetta accessibile "Frasi"; su computer anche la scritta);
+  - **elenco sotto il pulsante**, con le frasi come pillole che vanno a capo: a 360 px ci stanno tutte senza scorrere; si chiude con una frase, con Esc o toccando fuori;
+  - **fumetto per 4 secondi** accanto all'avatar di chi ha parlato: a destra per chi sta in alto, sopra l'avatar per te e per chi sta ai lati (per te era previsto a destra, ma lì c'è il tuo nome e a 360 px non c'è spazio); una frase nuova dello stesso giocatore sostituisce la vecchia; il nome si legge solo con i lettori di schermo;
+  - dopo l'invio il pulsante resta **spento 3 secondi**; con `too_fast` per i `retry_after` secondi, senza messaggi; senza connessione il messaggio va nella riga di stato;
+  - **frasi anche a partita finita** (il server lo permette, P55);
+  - nella prova (`?demo=`) il pulsante compare solo quando arriva l'elenco (evento `demo:phrases`); le frasi degli altri con `demo:phrase`; una frase scelta mostra subito il proprio fumetto, senza server
+- **Domande nuove**: nessuna
+- **Punti delicati**: il tavolo si ridisegna tutto a ogni vista, quindi elenco aperto, pausa e fumetti stanno in `game.js` (come i momenti di P57), e `render` rimette il fuoco sul pulsante o sulla frase che l'aveva, per chi usa la tastiera. `PHRASE_PAUSE_MS` in `game.js` deve restare uguale a `TABLE_PHRASE_MIN_INTERVAL_SECONDS` (lo controlla un test). La pagina non ha una copia delle frasi: un test controlla che nessun testo dell'elenco sia scritto nei file JS. L'invio vero (`game:send_phrase`) nel browser non è provato: lo provano i test di P55 lato server
+- **Cosa devono fare gli altri**: **Chi è di turno sui documenti**: spuntare P56, registrare le decisioni qui sopra in `DECISIONI.md` (Interfaccia), il punto delicato in `CLAUDE.md`, e nella scaletta il nome del file di test. **Giuseppe**: niente; se cambi il limite delle frasi in `config.py`, cambia anche `PHRASE_PAUSE_MS` in `game.js`
+
 ### P30 — Pannello statistiche con dati reali (28/09/2026)
 
 - **Branch**: feature/p30-statistiche (partito da `dev` con P28 già dentro)

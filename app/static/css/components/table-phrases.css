@@ -1,0 +1,149 @@
+/*
+ * Frasi del tavolo (P56), create da js/components/TablePhrases.js: il pulsante in
+ * alto a destra, l'elenco sotto il pulsante e il fumetto accanto all'avatar di chi
+ * ha parlato (a destra per chi sta in alto; sopra per te e per chi sta ai lati, così
+ * non tocca il tuo nome, la tua mano e le carte del canto di P57).
+ */
+
+.phrases-button {
+  justify-self: end;
+}
+
+/* Su telefono solo l'icona (l'etichetta accessibile resta "Frasi") */
+.phrases-button__text {
+  display: none;
+}
+
+/* L'elenco: sotto il pulsante, sopra tutto il resto del tavolo */
+.phrases-menu {
+  position: absolute;
+  top: 52px;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  width: min(100%, 360px);
+  padding: 10px;
+  border-radius: var(--radius-l);
+  background: var(--surface);
+  box-shadow: var(--shadow-2);
+  animation: phrases-in 0.18s ease-out;
+}
+
+.phrase {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.phrase:hover:not(:disabled) {
+  filter: brightness(0.96);
+}
+
+.phrase:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+/* Il fumetto, agganciato all'avatar */
+.phrase-bubble {
+  position: absolute;
+  z-index: 6;
+  width: max-content;
+  max-width: min(170px, 40vw);
+  padding: 4px 10px;
+  border-radius: var(--radius-m);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-text);
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: left;
+  text-shadow: none;
+  box-shadow: var(--shadow-2);
+  pointer-events: none;
+  animation: phrase-pop 0.2s ease-out;
+}
+
+.phrase-bubble::after {
+  content: "";
+  position: absolute;
+  border: 6px solid transparent;
+}
+
+/*
+ * In alto: a destra dell'avatar, con la punta verso di lui. L'avatar sta al centro
+ * dello schermo: il fumetto non va oltre la metà destra, meno avatar e margine.
+ */
+.phrase-bubble--top {
+  top: 50%;
+  left: calc(100% + 10px);
+  max-width: min(170px, calc(50vw - 70px - var(--gutter)));
+  translate: 0 -50%;
+}
+
+.phrase-bubble--top::after {
+  top: 50%;
+  right: 100%;
+  border-right-color: var(--surface);
+  translate: 0 -50%;
+}
+
+/* Tu e chi sta ai lati: sopra l'avatar, con la punta in basso */
+.phrase-bubble--bottom,
+.phrase-bubble--left,
+.phrase-bubble--right {
+  bottom: calc(100% + 10px);
+}
+
+.phrase-bubble--bottom,
+.phrase-bubble--left {
+  left: 0;
+}
+
+.phrase-bubble--right {
+  right: 0;
+}
+
+.phrase-bubble--bottom::after,
+.phrase-bubble--left::after,
+.phrase-bubble--right::after {
+  top: 100%;
+  border-top-color: var(--surface);
+}
+
+.phrase-bubble--bottom::after,
+.phrase-bubble--left::after {
+  left: 14px;
+}
+
+.phrase-bubble--right::after {
+  right: 14px;
+}
+
+@keyframes phrases-in {
+  from { opacity: 0; transform: translateY(-6px); }
+}
+
+@keyframes phrase-pop {
+  from { opacity: 0; transform: scale(0.85); }
+}
+
+@media (min-width: 640px) {
+  .phrases-button__text {
+    display: inline;
+  }
+
+  .phrases-menu {
+    top: 56px;
+  }
+}

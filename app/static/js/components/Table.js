@@ -16,6 +16,8 @@
  * I momenti del tavolo (P57) arrivano in `moments`, già decisi da pages/game.js,
  * che sa quando cominciano e quando finiscono: la presa appena chiusa, il
  * riepilogo di fine mano e le carte del canto (D15). Qui si disegnano soltanto.
+ * Allo stesso modo le frasi del tavolo (P56) arrivano in `phrases`: pulsante in
+ * alto a destra, elenco sotto il pulsante e fumetti accanto a chi ha parlato.
  * Stile in css/components/table.css, trick.css, hand-summary.css e css/pages/game.css.
  */
 
@@ -25,6 +27,7 @@ import { Hand, HiddenHand } from './Hand.js';
 import { HandSummary } from './HandSummary.js';
 import { Scoreboard } from './Scoreboard.js';
 import { SingButtons } from './SingButtons.js';
+import { PhraseBubble, PhrasesButton, PhrasesMenu } from './TablePhrases.js';
 import { Timer } from './Timer.js';
 import { DeckAndTrump, LastTrick, Trick } from './Trick.js';
 
@@ -72,7 +75,7 @@ function SangCards(sang, position) {
 }
 
 /** Un giocatore al tavolo: avatar (con l'anello del tempo se tocca a lui), nome, stato. */
-function Seat(view, player, position, sang = null) {
+function Seat(view, player, position, sang = null, phrase = null) {
   const isTurn = view.turn !== null && view.turn.seat === player.seat;
   const isMe = player.seat === view.you.seat;
   const partner = view.mode === '2v2' && !isMe && player.team === view.players[view.you.seat].team;
@@ -88,6 +91,7 @@ function Seat(view, player, position, sang = null) {
   const avatar = el('span', { class: 'seat__avatar' }, [
     el('span', { class: 'avatar', text: player.username.slice(0, 1).toUpperCase(), attrs: { 'aria-hidden': 'true' } }),
     isTurn ? Timer(view.turn) : null,
+    phrase ? PhraseBubble(player.username, phrase, position) : null,
   ]);
   const label = el('div', { class: 'seat__label' }, [
     el('span', { class: 'seat__name', text: isMe ? `${player.username} (tu)` : player.username }),
@@ -147,10 +151,18 @@ function winnerText(view, seat) {
  * @param {object|null} [moments.summary] il riepilogo di fine mano (last_hand)
  * @param {function} [moments.onCloseSummary] pulsante "Ok" del riepilogo
  * @param {object} [moments.sang] posto → evento game:sang da mostrare
+ * @param {object|null} [phrases] frasi del tavolo (P56); null finché l'elenco non arriva
+ * @param {Array} phrases.list l'elenco di game:phrases ({code, text})
+ * @param {boolean} phrases.open l'elenco è aperto
+ * @param {boolean} phrases.disabled pulsante e frasi spenti
+ * @param {function} phrases.onToggle apre o chiude l'elenco
+ * @param {function} phrases.onPick frase scelta (code)
+ * @param {object} phrases.bubbles posto → testo del fumetto da mostrare
  * @returns {HTMLElement}
  */
-export function Table(view, { onPlay, onSing, onLeave }, status = '', moments = {}) {
+export function Table(view, { onPlay, onSing, onLeave }, status = '', moments = {}, phrases = null) {
   const { lastTrick = null, summary = null, onCloseSummary = null, sang = {} } = moments;
+  const bubbles = phrases ? phrases.bubbles : {};
   const positionOf = positionFn(view);
   const me = view.players.find((player) => player.seat === view.you.seat);
   const others = view.players.filter((player) => player.seat !== view.you.seat);
@@ -163,10 +175,13 @@ export function Table(view, { onPlay, onSing, onLeave }, status = '', moments = 
       on: { click: onLeave },
     }, [icon('logout'), 'Esci']),
     Scoreboard(view),
+    phrases ? PhrasesButton(phrases) : null,
   ]);
+  const menu = phrases && phrases.open ? PhrasesMenu(phrases.list, phrases) : null;
 
   const board = el('div', { class: `table__board table__board--${view.mode}` }, [
-    ...others.map((player) => Seat(view, player, positionOf(player.seat), sang[player.seat])),
+    ...others.map((player) =>
+      Seat(view, player, positionOf(player.seat), sang[player.seat], bubbles[player.seat])),
     el('div', { class: 'table__center' }, [
       lastTrick
         ? LastTrick(lastTrick, positionOf, winnerText(view, lastTrick.winner_seat))
@@ -177,7 +192,7 @@ export function Table(view, { onPlay, onSing, onLeave }, status = '', moments = 
   ]);
 
   const mine = el('div', { class: 'table__mine' }, [
-    Seat(view, me, 'bottom', sang[me.seat]),
+    Seat(view, me, 'bottom', sang[me.seat], bubbles[me.seat]),
     SingButtons(view.legal.sing, view.sings, onSing),
     Hand(view.hand, { playable: view.legal.play, onPlay }),
     el('p', { class: 'table__status', text: status, data: { tableStatus: '' }, attrs: { role: 'status', 'aria-live': 'polite' } }),
@@ -188,5 +203,5 @@ export function Table(view, { onPlay, onSing, onLeave }, status = '', moments = 
   return el('div', {
     class: 'table__inner',
     data: { mode: view.mode, version: view.version, status: view.status },
-  }, [topbar, board, mine, result]);
+  }, [topbar, board, mine, result, menu]);
 }
