@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: P24 (28/09/2026)
+
+- **Branch**: docs/p24
+- **File**: modificati `SCALETTA.md` (P24 spuntato, **P57 aggiunto**, "Da dove si parte"), `DECISIONI.md` (stanze di gioco, P57), `CLAUDE.md` (riga "Stato", numero di test, punto delicato di P24), questo file
+- **Controlli**: nessun codice cambiato; `python tests/esegui_tutti.py` su `dev` con P24: 790 PASS in 6 suite (confermato il conteggio di Giuseppe)
+- **Decisioni prese**: registrate quelle tecniche di P24 (dal riepilogo di Giuseppe)
+- **Decisione nuova**: **P57**, punto nuovo mio dopo P25: al tavolo l'ultima presa per un momento, il riepilogo di fine mano e le carte del canto per 3 secondi (P24 li lascia fuori e P25 non li tocca)
+- **Domande nuove**: nessuna
+- **Punti delicati**: nessuno in più
+- **Cosa devono fare gli altri**: **Giuseppe** P25 (dopo tocca a me con P57 su `game.js`); **Antonio** (P28, P29) crea le partite con `create_room(...)` senza modificare `room_manager.py`
+
 ### Documenti: P21, P23 e D18 (28/09/2026)
 
 - **Branch**: docs/p21-p23

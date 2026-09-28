@@ -61,7 +61,7 @@ Una web-app per giocare online a **Cinquecento**, variante siciliana, con le car
 - [ ] P45 (Fase 2, B): amicizie (richieste, accetta, rifiuta, rimuovi, lista) — `app/blueprints/friends/`, `friend_service.py`, `friend_repo.py`
 - [ ] P46 (Fase 2, C): pannello amici e finestra chat con dati finti — `FriendsPanel.js`, `ChatWindow.js`
 - [x] P23 (Fase 2, I): collegamento in tempo reale, stanze, lock — `app/realtime/`, `app/sockets/connection_events.py`, `app/static/js/core/socket.js` — *28/09 (Giuseppe, commit `9b6526f`): 12 test nuovi nella suite nuova `sockets` (server vero sulla porta 5099, vuole MySQL), 748 PASS in tutto; ogni evento di una stanza passa da `room.run(...)` (lock della stanza); canali `user:<id>` e `room:<game_id>`, `game_id` casuale di 12 caratteri; risposte con la forma unica di `events.py`; client Socket.IO 4.8.1 (versione ES module) in `js/vendor/socket.io.min.js`, importato da `core/socket.js`; `send()` senza connessione risponde subito `no_connection` (codice solo della pagina). D14 (`game:replaced`) la fa P24*
-- [ ] P24 (Fase 2, I): stanze e partita completa — `app/realtime/room.py`, `room_manager.py`, `app/sockets/game_events.py`
+- [x] P24 (Fase 2, I): stanze e partita completa — `app/realtime/room.py`, `room_manager.py`, `app/sockets/game_events.py` — *28/09 (Giuseppe, commit `51387a6`): 29 test nuovi nella suite `sockets` (partite 1v1 e 2v2 intere fino a 150 con client simulati), 790 PASS in tutto; `create_room(...)` e `find_room_of_user(...)` in `room_manager.py` (li usano P28, P29, P44, P47 senza modificarlo); `version` parte da 1 e sale a ogni mossa e a ogni cambio di scheda; D14 fatta (`game:replaced`, le mosse della scheda vecchia ricevono `not_allowed`); `game.js` collegato al server (in prova con `?demo=` no): mosse con `version`, pulsanti disattivati fino alla risposta, errori nella riga di stato, `game:sang` come scritta per 3 secondi. Restano: timer che gioca da solo, riconnessione e abbandono (P25); ultima presa, riepilogo di fine mano e carte del canto disegnate (P57, Christian)*
 - [ ] P25 (Fase 2, I): timer, riconnessione, abbandono — `app/realtime/room.py`, `app/sockets/game_events.py`
 - [ ] P26 (Fase 2, B): salvataggio delle partite — `match_service.py`, `match_repo.py`
 - [ ] P27 (Fase 2, B): rating Glicko-2 — `glicko2.py`, `rating_service.py`, `rating_repo.py`
@@ -73,6 +73,7 @@ Una web-app per giocare online a **Cinquecento**, variante siciliana, con le car
 - [ ] ~~P54 (Fase 2, B): frasi del tavolo: elenco e salvataggio~~ — **tolto il 27/09/2026**: le frasi del tavolo non si salvano (D24)
 - [ ] P55 (Fase 2, I): frasi del tavolo in tempo reale — `app/realtime/table_phrases.py`, `app/sockets/game_events.py`, `config.py`
 - [ ] P56 (Fase 2, C): frasi del tavolo nella pagina — `TablePhrases.js`, `table-phrases.css`, `pages/game.js`
+- [ ] P57 (Fase 2, C): momenti del tavolo: ultima presa, riepilogo di fine mano, carte del canto — `HandSummary.js`, `Table.js`, `pages/game.js`
 - [ ] P30 (Fase 2, B+C): pannello statistiche con dati reali — `stats_service.py`, `stats_repo.py`, `StatsPanel.js`
 - [ ] ~~P49 (Fase 2, B+C): classifica~~ — **tolto il 27/09/2026** per decisione dell'utente (vedi `DECISIONI.md`, Progetto e tempi)
 - [ ] ~~P50 (Fase 2, B+C): pagina "Partite" (storico)~~ — **tolto il 27/09/2026** per decisione dell'utente (vedi `DECISIONI.md`, Progetto e tempi)
@@ -115,7 +116,7 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 | `app/sockets/game_events.py` | P4 → P24 → P25 → P55 | Giuseppe |
 | `app/sockets/friends_events.py` | P4 → P47 | Giuseppe |
 | `app/sockets/chat_events.py` | P4 → P48 | Antonio |
-| `app/static/js/pages/game.js` | P21 → P24 → P25 → P56 | Christian, poi Giuseppe dopo che P21 è in `dev`, poi Christian (P56) dopo che P55 è in `dev` |
+| `app/static/js/pages/game.js` | P21 → P24 → P25 → P56, P57 | Christian, poi Giuseppe dopo che P21 è in `dev`, poi Christian (P56 dopo che P55 è in `dev`, P57 dopo che P25 è in `dev`) |
 | `app/static/js/pages/home.js` | P40 → P22 → P28 → P29 → P44 | Christian → Antonio → Giuseppe, ciascuno dopo che il punto precedente è in `dev` |
 | `app/static/js/components/ModeModal.js` | P22 → P28 → P47 | Christian → Antonio (collega "Gioca" alla coda) → Giuseppe (lista amici e inviti), ciascuno dopo che il punto precedente è in `dev` |
 | `app/static/js/components/StatsPanel.js` | P40 → P30 | Christian (dati finti, poi dati veri) |
@@ -421,6 +422,16 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 - *Fatto quando*: a 360 px l'elenco delle frasi sta sullo schermo e il fumetto non copre le carte in mano; il pulsante con sola icona ha un'etichetta accessibile; il test controlla che il componente non usi `innerHTML` con dati esterni.
 - *Dipende da*: P55.
 
+**P57 — Momenti del tavolo: ultima presa, fine mano, carte del canto** · piccolo · decisione: no (D15 decisa) — aggiunto il 28/09/2026
+- *Cosa e perché*: tre momenti della partita che P24 non disegna e P25 non tocca (tempo, riconnessione e abbandono):
+  - l'**ultima presa** (`last_trick`): quando una presa si chiude, le carte restano per un momento al centro, con chi l'ha vinta, prima di sparire;
+  - il **riepilogo di fine mano** (`last_hand`): a inizio della mano nuova, un riquadro con i punti delle carte prese, dei canti e il totale di ogni squadra (durante la mano i punti delle prese sono nascosti: si vedono solo qui, decisione di P8);
+  - le **carte del canto** (`game:sang`, D15): Re e Cavallo cantati si mostrano a tutti per `show_seconds` secondi (3) accanto a chi ha cantato; poi resta l'icona fissa che c'è già (P21). Oggi P24 scrive solo "X ha cantato 40 a coppe".
+  Si prova con le viste finte (`?demo=`) e con una partita vera; con "riduci movimento" niente animazioni.
+- *File* — crea: `app/static/js/components/HandSummary.js`, `app/static/css/components/hand-summary.css`, `tests/frontend/test_momenti_tavolo.py`. Modifica: `app/static/js/pages/game.js` (P25), `app/static/js/components/Table.js`, `Trick.js`, `app/static/css/components/table.css`, `trick.css` (P21). Certezza: **sicuro**.
+- *Fatto quando*: a 360 px ultima presa, riepilogo e carte del canto stanno nello schermo e non coprono le carte in mano; le carte del canto spariscono dopo `show_seconds`; il testo è inserito sempre con `textContent`; il test controlla i marcatori `data-*` dei tre momenti.
+- *Dipende da*: P24, P25.
+
 #### Pagine con i dati (B + C)
 
 **P30 — Pannello statistiche con dati reali** · medio · decisione: no
@@ -547,6 +558,7 @@ Chi crea ogni file. I file creati da P4 come segnaposto e poi riempiti da altri 
 | `partials/navbar.html`, `navbar.css`, `stats-panel.css`, `core/layout.js`, `StatsPanel.js`, `LoginPrompt.js`, `img/cards-bg/*`, `pages/home.js` (poi P22) | P40 |
 | `Card.js`, `Hand.js`, `card.css`, `hand.css`, `static/dev/carte.*` | P20 |
 | `game/table.html`, `pages/game.js`, `Table/Trick/Scoreboard/Timer/SingButtons.js` e relativi CSS | P21 |
+| `HandSummary.js`, `hand-summary.css`, `tests/frontend/test_momenti_tavolo.py` | P57 |
 | `pages/home.css`, `ModeModal.js`, `mode-modal.css`, `CardBackground.js`, `card-background.css`, `QueueOverlay.js`, `queue-overlay.css`, `ResumeBanner.js` | P22 |
 | `friend_service.py`, `friend_repo.py` | P45 |
 | `FriendsPanel.js`, `ChatWindow.js`, `friends-panel.css`, `chat.css` | P46 |
@@ -622,12 +634,12 @@ Due studenti che lavorano in parallelo non toccano mai gli stessi file. Vale anc
 
 **Antonio (Studente 2) — account, dati, amici:** P5, P7, P16, P17, P18, P45, P26, P27, P28, P29, P48, P39 (più P38 in 9.2)
 
-**Christian (Studente 3) — interfaccia e documenti:** P3, P52, P8, P9, P19, P40, P20, P21, P22, P46, P56, P30, P36, P37 (più P33, P34, P35, P42, P43 e P53 in 9.2)
+**Christian (Studente 3) — interfaccia e documenti:** P3, P52, P8, P9, P19, P40, P20, P21, P22, P46, P56, P57, P30, P36, P37 (più P33, P34, P35, P42, P43 e P53 in 9.2)
 
-**Da dove si parte** (aggiornato il 28/09/2026 notte: in `dev` ci sono P1–P6, P8, P10–P16, P19, P20, P21, P23, P40 e P52, più le correzioni di `app/checks.py` e `scripts/migrate.py`) [L]:
-- **Giuseppe**: **P24 subito** (P15, P21 e P23 sono in `dev`): collega `game.js` ai socket nei punti segnati (`game:join`, `game:play_card`, `game:sing`, `game:leave`) e fa D14; poi P25. Ha fatto anche P16 al posto di Antonio e ne rifinisce la grafica.
+**Da dove si parte** (aggiornato il 28/09/2026 notte: in `dev` ci sono P1–P6, P8, P10–P16, P19, P20, P21, P23, P24, P40 e P52, più le correzioni di `app/checks.py` e `scripts/migrate.py`) [L]:
+- **Giuseppe**: **P25 subito** (timer che gioca da solo, riconnessione, abbandono con `game:leave`: oggi "Esci" torna alla home senza abbandonare). Ha fatto anche P16 al posto di Antonio e ne rifinisce la grafica.
 - **Antonio**: **P7 e P18 subito**; poi **P17** (P16 e P40 sono in `dev`: `auth_service.py` e `user_repo.py` sono da estendere). Le suite `api` e `sockets` richiedono MySQL.
-- **Christian**: **P22** (la home vera, P8, P40 e P52 sono in `dev`), poi P46.
+- **Christian**: **P22** (la home vera, P8, P40 e P52 sono in `dev`), poi P46; **P57** (ultima presa, fine mano, carte del canto) appena P25 è in `dev`.
 - **Da concordare**: le pagine di accesso e registrazione (P16) non hanno ancora uno script di pagina, quindi lì la navbar non si apre. Serve un `js/pages/auth.js` che importa `core/layout.js` e chiama `initLayout()`: non è nell'elenco di nessun punto; proposta: lo aggiunge Giuseppe con la grafica delle due pagine.
 
 | Punto | Chi | File condivisi con punti di altri studenti | Attende (già in `dev`) |
@@ -665,6 +677,7 @@ Due studenti che lavorano in parallelo non toccano mai gli stessi file. Vale anc
 | P30 | Christian | `blueprints/stats/routes.py` (segnaposto di P4), `StatsPanel.js` (P40, sempre Christian) | P26, P27, P40 |
 | P55 | Giuseppe | `config.py` (P4: una chiave nuova, concordata nel punto); `game_events.py` è di Giuseppe | P8, P25 |
 | P56 | Christian | `pages/game.js` (dopo Giuseppe, P25) | P55 |
+| P57 | Christian | `pages/game.js` (dopo Giuseppe, P25); `Table.js`, `Trick.js` sono suoi (P21) | P24, P25 |
 | P31 | Giuseppe | nessuno (crea solo `tests/e2e/*`) | P25, P29, P47, P48 |
 | P36 | Christian | nessuno (crea solo `REVIEW.md`) | P31, P32, P33 |
 | P37 | Christian | `CLAUDE.md`, `README.md` (P3 e P9, sempre Christian) | P36 |
