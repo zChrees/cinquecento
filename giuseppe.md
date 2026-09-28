@@ -22,6 +22,24 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### P23 — Collegamento in tempo reale (28/09/2026)
+
+- **Branch**: feature/p23-realtime
+- **File**: creati app/realtime/events.py, room.py, room_manager.py, app/static/js/core/socket.js, events.js, app/static/js/vendor/socket.io.min.js, tests/sockets/conftest.py, test_connessione.py, test_lock_stanza.py; modificato app/sockets/connection_events.py. `app/sockets/__init__.py` era nell'elenco ma non è servito toccarlo.
+- **Controlli**: 748 PASS in tutto (12 nuovi, nella suite nuova `sockets`; conteggio dopo P20 di Christian), `ruff check .` pulito
+- **Decisioni prese** (tecniche, nessuna sul gioco):
+  - client Socket.IO **4.8.1**, versione "ES module" (`socket.io.esm.min.js` di jsDelivr), salvata con il nome dell'elenco, `vendor/socket.io.min.js`: così `core/socket.js` la importa e la pagina resta con un solo script (regola di P19). In cima al file: versione, origine e SHA-256 dell'originale;
+  - ogni scheda collegata entra nel canale `user:<id>` (tutte le schede di un utente) e le stanze di gioco usano il canale `room:<game_id>`; `game_id` è un codice casuale di 12 caratteri (`secrets.token_urlsafe`);
+  - D14 ("l'ultima scheda prende il posto", `game:replaced`) scatta con `game:join`, quindi la fa P24;
+  - `events.py` ha la forma unica delle risposte (`ok`, `error`, il decoratore `handler` e `EventError` con i soli codici del contratto): un errore imprevisto diventa `server_error` e il dettaglio va solo nel log;
+  - `socket.js`: `send()` non manda niente senza connessione e risponde subito con `{ok: false, error: {code: "no_connection", ...}}`; è un codice **solo della pagina**, non del server, quindi non è nella tabella del contratto.
+- **Domande nuove**: nessuna
+- **Punti delicati**:
+  - ogni evento di una stanza passa da `room.run(...)` (lock della stanza, rientrante): il test manda 50 azioni insieme da 5 client e controlla che nel lock ne entri una alla volta; togliendo il lock il contatore arriva a 5 invece di 50 (provato);
+  - la suite `sockets` avvia un server vero sulla porta 5099 in un thread e fa il login via HTTP con il codice CSRF; vuole MySQL;
+  - il server di sviluppo (Werkzeug) non risponde alla chiusura ordinata del websocket: il client Python la aspetta 3 secondi per connessione (la suite ci metteva 42 s). Nei test l'attesa è accorciata a 0,1 s; il browser non aspetta quella risposta [D].
+- **Note per gli altri**: le pagine che usano il tempo reale importano `core/socket.js` (`connect`, `send`, `on`, `onStatus`) e i nomi da `core/events.js`. P24 (Giuseppe) attende P21 di Christian.
+
 ### Correzione di migrate.py quando MySQL rifiuta la connessione (28/09/2026)
 
 - **Branch**: fix/migrate-connessione (era "Da assegnare" in `SCALETTA.md`)
