@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P46 — Pannello amici e finestra chat; registrato P25 (28/09/2026)
+
+- **Branch**: feature/p46-amici (codice, commit `392e3ea`, dopo il rebase su P25), poi docs/p46 (documenti)
+- **File**: creati `js/components/FriendsPanel.js`, `ChatWindow.js`, `css/components/friends-panel.css`, `chat.css`, `tests/frontend/test_pannello_amici.py`, `tests/browser.py` (pilota di Chrome in comune); modificati `js/core/layout.js`, `docs/CONTRATTO-SOCKET.md` (2.2); fuori elenco, con il mio ok, `base.html`, `test_base.py`, `navbar.html`, `mode-modal.css`, `test_pagina_home.py` (ora usa `tests/browser.py`). Documenti: `SCALETTA.md`, `DECISIONI.md`, `CLAUDE.md`, questo file
+- **Controlli**: 990 controlli (10 nuovi); nell'ultimo giro 989 PASS: il test `test_turno_scaduto_il_server_gioca_la_mossa_automatica` di P25 fallisce sul mio PC anche su `dev` senza P46; `ruff check .` pulito
+- **Decisioni prese**: pannello con i dati veri di P45, chat finta fino a P48; niente "Invita" nel pannello; "Altro" (rimuovi, blocca) e sezione "Bloccati"; contratto 2.2 completato (accordo dei tre)
+- **Domande nuove**: nessuna
+- **P25** (fatto da Antonio con il permesso di Giuseppe, riepilogo in `antonio.md`): spuntato in `SCALETTA.md`, decisione "chi non arriva al tavolo non ha limite di tempo" in `DECISIONI.md`, punto delicato in `CLAUDE.md`
+- **Punti delicati**: "indietro" chiude il pannello con `history.pushState`; `request_id` funziona anche in http (demo in rete locale); i test nel browser rispondono al posto del server (`routes` di `tests/browser.py`)
+- **Cosa devono fare gli altri**: **Giuseppe**: il test di P25 qui sopra è instabile (ipotesi [D]: con 0,3 secondi il timer parte prima che i due giocatori siano seduti); per P47 gli avvisi `friends:changed` devono far ricaricare la lista del pannello: la funzione `load()` oggi è interna a `initFriendsPanel` in `FriendsPanel.js`, basta esporla. **Antonio**: per P48 la chat vera va in `openChat` e `onSend` di `FriendsPanel.js`; `ChatWindow.js` non va cambiato. Per P26 la chiamata al salvataggio va in `Room._apply` e `Room.abandon`
+
 ### Documenti: niente test per i soli documenti; registrato P45 (28/09/2026)
 
 - **Branch**: docs/regola-test-documenti
