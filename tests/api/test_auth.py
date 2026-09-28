@@ -1,0 +1,324 @@
+"""P16: registrazione, login e logout.
+
+Serve MySQL con scripts/setup_db.sql già lanciato: si usa SOLO il database dei
+test, che all'inizio viene svuotato e ricreato con migrate.py; prima di ogni prova
+la tabella utenti si svuota. Comando: python tests/esegui_tutti.py api
+"""
+
+import importlib.util
+import re
+from pathlib import Path
+
+import pytest
+import sqlalchemy as sa
+from flask_login import login_required
+
+from app import create_app
+from app.extensions import db
+from app.models.user import User
+from app.services import auth_service
+from app.services.auth_service import (
+    EMAIL_TAKEN,
+    LOGIN_FAILED,
+    LOGIN_LOCKED,
+    USERNAME_TAKEN,
+    LoginLimiter,
+)
+
+BASE_DIR = Path(__file__).resolve().parents[2]
+PASSWORD = "Password-di-prova-1"
+
+
+def _load_migrate():
+    spec = importlib.util.spec_from_file_location("migrate", BASE_DIR / "scripts" / "migrate.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _make_app(csrf):
+    app = create_app("testing")
+    app.config["WTF_CSRF_ENABLED"] = csrf
+
+    @app.route("/_prova/protetta")
+    @login_required
+    def protected():
+        return "pagina protetta"
+
+    return app
+
+
+@pytest.fixture(scope="module")
+def app():
+    app = _make_app(csrf=False)
+    with app.app_context():
+        url = db.engine.url
+        assert url.database.endswith("_test"), "i test usano solo un database che finisce con _test"
+        try:
+            with db.engine.begin() as conn:
+                tables = conn.execute(sa.text(
+                    "SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE()"
+                )).scalars().all()
+                conn.execute(sa.text("SET FOREIGN_KEY_CHECKS = 0"))
+                for table in tables:
+                    conn.execute(sa.text(f"DROP TABLE `{table}`"))
+                conn.execute(sa.text("SET FOREIGN_KEY_CHECKS = 1"))
+        except sa.exc.OperationalError as exc:
+            code = exc.orig.args[0] if exc.orig is not None and exc.orig.args else "?"
+            pytest.fail(
+                f"Non riesco a usare il database {url.database} (errore MySQL {code}): "
+                "MySQL è acceso? scripts/setup_db.sql è stato lanciato? "
+                "DB_USER e DB_PASSWORD nel .env sono giusti?",
+                pytrace=False,
+            )
+        _load_migrate().migrate(url, report=lambda _msg: None)
+    return app
+
+
+@pytest.fixture
+def client(app, monkeypatch):
+    with app.app_context():
+        db.session.execute(sa.text("DELETE FROM utenti"))
+        db.session.commit()
+    monkeypatch.setattr(auth_service, "limiter", LoginLimiter())
+    return app.test_client()
+
+
+def register(client, username="Mario", email="mario@esempio.it", password=PASSWORD, confirm=None):
+    return client.post("/auth/register", data={
+        "username": username, "email": email, "password": password,
+        "confirm": password if confirm is None else confirm,
+    })
+
+
+def login(client, username="Mario", password=PASSWORD, next_url=None):
+    url = "/auth/login" + (f"?next={next_url}" if next_url else "")
+    return client.post(url, data={"username": username, "password": password})
+
+
+def logged_in(client):
+    with client.session_transaction() as session:
+        return "_user_id" in session
+
+
+def users(app):
+    with app.app_context():
+        return db.session.scalars(sa.select(User)).all()
+
+
+def page_text(response):
+    return response.get_data(as_text=True)
+
+
+# --- Registrazione ---
+
+
+def test_registrazione_ok_entra_e_torna_alla_home(app, client):
+    response = register(client)
+    assert response.status_code == 302
+    assert response.location == "/"
+    assert logged_in(client)
+    assert "Benvenuto, Mario!" in page_text(client.get("/"))
+    [user] = users(app)
+    assert (user.username, user.email) == ("Mario", "mario@esempio.it")
+
+
+def test_password_mai_in_chiaro_nel_database(app, client):
+    register(client)
+    with app.app_context():
+        stored = db.session.execute(sa.text("SELECT hash_password FROM utenti")).scalar()
+    assert PASSWORD not in stored
+    assert stored.startswith("scrypt:")
+
+
+def test_username_duplicato_rifiutato(app, client):
+    register(client)
+    client.post("/auth/logout")
+    response = register(client, email="altro@esempio.it")
+    assert response.status_code == 200
+    assert USERNAME_TAKEN in page_text(response)
+    assert len(users(app)) == 1
+
+
+def test_username_con_maiuscole_diverse_accettato(app, client):
+    register(client)
+    client.post("/auth/logout")
+    assert register(client, username="mario", email="altro@esempio.it").status_code == 302
+    assert sorted(u.username for u in users(app)) == ["Mario", "mario"]
+
+
+def test_email_duplicata_rifiutata_anche_con_maiuscole(app, client):
+    register(client)
+    client.post("/auth/logout")
+    response = register(client, username="Luigi", email="Mario@Esempio.it")
+    assert EMAIL_TAKEN in page_text(response)
+    assert len(users(app)) == 1
+
+
+@pytest.mark.parametrize(("fields", "message"), [
+    ({"username": "ab"}, "da 3 a 20 caratteri"),
+    ({"username": "a" * 21}, "da 3 a 20 caratteri"),
+    ({"username": "mario rossi"}, "solo lettere, numeri e _"),
+    ({"username": "màrio"}, "solo lettere, numeri e _"),
+    ({"email": "non-una-email"}, "email valida"),
+    ({"password": "corta1"}, "almeno 8 caratteri"),
+    ({"confirm": "Un-altra-password"}, "non coincidono"),
+])
+def test_dati_non_validi_rifiutati_con_messaggio(app, client, fields, message):
+    response = register(client, **fields)
+    assert response.status_code == 200
+    assert message in page_text(response)
+    assert users(app) == []
+    assert not logged_in(client)
+
+
+# --- Login e logout ---
+
+
+def test_login_ok(client):
+    register(client)
+    client.post("/auth/logout")
+    assert not logged_in(client)
+    response = login(client)
+    assert response.status_code == 302
+    assert response.location == "/"
+    assert logged_in(client)
+
+
+def test_password_sbagliata_e_utente_inesistente_stesso_messaggio(client):
+    register(client)
+    client.post("/auth/logout")
+    wrong_password = page_text(login(client, password="Sbagliata-123"))
+    unknown_user = page_text(login(client, username="Nessuno"))
+    assert LOGIN_FAILED in wrong_password
+    assert LOGIN_FAILED in unknown_user
+    assert not logged_in(client)
+
+
+def test_username_con_maiuscole_diverse_non_entra(client):
+    register(client)
+    client.post("/auth/logout")
+    assert LOGIN_FAILED in page_text(login(client, username="mario"))
+
+
+def test_dopo_il_logout_le_pagine_protette_rimandano_al_login(client):
+    register(client)
+    assert page_text(client.get("/_prova/protetta")) == "pagina protetta"
+    response = client.post("/auth/logout")
+    assert response.status_code == 302
+    response = client.get("/_prova/protetta")
+    assert response.status_code == 302
+    assert response.location.startswith("/auth/login?next=")
+
+
+def test_dopo_il_login_si_torna_alla_pagina_chiesta(client):
+    register(client)
+    client.post("/auth/logout")
+    assert login(client, next_url="/_prova/protetta").location == "/_prova/protetta"
+
+
+@pytest.mark.parametrize("target", ["//sito-esterno.it", "https://sito-esterno.it", "/\\sito-esterno.it"])
+def test_dopo_il_login_mai_verso_un_altro_sito(client, target):
+    register(client)
+    client.post("/auth/logout")
+    assert login(client, next_url=target).location == "/"
+
+
+def test_logout_solo_con_post(client):
+    register(client)
+    assert client.get("/auth/logout").status_code == 405
+    assert logged_in(client)
+
+
+def test_chi_ha_gia_fatto_il_login_torna_alla_home(client):
+    register(client)
+    assert client.get("/auth/login").location == "/"
+    assert client.get("/auth/register").location == "/"
+
+
+def test_sessione_con_id_non_valido_non_entra(app):
+    with app.app_context():
+        assert auth_service.load_user("abc") is None
+        assert auth_service.load_user("999999") is None
+
+
+# --- Troppi tentativi ---
+
+
+def test_dopo_5_errori_si_aspetta_anche_con_la_password_giusta(app, client, monkeypatch):
+    now = [1000.0]
+    monkeypatch.setattr(auth_service, "limiter", LoginLimiter(clock=lambda: now[0]))
+    register(client)
+    client.post("/auth/logout")
+    attempts = app.config["LOGIN_MAX_ATTEMPTS"]
+    for _ in range(attempts - 1):
+        assert LOGIN_FAILED in page_text(login(client, password="Sbagliata-123"))
+    assert LOGIN_LOCKED in page_text(login(client, password="Sbagliata-123"))
+    assert LOGIN_LOCKED in page_text(login(client))
+    assert not logged_in(client)
+
+    now[0] += app.config["LOGIN_LOCK_SECONDS"]
+    assert login(client).status_code == 302
+    assert logged_in(client)
+
+
+def test_login_riuscito_azzera_gli_errori(app, client):
+    register(client)
+    client.post("/auth/logout")
+    attempts = app.config["LOGIN_MAX_ATTEMPTS"]
+    for _ in range(attempts - 1):
+        login(client, password="Sbagliata-123")
+    assert login(client).status_code == 302
+    client.post("/auth/logout")
+    for _ in range(attempts - 1):
+        assert LOGIN_FAILED in page_text(login(client, password="Sbagliata-123"))
+
+
+def test_il_blocco_vale_solo_per_quello_username(client):
+    register(client)
+    client.post("/auth/logout")
+    for _ in range(10):
+        login(client, username="Altro", password="Sbagliata-123")
+    assert login(client).status_code == 302
+
+
+def test_errori_vecchi_dimenticati():
+    now = [0.0]
+    limiter = LoginLimiter(clock=lambda: now[0])
+    for _ in range(4):
+        assert not limiter.record_failure("Mario", 5, 300)
+    now[0] += 300
+    assert not limiter.record_failure("Mario", 5, 300)  # riparte da 1
+    assert not limiter.is_locked("Mario")
+
+
+def test_username_inventati_non_restano_in_memoria():
+    now = [0.0]
+    limiter = LoginLimiter(clock=lambda: now[0])
+    for i in range(LoginLimiter.SWEEP_SIZE):
+        limiter.record_failure(f"finto{i}", 5, 300)
+    now[0] += 301
+    limiter.record_failure("Mario", 5, 300)
+    assert list(limiter._entries) == ["Mario"]
+
+
+# --- CSRF e log ---
+
+
+def test_moduli_senza_codice_csrf_rifiutati():
+    client = _make_app(csrf=True).test_client()
+    page = page_text(client.get("/auth/login"))
+    assert re.search(r'name="csrf_token" type="hidden" value="[^"]+"', page)
+    for url in ("/auth/login", "/auth/register", "/auth/logout"):
+        assert client.post(url, data={"username": "Mario", "password": PASSWORD}).status_code == 400
+
+
+def test_password_mai_nei_log(client, caplog):
+    caplog.set_level("DEBUG")
+    register(client)
+    client.post("/auth/logout")
+    for _ in range(6):
+        login(client, password="Sbagliata-123")
+    assert "Login bloccato" in caplog.text
+    assert PASSWORD not in caplog.text
+    assert "Sbagliata-123" not in caplog.text

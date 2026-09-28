@@ -22,6 +22,30 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### P16 — Registrazione, login, logout: la logica (28/09/2026)
+
+Punto di Antonio, fatto da Giuseppe con il suo permesso. È la parte di logica; la grafica di `login.html` e `register.html` si rifinisce dopo, sempre da Giuseppe.
+
+- **Branch**: feature/p16-auth (partito prima che P7 fosse in `dev`, con l'ok di Giuseppe: P16 non tocca i file di P7)
+- **File**: creati app/blueprints/auth/forms.py, app/services/auth_service.py, app/repositories/user_repo.py, app/templates/auth/login.html, app/templates/auth/register.html (versione di base, con le classi di P19), tests/api/test_auth.py; modificato app/blueprints/auth/routes.py. Nessun file fuori elenco.
+- **Controlli**: 717 PASS in tutto (30 nuovi, in `api`), `ruff check .` pulito
+- **Decisioni prese** (raccomandazioni di Claude, accettate da Giuseppe):
+  - login **solo con lo username** (non con l'email); dopo la registrazione si entra subito e si torna alla home con "Benvenuto, *username*!";
+  - **troppi tentativi**: contati **per username, in memoria**; dopo `LOGIN_MAX_ATTEMPTS` (5) errori, per `LOGIN_LOCK_SECONDS` (300) quello username non entra nemmeno con la password giusta ("Troppi tentativi sbagliati: riprova tra qualche minuto."); il conteggio si azzera con un login riuscito, dopo 5 minuti senza errori o al riavvio del server. Nessuna colonna nuova;
+  - password e username sbagliati danno lo **stesso messaggio** ("Username o password non corretti."), e con uno username inesistente si calcola comunque un hash, così nemmeno il tempo di risposta dice se l'account esiste;
+  - D8 usata com'è in `config.py` (almeno 8 caratteri): resta provvisoria in `DA-DECIDERE.md`.
+- **Domande nuove**: nessuna
+- **Punti delicati**:
+  - username o email già usati li rifiuta il vincolo unico di MySQL al commit (`uq_utenti_nome`, `uq_utenti_email`), non un controllo fatto prima: così due registrazioni contemporanee non creano doppioni. L'email è unica senza distinguere le maiuscole (collation della colonna), lo username le distingue (D7);
+  - il vero `user_loader` di Flask-Login si registra in `auth/routes.py` e sostituisce il segnaposto di `extensions.py`;
+  - dopo il login si torna alla pagina chiesta (`?next=`) solo se è un indirizzo di questo sito (niente `//altro-sito`);
+  - `/auth/logout` accetta solo POST con il codice CSRF, come il modulo "Esci" di P40; i moduli senza codice CSRF sono rifiutati (400);
+  - le password sono hash `scrypt` di werkzeug; nei log non finiscono mai password né username (c'è un test).
+- **Note per gli altri**:
+  - **Christian**: le pagine di accesso e registrazione non hanno ancora uno script di pagina, quindi la navbar lì non si apre (serve `core/layout.js` con `initLayout()`, come dice il riepilogo di P40). Lo aggiungiamo con la grafica delle due pagine; il file (`js/pages/auth.js` o simile) non è nell'elenco di P16, va concordato;
+  - **Antonio**: P16 è fatto (resta la grafica); P17 ha `auth_service` e `user_repo` da estendere. La suite `api` ora richiede MySQL (`test_auth.py`);
+  - P23 (Giuseppe) può partire: attendeva P16.
+
 ### Correzione del controllo di MySQL all'avvio (28/09/2026)
 
 - **Branch**: fix/checks-database

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{#
+  Pagina di registrazione (P16). Struttura e classi da css/pages/auth.css e
+  css/components/form.css (P19), senza modificarne i file.
+  `form` è il RegisterForm di app/blueprints/auth/forms.py (Flask-WTF): porta anche
+  il campo nascosto con il codice CSRF.
+#}
+
+{% block title %}Registrati · Cinquecento{% endblock %}
+{% block page_class %}page--form{% endblock %}
+{% block page_name %}register{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/auth.css') }}">
+{% endblock %}
+
+{% macro field(input, type, autocomplete) %}
+<div class="field{% if input.errors %} field--error{% endif %}">
+  <label class="field__label" for="{{ input.id }}">{{ input.label.text }}</label>
+  {{ input(class_="input", type=type, autocomplete=autocomplete, required=true,
+           **({"aria-invalid": "true"} if input.errors else {})) }}
+  {% for error in input.errors %}
+  <p class="field__error" role="alert">{{ error }}</p>
+  {% endfor %}
+</div>
+{% endmacro %}
+
+{% block content %}
+<section class="panel auth" data-auth="register">
+  <h1 class="auth__title">Registrati</h1>
+  <p class="auth__subtitle">Crea un account per giocare a Cinquecento.</p>
+
+  <form class="form" method="post" action="{{ url_for('auth.register') }}" novalidate data-register-form>
+    {{ form.hidden_tag() }}
+    {{ field(form.username, "text", "username") }}
+    {{ field(form.email, "email", "email") }}
+    {{ field(form.password, "password", "new-password") }}
+    {{ field(form.confirm, "password", "new-password") }}
+    <div class="form__actions">
+      <button class="btn btn--primary btn--big" type="submit" data-register-submit>Registrati</button>
+    </div>
+  </form>
+
+  <p class="auth__switch">Hai già un account? <a href="{{ url_for('auth.login') }}">Accedi</a></p>
+</section>
+{% endblock %}
