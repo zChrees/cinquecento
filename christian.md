@@ -22,6 +22,20 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P35 — Carte vere (28/09/2026)
+
+- **Branch**: feature/p35-carte-vere
+- **File**: creati `app/static/img/cards/` (40 carte `<seme>-<valore>.webp`, 316 KB in tutto) e `app/static/img/cards/LICENZA.md`; modificati `js/components/Card.js`, `css/components/card.css`; fuori elenco, miei (P20), `tests/frontend/test_carte.py` (controllava le immagini del segnaposto: ora le 40 carte, il peso sotto 1 MB e la licenza) e il titolo di `app/static/dev/carte.html`; questo file
+- **Controlli**: 1167 PASS in 7 suite (1 nuovo), `ruff check .` pulito
+- **Decisioni prese** (mie):
+  - **D19 chiusa: le carte vengono dalle scansioni di Matsoftware** su Wikimedia Commons (`Carte_da_gioco_siciliane_-_<seme>.jpg`, CC BY-SA 3.0, la stessa fonte delle carte dello sfondo). Verificato: ogni foglio ha tutte le 10 carte del seme; autore e licenza confermati dall'API di Commons. La riga dei crediti che c'è già vale anche per queste carte;
+  - **niente valore negli angoli**, come sulle carte siciliane vere (Claude consigliava una piccola etichetta, per le carte piccole al tavolo);
+  - **carta intera** con il suo margine bianco; gli angoli arrotondati li fa il CSS, come prima;
+  - nomi dei file uguali ai codici del motore (`coppe-10.webp`); il dorso resta `img/cards-bg/dorso.webp`; le carte di `img/cards-bg/` (sfondo, logo, carte-pulsante) non sono cambiate.
+- **Domande nuove**: nessuna
+- **Punti delicati**: le carte si sono ritagliate con uno script fuori dal progetto (Pillow, non è tra le dipendenze): come sono state fatte è scritto in `img/cards/LICENZA.md`. Le carte della colonna sinistra delle scansioni sono un po' tagliate dal bordo del foglio
+- **Cosa devono fare gli altri**: **Chi è di turno sui documenti**: spuntare P35, chiudere D19 in `DA-DECIDERE.md` e spostarla in `DECISIONI.md` (Interfaccia) con le scelte qui sopra. **Giuseppe**: la proposta sull'ultima presa di ogni mano (`last_hand.last_trick`, tuo riepilogo di P44) è **approvata da tutti e tre** (Antonio tramite Christian): fai tu motore, vista, contratto 3.3 ed esempi, come proponevi; quando è in `dev`, io adatto `game.js` per mostrare le carte prima del riepilogo
+
 ### Correzione — Test della home dopo P44 (28/09/2026)
 
 - **Branch**: feature/p56-frasi-tavolo (commit a parte, dopo il rebase su P29 e P44)

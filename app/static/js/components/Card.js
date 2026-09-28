@@ -1,8 +1,10 @@
 /**
- * Carta siciliana (P20): segnaposto disegnato in CSS finché P35 non porta le
- * carte vere. Faccia crema con il valore negli angoli (A, 2–7, F, C, R) nel
- * colore del seme e, al centro, la figura dell'Asso di quel seme; il dorso è
- * quello delle altre pagine (img/cards-bg/dorso.webp).
+ * Carta siciliana (P20, P35). La faccia è l'immagine della carta vera,
+ * img/cards/<seme>-<valore>.webp (per esempio coppe-10.webp: il nome è il codice
+ * della carta nel motore), ritagliata dalle scansioni di Matsoftware (CC BY-SA
+ * 3.0, vedi img/cards/LICENZA.md). Come sulle carte siciliane vere, niente valore
+ * negli angoli (scelta di P35). Il dorso è quello delle altre pagine
+ * (img/cards-bg/dorso.webp).
  *
  * La carta arriva dal server nella forma del contratto: {"suit": "coppe", "rank": 10}
  * (1 = Asso, 8 = Fante, 9 = Cavallo, 10 = Re). Una carta fuori elenco si rifiuta
@@ -25,12 +27,8 @@ export const RANK_NAMES = {
   1: 'Asso', 2: '2', 3: '3', 4: '4', 5: '5', 6: '6', 7: '7', 8: 'Fante', 9: 'Cavallo', 10: 'Re',
 };
 
-/** Il valore scritto negli angoli della carta. */
-export const RANK_LABELS = {
-  1: 'A', 2: '2', 3: '3', 4: '4', 5: '5', 6: '6', 7: '7', 8: 'F', 9: 'C', 10: 'R',
-};
-
-const IMG_BASE = new URL('../../img/cards-bg/', import.meta.url).href;
+const FACE_BASE = new URL('../../img/cards/', import.meta.url).href;
+const BACK_URL = new URL('../../img/cards-bg/dorso.webp', import.meta.url).href;
 
 /**
  * Controlla che una carta sia nella forma del contratto e la restituisce.
@@ -66,10 +64,9 @@ export function sameCard(a, b) {
  */
 export function Card(card, { onPlay = null, playable = true } = {}) {
   const name = cardName(card);
+  // Il nome lo dà l'etichetta della carta (aria-label): l'immagine è solo decorativa
   const face = [
-    el('span', { class: 'card__rank card__rank--top', text: RANK_LABELS[card.rank], attrs: { 'aria-hidden': 'true' } }),
-    el('img', { class: 'card__suit', attrs: { src: `${IMG_BASE}asso-${card.suit}-figura.webp`, alt: '', draggable: 'false' } }),
-    el('span', { class: 'card__rank card__rank--bottom', text: RANK_LABELS[card.rank], attrs: { 'aria-hidden': 'true' } }),
+    el('img', { class: 'card__face', attrs: { src: `${FACE_BASE}${card.suit}-${card.rank}.webp`, alt: '', draggable: 'false' } }),
   ];
   const data = { suit: card.suit, rank: card.rank };
 
@@ -91,6 +88,6 @@ export function Card(card, { onPlay = null, playable = true } = {}) {
 /** Carta coperta (dorso): per le carte degli avversari e il mazzo. */
 export function CardBack() {
   return el('div', { class: 'card card--back', data: { back: '' }, attrs: { role: 'img', 'aria-label': 'Carta coperta' } }, [
-    el('img', { class: 'card__back', attrs: { src: `${IMG_BASE}dorso.webp`, alt: '', draggable: 'false' } }),
+    el('img', { class: 'card__back', attrs: { src: BACK_URL, alt: '', draggable: 'false' } }),
   ]);
 }

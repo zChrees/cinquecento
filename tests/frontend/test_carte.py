@@ -92,10 +92,27 @@ def test_ogni_carta_ha_data_suit_e_data_rank():
 
 
 def test_immagini_usate_dalle_carte_esistono():
-    images = STATIC / "img" / "cards-bg"
-    for suit in Suit:
-        assert (images / f"asso-{suit.value}-figura.webp").is_file(), suit.value
-    assert (images / "dorso.webp").is_file()
+    # P35: una faccia per ognuna delle 40 carte, con il nome del codice del motore
+    # ("coppe-10"), e il dorso delle altre pagine
+    images = STATIC / "img" / "cards"
+    expected = {f"{suit.value}-{rank}.webp" for suit in Suit for rank in range(1, 11)}  # rank del contratto
+    assert {path.name for path in images.glob("*.webp")} == expected
+    assert (STATIC / "img" / "cards-bg" / "dorso.webp").is_file()
+    code = CARD_JS.read_text(encoding="utf-8")
+    assert "new URL('../../img/cards/', import.meta.url)" in code
+    assert "${FACE_BASE}${card.suit}-${card.rank}.webp" in code
+
+
+def test_carte_vere_leggere_e_con_licenza():
+    images = STATIC / "img" / "cards"
+    total = sum(path.stat().st_size for path in images.glob("*.webp"))
+    assert total < 1024 * 1024, f"le 40 carte pesano {total} byte: il limite è 1 MB (P35)"
+    for path in images.glob("*.webp"):
+        # File WebP veri (intestazione RIFF...WEBP), non solo con l'estensione giusta
+        head = path.read_bytes()[:12]
+        assert head[:4] == b"RIFF" and head[8:12] == b"WEBP", path.name
+    licence = (images / "LICENZA.md").read_text(encoding="utf-8")
+    assert "Matsoftware" in licence and "CC BY-SA 3.0" in licence
 
 
 def test_semi_e_nomi_uguali_al_motore():

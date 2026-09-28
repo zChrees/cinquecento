@@ -1,19 +1,15 @@
 /*
- * Carta siciliana segnaposto (P20), creata da js/components/Card.js.
- * Faccia crema con le proporzioni di una carta siciliana (--card-ratio), valore
- * negli angoli nel colore del seme (come le carte-pulsante della home: coppe
- * rosso, spade viola, denari giallo, bastoni blu) e l'Asso del seme al centro.
- * La larghezza predefinita è --card-w; chi contiene la carta (la mano, il tavolo)
- * può cambiarla;
- * tutte le misure interne sono in proporzione (unità cqi della carta).
- * P35 sostituirà la faccia con le immagini delle carte vere.
+ * Carta siciliana (P20, P35), creata da js/components/Card.js: la faccia è
+ * l'immagine della carta vera (img/cards/), il dorso il disegno a cubi.
+ * Proporzioni di una carta siciliana (--card-ratio); gli angoli arrotondati li
+ * fa il bordo della carta (le scansioni hanno gli angoli del fondo dello scanner,
+ * che così restano nascosti). La larghezza predefinita è --card-w; chi contiene
+ * la carta (la mano, il tavolo) può cambiarla.
  */
 
 .card {
   --card-w: 72px;
-  --suit-color: var(--text);
   position: relative;
-  container-type: inline-size;
   display: block;
   flex: none;
   width: var(--card-w);
@@ -22,69 +18,15 @@
   border: 1px solid var(--card-edge);
   border-radius: 9% / 5.5%;   /* angoli uguali in orizzontale e in verticale (5,5% ≈ 9% × 0,61) */
   background: var(--card-face);
-  color: var(--suit-color);
   box-shadow: var(--shadow-1);
   overflow: hidden;
   user-select: none;
 }
 
-.card--coppe { --suit-color: var(--red); }
-.card--spade { --suit-color: var(--purple); }
-.card--denari { --suit-color: var(--yellow-card); }
-.card--bastoni { --suit-color: var(--blue); }
-
-/* Cornice sottile nel colore del seme, dentro il bordo */
-.card::after {
-  content: "";
-  position: absolute;
-  inset: 5cqi;
-  border: 1px solid var(--suit-color);
-  border-radius: 6cqi;
-  opacity: 0.35;
-  pointer-events: none;
-}
-
-.card__rank {
-  position: absolute;
-  font-family: var(--font-title);
-  font-weight: 700;
-  font-size: 30cqi;
-  line-height: 1;
-}
-
-.card__rank--top {
-  top: 9cqi;
-  left: 11cqi;
-}
-
-/* In basso a destra, capovolto come sulle carte vere */
-.card__rank--bottom {
-  right: 11cqi;
-  bottom: 9cqi;
-  transform: rotate(180deg);
-}
-
-.card__suit {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 56%;
-  height: 56%;
-  object-fit: contain;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-}
-
-/* Dorso: lo stesso disegno a cubi della cascata e del logo */
-.card--back {
-  border-color: var(--card-edge);
-}
-
-.card--back::after {
-  content: none;
-}
-
+/* Faccia e dorso riempiono la carta */
+.card__face,
 .card__back {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
