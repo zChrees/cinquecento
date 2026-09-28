@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: niente test per i soli documenti; registrato P45 (28/09/2026)
+
+- **Branch**: docs/regola-test-documenti
+- **File**: modificati `CLAUDE.md` ("Processo di lavoro", "Regole git", "Testing", riga "Stato", punto delicato di P45), `DECISIONI.md` (Processo; presenza degli amici), `SCALETTA.md` (P45), questo file
+- **Controlli**: nessuno, per la regola nuova; 963 PASS calcolato (904 dell'ultimo giro completo più i 59 di P45)
+- **P45 di Antonio** (dal suo riepilogo): spuntato in `SCALETTA.md`, presenza degli amici in `DECISIONI.md`, punto delicato su READ COMMITTED e riga "Stato" in `CLAUDE.md`. I dettagli che il contratto 2.2 non fissava (forma di `blocked`, ordine della lista, codici di errore, risposta di `POST /friends/requests`) restano nel suo riepilogo: aggiungerli al contratto richiede l'accordo dei tre (D8), lo propongo con P46
+- **Decisioni prese**: quando aggiorno solo i documenti (branch `docs/…`) Claude non lancia i test, nemmeno dopo un pull o un rebase; il numero di controlli si prende dai vostri riepiloghi o dall'ultimo giro su un punto. Per i lotti che cambiano codice o test non cambia niente
+- **Domande nuove**: nessuna
+- **Punti delicati**: nessuno
+- **Cosa devono fare gli altri**: niente; continuate a scrivere nel riepilogo il numero di PASS del vostro giro, perché ora è l'unica fonte per i documenti
+
 ### P22 — Home con dati finti; registrati P7, P18 e P17 (28/09/2026)
 
 - **Branch**: feature/p22-home (codice), poi docs/p22 (documenti e correzione del test); dopo i rebase su P7, P18 e P17 i commit sono `9ae2f99` (P22) e `09a184d` (test)
