@@ -7,7 +7,7 @@ Comando (finché P6 non aggiunge il runner): python -m pytest tests/api/test_avv
 import pytest
 
 from app import create_app
-from app.checks import StartupCheckError, check_mysql_version, check_python
+from app.checks import StartupCheckError, check_mysql, check_mysql_version, check_python
 from app.extensions import socketio
 from config import ConfigError, load_config
 
@@ -106,3 +106,26 @@ def test_sviluppo_con_env_completo():
     # Una password con caratteri speciali non rompe l'indirizzo del database.
     assert config.SQLALCHEMY_DATABASE_URI.password == "p@ss:/word"
     assert config.SQLALCHEMY_DATABASE_URI.query["charset"] == "utf8mb4"
+
+
+def test_controllo_mysql_si_collega_senza_database(monkeypatch):
+    """Il controllo di avvio si collega al server, non al database: se il database
+    non esiste ancora il messaggio deve parlare di MySQL, non di utente e password."""
+    received = []
+
+    class Stop(Exception):
+        pass
+
+    def fake_create_engine(url, **_options):
+        received.append(url)
+        raise Stop
+
+    env = {"SECRET_KEY": SECRET, "DB_NAME": "cinquecento_dev", "DB_USER": "u", "DB_PASSWORD": "p@ss"}
+    url = load_config("development", environ=env).SQLALCHEMY_DATABASE_URI
+    monkeypatch.setattr("app.checks.sa.create_engine", fake_create_engine)
+    with pytest.raises(Stop):
+        check_mysql(url, (8, 0))
+    assert received[0].database is None
+    # Il resto dell'indirizzo resta quello del .env.
+    assert (received[0].username, received[0].password, received[0].host) == ("u", "p@ss", url.host)
+    assert (received[0].port, received[0].query) == (url.port, url.query)

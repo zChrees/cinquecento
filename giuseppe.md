@@ -22,6 +22,16 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### Correzione del controllo di MySQL all'avvio (28/09/2026)
+
+- **Branch**: fix/checks-database
+- **File**: modificati app/checks.py (riga 39), tests/api/test_avvio.py (1 test nuovo)
+- **Controlli**: 672 PASS in tutto (1 nuovo), `ruff check .` pulito
+- **Decisioni prese**: nessuna. È il bug segnalato da Christian nel riepilogo di P5: `url.set(database=None)` non toglie il database, perché `set()` ignora i valori `None`, quindi il controllo di `run.py` si collegava già a `DB_NAME` e, se il database non esisteva, dava il messaggio sbagliato. Ora è `url._replace(database=None)`.
+- **Domande nuove**: nessuna
+- **Punti delicati**: il test sostituisce `create_engine` con una funzione finta e controlla che riceva l'indirizzo senza database, con utente, password, host, porta e charset invariati; non serve MySQL. Provato anche a mano sul MySQL vero: con un `DB_NAME` inesistente il controllo di versione ora passa, e l'errore sul database arriverà dopo, con il suo messaggio.
+- **Note per il contratto o per gli altri**: nessuna
+
 ### P6 — Runner dei test (28/09/2026)
 
 - **Branch**: feature/p6-runner

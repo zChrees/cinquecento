@@ -36,7 +36,8 @@ def check_mysql_version(version_text, required):
 
 def check_mysql(url, required):
     """Si collega al server MySQL (senza scegliere un database) e ne controlla la versione."""
-    engine = sa.create_engine(url.set(database=None))
+    # url.set(database=None) non toglie il database: set() ignora i valori None.
+    engine = sa.create_engine(url._replace(database=None))
     try:
         with engine.connect() as conn:
             version_text = conn.execute(sa.text("SELECT VERSION()")).scalar()
