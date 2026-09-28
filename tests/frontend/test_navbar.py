@@ -156,6 +156,19 @@ def test_pannello_statistiche_con_impostazioni_esci_e_crediti(user_home):
     assert 'rel="noopener"' in credits
 
 
+def test_crediti_anche_nella_finestra_di_accesso():
+    # D39: chi non ha fatto il login vede le carte nel logo, quindi anche la finestra
+    # "Accedi o registrati" ha la riga dei crediti, uguale a quella del pannello
+    code = (STATIC / "js" / "components" / "LoginPrompt.js").read_text(encoding="utf-8")
+    assert "LICENSE_URL = 'https://creativecommons.org/licenses/by-sa/3.0/deed.it'" in code
+    assert "'Immagini delle carte: Matsoftware, '" in code
+    assert "text: 'CC BY-SA 3.0'" in code and "', da Wikimedia Commons'" in code
+    assert "rel: 'noopener'" in code
+    assert "footer: credits()" in code
+    modal = (STATIC / "js" / "components" / "Modal.js").read_text(encoding="utf-8")
+    assert "footer = null" in modal
+    assert re.search(r"el\('div', \{ class: 'dialog__actions' \}, buttons\),\s*footer,", modal)
+
 def test_dati_finti_delle_statistiche_raggiungibili(app, user_home):
     url = re.search(r'data-stats-url="([^"]+)"', user_home).group(1)
     assert url == "/static/dev/statistiche_esempio.json"

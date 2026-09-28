@@ -33,12 +33,13 @@ function reduceMotion() {
  * @param {string} options.title titolo (testo)
  * @param {string} [options.message] testo sotto il titolo
  * @param {Node} [options.content] contenuto in più (un elemento già creato con el())
+ * @param {Node} [options.footer] riga in fondo, sotto i pulsanti (es. i crediti delle immagini, D39)
  * @param {Array<{label: string, value: *, variant?: 'primary'|'ghost'|'danger'}>} options.actions
  *        pulsanti, nell'ordine in cui compaiono (il principale per ultimo); il primo riceve il focus
  * @param {*} [options.dismissValue] valore per X, Esc e tocco fuori (predefinito: null)
  * @returns {Promise<*>}
  */
-export function openModal({ title, message = '', content = null, actions, dismissValue = null }) {
+export function openModal({ title, message = '', content = null, footer = null, actions, dismissValue = null }) {
   return new Promise((resolve) => {
     const titleId = `dialog-title-${++nextId}`;
     let closing = false;
@@ -72,6 +73,7 @@ export function openModal({ title, message = '', content = null, actions, dismis
         message ? el('p', { class: 'dialog__body', text: message }) : null,
         content,
         el('div', { class: 'dialog__actions' }, buttons),
+        footer,
       ],
     );
 
