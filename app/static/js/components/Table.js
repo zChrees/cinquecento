@@ -3,7 +3,9 @@
  *
  * Tu sei sempre in basso; gli altri si dispongono nell'ordine dei posti, verso
  * destra (D11): nel 1v1 l'avversario in alto; nel 2v2 a destra chi gioca dopo di
- * te, in alto il compagno, a sinistra chi gioca prima di te.
+ * te, in alto il compagno, a sinistra chi gioca prima di te. Le loro carte coperte
+ * (P70) sono ventagli agganciati al bordo dello schermo dal loro lato, per metà
+ * fuori; quello in alto sta dietro la barra con "Esci" e il punteggio.
  *
  *   [Esci]        Punteggio
  *              (giocatore in alto)
@@ -26,7 +28,7 @@
 
 import { el, icon } from '../utils/dom.js';
 import { Card } from './Card.js';
-import { Hand, HiddenHand } from './Hand.js';
+import { EdgeHand, Hand } from './Hand.js';
 import { HandSummary } from './HandSummary.js';
 import { Scoreboard } from './Scoreboard.js';
 import { SingButtons } from './SingButtons.js';
@@ -108,7 +110,6 @@ function Seat(view, player, position, sang = null, phrase = null) {
     avatar,
     label,
     SingBadges(view, player.seat),
-    isMe ? null : HiddenHand(player.cards_in_hand),
     sang ? SangCards(sang, position) : null,
   ]);
 }
@@ -162,6 +163,8 @@ function winnerText(view, seat) {
  * @param {object|null} [moments.lastTrick] la presa appena chiusa (last_trick)
  * @param {number} [moments.lastTrickFor] P70: millisecondi da quando la presa chiusa si vede
  * @param {object} [moments.thrown] P70: carta ("coppe-10") → millisecondi dal lancio, per le carte in volo
+ * @param {object} [moments.drawnSeats] P70: posto di un avversario → millisecondi dalla sua pescata
+ * @param {object} [moments.drawnCards] P70: carta pescata da te ("coppe-10") → millisecondi dalla pescata
  * @param {object|null} [moments.summary] il riepilogo di fine mano (last_hand)
  * @param {function} [moments.onCloseSummary] pulsante "Ok" del riepilogo
  * @param {object} [moments.sang] posto → evento game:sang da mostrare
@@ -175,7 +178,10 @@ function winnerText(view, seat) {
  * @returns {HTMLElement}
  */
 export function Table(view, { onPlay, onSing, onLeave }, status = '', moments = {}, phrases = null) {
-  const { lastTrick = null, lastTrickFor = 0, thrown = {}, summary = null, onCloseSummary = null, sang = {} } = moments;
+  const {
+    lastTrick = null, lastTrickFor = 0, thrown = {}, drawnSeats = {}, drawnCards = {},
+    summary = null, onCloseSummary = null, sang = {},
+  } = moments;
   const bubbles = phrases ? phrases.bubbles : {};
   const positionOf = positionFn(view);
   const me = view.players.find((player) => player.seat === view.you.seat);
@@ -213,14 +219,18 @@ export function Table(view, { onPlay, onSing, onLeave }, status = '', moments = 
   const mine = el('div', { class: 'table__mine' }, [
     meRow,
     SingButtons(view.legal.sing, view.sings, onSing),
-    Hand(view.hand, { playable: view.legal.play, onPlay }),
+    Hand(view.hand, { playable: view.legal.play, onPlay, drawn: drawnCards }),
     el('p', { class: 'table__status', text: status, data: { tableStatus: '' }, attrs: { role: 'status', 'aria-live': 'polite' } }),
   ]);
+
+  // P70: le carte coperte degli altri, a ventaglio dal bordo dello schermo dal loro lato
+  const edgeHands = others.map((player) =>
+    EdgeHand(player.cards_in_hand, positionOf(player.seat), drawnSeats[player.seat] ?? null));
 
   // A fine partita il riquadro arriva dopo che si è vista l'ultima presa
   const result = view.result && !lastTrick ? Result(view) : null;
   return el('div', {
     class: 'table__inner',
     data: { mode: view.mode, version: view.version, status: view.status },
-  }, [topbar, board, mine, result]);
+  }, [...edgeHands, topbar, board, mine, result]);
 }

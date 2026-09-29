@@ -33,3 +33,51 @@
     --hand-card-max: 104px;
   }
 }
+
+/*
+ * Pescata (P70). Le durate (0,5 s) sono DRAW_MS di pages/game.js; i ritardi li
+ * scrive Hand.js (negativi: la pescata è già cominciata; positivi: tocca dopo agli
+ * altri). Con "riduci movimento" niente animazioni (reset.css).
+ * - Avversario: la carta nuova arriva dal centro del tavolo (in su, nel ventaglio
+ *   "in piedi" di table.css) e le altre si allargano dal ventaglio di prima.
+ * - Tu: la carta nuova scende nella mano dall'alto, dove sta il mazzo.
+ */
+.edge-hand > .card--drawn {
+  animation: card-draw 0.5s cubic-bezier(0.2, 0.75, 0.3, 1) both;
+}
+
+.edge-hand > .card--making-room {
+  animation: card-room 0.5s ease-out both;
+}
+
+.hand > .card--drawn-mine {
+  animation: card-draw-mine 0.5s cubic-bezier(0.2, 0.75, 0.3, 1) both;
+}
+
+@keyframes card-draw {
+  from {
+    opacity: 0;
+    translate: 0 -240px;
+    rotate: 0deg;
+  }
+  30% {
+    opacity: 1;
+  }
+}
+
+@keyframes card-room {
+  from {
+    rotate: calc((var(--i) - (var(--n-before) - 1) / 2) * var(--edge-spread));
+  }
+}
+
+@keyframes card-draw-mine {
+  from {
+    opacity: 0;
+    translate: 0 -220px;
+    scale: 0.7;
+  }
+  30% {
+    opacity: 1;
+  }
+}

@@ -22,6 +22,19 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P70 (secondo lotto) — Carte degli avversari e pescata (29/09/2026)
+
+- **Branch**: fix/p70-carte-avversari
+- **File**: creato `tests/frontend/test_carte_avversari.py`; modificati `app/static/js/components/Hand.js`, `Table.js`, `app/static/js/pages/game.js`, `app/static/css/components/table.css`, `hand.css`, `tests/api/test_grafica_tavolo.py`
+- **Controlli**: suite `frontend` 143 PASS (8 nuovi), suite `api` 274 PASS, `ruff check` pulito; tutte le suite non lanciate
+- **Fatto**: (1) le carte coperte degli avversari non stanno più sotto il nome: sono un **ventaglio agganciato al bordo dello schermo** dal loro lato (`EdgeHand` di `Hand.js`, marcatore `data-edge-hand`), carte da 44 px (56 da 1024 px in su), aperto verso il centro; quello in alto esce per metà dal bordo alto, **dietro la barra** con "Esci" e il punteggio (la barra resta sopra e si tocca); ai lati sporge circa un terzo di carta e i giocatori ai lati si spostano di 14 px verso il centro, così il ventaglio non copre avatar e nome; (2) **pescata**: quando nella stessa mano il mazzo cala, pesca per primo chi ha preso e poi gli altri a turno (0,15 s l'uno dall'altro, 0,5 s ciascuno: `DRAW_MS`, `DRAW_STEP_MS` in `game.js`, uguali alle animazioni di `hand.css`, un test li confronta); nel ventaglio la carta nuova arriva dal centro del tavolo e le altre si allargano dal ventaglio di prima; la tua carta nuova scende nella mano dall'alto; (3) come per il lancio, i tempi passano al tavolo come ritardi delle animazioni (un ridisegno a metà non le fa ripartire) e con "riduci movimento" niente animazioni
+- **Effetto in più**: sparito il difetto trovato in P71 (sui portatili bassi, nel 1v1, la presa entrava nel posto dell'avversario, perché le sue carte coperte stavano sotto il nome): tolta l'eccezione da `tests/api/test_grafica_tavolo.py`, che a 1280×720 ora passa; non va più in P34
+- **Decisioni prese**: nessuna nuova (applicate quelle di Christian registrate nel primo lotto); scelte di Claude: ventagli ai lati che sporgono un terzo di carta e giocatori ai lati spostati di 14 px, carte degli avversari da 56 px da 1024 px in su
+- **Domande nuove**: nessuna
+- **Punti delicati**: i ventagli sono `position: fixed` rispetto allo schermo e stanno sotto la barra in alto grazie a `z-index` (`.table__top` 2, `.edge-hand` 0): chi aggiunge cose nella barra o ai bordi del tavolo deve tenerne conto. L'angolo di ogni carta del ventaglio viene da `--i` e `--n` (scritti da `Hand.js` con `style.setProperty`, ammesso dalla CSP). La pescata si riconosce dal mazzo che cala nella stessa mano (`noticeDraws` in `game.js`): a inizio mano non c'è, arriverà con la distribuzione (P70, terzo lotto)
+- **Contratto di P65** (richiesta di Giuseppe): **ok di Christian** alla frase nuova del 5.2 (`friends:changed` a tutti e due gli utenti); ok anche a correggere in **P34** lo stesso scambio di risposte in `FriendsPanel.js` (vale solo l'ultima lettura di `GET /friends/`, come in `home.js`)
+- **Cosa devono fare gli altri**: niente
+
 ### P70 (primo lotto) — Lancio della carta e carte bianche (29/09/2026)
 
 - **Branch**: fix/p70-lancio-carta

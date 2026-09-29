@@ -34,6 +34,9 @@
  *     tavolo, così un ridisegno a metà non fa ripartire le animazioni. Prima di ogni
  *     ridisegno le immagini delle carte si riusano (reuseCardImages): un'immagine
  *     nuova per un attimo si vede bianca.
+ *   - P70, pescata: quando il mazzo cala nella stessa mano, ognuno pesca a turno
+ *     partendo da chi ha preso (DRAW_STEP_MS l'uno dall'altro, DRAW_MS ciascuno): la
+ *     carta arriva nel ventaglio dell'avversario, o nella propria mano.
  *   Con "riduci movimento" i tempi sono gli stessi, senza animazioni.
  * - P56, frasi del tavolo (D24): l'elenco arriva con game:phrases a ogni game:join
  *   (la pagina non ne tiene una copia sua; senza elenco il pulsante non c'è). Una
@@ -68,6 +71,8 @@ const SUMMARY_MS = 5000;
 const PHRASE_PAUSE_MS = 3000; // come TABLE_PHRASE_MIN_INTERVAL_SECONDS del server (P55)
 const BUBBLE_MS = 4000;
 const THROW_MS = 400; // come la durata di card-throw in css/components/trick.css (P70)
+const DRAW_MS = 500; // come la durata di card-draw in css/components/hand.css (P70)
+const DRAW_STEP_MS = 150; // tra la pescata di un giocatore e quella del successivo
 
 let view = null;
 let viewAt = 0; // quando è arrivata la vista (performance.now), per far scendere i secondi
@@ -86,6 +91,9 @@ const sang = {}; // posto → { event, timer }
 let lastTrickAt = 0; // quando si è vista la presa chiusa (performance.now), per le animazioni
 const throws = new Map(); // P70: throwKey(carta) → performance.now() del lancio
 let throwTimer = 0;
+const drawsBySeat = new Map(); // P70: posto → performance.now() della sua pescata (anche nel futuro)
+const drawsOfMine = new Map(); // P70: throwKey(carta pescata da te) → performance.now() della pescata
+let drawTimer = 0;
 
 // Frasi del tavolo (P56)
 let phrases = null; // elenco di game:phrases: [{code, text}]
@@ -200,10 +208,49 @@ function noticeThrows(previous, next) {
   }
 }
 
+/** P70: le pescate in corso, { seats: posto → ms, cards: carta → ms } (ms negativi: tra poco). */
+function drawing() {
+  const now = performance.now();
+  const pick = (map) => {
+    const out = {};
+    for (const [key, at] of map) {
+      if (now - at < DRAW_MS) out[key] = now - at;
+      else map.delete(key);
+    }
+    return out;
+  };
+  return { seats: pick(drawsBySeat), cards: pick(drawsOfMine) };
+}
+
+/**
+ * P70: il mazzo è calato nella stessa mano, quindi dopo la presa chi ha preso e poi
+ * gli altri, in ordine, hanno pescato una carta ciascuno.
+ */
+function noticeDraws(previous, next) {
+  if (reducedMotion() || next.hand_number !== previous.hand_number || !next.last_trick) return;
+  const drawn = previous.deck_count - next.deck_count;
+  if (drawn <= 0) return;
+  const n = next.players.length;
+  const now = performance.now();
+  const mine = new Set(previous.hand.map(throwKey));
+  for (let step = 0; step < Math.min(drawn, n); step += 1) {
+    const seat = (next.last_trick.winner_seat + step) % n;
+    const at = now + step * DRAW_STEP_MS;
+    if (seat === next.you.seat) {
+      for (const card of next.hand) if (!mine.has(throwKey(card))) drawsOfMine.set(throwKey(card), at);
+    } else {
+      drawsBySeat.set(seat, at);
+    }
+  }
+  clearTimeout(drawTimer);
+  drawTimer = setTimeout(redraw, (Math.min(drawn, n) - 1) * DRAW_STEP_MS + DRAW_MS);
+}
+
 /** Momenti che cominciano con la vista nuova (P57, P58): presa appena chiusa, fine mano. */
 function noticeMoments(previous, next) {
   if (!previous) return; // prima vista: niente da mostrare "per un momento"
   noticeThrows(previous, next);
+  noticeDraws(previous, next);
   if (next.hand_number !== previous.hand_number) hideLastTrick();
   if (next.last_trick && next.hand_number === previous.hand_number
       && JSON.stringify(next.last_trick) !== JSON.stringify(previous.last_trick)) {
@@ -236,10 +283,13 @@ function render(next) {
   const offline = !demo && !isConnected();
   const handEnding = Boolean(nextSummary || summary);
   const shown = timed(waiting || leaving || offline || handEnding ? { ...view, legal: NO_MOVES } : view);
+  const drawn = drawing();
   const moments = {
     lastTrick,
     lastTrickFor: lastTrick ? performance.now() - lastTrickAt : 0,
     thrown: flying(),
+    drawnSeats: drawn.seats,
+    drawnCards: drawn.cards,
     summary,
     onCloseSummary: () => { closeSummary(); redraw(); },
     sang: Object.fromEntries(Object.entries(sang).map(([seat, { event }]) => [seat, event])),

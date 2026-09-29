@@ -172,9 +172,8 @@ def test_il_tavolo_non_scorre(browser, server, mode):
         seats = browser.js("""[...document.querySelectorAll('.table__board > .seat')].map((s) => {
           const b = s.getBoundingClientRect(); return { l: b.left, t: b.top, r: b.right, b: b.bottom }; })""")
         for seat in seats:
-            # Difetto che c'era già prima di P71: sui portatili bassi, nel 1v1, la presa
-            # entra di qualche pixel nel posto dell'avversario (da sistemare in P34)
-            if (mode, size) != ("1v1", (1280, 720)):
-                assert not _overlap(box["trick"], seat), (mode, size, "la presa copre un giocatore", seat)
+            # Prima di P70 (secondo lotto), sui portatili bassi nel 1v1, la presa entrava nel
+            # posto dell'avversario: le sue carte coperte ora sono al bordo dello schermo
+            assert not _overlap(box["trick"], seat), (mode, size, "la presa copre un giocatore", seat)
             assert not _overlap(box["deck"], seat), (mode, size, "il mazzo copre un giocatore", seat)
         assert not _overlap(box["deck"], box["me"]), (mode, size, "il mazzo copre la tua riga")
