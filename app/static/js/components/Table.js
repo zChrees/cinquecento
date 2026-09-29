@@ -160,6 +160,8 @@ function winnerText(view, seat) {
  * @param {string} [status] messaggio sotto la mano (es. risposta del server)
  * @param {object} [moments] momenti del tavolo da mostrare adesso (P57)
  * @param {object|null} [moments.lastTrick] la presa appena chiusa (last_trick)
+ * @param {number} [moments.lastTrickFor] P70: millisecondi da quando la presa chiusa si vede
+ * @param {object} [moments.thrown] P70: carta ("coppe-10") → millisecondi dal lancio, per le carte in volo
  * @param {object|null} [moments.summary] il riepilogo di fine mano (last_hand)
  * @param {function} [moments.onCloseSummary] pulsante "Ok" del riepilogo
  * @param {object} [moments.sang] posto → evento game:sang da mostrare
@@ -173,7 +175,7 @@ function winnerText(view, seat) {
  * @returns {HTMLElement}
  */
 export function Table(view, { onPlay, onSing, onLeave }, status = '', moments = {}, phrases = null) {
-  const { lastTrick = null, summary = null, onCloseSummary = null, sang = {} } = moments;
+  const { lastTrick = null, lastTrickFor = 0, thrown = {}, summary = null, onCloseSummary = null, sang = {} } = moments;
   const bubbles = phrases ? phrases.bubbles : {};
   const positionOf = positionFn(view);
   const me = view.players.find((player) => player.seat === view.you.seat);
@@ -194,8 +196,8 @@ export function Table(view, { onPlay, onSing, onLeave }, status = '', moments = 
       Seat(view, player, positionOf(player.seat), sang[player.seat], bubbles[player.seat])),
     el('div', { class: 'table__center' }, [
       lastTrick
-        ? LastTrick(lastTrick, positionOf, winnerText(view, lastTrick.winner_seat))
-        : Trick(view.trick, positionOf),
+        ? LastTrick(lastTrick, positionOf, winnerText(view, lastTrick.winner_seat), { shownFor: lastTrickFor, thrown })
+        : Trick(view.trick, positionOf, thrown),
       DeckAndTrump(view.deck_count, view.trump),
     ]),
     summary ? HandSummary(view, summary, { onClose: onCloseSummary }) : null,

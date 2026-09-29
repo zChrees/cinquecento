@@ -14,6 +14,7 @@
  *   Card({ suit: 'coppe', rank: 10 })                         // carta scoperta
  *   Card({ suit: 'coppe', rank: 10 }, { onPlay, playable })   // pulsante nella mano
  *   CardBack()                                               // carta coperta
+ *   reuseCardImages(root)   // P70: prima di ridisegnare, riusa le immagini già caricate
  *
  * Stile in css/components/card.css.
  */
@@ -29,6 +30,31 @@ export const RANK_NAMES = {
 
 const FACE_BASE = new URL('../../img/cards/', import.meta.url).href;
 const BACK_URL = new URL('../../img/cards-bg/dorso.webp', import.meta.url).href;
+
+// P70: immagini della pagina di prima, da riusare al prossimo ridisegno (reuseCardImages)
+let reusable = new Map();
+
+/**
+ * Prende da `root` le immagini delle carte già disegnate, così le carte del
+ * ridisegno successivo riusano gli stessi elementi <img> invece di crearne di
+ * nuovi (P70). Un'immagine nuova, finché il browser non l'ha pronta, per un attimo
+ * mostra il fondo bianco della carta: è il lampo bianco trovato giocando dal
+ * telefono. Da chiamare subito prima di ridisegnare dentro `root`.
+ * @param {HTMLElement} root
+ */
+export function reuseCardImages(root) {
+  reusable = new Map();
+  for (const img of root.querySelectorAll('img.card__face, img.card__back')) {
+    if (!reusable.has(img.src)) reusable.set(img.src, []);
+    reusable.get(img.src).push(img);
+  }
+}
+
+function cardImage(className, src) {
+  const old = reusable.get(src)?.pop();
+  if (old) return old;
+  return el('img', { class: className, attrs: { src, alt: '', draggable: 'false' } });
+}
 
 /**
  * Controlla che una carta sia nella forma del contratto e la restituisce.
@@ -65,9 +91,7 @@ export function sameCard(a, b) {
 export function Card(card, { onPlay = null, playable = true } = {}) {
   const name = cardName(card);
   // Il nome lo dà l'etichetta della carta (aria-label): l'immagine è solo decorativa
-  const face = [
-    el('img', { class: 'card__face', attrs: { src: `${FACE_BASE}${card.suit}-${card.rank}.webp`, alt: '', draggable: 'false' } }),
-  ];
+  const face = [cardImage('card__face', `${FACE_BASE}${card.suit}-${card.rank}.webp`)];
   const data = { suit: card.suit, rank: card.rank };
 
   if (!onPlay) {
@@ -88,6 +112,6 @@ export function Card(card, { onPlay = null, playable = true } = {}) {
 /** Carta coperta (dorso): per le carte degli avversari e il mazzo. */
 export function CardBack() {
   return el('div', { class: 'card card--back', data: { back: '' }, attrs: { role: 'img', 'aria-label': 'Carta coperta' } }, [
-    el('img', { class: 'card__back', attrs: { src: BACK_URL, alt: '', draggable: 'false' } }),
+    cardImage('card__back', BACK_URL),
   ]);
 }

@@ -60,6 +60,32 @@
 }
 
 /*
+ * Lancio (P70): la carta appena giocata arriva dal lato di chi l'ha giocata, più
+ * grande e ruotata, e si posa al suo posto girando leggermente su sé stessa. La
+ * durata (0,4 s) è THROW_MS di pages/game.js, che fino ad allora spegne le carte
+ * in mano; il ritardo lo scrive Trick.js. Con "riduci movimento" niente lancio
+ * (reset.css).
+ */
+.trick__card--bottom { --throw-x: 0; --throw-y: 150px; --throw-turn: -28deg; }
+.trick__card--top { --throw-x: 0; --throw-y: -150px; --throw-turn: 24deg; }
+.trick__card--left { --throw-x: -150px; --throw-y: 0; --throw-turn: -32deg; }
+.trick__card--right { --throw-x: 150px; --throw-y: 0; --throw-turn: 30deg; }
+
+.card--thrown {
+  animation: card-throw 0.4s cubic-bezier(0.2, 0.75, 0.3, 1) both;
+}
+
+@keyframes card-throw {
+  from {
+    opacity: 0.4;
+    transform: translate(var(--throw-x), var(--throw-y)) rotate(var(--throw-turn)) scale(1.25);
+  }
+  70% {
+    opacity: 1;
+  }
+}
+
+/*
  * Presa appena chiusa (P57): la carta di chi ha preso è in risalto, al centro
  * "Prende …"; alla fine le carte scivolano verso chi ha preso (--away-x/y).
  * Il tempo lo decide pages/game.js (1,5 s): qui l'uscita comincia a 1,1 s.

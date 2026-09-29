@@ -28,6 +28,12 @@
  *     spente (toccando in fretta si giocava una carta della mano nuova senza
  *     volerlo); "Ok" chiude il riepilogo e le riaccende;
  *   - carte del canto (game:sang, D15): accanto a chi ha cantato per show_seconds.
+ *   - P70, lancio: ogni carta che arriva sul tavolo (anche quella che chiude la
+ *     presa o la mano) vola al suo posto in THROW_MS; finché vola, un tocco sulle
+ *     proprie carte non gioca niente. I tempi di lanci e presa chiusa passano al
+ *     tavolo, così un ridisegno a metà non fa ripartire le animazioni. Prima di ogni
+ *     ridisegno le immagini delle carte si riusano (reuseCardImages): un'immagine
+ *     nuova per un attimo si vede bianca.
  *   Con "riduci movimento" i tempi sono gli stessi, senza animazioni.
  * - P56, frasi del tavolo (D24): l'elenco arriva con game:phrases a ogni game:join
  *   (la pagina non ne tiene una copia sua; senza elenco il pulsante non c'è). Una
@@ -48,7 +54,8 @@ import { connect, isConnected, on, onStatus, send } from '../core/socket.js';
 import { EVENTS, NOT_LOGGED_IN } from '../core/events.js';
 import { confirmModal } from '../components/Modal.js';
 import { Table } from '../components/Table.js';
-import { cardName } from '../components/Card.js';
+import { cardName, reuseCardImages } from '../components/Card.js';
+import { throwKey } from '../components/Trick.js';
 
 initLayout();
 
@@ -60,6 +67,7 @@ const LAST_TRICK_MS = 1500;
 const SUMMARY_MS = 5000;
 const PHRASE_PAUSE_MS = 3000; // come TABLE_PHRASE_MIN_INTERVAL_SECONDS del server (P55)
 const BUBBLE_MS = 4000;
+const THROW_MS = 400; // come la durata di card-throw in css/components/trick.css (P70)
 
 let view = null;
 let viewAt = 0; // quando è arrivata la vista (performance.now), per far scendere i secondi
@@ -75,6 +83,9 @@ let summary = null;
 let summaryTimer = 0;
 let nextSummary = null; // riepilogo che aspetta la fine dell'ultima presa della mano
 const sang = {}; // posto → { event, timer }
+let lastTrickAt = 0; // quando si è vista la presa chiusa (performance.now), per le animazioni
+const throws = new Map(); // P70: throwKey(carta) → performance.now() del lancio
+let throwTimer = 0;
 
 // Frasi del tavolo (P56)
 let phrases = null; // elenco di game:phrases: [{code, text}]
@@ -129,6 +140,7 @@ function hideLastTrick() {
 function showLastTrick(trick) {
   hideLastTrick();
   lastTrick = trick;
+  lastTrickAt = performance.now();
   lastTrickTimer = setTimeout(() => { hideLastTrick(); redraw(); }, LAST_TRICK_MS);
 }
 
@@ -143,9 +155,55 @@ function closeSummary() {
   summary = null;
 }
 
+function reducedMotion() {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+/** P70: le carte in volo adesso, throwKey(carta) → millisecondi dal lancio. */
+function flying() {
+  const now = performance.now();
+  const thrown = {};
+  for (const [key, at] of throws) {
+    if (now - at < THROW_MS) thrown[key] = now - at;
+    else throws.delete(key);
+  }
+  return thrown;
+}
+
+/**
+ * P70: le carte arrivate sul tavolo con la vista nuova partono con il lancio: quelle
+ * nuove nella presa, e quella che ha chiuso la presa o la mano (nella presa chiusa).
+ */
+function noticeThrows(previous, next) {
+  if (reducedMotion()) return;
+  const before = new Set(previous.trick.cards.map(({ card }) => throwKey(card)));
+  const arrived = [...next.trick.cards];
+  if (next.hand_number === previous.hand_number && next.last_trick
+      && JSON.stringify(next.last_trick) !== JSON.stringify(previous.last_trick)) {
+    arrived.push(...next.last_trick.cards);
+  }
+  if (next.hand_number > previous.hand_number && next.last_hand?.last_trick) {
+    arrived.push(...next.last_hand.last_trick.cards);
+  }
+  const now = performance.now();
+  let started = false;
+  for (const { card } of arrived) {
+    const key = throwKey(card);
+    if (!before.has(key) && !throws.has(key)) {
+      throws.set(key, now);
+      started = true;
+    }
+  }
+  if (started) {
+    clearTimeout(throwTimer);
+    throwTimer = setTimeout(redraw, THROW_MS); // a lancio finito le carte tornano ferme
+  }
+}
+
 /** Momenti che cominciano con la vista nuova (P57, P58): presa appena chiusa, fine mano. */
 function noticeMoments(previous, next) {
   if (!previous) return; // prima vista: niente da mostrare "per un momento"
+  noticeThrows(previous, next);
   if (next.hand_number !== previous.hand_number) hideLastTrick();
   if (next.last_trick && next.hand_number === previous.hand_number
       && JSON.stringify(next.last_trick) !== JSON.stringify(previous.last_trick)) {
@@ -180,6 +238,8 @@ function render(next) {
   const shown = timed(waiting || leaving || offline || handEnding ? { ...view, legal: NO_MOVES } : view);
   const moments = {
     lastTrick,
+    lastTrickFor: lastTrick ? performance.now() - lastTrickAt : 0,
+    thrown: flying(),
     summary,
     onCloseSummary: () => { closeSummary(); redraw(); },
     sang: Object.fromEntries(Object.entries(sang).map(([seat, { event }]) => [seat, event])),
@@ -195,6 +255,7 @@ function render(next) {
   // Il tavolo si ridisegna tutto: chi stava usando le frasi con la tastiera resta dov'era
   const focused = document.activeElement;
   const focusKey = root.contains(focused) && (focused.dataset.phraseCode ?? ('phrasesButton' in focused.dataset ? '' : null));
+  reuseCardImages(root); // P70: niente immagini nuove (e lampi bianchi) a ogni ridisegno
   root.replaceChildren(Table(shown, { onPlay, onSing, onLeave }, status, moments, phrasesShown));
   if (typeof focusKey === 'string') {
     const selector = focusKey ? `[data-phrase-code="${CSS.escape(focusKey)}"]` : '[data-phrases-button]';
@@ -303,6 +364,8 @@ async function sendMove(event, data) {
 }
 
 function onPlay(card) {
+  // P70: finché una carta vola sul tavolo non se ne gioca un'altra
+  if (Object.keys(flying()).length) return;
   if (demo) {
     setStatus(`Prova: hai scelto ${cardName(card)}. In partita la carta va al server.`);
     return;

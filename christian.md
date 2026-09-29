@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P70 (primo lotto) — Lancio della carta e carte bianche (29/09/2026)
+
+- **Branch**: fix/p70-lancio-carta
+- **File**: creato `tests/frontend/test_lancio_carta.py`; modificati `app/static/js/pages/game.js`, `app/static/js/components/Card.js`, `Trick.js`, `Table.js` (aggiunto all'elenco con l'ok di Christian), `app/static/css/components/trick.css`
+- **Controlli**: suite `frontend` 135 PASS (7 nuovi), suite `api` 274 PASS, `ruff check` pulito; tutte le suite non lanciate
+- **Fatto**: (1) **lancio**: ogni carta che arriva sul tavolo, compresa quella che chiude la presa o la mano, vola al suo posto dal lato di chi l'ha giocata, più grande e ruotata, girando leggermente su sé stessa (0,4 s, `THROW_MS` in `game.js` = `card-throw` in `trick.css`, un test li confronta); (2) finché una carta vola, un tocco sulle proprie carte non gioca niente (le carte non si spengono, per non farle lampeggiare a ogni carta degli altri); (3) **ridisegni**: la pagina si ricorda quando sono iniziati i lanci e la presa chiusa, e li passa al tavolo come ritardi delle animazioni: un ridisegno a metà (fumetto, timer, scollegato) non fa più ripartire né il lancio né l'uscita della presa chiusa, che prima ripartiva da capo; (4) **carte bianche** [D]: a ogni ridisegno le immagini delle carte erano elementi nuovi, che il telefono può mostrare vuoti (fondo bianco) per un fotogramma; ora `reuseCardImages(root)` di `Card.js` riusa le immagini già disegnate. La causa non si riproduce in Chrome sul PC: il test controlla che le immagini restino le stesse; **da riprovare sul telefono**; (5) con "riduci movimento" niente lancio e niente attesa
+- **Decisioni prese** (per P70, di Christian): distribuzione a inizio mano **dopo il riepilogo**; carte dell'avversario in alto **dal bordo alto, dietro la barra** con "Esci" e il punteggio; carte degli avversari da circa **44 px**; la pescata animata vale **anche per sé**; P70 in tre lotti: lancio (questo), carte degli avversari, mescolata e distribuzione (da registrare in `DECISIONI.md`, Interfaccia)
+- **Domande nuove**: nessuna
+- **Punti delicati**: il tavolo si ridisegna tutto a ogni vista: un'animazione nuova deve ricevere da `game.js` il tempo già passato e usarlo come ritardo negativo (`animationDelay`), altrimenti riparte a ogni ridisegno; un'immagine di carta si crea solo con `Card`/`CardBack` di `Card.js`, che riusano quelle di prima (`reuseCardImages`, chiamata in `render` subito prima di `replaceChildren`). Nei test del browser "riduci movimento" è acceso (`tests/browser.py`): per provare un'animazione va spento (`Emulation.setEmulatedMedia`), e il suo avanzamento si legge con `getComputedTiming().progress`, non con `currentTime`
+- **Cosa devono fare gli altri**: **Giuseppe**, ho controllato le tue modifiche di P59 a `ModeModal.js` e `QueueOverlay.js`: vanno bene. Un dettaglio: nel 2v2, se un amico ha già accettato e un altro poi rifiuta o scade, sotto la lista resta solo "L'invito a … è stato rifiutato" e sparisce "puoi giocare", anche se "Gioca" resta acceso: se ti va, dopo l'avviso rimetti `acceptedHint()` quando c'è almeno un amico che ha accettato
+
 ### P71 — Grafica del tavolo (29/09/2026)
 
 - **Branch**: fix/p71-grafica-tavolo

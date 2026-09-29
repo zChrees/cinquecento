@@ -4,21 +4,48 @@
  * Accanto, il mazzo coperto con le carte rimaste e sopra il seme della briscola
  * (P71). Stile in css/components/trick.css.
  * P57: LastTrick, la presa appena chiusa, per un momento.
+ * P70: la carta appena giocata vola al suo posto (lancio); i tempi li decide
+ * pages/game.js e qui diventano ritardi delle animazioni, così un ridisegno a metà
+ * non le fa ripartire da capo.
  */
 
 import { el } from '../utils/dom.js';
 import { Card, CardBack, cardName } from './Card.js';
 
 const IMG_BASE = new URL('../../img/cards-bg/', import.meta.url).href;
+// Dopo quanto le carte della presa chiusa scivolano via: come il ritardo di trick-away in trick.css
+const AWAY_DELAY_MS = 1100;
+
+/**
+ * La carta dentro la presa. P70: se è appena stata giocata (`thrown` = millisecondi
+ * dal lancio, lo decide pages/game.js) vola al suo posto; il ritardo negativo fa
+ * ripartire l'animazione dal punto giusto quando il tavolo si ridisegna a metà volo.
+ */
+function ThrownCard(card, thrown) {
+  const face = Card(card);
+  if (thrown != null) {
+    face.classList.add('card--thrown');
+    face.dataset.thrown = '';
+    face.style.animationDelay = `${-Math.round(thrown)}ms`;
+  }
+  return face;
+}
+
+/** Chiave di una carta per i lanci (P70): "coppe-10". */
+export function throwKey(card) {
+  return `${card.suit}-${card.rank}`;
+}
 
 /**
  * @param {object} trick il campo trick della vista ({leader_seat, cards: [{seat, card}]})
  * @param {function} positionOf posto → 'bottom' | 'right' | 'top' | 'left'
+ * @param {object} [thrown] P70: throwKey(carta) → millisecondi dal lancio, per le carte in volo
  * @returns {HTMLElement}
  */
-export function Trick(trick, positionOf) {
+export function Trick(trick, positionOf, thrown = {}) {
   const cards = trick.cards.map(({ seat, card }) =>
-    el('div', { class: `trick__card trick__card--${positionOf(seat)}`, data: { trickSeat: seat } }, [Card(card)]),
+    el('div', { class: `trick__card trick__card--${positionOf(seat)}`, data: { trickSeat: seat } },
+      [ThrownCard(card, thrown[throwKey(card)])]),
   );
   const label = trick.cards.length
     ? `Presa in corso: ${trick.cards.map(({ card }) => cardName(card)).join(', ')}`
@@ -35,22 +62,31 @@ export function Trick(trick, positionOf) {
  * @param {object} lastTrick il campo last_trick ({winner_seat, cards: [{seat, card}]})
  * @param {function} positionOf posto → 'bottom' | 'right' | 'top' | 'left'
  * @param {string} winnerText es. "Prende Turi" oppure "Prendi tu"
+ * @param {object} [timing] P70, per non far ripartire le animazioni a ogni ridisegno
+ * @param {number} [timing.shownFor] millisecondi da quando la presa chiusa si vede
+ * @param {object} [timing.thrown] throwKey(carta) → millisecondi dal lancio (la carta che l'ha chiusa)
  * @returns {HTMLElement}
  */
-export function LastTrick(lastTrick, positionOf, winnerText) {
+export function LastTrick(lastTrick, positionOf, winnerText, { shownFor = 0, thrown = {} } = {}) {
   const winner = lastTrick.winner_seat;
-  const cards = lastTrick.cards.map(({ seat, card }) =>
-    el('div', {
+  // L'uscita verso chi ha preso comincia AWAY_DELAY_MS dopo che la presa si vede, anche dopo un ridisegno
+  const awayDelay = `${Math.round(AWAY_DELAY_MS - shownFor)}ms`;
+  const cards = lastTrick.cards.map(({ seat, card }) => {
+    const slot = el('div', {
       class: `trick__card trick__card--${positionOf(seat)}${seat === winner ? ' trick__card--winner' : ''}`,
       data: { trickSeat: seat },
-    }, [Card(card)]),
-  );
+    }, [ThrownCard(card, thrown[throwKey(card)])]);
+    slot.style.animationDelay = awayDelay;
+    return slot;
+  });
   const label = `${winnerText}: ${lastTrick.cards.map(({ card }) => cardName(card)).join(', ')}`;
+  const winnerLabel = el('span', { class: 'trick__winner', text: winnerText, attrs: { 'aria-hidden': 'true' } });
+  winnerLabel.style.animationDelay = awayDelay;
   return el('div', {
     class: `trick trick--closed trick--to-${positionOf(winner)}`,
     data: { lastTrick: '', winnerSeat: winner, count: lastTrick.cards.length },
     attrs: { role: 'group', 'aria-label': label },
-  }, [...cards, el('span', { class: 'trick__winner', text: winnerText, attrs: { 'aria-hidden': 'true' } })]);
+  }, [...cards, winnerLabel]);
 }
 
 /**
