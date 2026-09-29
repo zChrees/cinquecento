@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P69 — Tocchi e clic al tavolo (29/09/2026)
+
+- **Branch**: fix/p69-tocchi-tavolo
+- **File**: creato `tests/frontend/test_tocchi_tavolo.py`; modificati `app/static/css/pages/game.css`, `app/static/js/pages/game.js`, `tests/frontend/test_momenti_tavolo.py`, `tests/frontend/test_frasi_pagina.py`
+- **Controlli**: **1340 PASS** in 8 suite (6 nuovi nella suite `frontend`, 1 capovolto), `ruff check` pulito; il giro completo si lancia solo quando lo chiede Christian (29/09/2026)
+- **Fatto**: (1) al tavolo il doppio tocco non ingrandisce (`touch-action: manipulation` su `:root:has(.page--game)`; lo zoom con due dita resta), tenendo premuto non si seleziona il testo e su iPhone non si apre l'anteprima delle immagini; le immagini del tavolo non ricevono il tocco (va al pulsante della carta: su Android niente menù "apri immagine"); (2) a fine mano, finché si vedono l'ultima presa della mano e il riepilogo, carte e canti sono spenti; "Ok" chiude il riepilogo e li riaccende; le prese in mezzo alla mano non spengono niente
+- **Resta aperto**: (3) le **frasi del tavolo a raffica** non si riproducono: un test con clic veri del mouse a raffica sul pulsante spento e sulla frase conferma una sola frase per pausa (3 secondi) nella prova con dati finti, e il server ne rifiuta più di una ogni 3 secondi [L]. Da riprovare in una partita vera dal telefono annotando cosa si vede (fumetti che escono davvero anche dall'altra parte? elenco che si apre con il pulsante spento?)
+- **Decisioni prese**: cambia la decisione di P57/P58 "la mano non si blocca mai" **solo a fine mano**: chi apre la mano nuova aspetta la fine dell'ultima presa e del riepilogo (fino a circa 6,5 secondi, meno con "Ok"), che il timer del server conta nei suoi 30 secondi (da registrare in `DECISIONI.md`, Interfaccia)
+- **Domande nuove**: nessuna
+- **Punti delicati**: le regole contro lo zoom stanno su `:root:has(.page--game)`, così valgono anche per le finestre aggiunte fuori da `<main>` (la conferma di "Esci"); una pagina nuova del tavolo deve tenere la classe `page--game`. In `game.js` le carte si spengono con `nextSummary || summary`: chi cambia i momenti di fine mano deve tenerne conto
+- **Cosa devono fare gli altri**: niente
+
 ### Documenti: punti nuovi dalla prova sul telefono (29/09/2026)
 
 - **Branch**: docs/punti-prova-telefono

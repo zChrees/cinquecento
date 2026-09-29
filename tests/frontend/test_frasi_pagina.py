@@ -162,6 +162,44 @@ def test_frase_mandata_fumetto_e_pausa(browser, server):
     assert time.monotonic() - start >= 3.5
 
 
+def _real_click(browser, selector):
+    """Un clic vero del mouse al centro di `selector` (non element.click(), che salta
+    i controlli del browser): arriva a quello che c'è davvero sotto il puntatore."""
+    point = browser.js(f"""(() => {{
+      const b = document.querySelector({json.dumps(selector)}).getBoundingClientRect();
+      return {{ x: b.left + b.width / 2, y: b.top + b.height / 2 }};
+    }})()""")
+    for kind in ("mousePressed", "mouseReleased"):
+        browser.send("Input.dispatchMouseEvent", type=kind, x=point["x"], y=point["y"], button="left", clickCount=1)
+
+
+def test_tocchi_rapidi_una_frase_per_pausa(browser, server):
+    # P69: tocchi veri e ripetuti sul pulsante e sulle frasi mandano una sola frase per pausa
+    # Una seconda frase partita durante la pausa la farebbe ricominciare: il pulsante
+    # resterebbe spento più dei 3 secondi dalla prima
+    _open(browser, server, "2v2")
+    _real_click(browser, "[data-phrases-button]")
+    menu = browser.js("""(() => { const b = document.querySelector("[data-phrase-code='mizzica']").getBoundingClientRect();
+      return { x: b.left + b.width / 2, y: b.top + b.height / 2 }; })()""")
+    _real_click(browser, "[data-phrase-code='mizzica']")
+    start = time.monotonic()
+    assert browser.js("document.querySelector('[data-seat=\"0\"] [data-phrase-bubble]').lastChild.textContent") == "Mizzica!"
+
+    # Durante la pausa: tocchi a raffica sul pulsante spento e dove stava la frase
+    while time.monotonic() - start < 2.0:
+        _real_click(browser, "[data-phrases-button]")
+        assert not _exists(browser, "[data-phrases-menu]")
+        for kind in ("mousePressed", "mouseReleased"):
+            browser.send("Input.dispatchMouseEvent", type=kind, x=menu["x"], y=menu["y"], button="left", clickCount=1)
+    assert browser.js("document.querySelector('[data-phrases-button]').disabled") is True
+
+    # Finita la pausa (3 secondi dalla prima frase, non di più) si torna a parlare
+    browser.wait_js("!document.querySelector('[data-phrases-button]').disabled", "pulsante di nuovo attivo", 8)
+    assert time.monotonic() - start < 3.8
+    _real_click(browser, "[data-phrases-button]")
+    assert _exists(browser, "[data-phrases-menu]")
+
+
 def test_fumetti_di_tutti_i_posti_a_360_px(browser, server):
     _open(browser, server, "2v2")
     for seat in range(4):

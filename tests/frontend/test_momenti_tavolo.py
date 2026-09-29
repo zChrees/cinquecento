@@ -3,7 +3,8 @@
 Controlla il "Fatto quando" di SCALETTA.md (P57): a 360 px ultima presa,
 riepilogo e carte del canto stanno nello schermo e non coprono le carte in mano;
 le carte del canto spariscono dopo show_seconds; il testo entra sempre come testo;
-i tre momenti hanno i loro marcatori data-*.
+i tre momenti hanno i loro marcatori data-*. P69: a fine mano, finché si vedono
+l'ultima presa e il riepilogo, le carte sono spente anche per i clic veri del mouse.
 
 Il tavolo si apre nella prova (/game/prova?demo=1v1 o 2v2) in Chrome o Edge senza
 finestra (tests/browser.py); il test gli manda viste e canti finti con gli eventi
@@ -129,6 +130,22 @@ def _check_fits(browser, selector):
         assert not overlap, (selector, item, hand, "copre la mano")
 
 
+def _playable(browser):
+    """Quante carte della propria mano si possono giocare adesso."""
+    return browser.js("document.querySelectorAll('.table__mine .hand button.card:not([disabled])').length")
+
+
+def _real_click(browser, selector):
+    """Un clic vero del mouse al centro di `selector` (non element.click(), che salta
+    i controlli del browser): arriva a quello che c'è davvero sotto il puntatore."""
+    point = browser.js(f"""(() => {{
+      const b = document.querySelector({json.dumps(selector)}).getBoundingClientRect();
+      return {{ x: b.left + b.width / 2, y: b.top + b.height / 2 }};
+    }})()""")
+    for kind in ("mousePressed", "mouseReleased"):
+        browser.send("Input.dispatchMouseEvent", type=kind, x=point["x"], y=point["y"], button="left", clickCount=1)
+
+
 def _trick_closed_1v1(base, winner=0):
     """Mario (posto 0) risponde con il 7 di coppe al 3 di Turi: la presa si chiude."""
     view = copy.deepcopy(base)
@@ -240,11 +257,13 @@ def test_riepilogo_di_fine_mano_1v1(browser, server):
         ["Punteggio", "273", "247"],
     ]
     _check_fits(browser, "[data-hand-summary]")
-    # La mano non è coperta e resta giocabile
-    assert browser.js("document.querySelectorAll('.table__mine .hand button.card:not([disabled])').length") == 5
+    # La mano non è coperta, ma finché c'è il riepilogo le carte sono spente (P69)
+    assert _playable(browser) == 0
 
+    # "Ok" chiude il riepilogo e riaccende le carte
     browser.click("[data-hand-summary-close]")
     assert not _exists(browser, "[data-hand-summary]")
+    assert _playable(browser) == 5
 
 
 def test_fine_mano_prima_l_ultima_presa_poi_il_riepilogo(browser, server):
@@ -266,6 +285,41 @@ def test_fine_mano_prima_l_ultima_presa_poi_il_riepilogo(browser, server):
     elapsed = _wait_gone(browser, "[data-last-trick]", 6)
     assert elapsed >= 1.0
     assert _exists(browser, "[data-hand-summary][data-hand-number='3']")
+
+
+def test_fine_mano_carte_spente_fino_al_riepilogo_chiuso(browser, server):
+    # P69: toccando in fretta le carte a fine mano non si gioca niente, né durante
+    # l'ultima presa della mano né durante il riepilogo; con "Ok" si torna a giocare
+    base = _view("1v1")
+    _open(browser, server, "1v1")
+    _send_state(browser, _new_hand(base, 4, closing=CLOSING_1V1))
+    assert _exists(browser, "[data-last-trick]")
+    assert _playable(browser) == 0
+    for _ in range(3):
+        _real_click(browser, ".table__mine .hand button.card")
+    assert browser.js("document.querySelector('[data-table-status]').textContent") == ""
+
+    browser.wait_js("document.querySelector('[data-hand-summary]') !== null", "riepilogo", 6)
+    assert _playable(browser) == 0
+    for _ in range(3):
+        _real_click(browser, ".table__mine .hand button.card")
+    assert browser.js("document.querySelector('[data-table-status]').textContent") == ""
+
+    _real_click(browser, "[data-hand-summary-close]")
+    assert not _exists(browser, "[data-hand-summary]")
+    assert _playable(browser) == 5
+    _real_click(browser, ".table__mine .hand button.card")
+    assert browser.js("document.querySelector('[data-table-status]').textContent").startswith("Prova: hai scelto")
+
+
+def test_presa_in_mezzo_alla_mano_non_spegne_le_carte(browser, server):
+    # Solo la fine della mano spegne le carte: dopo una presa qualsiasi si gioca subito (P57)
+    base = _view("1v1")
+    _open(browser, server, "1v1")
+    _send_state(browser, _trick_closed_1v1(base))
+    assert _exists(browser, "[data-last-trick]")
+    _real_click(browser, ".table__mine .hand button.card")
+    assert browser.js("document.querySelector('[data-table-status]').textContent").startswith("Prova: hai scelto")
 
 
 def test_fine_mano_carta_nuova_apre_subito_il_riepilogo(browser, server):

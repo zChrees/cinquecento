@@ -24,6 +24,9 @@
  *   - fine mano (hand_number salito): prima l'ultima presa della mano, che arriva in
  *     last_hand.last_trick (P58: la mano nuova parte con last_trick null), come una
  *     presa qualsiasi; poi il riepilogo di fine mano per SUMMARY_MS, o fino a "Ok";
+ *   - P69: finché si vedono l'ultima presa della mano e il riepilogo le carte sono
+ *     spente (toccando in fretta si giocava una carta della mano nuova senza
+ *     volerlo); "Ok" chiude il riepilogo e le riaccende;
  *   - carte del canto (game:sang, D15): accanto a chi ha cantato per show_seconds.
  *   Con "riduci movimento" i tempi sono gli stessi, senza animazioni.
  * - P56, frasi del tavolo (D24): l'elenco arriva con game:phrases a ogni game:join
@@ -169,10 +172,12 @@ function render(next) {
   }
   // La presa chiusa lascia il posto alla presa nuova appena qualcuno gioca
   if (lastTrick && view.trick.cards.length) hideLastTrick();
-  // Mentre si aspetta la risposta a una mossa, o senza connessione (P33), nessuna carta
-  // e nessun canto sono attivi
+  // Mentre si aspetta la risposta a una mossa, senza connessione (P33) o a fine mano,
+  // finché si vedono l'ultima presa della mano e il riepilogo (P69), nessuna carta e
+  // nessun canto sono attivi
   const offline = !demo && !isConnected();
-  const shown = timed(waiting || leaving || offline ? { ...view, legal: NO_MOVES } : view);
+  const handEnding = Boolean(nextSummary || summary);
+  const shown = timed(waiting || leaving || offline || handEnding ? { ...view, legal: NO_MOVES } : view);
   const moments = {
     lastTrick,
     summary,

@@ -7,6 +7,24 @@
   padding: 8px var(--gutter) calc(8px + env(safe-area-inset-bottom));
 }
 
+/*
+ * P69: al tavolo, sul telefono, il doppio tocco non ingrandisce la pagina (lo zoom
+ * con due dita resta, per chi vede poco) e il tocco lungo non apre l'anteprima o
+ * il menù delle immagini né seleziona il testo. Vale per tutta la pagina, comprese
+ * le finestre aggiunte fuori da <main> (per esempio la conferma di "Esci").
+ */
+:root:has(.page--game) {
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Le immagini sono solo decorative: il tocco va al pulsante o alla carta che le contiene */
+.page--game img {
+  pointer-events: none;
+}
+
 .table {
   display: flex;
   flex-direction: column;
