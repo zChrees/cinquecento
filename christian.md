@@ -22,6 +22,21 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: punti nuovi dalla prova sul telefono (29/09/2026)
+
+- **Branch**: docs/punti-prova-telefono
+- **File**: modificati `SCALETTA.md` (tracker, sezioni 3, 4, 9 e 9.2), `DECISIONI.md` (Progetto e tempi, Dati, Interfaccia, Gioco), `DA-DECIDERE.md` (D31, D43 e D44 nuove), `CLAUDE.md` (riga "Stato", paragrafo "Progetto")
+- **Controlli**: nessuno (soli documenti); 1320 PASS dall'ultimo giro (P33)
+- **Registrati**: nessun riepilogo nuovo di Giuseppe o di Antonio dopo l'ultimo aggiornamento
+- **Tracker**: punti nuovi dalla prova a mano dal telefono (io e un amico, server sul mio PC in rete locale). **Giuseppe**: P63 (spazi prima o dopo il nome nella richiesta di amicizia), P64 (niente canto nella prima presa, regola nuova), P65 (amico bloccato, sbloccato e di nuovo amico che non compare online nella carta-pulsante), P66 (mossa automatica dei 30 secondi che non parte più dopo essere usciti dal browser e rientrati), P67 (punti della mano in corso nella vista, solo della propria squadra), P68 (CPU: mosse e stanza). **Christian**: P69 (tocchi e clic al tavolo: zoom sul telefono, carta giocata durante il riepilogo, frasi a raffica), P70 (animazioni: lancio, mescolata e distribuzione, carte degli avversari, carte bianche per un attimo), P71 (grafica: briscola sul mazzo, niente "Carte franche" né "mazziere", mazzo e carte più grandi, pulsante delle frasi sopra la mano), P72 (i propri punti sopra la mano), P73 (CPU nella home). Le correzioni del tavolo che erano dentro P34 ora sono P69–P72
+- **Decisioni registrate**: partita contro la CPU nella prima versione; spazi attorno allo username tolti nella richiesta di amicizia; ritocchi del tavolo; niente canto nella prima presa di ogni mano
+- **Domande nuove**: **D43** (CPU: strategia, 1v1 o 2v2, salvataggio e rating, posto nella home), **D44** (punti al tavolo: cosa resta del tabellone e del riepilogo di fine mano); D31 aggiornata (la CPU è il punto più grande da tagliare se manca tempo)
+- **Da revisionare, Giuseppe**:
+  - l'**ordine** dei tuoi punti in "Da dove si parte" è una mia proposta: prima i difetti (P66, P65, P63), poi P64, P59, P61, P67 e P68, e P38 e P39 l'ultimo giorno;
+  - **P64**: ho inteso "primo giro" come la **prima presa di ogni mano**; se nel tuo riepilogo scrivi un dubbio, lo sistemiamo prima che parta il punto;
+  - **P67** cambia il contratto 3.3 e gli esempi in `app/static/dev/`, che leggono anche i miei test del tavolo: il nome del campo lo fissiamo insieme; P72 parte dopo che P67 è in `dev`;
+  - **P68** (CPU) aspetta D43, da decidere insieme; se serve salvare le partite con la CPU nel database, è una modifica di tabelle da discutere prima.
+
 ### Documenti: registrati i lotti del 29/09 (29/09/2026)
 
 - **Branch**: docs/registra-29-09-christian

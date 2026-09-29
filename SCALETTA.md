@@ -77,6 +77,11 @@ Una web-app per giocare online a **Cinquecento**, variante siciliana, con le car
 - [x] P30 (Fase 2, B+C): pannello statistiche con dati reali — `stats_service.py`, `stats_repo.py`, `StatsPanel.js` — *28/09 (Christian, commit `3419247`): 14 test nuovi (`tests/api/test_statistiche.py`), 1119 PASS; `GET /stats/me` sempre, anche in sviluppo; "provvisorio" contato da `giocatori_partita` e `partite.conta_per_rating`; nel 2v2 la partita in cui il compagno abbandona non conta per il "provvisorio" di chi resta. Fuori elenco, con l'ok di Christian: `navbar.html` (`data-stats-url`), `tests/frontend/test_navbar.py`*
 - [x] P58 (Fase 2, A): ultima presa della mano nella vista — `app/game/engine/state.py`, `game.py`, `views.py`, `docs/CONTRATTO-SOCKET.md` (3.3), `app/static/dev/vista_*.json` — *aggiunto il 28/09/2026, approvato dai tre. 28/09 (Giuseppe, commit `4dd9e5e`): `HandResult.last_trick`, `last_hand.last_trick` nella vista con la stessa forma di `last_trick`, contratto 3.3 ed esempio 1v1 (`vista_2v2.json` ha `last_hand` null); 10 test nuovi nella suite `engine`, 1243 PASS e 2 FAIL (quelli noti di Christian); il test "nessuna carta nascosta" ora controlla `last_hand` a parte (il mazzo si rimescola: una carta dell'ultima presa può essere adesso in mano a un altro). La pagina l'ha adattata Christian il 29/09 (commit `a220b0e`): a fine mano `game.js` mostra l'ultima presa della mano per 1,5 secondi, poi il riepilogo (subito, se nel frattempo si gioca la prima carta della mano nuova); 2 test nuovi in `test_momenti_tavolo.py`, e corretti due test instabili (`test_chat_pannello.py`, `test_icone.py`) che chiudevano o aprivano la chat prima del collegamento al tempo reale; 1313 PASS*
 - [ ] P59 (Fase 2, I): 2v2 con più amici invitati — **file non tutti sicuri, vedi sezione 9.2** — *aggiunto il 28/09/2026, approvato dai tre*
+- [ ] P64 (Fase 2, A): niente canto nella prima presa della mano (regola nuova) — `app/game/engine/singing.py`, `docs/REGOLE-GIOCO.md`, `tests/engine/test_canti.py` (**file da confermare**, vedi 9.2) — *aggiunto il 29/09/2026 dalla prova a mano sul telefono (Christian e un amico)*
+- [ ] P67 (Fase 2, A): punti della mano in corso nella vista, solo della propria squadra — `app/game/engine/views.py`, `docs/CONTRATTO-SOCKET.md` (3.3), `app/static/dev/*.json`, `tests/engine/test_viste.py` (**aspetta D44**) — *aggiunto il 29/09/2026 dalla prova a mano sul telefono (Christian e un amico)*
+- [ ] P72 (Fase 2, C): i propri punti sopra le carte in mano, aggiornati in tempo reale — `Hand.js`, `Scoreboard.js`, `pages/game.js` (**file da confermare**, vedi 9.2; attende P67) — *aggiunto il 29/09/2026 dalla prova a mano sul telefono (Christian e un amico)*
+- [ ] P68 (Fase 2, A+I): partita contro la CPU: mosse e stanza — **file non sicuri, vedi sezione 9.2**; **aspetta D43** — *aggiunto il 29/09/2026 dalla prova a mano sul telefono (Christian e un amico)*
+- [ ] P73 (Fase 2, C): partita contro la CPU nella home — **file non sicuri, vedi sezione 9.2**; **aspetta D43**, attende P68 e P59 — *aggiunto il 29/09/2026 dalla prova a mano sul telefono (Christian e un amico)*
 - [ ] ~~P49 (Fase 2, B+C): classifica~~ — **tolto il 27/09/2026** per decisione dell'utente (vedi `DECISIONI.md`, Progetto e tempi)
 - [ ] ~~P50 (Fase 2, B+C): pagina "Partite" (storico)~~ — **tolto il 27/09/2026** per decisione dell'utente (vedi `DECISIONI.md`, Progetto e tempi)
 - [ ] ~~P51 (Fase 2, C): pagina "Regole" con mini-tutorial~~ — **tolto il 27/09/2026** per decisione dell'utente (vedi `DECISIONI.md`, Progetto e tempi)
@@ -86,9 +91,15 @@ Una web-app per giocare online a **Cinquecento**, variante siciliana, con le car
 - [x] P32 (Fase 3): sicurezza di base — `config.py`, `app/__init__.py`, altri (lista in 9.2) — *29/09 (Giuseppe, commit `b38c56b`): intestazioni di sicurezza con CSP su ogni risposta; limite di frequenza per scheda sugli eventi in tempo reale (20 di fila, poi 10 al secondo); "Esci" e cancellazione dell'account scollegano tutte le schede (la cancellazione toglie anche dalla coda e annulla gli inviti); `not_logged_in` a una scheda di un account che non esiste più. I gestori validavano già tutto: 15 eventi × 18 dati sbagliati, mai `server_error`. 46 test nuovi (`tests/api/test_sicurezza.py`, `tests/sockets/test_validazione_eventi.py`, `tests/frontend/test_csp.py`), 1301 PASS e 2 FAIL (quelli noti di Christian)*
 - [x] P33 (Fase 3): errori e connessione nell'interfaccia — `Banner.js`, `banner.css`, `core/socket.js`, pagine e componenti (lista in 9.2) — *29/09 (Christian, commit `b3de874`): avviso comune in cima alla pagina, deciso da `socket.js`: "Connessione persa: riprovo a collegarmi…", "Sei stato scollegato… ricarica la pagina." con **Ricarica** (P32), "Collegamento al server in corso…" solo se il primo collegamento supera 3 secondi; senza connessione spenti solo i pulsanti del tempo reale (carte, canti e frasi al tavolo, "Gioca", "Invita", "Accetta"/"Rifiuta", "Invia" della chat); al ritorno home, pannello amici e chat si aggiornano da soli; quando la connessione cade la schermata di coda si chiude e un invito mandato si considera annullato. 7 test nuovi (`test_niente_alert.py`, `test_banner_connessione.py`), 1320 PASS. Non provati nel browser: carte spente al tavolo e pulsanti dell'invito ricevuto*
 - [ ] P61 (Fase 3, B): regole della password (D8) — `app/blueprints/auth/forms.py`, `config.py`, `app/templates/auth/register.html`, `tests/api/test_auth.py` (**file da confermare**, vedi 9.2) — *aggiunto il 29/09/2026 (D8 chiusa da Christian); proposto a Giuseppe, da confermare con lui*
+- [ ] P63 (Fase 3, B): richiesta di amicizia con spazi prima o dopo il nome — `app/services/friend_service.py`, `tests/api/test_amicizie.py` — *aggiunto il 29/09/2026 dalla prova a mano sul telefono (Christian e un amico)*
+- [ ] P65 (Fase 3, I): amico bloccato, sbloccato e di nuovo amico che non compare più online nella carta-pulsante — **file non sicuri, vedi sezione 9.2** — *aggiunto il 29/09/2026 dalla prova a mano sul telefono (Christian e un amico)*
+- [ ] P66 (Fase 3, I): mossa automatica dei 30 secondi che non parte più dopo essere usciti dal browser e rientrati — `app/realtime/room.py`, altri (**file non sicuri**, vedi 9.2) — *aggiunto il 29/09/2026 dalla prova a mano sul telefono (Christian e un amico)*
+- [ ] P69 (Fase 3, C): tocchi e clic al tavolo (zoom sul telefono, carta giocata durante il riepilogo, frasi ripetute) — **file non sicuri, vedi sezione 9.2** — *aggiunto il 29/09/2026 dalla prova a mano sul telefono (Christian e un amico)*
 
 ### Fase 4 — Rifiniture e revisione
-- [ ] P34 (Fase 4): rifinitura mobile e accessibilità — `app/static/css/`, `app/templates/` (**file precisi da definire**)
+- [ ] P34 (Fase 4): rifinitura mobile e accessibilità — `app/static/css/`, `app/templates/` (**file precisi da definire**) — *29/09/2026: le correzioni del tavolo trovate con la prova sul telefono sono diventate P69–P72; in P34 restano accessibilità, le altre pagine e il difetto di "indietro" nel pannello amici*
+- [ ] P70 (Fase 4, C): animazioni del tavolo (lancio della carta, mescolata e distribuzione, carte degli avversari, carte bianche per un attimo) — **file non sicuri, vedi sezione 9.2** — *aggiunto il 29/09/2026 dalla prova a mano sul telefono (Christian e un amico)*
+- [ ] P71 (Fase 4, C): grafica del tavolo (briscola sul mazzo, niente "Carte franche" né "mazziere", mazzo e carte più grandi sul telefono, pulsante delle frasi) — **file non sicuri, vedi sezione 9.2** — *aggiunto il 29/09/2026 dalla prova a mano sul telefono (Christian e un amico)*
 - [x] P35 (Fase 4): carte vere — `app/static/img/cards/`, `Card.js`, `card.css` — *28/09 (Christian, commit `71460b4`): 40 carte `<seme>-<valore>.webp` (316 KB) ritagliate dalle scansioni di Matsoftware (CC BY-SA 3.0, D19 chiusa), con `LICENZA.md`; niente valore negli angoli; 1167 PASS. Fuori elenco, suoi: `tests/frontend/test_carte.py`, titolo di `dev/carte.html`*
 - [x] P42 (Fase 4): logo vero "Cinquecento" — `app/static/img/logo.*` (**formato da definire**), `partials/navbar.html` — *28/09 (Christian, commit `86157d3`): il logo resta quello di P40 (`navbar.html` e `navbar.css` non cambiano); icona della scheda in `app/static/img/` (`favicon.svg`, `favicon-32.png`, `apple-touch-icon.png`) collegata da `base.html`; 8 test nuovi (`tests/frontend/test_logo.py`), 1202 PASS. Fuori elenco, suo: `tests/frontend/test_base.py`*
 - [x] P62 (Fase 4, C): font delle icone nel progetto (D40) — `app/static/fonts/`, `base.html`, `typography.css` — *aggiunto e fatto il 29/09/2026 (Christian, commit `7b7a8b7`): il font Material Symbols completo di Google (5,4 MB, le icone comparivano dopo secondi) diventa `material-symbols-rounded.woff2` (6 KB) con solo le 31 icone di `icone.txt`, precaricato da `base.html`; passi per aggiungere un'icona in `docs/prototipo/LEGGIMI.md` ("Icone"); `test_icone.py`, 6 test; 1311 PASS. Fuori elenco, suoi: `LEGGIMI.md`, `test_base.py` (un commento)*
@@ -114,7 +125,7 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 | `app/__init__.py`, `config.py` | P4 → P55 → P32 → P61 | Dopo P4: P55 (Giuseppe) aggiunge una chiave a `config.py`, concordata nel punto; poi solo P32. Il 28/09/2026 Christian ha aggiornato commenti e chiavi di `config.py` alle decisioni prese, prima che partissero i punti; lo stesso giorno, dopo D9, D16, D26 e D27, ha aggiornato di nuovo i commenti (solo i commenti, non i valori) |
 | `requirements.txt`, `requirements-dev.txt`, `.env.example`, `app/extensions.py` | P4 | Una libreria o una chiave nuova richiede di fermarsi e concordarla |
 | `app/sockets/__init__.py` | P4 → P23 → P44 | Giuseppe (P28 non l'ha toccato) |
-| `app/realtime/room.py` | P23 → P24 → P25 → P26 → P55 → P44 → P47 → P31 | Giuseppe; P25 e P26 li ha fatti Antonio (salvataggio ed elenco delle mosse, `_moves`); P55 `phrase_times`, P44 `finish_listeners`, P47 `start_listeners`, P31 la correzione di `notify` |
+| `app/realtime/room.py` | P23 → P24 → P25 → P26 → P55 → P44 → P47 → P31 → P66 → P68 | Giuseppe; P25 e P26 li ha fatti Antonio (salvataggio ed elenco delle mosse, `_moves`); P55 `phrase_times`, P44 `finish_listeners`, P47 `start_listeners`, P31 la correzione di `notify` |
 | `app/realtime/events.py`, `app/realtime/presence.py` | P23 → P44 → P32 | Giuseppe (P32: controllo del login e limite nel decoratore `handler`, `disconnect_user`) |
 | `app/realtime/room_manager.py` | P23 → P24 → P47 | Giuseppe. P28, P29 e P44 **usano** le funzioni che P24 espone; P47 ha aggiunto `start_listeners` |
 | `app/sockets/connection_events.py` | P4 → P23 → P25 → P28 → P44 → P47 | Giuseppe |
@@ -122,9 +133,9 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 | `app/sockets/game_events.py` | P4 → P24 → P25 → P55 | Giuseppe |
 | `app/sockets/friends_events.py` | P4 → P47 | Giuseppe |
 | `app/sockets/chat_events.py` | P4 → P48 | Giuseppe, sul punto di Antonio |
-| `app/static/js/pages/game.js` | P21 → P24 → P25 → P57 → P56 → P58 → P33 | Christian, poi Giuseppe (P24) e Antonio (P25), poi Christian (P58: l'ultima presa della mano; P33: connessione) |
-| `app/static/js/pages/home.js` | P40 → P22 → P28 → P29 → P44 → P47 → P33 → P59 | Christian, poi Giuseppe (P28 e P29 al posto di Antonio), poi Christian (P33); P59 dopo il pull di P33 |
-| `app/static/js/components/ModeModal.js` | P22 → P33 → P59 | Christian (P33: `setModeModalOnline`); P28 e P47 non l'hanno toccato (bastava `home.js`); P59 forse (sezione 9.2) |
+| `app/static/js/pages/game.js` | P21 → P24 → P25 → P57 → P56 → P58 → P33 → P69 → P71 → P70 → P72 | Christian, poi Giuseppe (P24) e Antonio (P25), poi Christian (P58: l'ultima presa della mano; P33: connessione) |
+| `app/static/js/pages/home.js` | P40 → P22 → P28 → P29 → P44 → P47 → P33 → P59 → P73 | Christian, poi Giuseppe (P28 e P29 al posto di Antonio), poi Christian (P33); P59 dopo il pull di P33 |
+| `app/static/js/components/ModeModal.js` | P22 → P33 → P59 → P73 | Christian (P33: `setModeModalOnline`); P28 e P47 non l'hanno toccato (bastava `home.js`); P59 forse (sezione 9.2) |
 | `app/static/js/components/InviteDialog.js` | P47 → P33 | Giuseppe, poi Christian (P33: `setOnline`) |
 | `app/static/js/components/StatsPanel.js` | P40 → P30 | Christian (dati finti, poi dati veri) |
 | `app/static/js/components/FriendsPanel.js` | P46 → P47 → P48 → P33 | Christian, poi Giuseppe, poi Christian (P33) |
@@ -132,11 +143,11 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 | `app/static/js/core/events.js` | P23 → P28 → P44 → P47 → P48 | Giuseppe (i nomi degli eventi) |
 | `app/static/js/core/layout.js` | P40 → P46 | Christian |
 | `app/static/js/core/socket.js` | P23 → P33 | Giuseppe, poi Christian (P33: l'avviso della connessione) |
-| `app/game/engine/game.py`, `state.py`, `views.py` | P13 → P14 → P15 → P58 | Giuseppe |
+| `app/game/engine/game.py`, `state.py`, `views.py` | P13 → P14 → P15 → P58 → P64 → P67 → P68 | Giuseppe |
 | `app/blueprints/auth/forms.py`, `app/templates/auth/*` | P16 → P61 | Giuseppe (P61: regole della password, D8) |
 | `app/services/auth_service.py`, `app/repositories/user_repo.py` | P16 → P17 → P32 | Giuseppe (P16), Antonio (P17), Giuseppe (P32: cancellazione dell'account con coda e inviti) |
 | `app/services/match_service.py` | P26 → P27 | Antonio |
-| `app/services/friend_service.py` | P45 → P47 | Antonio, poi Giuseppe con il suo permesso |
+| `app/services/friend_service.py` | P45 → P47 → P63 → P65 | Antonio, poi Giuseppe con il suo permesso |
 | `app/repositories/chat_repo.py`, `friend_repo.py` | P48, P45 → P31 | Giuseppe (P31: l'ora tagliata alla precisione della colonna) |
 | `tests/browser.py` | P46 → P29 | Christian; Giuseppe ha corretto l'attesa della porta di Chrome (P29, commit a parte) |
 | `app/blueprints/*/routes.py` e `__init__.py` | P4 (segnaposto) → un solo punto per blueprint | `main/routes.py`: solo P22 (Christian) |
@@ -523,6 +534,68 @@ Un conflitto git nasce quando due persone modificano **le stesse righe dello ste
 - *Fatto quando*: le icone compaiono insieme alla pagina; ogni icona usata nel codice è nel font (lo controlla il test).
 - *Dipende da*: P19.
 
+### Correzioni e richieste dalla prova sul telefono (29/09/2026)
+
+Il 29/09/2026 Christian e un amico hanno giocato dal telefono (server sul PC di Christian, stessa rete Wi-Fi) e hanno scritto le cose da sistemare. Sono diventate i punti P63–P73: i primi sei di Giuseppe (server, motore, tempo reale), gli altri cinque di Christian (pagina del tavolo e home). Le decisioni sono in `DECISIONI.md` (29/09/2026), le domande aperte in `DA-DECIDERE.md` (D43, D44).
+
+**P63 — Richiesta di amicizia con spazi prima o dopo il nome** · piccolo · decisione: sì (presa il 29/09/2026) — Giuseppe
+- *Cosa e perché*: scrivendo il nome dell'amico con uno spazio prima o dopo (succede spesso con la tastiera del telefono) il server cerca il nome con lo spazio e risponde "Nessun utente con questo username.". Il server toglie gli spazi all'inizio e alla fine prima di cercare: uno username non può contenere spazi (D7), quindi non è una correzione silenziosa di un dato valido.
+- *File* — modifica: `app/services/friend_service.py` (`check_username` o `send_request`), `tests/api/test_amicizie.py`. Certezza: **sicuro**.
+- *Fatto quando*: " Mario " trova Mario; uno spazio in mezzo al nome si rifiuta ancora con il messaggio di sempre; un test lo prova dalla rotta vera.
+- *Dipende da*: P45.
+
+**P64 — Niente canto nella prima presa della mano** · piccolo · decisione: sì (regola nuova del 29/09/2026) — Giuseppe — **file da confermare, vedi sezione 9.2**
+- *Cosa e perché*: regola nuova: durante la **prima presa di ogni mano** nessuno può cantare, né 40 né 20; si canta dalla seconda presa in poi, con le regole di sempre (nel proprio turno, prima della carta). La pagina non cambia: usa `legal.sing`, che nella prima presa è vuoto.
+- *File* — modifica: `app/game/engine/singing.py`, `docs/REGOLE-GIOCO.md` (sezione Canti), `tests/engine/test_canti.py`; forse `state.py` se serve sapere a che presa si è. Certezza: **da confermare** all'inizio del punto.
+- *Fatto quando*: nella prima presa `legal.sing` è vuoto e `sing` rifiuta con un messaggio chiaro; dalla seconda presa si canta come prima; la prova che confronta `singable_suits` e `sing` (3.000 situazioni) passa ancora; il regolamento lo dice.
+- *Dipende da*: P12, P13.
+
+**P65 — Amico sbloccato che non compare più online nella carta-pulsante** · piccolo · decisione: no — Giuseppe — **file non sicuri, vedi sezione 9.2**
+- *Cosa e perché*: dopo aver bloccato un amico, averlo sbloccato ed essere tornati amici, l'amico non compare più tra gli amici online nella carta-pulsante "Gioca con un amico" (la lista da invitare). Prima si riproduce con un test, poi si trova dove si perde (elenco degli amici online di P47, presenza di P44 o pagina).
+- *Fatto quando*: un test fa blocca → sblocca → richiesta → accetta e controlla che l'amico torni online nella lista da invitare, senza ricaricare la pagina.
+- *Dipende da*: P44, P45, P47.
+
+**P66 — Mossa automatica dopo il rientro** · piccolo · decisione: no — Giuseppe — **file non sicuri, vedi sezione 9.2**
+- *Cosa e perché*: uscendo dal browser e rientrando nella partita, allo scadere dei 30 secondi del turno la carta automatica non parte più (P25). Prima si riproduce con un test (suite `sockets` o `e2e`), poi si corregge.
+- *Fatto quando*: dopo uscita e rientro, il turno scaduto gioca la carta automatica come prima; il test lo prova con il turno accorciato (`shorten_turn`).
+- *Dipende da*: P25.
+
+**P67 — Punti della mano in corso nella vista** · piccolo · **decisione: sì** (D44) — Giuseppe
+- *Cosa e perché*: la pagina deve mostrare a ogni giocatore **solo i punti della propria squadra** nella mano in corso, aggiornati a ogni presa e a ogni canto (P72). Oggi la vista ha solo i totali della partita (`scores`) e i punti della mano finita (`last_hand`). Il server aggiunge un campo nella vista (nome da fissare nel punto); è un cambiamento del contratto 3.3, che vale con l'ok di Giuseppe e Christian.
+- *File* — modifica: `app/game/engine/views.py`, `docs/CONTRATTO-SOCKET.md` (3.3), `app/static/dev/*.json` (esempi della vista), `tests/engine/test_viste.py`; forse `state.py` o `game.py`. Certezza: **quasi sicuro** (da D44).
+- *Fatto quando*: la vista di ogni giocatore ha i punti della mano in corso della sua squadra (carte prese più canti) e non quelli degli avversari; gli esempi della vista sono aggiornati e i test che li confrontano passano.
+- *Dipende da*: P15, P58; aspetta D44.
+
+**P68 — Partita contro la CPU: mosse e stanza** · grande · **decisione: sì** (D43) — Giuseppe — **file non sicuri, vedi sezione 9.2**
+- *Cosa e perché*: richiesta nuova del 29/09/2026: si può giocare contro la CPU. Le mosse **non sono casuali**: la strategia si decide insieme (D43). Il motore resta puro: la scelta della mossa è una funzione come `auto_move` (dalla vista del giocatore CPU e da `legal`), e la stanza la fa giocare quando tocca alla CPU.
+- *Fatto quando*: da un evento del tempo reale si avvia una partita contro la CPU, la CPU gioca e canta secondo la strategia di D43 senza vedere le carte altrui, e la partita arriva alla fine; i test la giocano intera.
+- *Dipende da*: P15, P24, P25; aspetta D43.
+
+**P69 — Tocchi e clic al tavolo** · piccolo · decisione: sì (presa il 29/09/2026) — Christian — **file non sicuri, vedi sezione 9.2**
+- *Cosa e perché*: tre difetti trovati giocando dal telefono. (1) Il doppio tocco ingrandisce la pagina e tenendo premuta una carta il telefono la ingrandisce o apre il suo menù: al tavolo non deve succedere (lo zoom con due dita resta, per l'accessibilità). (2) Toccando in fretta le carte a fine mano, mentre si vedono l'ultima presa e il riepilogo, si riesce a giocare una carta: finché ci sono ultima presa e riepilogo le carte in mano non si giocano. (3) Toccando più volte l'icona delle frasi del tavolo, in alto a destra, si mandano frasi a raffica anche se sembra spenta: durante la pausa (P56) il pulsante non manda niente. Se il server accetta frasi più spesso del limite di P55, la correzione del server va a Giuseppe.
+- *Fatto quando*: al tavolo, sul telefono, doppio tocco e tocco lungo non ingrandiscono né aprono menù; nei test del browser un clic sulle carte durante l'ultima presa o il riepilogo non manda `game:play`, e i clic ripetuti sulle frasi ne mandano una sola per pausa.
+- *Dipende da*: P56, P57, P58 (pagina).
+
+**P70 — Animazioni del tavolo** · medio · decisione: sì (presa il 29/09/2026) — Christian — **file non sicuri, vedi sezione 9.2**
+- *Cosa e perché*: (1) la carta giocata **vola sul tavolo con un movimento fluido**, ruotando leggermente su sé stessa, come lanciata; (2) si può giocare una carta solo quando è **finita l'animazione della carta precedente**; (3) a inizio mano un'animazione **mescola il mazzo** e **distribuisce le carte una alla volta** ai giocatori; (4) le carte in mano agli avversari **partono dal bordo dello schermo, nascoste per metà**, e la carta pescata dall'avversario **entra fluida** tra quelle che ha in mano; (5) difetto: ogni tanto le carte diventano **bianche per qualche millisecondo** (da riprodurre: forse le immagini ricreate a ogni vista). Con "riduci movimento" del dispositivo le animazioni si accorciano o si tolgono. Le animazioni non devono mangiare troppo del turno di 30 secondi, che il server conta già.
+- *Fatto quando*: le quattro animazioni si vedono su telefono e computer e non bloccano la pagina; le carte non lampeggiano più; i test del tavolo passano anche con le animazioni (marcatori `data-*` per sapere quando un'animazione è finita).
+- *Dipende da*: P57, P58 (pagina); meglio dopo P71, che sposta mazzo e carte.
+
+**P71 — Grafica del tavolo** · medio · decisione: sì (presa il 29/09/2026) — Christian — **file non sicuri, vedi sezione 9.2**
+- *Cosa e perché*: (1) via la scritta "Carte franche" prima del canto del 40; (2) la **briscola** si mostra con il **seme sopra il mazzo, al centro**, senza il nome del seme; quando il mazzo finisce sparisce anche il seme; (3) un segno **vicino alle carte in mano** fa capire qual è la briscola (forma da proporre nel punto); (4) via la scritta "mazziere"; (5) sul telefono il **mazzo** sta più a destra ed è **più grande**; (6) le **carte giocate sul tavolo** (dopo il lancio) sono più grandi; (7) il pulsante delle **frasi del tavolo** ("chat") va **sopra le carte in mano, a destra**.
+- *Fatto quando*: tutto quanto sopra si vede su telefono (360 px) e computer; il tavolo non scorre; i test del tavolo e delle frasi passano, aggiornati ai nuovi marcatori. Un'icona nuova va in `app/static/fonts/icone.txt` (P62).
+- *Dipende da*: P57, P58 (pagina).
+
+**P72 — I propri punti sopra le carte in mano** · piccolo · **decisione: sì** (D44) — Christian — **file da confermare, vedi sezione 9.2**
+- *Cosa e perché*: i punti della mano non si mostrano più come oggi: sopra le carte in mano si vedono **solo i punti della propria squadra**, aggiornati in tempo reale a ogni presa e canto. Cosa resta del tabellone e del riepilogo di fine mano lo dice D44.
+- *Fatto quando*: durante la mano il numero sopra le carte cambia a ogni presa e a ogni canto della propria squadra; i test del tavolo lo provano con gli esempi della vista.
+- *Dipende da*: P67; aspetta D44.
+
+**P73 — Partita contro la CPU nella home** · medio · **decisione: sì** (D43) — Christian — **file non sicuri, vedi sezione 9.2**
+- *Cosa e perché*: il modo di avviare dalla home la partita contro la CPU (P68), con la grafica delle carte-pulsante e della carta-modal. La home non deve scorrere (va misurata come in P22).
+- *Fatto quando*: dalla home si avvia una partita contro la CPU e si arriva al tavolo; `test_pagina_home.py` misura la home senza scorrimento; senza connessione il pulsante è spento (P33).
+- *Dipende da*: P68, P59 (tocca anche lui `home.js` e `ModeModal.js`); aspetta D43.
+
 **~~P60 — Togliere le viste finte dalla versione consegnata~~** · **tolto il 29/09/2026** (vedi il tracker) · aggiunto il 28/09/2026 (proposta di Christian in P57)
 - *Cosa e perché*: le prove nell'indirizzo (`?demo=1v1`, `?demo=2v2` del tavolo, `?demo=rientro` della home) e gli eventi `demo:` del browser non devono restare nella versione consegnata: si tolgono o si spostano in una pagina solo di sviluppo, e si adattano le suite che le usano.
 - *Fatto quando*: nella demo vera nessun indirizzo con `?demo=` mostra dati finti; le suite passano.
@@ -672,16 +745,16 @@ Qui ci sono solo i punti di cui conosco **con certezza** tutti i file. Sono divi
 
 Due studenti che lavorano in parallelo non toccano mai gli stessi file. Vale anche per i documenti condivisi (`SCALETTA.md`, riga Stato di `CLAUDE.md`, `DECISIONI.md`, `DA-DECIDERE.md`): li aggiorna solo chi il gruppo sceglie a fine giornata, su un branch `docs/…` (28/09/2026, sostituisce D22).
 
-**Giuseppe (Studente 1) — motore di gioco e tempo reale:** P1, P2, P4, P6, P10, P11, P12, P13, P14, P15, P23, P24, P44, P47, P55, P58, P59, P31 (più P32 in 9.2; P61 proposto il 29/09/2026, da confermare); dal 28/09/2026 anche i punti di Antonio ancora aperti: P38 (in 9.2) e P39. Al posto di Antonio, con il suo permesso, ha già fatto P16, P28, P29, P48 e metà di P38
+**Giuseppe (Studente 1) — motore di gioco e tempo reale:** P1, P2, P4, P6, P10, P11, P12, P13, P14, P15, P23, P24, P44, P47, P55, P58, P59, P31, P63, P67 (più P32, P64, P65, P66 e P68 in 9.2; P61 proposto il 29/09/2026, da confermare); dal 28/09/2026 anche i punti di Antonio ancora aperti: P38 (in 9.2) e P39. Al posto di Antonio, con il suo permesso, ha già fatto P16, P28, P29, P48 e metà di P38
 
 **Antonio (Studente 2) — account, dati, amici:** P5, P7, P17, P18, P45, P26, P27, più P25 al posto di Giuseppe. **Dal 28/09/2026 non può lavorare al progetto per un bel po'** (detto da Christian, riepilogo di P30): i suoi punti aperti sono passati a Giuseppe (P16, P28, P29 e P48 li aveva già fatti lui; P38 e P39 riassegnati il 28/09/2026)
 
-**Christian (Studente 3) — interfaccia e documenti:** P3, P52, P8, P9, P19, P40, P20, P21, P22, P46, P56, P57, P30, P62, P36, P37 (più P33, P34, P35, P42, P43 e P53 in 9.2; P60 tolto il 29/09/2026)
+**Christian (Studente 3) — interfaccia e documenti:** P3, P52, P8, P9, P19, P40, P20, P21, P22, P46, P56, P57, P30, P62, P36, P37 (più P33, P34, P35, P42, P43, P53, P69, P70, P71, P72 e P73 in 9.2; P60 tolto il 29/09/2026)
 
-**Da dove si parte** (aggiornato il 29/09/2026, sera, da Christian: in `dev` ci sono P1–P8, P10–P33, P35, P40, P42, P44–P48, P52, P55–P58 (con la pagina di P58), P62, metà di P38, più le correzioni di `app/checks.py`, `scripts/migrate.py`, `tests/browser.py`, dei test della home, le tre di P31 e i test del pannello amici dopo P48; P60 tolto) [L]:
-- **Giuseppe**: **P59** (2v2 con più amici: i dettagli si fissano all'inizio del punto, con il contratto 5.3; **prima fa il pull**, perché P33 ha toccato `home.js` e `ModeModal.js`, e spegne i pulsanti nuovi del tempo reale con `setModeModalOnline`); **P61** (regole della password, D8) se lo conferma; `js/pages/auth.js` se il gruppo lo conferma (sotto); il **blocco occasionale delle suite** (`sockets` fermata dopo 25 minuti il 29/09; forse un collegamento lasciato a metà, come quello trovato in `test_icone.py`: riepilogo di P58 in `christian.md`); **P38** (installazione sul PC della demo, da `main`) e **P39** (con ngrok e QR code, D20) l'ultimo giorno.
+**Da dove si parte** (aggiornato il 29/09/2026, sera, da Christian, con i punti P63–P73 della prova sul telefono: in `dev` ci sono P1–P8, P10–P33, P35, P40, P42, P44–P48, P52, P55–P58 (con la pagina di P58), P62, metà di P38, più le correzioni di `app/checks.py`, `scripts/migrate.py`, `tests/browser.py`, dei test della home, le tre di P31 e i test del pannello amici dopo P48; P60 tolto) [L]:
+- **Giuseppe** (ordine proposto da Christian, da confermare con Giuseppe): prima i difetti della prova sul telefono, **P66** (mossa automatica dopo il rientro), **P65** (amico sbloccato non online), **P63** (spazi nel nome dell'amico), poi **P64** (niente canto nella prima presa); poi **P59** (2v2 con più amici: i dettagli si fissano all'inizio del punto, con il contratto 5.3; **prima fa il pull**, perché P33 ha toccato `home.js` e `ModeModal.js`, e spegne i pulsanti nuovi del tempo reale con `setModeModalOnline`); **P61** (regole della password, D8) se lo conferma; `js/pages/auth.js` se il gruppo lo conferma (sotto); il **blocco occasionale delle suite** (`sockets` fermata dopo 25 minuti il 29/09; forse un collegamento lasciato a metà, come quello trovato in `test_icone.py`: riepilogo di P58 in `christian.md`); **P67** dopo D44 (i punti della mano nella vista, che servono a P72 di Christian) e **P68** dopo D43 (CPU); **P38** (installazione sul PC della demo, da `main`) e **P39** (con ngrok e QR code, D20) l'ultimo giorno.
 - **Antonio**: nessun punto aperto.
-- **Christian**: **P34** (rifinitura mobile e accessibilità: comprende le correzioni grafiche del tavolo trovate giocando il 29/09 e il difetto di "indietro" nel pannello amici dopo un ricaricamento, riepilogo "Correzione — Test del pannello amici" in `christian.md`); poi **P43** (avatar in SVG generati da Claude, D29), **P53** (tema scuro, il primo da tagliare), la review **P36** (P31, P32 e P33 sono in `dev`), P37; a fine progetto la **relazione** (D1) e l'aggiornamento di `main` con i soli file del sito. Con P32 vale la **CSP**: niente script, stili o `onclick=` scritti nell'HTML, e ogni risorsa esterna nuova va anche in `CSP_DIRECTIVES` di `app/__init__.py`. Un'icona nuova va in `app/static/fonts/icone.txt` e il font va riscaricato (P62).
+- **Christian**: prima i punti della prova sul telefono, **P69** (tocchi e clic al tavolo), **P71** (grafica del tavolo), **P70** (animazioni), **P72** dopo P67 e D44; poi **P34** (rifinitura mobile e accessibilità: il resto delle pagine e il difetto di "indietro" nel pannello amici dopo un ricaricamento, riepilogo "Correzione — Test del pannello amici" in `christian.md`); **P73** dopo P68, P59 e D43; poi **P43** (avatar in SVG generati da Claude, D29), **P53** (tema scuro, il primo da tagliare), la review **P36** (P31, P32 e P33 sono in `dev`), P37; a fine progetto la **relazione** (D1) e l'aggiornamento di `main` con i soli file del sito. Con P32 vale la **CSP**: niente script, stili o `onclick=` scritti nell'HTML, e ogni risorsa esterna nuova va anche in `CSP_DIRECTIVES` di `app/__init__.py`. Un'icona nuova va in `app/static/fonts/icone.txt` e il font va riscaricato (P62).
 - **Da concordare**: le pagine di accesso e registrazione (P16) non hanno ancora uno script di pagina, quindi lì la navbar non si apre. Serve un `js/pages/auth.js` che importa `core/layout.js` e chiama `initLayout()`: non è nell'elenco di nessun punto; proposta: lo aggiunge Giuseppe con la grafica delle due pagine.
 
 | Punto | Chi | File condivisi con punti di altri studenti | Attende (già in `dev`) |
@@ -729,6 +802,17 @@ Due studenti che lavorano in parallelo non toccano mai gli stessi file. Vale anc
 | P36 | Christian | nessuno (crea solo `REVIEW.md`) | P31, P32, P33 |
 | P37 | Christian | `CLAUDE.md`, `README.md` (P3 e P9, sempre Christian) | P36 |
 | P39 | Giuseppe (riassegnato) | `docs/DEMO.md` (creato da P38, sempre Giuseppe) | P38 |
+| P63 | Giuseppe | `friend_service.py` (P45, P47: ora di Giuseppe) | P45 |
+| P64 | Giuseppe | nessuno (motore, `docs/REGOLE-GIOCO.md`) | P12, P13 |
+| P65 | Giuseppe | vedi 9.2 (forse `ModeModal.js` o `home.js` di Christian) | P44, P45, P47 |
+| P66 | Giuseppe | nessuno di altri studenti (`room.py` è di Giuseppe) | P25 |
+| P67 | Giuseppe | `app/static/dev/*.json` (li leggono i test del tavolo di Christian), contratto 3.3 (ok di Giuseppe e Christian) | P58; aspetta D44 |
+| P68 | Giuseppe | vedi 9.2 | P25; aspetta D43 |
+| P69 | Christian | nessuno di altri studenti (`game.js`, `Table.js`, `TablePhrases.js` sono suoi dopo P33) | P58 |
+| P70 | Christian | nessuno di altri studenti | P58; meglio dopo P71 |
+| P71 | Christian | nessuno di altri studenti | P58 |
+| P72 | Christian | nessuno di altri studenti | **P67** |
+| P73 | Christian | `home.js`, `ModeModal.js` (dopo Giuseppe, P59) | **P68**, **P59**; aspetta D43 |
 
 **Controlli di parallelismo** [D]: questi punti avvengono negli stessi giorni ma toccano file diversi. La verifica vale finché ognuno resta nei file elencati nel suo punto.
 - P25 (Giuseppe) ∥ P28 (Antonio): `room.py`, `game_events.py`, `connection_events.py`, `game.js` contro `matchmaking.py`, `lobby_events.py`, `sockets/__init__.py`, `home.js`.
@@ -736,6 +820,7 @@ Due studenti che lavorano in parallelo non toccano mai gli stessi file. Vale anc
 - P44 (Giuseppe) ∥ P33 (Christian): P33 può toccare `home.js` (vedi 9.2), quindi **P33 attende che P44 sia in `dev`**.
 - P31 e P32 (Giuseppe) ∥ P33 (Christian): P32 può toccare gli stessi file di P33 (gestori degli eventi e pagine): chi comincia per secondo controlla la lista dei file di 9.2 dell'altro.
 - P59 (Giuseppe) ∥ P33 (Christian): P59 può toccare `home.js` e `ModeModal.js`; P33 è andato prima (in `dev` dal 29/09/2026): P59 parte dopo il pull.
+- P63–P67 (Giuseppe) ∥ P69–P71 (Christian): server, motore e tempo reale contro pagina del tavolo; nessun file in comune. **P65** può scoprire che la causa è nella pagina (`ModeModal.js`, `home.js`): in quel caso Giuseppe avvisa Christian prima di toccarli. **P72** parte solo quando P67 è in `dev` (esempi della vista e contratto).
 
 ### 9.2 Punti con file NON sicuri
 
@@ -785,6 +870,35 @@ Per questi punti non posso dire adesso con certezza quali file verranno toccati.
 **P61 — Regole della password** · proposto: Giuseppe (da confermare)
 - *Probabili*: `app/blueprints/auth/forms.py` (P16), `config.py` (una chiave se le regole vanno in configurazione), `app/templates/auth/register.html`, `tests/api/test_auth.py` e le password dei test che non rispettano le regole nuove.
 - *Perché non sono sicuro*: dipende da dove si mettono le regole (solo nel modulo o anche in `config.py`) e da quanti test usano password troppo semplici.
+
+**P64 — Niente canto nella prima presa della mano** · proposto: Giuseppe
+- *Sicuri*: `app/game/engine/singing.py`, `docs/REGOLE-GIOCO.md`, `tests/engine/test_canti.py`.
+- *Probabili*: `app/game/engine/state.py` (se serve sapere a che presa si è), `tests/engine/test_mano.py` e le partite simulate delle suite `sockets` ed `e2e` che cantano nella prima presa.
+- *Perché non sono sicuro*: dipende da come il motore sa a che presa della mano si è, e da quanti test cantano subito.
+
+**P65 — Amico sbloccato non online** · proposto: Giuseppe
+- *Probabili*: `app/services/friend_service.py`, `app/realtime/presence.py`, `app/sockets/friends_events.py`, `app/sockets/home_events.py`; forse `app/static/js/pages/home.js` o `ModeModal.js` (di Christian); un test nuovo in `tests/sockets/`.
+- *Perché non sono sicuro*: prima va trovata la causa. Se è nella pagina, i file sono di Christian: si concorda prima.
+
+**P66 — Mossa automatica dopo il rientro** · proposto: Giuseppe
+- *Probabili*: `app/realtime/room.py`, `app/sockets/game_events.py`, `app/sockets/connection_events.py`; un test in `tests/sockets/` o `tests/e2e/`.
+- *Perché non sono sicuro*: prima va riprodotto; il difetto può stare nel timer (`_turn_token`) o nel rientro.
+
+**P68 — Partita contro la CPU: mosse e stanza** · proposto: Giuseppe
+- *Probabili*: un file nuovo nel motore per la scelta della mossa (per esempio `app/game/engine/cpu.py`), `app/realtime/room.py`, `room_manager.py`, `app/sockets/lobby_events.py` (o un evento nuovo), `docs/CONTRATTO-SOCKET.md`, forse `match_service.py` e il database (una partita con la CPU si salva? conta per le statistiche?), test nuovi in `tests/engine/` e `tests/sockets/`.
+- *Perché non sono sicuro*: dipende da D43 (strategia, 1v1 o anche 2v2, salvataggio e rating). Una colonna o tabella nuova va discussa prima (convenzioni del progetto).
+
+**P69, P70, P71 — Tocchi, animazioni e grafica del tavolo** · proposto: Christian
+- *Probabili*: `app/static/js/pages/game.js`, `components/Table.js`, `Trick.js`, `Hand.js`, `Card.js`, `TablePhrases.js`, `Scoreboard.js`; `app/static/css/components/table.css`, `trick.css`, `hand.css`, `card.css`, `table-phrases.css`, `app/static/css/pages/game.css`; forse `app/templates/game/table.html`, `app/static/fonts/icone.txt` e il font delle icone (P62); i test `tests/api/test_pagina_tavolo.py`, `tests/frontend/test_momenti_tavolo.py`, `test_frasi_pagina.py`.
+- *Perché non sono sicuro*: le animazioni e le misure sul telefono si scoprono provando. **Regola:** come per P34, mentre uno di questi punti è aperto nessun altro modifica i file del tavolo.
+
+**P72 — I propri punti sopra le carte in mano** · proposto: Christian
+- *Probabili*: `app/static/js/components/Hand.js`, `Scoreboard.js`, `HandSummary.js`, `pages/game.js`, `hand.css`, `scoreboard.css`; i test del tavolo.
+- *Perché non sono sicuro*: dipende da D44 (cosa resta del tabellone e del riepilogo di fine mano) e dal nome del campo di P67.
+
+**P73 — Partita contro la CPU nella home** · proposto: Christian
+- *Probabili*: `app/templates/main/index.html`, `app/static/js/pages/home.js`, `components/ModeModal.js`, `app/static/css/pages/home.css`, `mode-modal.css`, `tests/api/test_pagina_home.py`.
+- *Perché non sono sicuro*: dipende da D43 (dove si avvia: una carta-pulsante nuova o una scelta dentro quelle che ci sono).
 
 **~~P60 — Togliere le viste finte~~** · tolto il 29/09/2026
 - *Sicuri*: `app/static/js/pages/game.js`, `home.js`; `tests/api/test_pagina_tavolo.py`, `test_pagina_home.py`, `tests/frontend/test_momenti_tavolo.py`, `test_frasi_pagina.py`.

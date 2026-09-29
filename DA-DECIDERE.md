@@ -10,7 +10,12 @@ Il 29/09/2026 sono state chiuse D5, D8, D10, D20, D29, D40, D41 e D42 (vedi `DEC
 
 ## Tempi
 
-- [ ] **D31 — Ordine di taglio se il tempo non basta**: proposto in `SCALETTA.md`, sezione 5 (tema scuro → frasi del tavolo → avatar e logo → carte vere → chat → matchmaking 2v2 → rifinitura mobile; non si tagliano mai P6, P15, P24, P31 e P32). Lasciata aperta da Christian il 29/09/2026. Di quella lista sono già fatti frasi del tavolo, logo, carte vere, chat e matchmaking 2v2: restano da tagliare, eventualmente, P53 (tema scuro), P43 (avatar), P59 (2v2 con più amici) e P34 (rifinitura mobile).
+- [ ] **D31 — Ordine di taglio se il tempo non basta**: proposto in `SCALETTA.md`, sezione 5 (tema scuro → frasi del tavolo → avatar e logo → carte vere → chat → matchmaking 2v2 → rifinitura mobile; non si tagliano mai P6, P15, P24, P31 e P32). Lasciata aperta da Christian il 29/09/2026. Di quella lista sono già fatti frasi del tavolo, logo, carte vere, chat e matchmaking 2v2: restano da tagliare, eventualmente, P53 (tema scuro), P43 (avatar), P59 (2v2 con più amici) e P34 (rifinitura mobile). **29/09/2026**: la prova sul telefono ha aggiunto P63–P73; i punti che si possono tagliare sono soprattutto la CPU (P68, P73, il più grande) e le animazioni (P70): va rivista la lista con la scadenza (D1).
+
+## Gioco e tavolo
+
+- [ ] **D43 — Partita contro la CPU** (P68, P73): (1) **come sceglie le mosse** la CPU, visto che non devono essere casuali (per esempio: quando prende e quando lascia, quando usa la briscola, quando canta); (2) solo **1v1** o anche **2v2** (CPU come compagno o come avversari); (3) la partita si **salva** e conta per **statistiche e rating**? (4) **dove si avvia** nella home, che non scorre: una carta-pulsante nuova o una scelta dentro quelle che ci sono; (5) nome e avatar della CPU e quanto aspetta prima di giocare. Da decidere insieme (Christian e Giuseppe), prima di P68.
+- [ ] **D44 — Punti al tavolo** (P67, P72): sopra le carte in mano si vedono solo i punti della propria squadra nella mano in corso (carte prese più canti), aggiornati in tempo reale. Resta da decidere: (1) il **tabellone** in alto (totale della partita, "a 500", "mano N") resta com'è? (2) il **riepilogo di fine mano** (P57) resta, con i punti di tutte e due le squadre? (3) gli avversari possono sapere i punti dell'altra squadra nella mano in corso (cioè: il server li manda o no)?
 
 ## Messa in servizio
 
