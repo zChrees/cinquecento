@@ -2,8 +2,9 @@
 
 Controlla il "Fatto quando" di SCALETTA.md (P46): il pannello si apre da
 qualsiasi pagina con la navbar (non dal tavolo) e si chiude con "indietro" e con
-Esc; a 360 px la chat è leggibile e il campo di scrittura resta visibile; i
-componenti non inseriscono testo come HTML. Nel browser (Chrome o Edge senza
+Esc; i componenti non inseriscono testo come HTML. La chat è quella vera di P48 e
+ha bisogno di MySQL: i suoi controlli nel browser stanno in test_chat_pannello.py.
+Nel browser (Chrome o Edge senza
 finestra, tests/browser.py) le richieste HTTP del contratto 2.2 le intercetta il
 test e risponde con i dati di app/static/dev/amici_esempio.json, così non serve
 MySQL; il test controlla anche il codice CSRF e request_id delle richieste.
@@ -45,10 +46,8 @@ def test_pulsante_amici_collegato_al_pannello():
     button = _friends_button(_render_logged_in(app))
     assert 'aria-controls="friends"' in button and 'aria-haspopup="dialog"' in button
     assert 'data-friends-url="/friends/"' in button
-    # Chat di prova solo in sviluppo e nei test
-    assert 'data-chat-demo-url="/static/dev/amici_esempio.json"' in button
-    app.config["ENV_NAME"] = "demo"
-    assert "data-chat-demo-url" not in _friends_button(_render_logged_in(app))
+    # La chat finta di P46 non c'è più (P48): nessun indirizzo di dati finti
+    assert "data-chat-demo-url" not in button
 
 
 def test_css_del_pannello_in_base_html():
@@ -224,45 +223,10 @@ def test_accetta_e_rimuovi_con_conferma(browser, server, friends):
                     "lista ricaricata senza Salvo")
 
 
-def test_chat_di_prova_testo_come_testo(browser, server):
-    browser.open(f"{server}/", 360, 640)
-    before = int(browser.js("document.querySelector('[data-friends-badge]').textContent") or 0)
-    _open_panel(browser)
-    browser.click("[data-chat-open='44']")
-    browser.wait_js("document.querySelector('[data-view=\"chat\"]') !== null", "apertura della chat")
-    history = EXAMPLE["chat:history (risposta)"]["messages"]
-    assert browser.js("document.querySelectorAll('.chat__msg').length") == len(history)
-    assert browser.js("document.querySelectorAll('.chat__msg--mine').length") == sum(m["from_user_id"] == ME for m in history)
-    assert "Chat di prova" in browser.js("document.querySelector('[data-chat-notice]').textContent")
-    # Aprire la chat segna come letti i 2 messaggi di Giulia
-    assert int(browser.js("document.querySelector('[data-friends-badge]').textContent") or 0) == before - 2
-
-    # A 360×640 il campo di scrittura è visibile
-    field = browser.js("(() => { const r = document.querySelector('#chat-input').getBoundingClientRect();"
-                       " return {top: r.top, bottom: r.bottom, vh: innerHeight}; })()")
-    assert 0 <= field["top"] and field["bottom"] <= field["vh"]
-
-    # Messaggio vuoto rifiutato; un testo con tag resta testo
-    browser.js("document.querySelector('#chat-input').value = '   '")
-    browser.click("[data-chat-form] button[type=submit]")
-    assert browser.js("document.querySelector('[data-chat-error]').textContent") == "Scrivi un messaggio."
-    browser.js("document.querySelector('#chat-input').value = '<b>ciao</b> <img src=x onerror=alert(1)>'")
-    browser.click("[data-chat-form] button[type=submit]")
-    browser.wait_js(f"document.querySelectorAll('.chat__msg').length === {len(history) + 1}", "messaggio mandato")
-    last = browser.js("""(() => { const m = [...document.querySelectorAll('.chat__msg')].at(-1);
-        return {text: m.firstChild.textContent, tags: m.querySelectorAll('b, img').length, mine: m.classList.contains('chat__msg--mine')}; })()""")
-    assert last == {"text": "<b>ciao</b> <img src=x onerror=alert(1)>", "tags": 0, "mine": True}
-    assert browser.js("document.querySelector('#chat-input').maxLength") == 1000
-
-
 def test_indietro_ed_esc_chiudono(browser, server):
+    # La chat si apre solo con il server vero (P48): "indietro" dalla chat lo prova test_chat_pannello.py
     browser.open(f"{server}/", 1440, 900)
     _open_panel(browser)
-    browser.click("[data-chat-open='44']")
-    browser.wait_js("document.querySelector('[data-view=\"chat\"]') !== null", "apertura della chat")
-    # "indietro": dalla chat alla lista, poi chiude il pannello
-    browser.js("history.back()")
-    browser.wait_js(f"document.querySelector('[data-view=\"chat\"]') === null && {PANEL_OPEN}", "ritorno alla lista")
     browser.js("history.back()")
     browser.wait_js("document.querySelector('[data-friends-panel]').open === false", "chiusura con indietro")
     # Esc

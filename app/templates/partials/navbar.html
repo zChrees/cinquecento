@@ -8,8 +8,7 @@
     il pannello statistiche; amici con il contatore, che apre il pannello amici
     (P46: js/components/FriendsPanel.js lo crea, layout.js lo aggancia). Il
     contatore è la somma di richieste ricevute e messaggi non letti (contratto 2.2).
-    data-friends-url: GET /friends/ di P45. data-chat-demo-url: solo in sviluppo e
-    nei test, la chat con i dati finti di app/static/dev/ finché non c'è P48.
+    data-friends-url: GET /friends/ di P45; la chat è quella vera (P48).
   - Senza login: icona generica e "Accedi"; avatar e amici aprono la finestra
     "Accedi o registrati per giocare" (data-login-prompt).
   - Indirizzi di accesso, impostazioni e uscita: li crea P16 / P17 (Antonio).
@@ -43,8 +42,7 @@
 
     {% if current_user.is_authenticated %}
     <button class="navbar__friends felt-text" type="button" data-friends-button aria-label="Amici" aria-haspopup="dialog" aria-controls="friends"
-      data-friends-url="{{ url_for('friends.overview') }}"
-      {%- if config.ENV_NAME in ("development", "testing") %} data-chat-demo-url="{{ url_for('static', filename='dev/amici_esempio.json') }}"{% endif %}>
+      data-friends-url="{{ url_for('friends.overview') }}">
     {% else %}
     <button class="navbar__friends felt-text" type="button" data-login-prompt aria-haspopup="dialog" aria-label="Amici: accedi per vederli">
     {% endif %}
