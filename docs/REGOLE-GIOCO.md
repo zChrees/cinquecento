@@ -44,7 +44,7 @@ Ogni mano vale 120 punti di carte, più i canti.
 
 1. Si mescola e si danno **5 carte** a testa. Le carte rimaste formano il mazzo.
 2. All'inizio della mano **non c'è briscola**.
-3. Al suo turno il giocatore può **cantare**, e poi deve giocare una carta.
+3. Al suo turno il giocatore può **cantare** (dalla seconda presa in poi), e poi deve giocare una carta.
 4. **Non c'è obbligo di rispondere al seme**: si può giocare qualsiasi carta.
 5. Chi vince la presa pesca per primo dal mazzo, poi gli altri in ordine di turno. Chi vince la presa gioca per primo nella presa successiva.
 6. **Quando il mazzo finisce non cambia niente**: si continua a giocare le carte in mano con le stesse regole, finché le carte non finiscono.
@@ -58,6 +58,7 @@ Ogni mano vale 120 punti di carte, più i canti.
 
 - Per cantare bisogna avere in mano **Re e Cavallo dello stesso seme**. Nel 2v2 non si può fare coppia con una carta del compagno.
 - Si canta **solo nel proprio turno** e **prima di giocare la carta**.
+- **Nella prima presa di ogni mano nessuno canta**, né 40 né 20, nemmeno chi gioca dopo il primo: si canta dalla seconda presa in poi. Deciso il 29/09/2026 (P64).
 - Non serve aver già vinto una presa.
 - Nello stesso turno si possono cantare **più semi**, e altri ancora nei turni successivi.
 - Il primo canto della mano vale **40** e fissa la briscola. I canti successivi valgono **20**.

@@ -34,9 +34,12 @@ def _refusal(
     sings: Sequence[Sing],
     played_cards: Collection[Card],
     deck_count: int,
+    first_trick: bool,
     rules: RuleSet,
 ) -> str | None:
     """Perché quel seme non si può cantare adesso, oppure None se si può."""
+    if first_trick:
+        return "Nella prima presa della mano non si canta."
     if any(done.suit == suit for done in sings):
         return f"Il seme di {suit.value} è già stato cantato in questa mano."
     king, knight = Card(suit, Rank.KING), Card(suit, Rank.KNIGHT)
@@ -57,12 +60,14 @@ def singable_suits(
     played_cards: Collection[Card],
     deck_count: int,
     is_turn: bool,
+    first_trick: bool,
     rules: RuleSet = MARIANNA,
 ) -> list[Suit]:
     """I semi che il giocatore può cantare adesso, sempre nello stesso ordine (legal.sing)."""
     if not is_turn:
         return []
-    return [suit for suit in Suit if _refusal(suit, hand, sings, played_cards, deck_count, rules) is None]
+    return [suit for suit in Suit
+            if _refusal(suit, hand, sings, played_cards, deck_count, first_trick, rules) is None]
 
 
 def sing(
@@ -74,17 +79,19 @@ def sing(
     played_cards: Collection[Card],
     deck_count: int,
     is_turn: bool,
+    first_trick: bool,
     rules: RuleSet = MARIANNA,
 ) -> Sing:
     """Controlla il canto e lo restituisce con i suoi punti; se non è ammesso lo rifiuta.
 
     is_turn è False anche dopo aver giocato la carta, perché la carta chiude il turno.
+    first_trick è True finché la prima presa della mano non si chiude: lì nessuno canta (P64).
     """
     if not isinstance(suit, Suit):
         raise InvalidMoveError("Seme non valido.")
     if not is_turn:
         raise NotYourTurnError("Non è il tuo turno.")
-    reason = _refusal(suit, hand, sings, played_cards, deck_count, rules)
+    reason = _refusal(suit, hand, sings, played_cards, deck_count, first_trick, rules)
     if reason is not None:
         raise InvalidMoveError(reason)
     points = rules.sing_20_points if sings else rules.sing_40_points

@@ -18,6 +18,9 @@ import pytest
 import requests
 import sqlalchemy as sa
 
+from app.game.engine.actions import PlayCardAction
+from app.game.engine.cards import Card, Rank, Suit
+from app.game.engine.game import apply_game, game_legal_actions
 from app.realtime.events import ok
 from app.realtime.room import Player
 from app.realtime.room_manager import RoomError, create_room, find_room_of_user, rooms
@@ -189,16 +192,47 @@ def test_partita_2v2_fino_a_150(connect, new_room):
     assert all(v["rated"] is True and v["mode"] == "2v2" for v in views)
 
 
+def _first_trick(game):
+    """Le carte della prima presa, giocando ognuno la prima carta ammessa, e la partita dopo la presa."""
+    moves = []
+    for _ in range(game.num_players):
+        seat = game.hand.turn_seat
+        move = PlayCardAction(seat, game_legal_actions(game, seat).play[0])
+        moves.append(move)
+        game = apply_game(game, move)
+    return moves, game
+
+
+def _has_pair(hand):
+    return any(Card(suit, Rank.KING) in hand and Card(suit, Rank.KNIGHT) in hand for suit in Suit)
+
+
 def test_canto_mostrato_a_tutti(connect, new_room):
-    # Si cerca una partita in cui chi comincia può cantare subito
-    for seed in range(200):
+    # Si cerca una partita in cui chi comincia ha Re e Cavallo dello stesso seme (ma nella prima presa
+    # non si canta, P64) e, finita la prima presa, chi è di turno può cantare
+    for seed in range(1000):
         room = new_room(["Primo", "Secondo"], "1v1", rng=random.Random(seed))
-        if room.view_for(room.game.hand.turn_seat)["legal"]["sing"]:
+        moves, after = _first_trick(room.game)
+        first = room.game.hand.turn_seat
+        if _has_pair(room.game.hand.hands[first]) and game_legal_actions(after, after.hand.turn_seat).sing:
             break
         rooms.remove(room.id)
+    else:
+        raise AssertionError("nessuna partita adatta")
     seats, version = sit(connect, room, ["Primo", "Secondo"])
+    pair = next(s.value for s in Suit if Card(s, Rank.KING) in room.game.hand.hands[first]
+                and Card(s, Rank.KNIGHT) in room.game.hand.hands[first])
+    assert seats[first].state["legal"]["sing"] == []
+    answer = seats[first].call("game:sing", {"game_id": room.id, "version": version, "suit": pair})
+    assert answer["ok"] is False and answer["error"]["code"] == "illegal_move", answer
+    for move in moves:
+        card = {"suit": move.card.suit.value, "rank": move.card.rank.value}
+        assert seats[move.seat].call("game:play_card", {"game_id": room.id, "version": version, "card": card}) == ok()
+        version += 1
+        seats[move.seat].wait_version(version)
+    assert not seats[0].sang and not seats[1].sang
     turn = room.game.hand.turn_seat
-    suit = seats[turn].state["legal"]["sing"][0]
+    suit = seats[turn].wait_version(version)["legal"]["sing"][0]
     assert seats[turn].call("game:sing", {"game_id": room.id, "version": version, "suit": suit}) == ok()
     for seat in seats:
         view = seat.wait_version(version + 1)

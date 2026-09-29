@@ -17,14 +17,15 @@ def cards(*codes):
     return [Card.from_code(code) for code in codes]
 
 
-def try_sing(suit, *, seat=0, hand, sings=(), played=(), deck_count=20, is_turn=True):
+# first_trick=False: salvo i test della prima presa, si è già dalla seconda presa in poi
+def try_sing(suit, *, seat=0, hand, sings=(), played=(), deck_count=20, is_turn=True, first_trick=False):
     return sing(suit, seat=seat, hand=hand, sings=list(sings), played_cards=set(played),
-                deck_count=deck_count, is_turn=is_turn)
+                deck_count=deck_count, is_turn=is_turn, first_trick=first_trick)
 
 
-def legal(*, hand, sings=(), played=(), deck_count=20, is_turn=True):
+def legal(*, hand, sings=(), played=(), deck_count=20, is_turn=True, first_trick=False):
     return singable_suits(hand=hand, sings=list(sings), played_cards=set(played),
-                          deck_count=deck_count, is_turn=is_turn)
+                          deck_count=deck_count, is_turn=is_turn, first_trick=first_trick)
 
 
 HAND_COPPE = cards("coppe-10", "coppe-9", "denari-1", "spade-4", "bastoni-2")
@@ -92,6 +93,34 @@ def test_dopo_aver_giocato_la_carta_non_si_canta():
 
 def test_fuori_turno_e_una_mossa_non_valida():
     assert issubclass(NotYourTurnError, InvalidMoveError)
+
+
+# --- Prima presa della mano (P64) ------------------------------------------------
+
+
+def test_nella_prima_presa_non_si_canta():
+    with pytest.raises(InvalidMoveError, match="Nella prima presa della mano non si canta"):
+        try_sing(Suit.COPPE, hand=HAND_COPPE, first_trick=True)
+    assert legal(hand=HAND_COPPE, first_trick=True) == []
+    assert legal(hand=HAND_DUE_COPPIE, first_trick=True) == []
+
+
+def test_nella_prima_presa_non_si_canta_nemmeno_il_20():
+    # Per esempio chi gioca per secondo: il 40 non c'è ancora, ma vale per ogni canto
+    first = Sing(seat=1, suit=Suit.DENARI, points=40)
+    with pytest.raises(InvalidMoveError, match="prima presa"):
+        try_sing(Suit.COPPE, hand=HAND_COPPE, sings=[first], first_trick=True)
+    assert legal(hand=HAND_COPPE, sings=[first], first_trick=True) == []
+
+
+def test_dalla_seconda_presa_si_canta():
+    assert try_sing(Suit.COPPE, hand=HAND_COPPE, first_trick=False).points == 40
+    assert legal(hand=HAND_COPPE, first_trick=False) == [Suit.COPPE]
+
+
+def test_prima_presa_fuori_turno_resta_non_e_il_tuo_turno():
+    with pytest.raises(NotYourTurnError, match="Non è il tuo turno"):
+        try_sing(Suit.COPPE, hand=HAND_COPPE, is_turn=False, first_trick=True)
 
 
 # --- Coppia -----------------------------------------------------------------
@@ -186,10 +215,13 @@ def test_mosse_legali_coincidono_con_i_canti_accettati():
         sings = [Sing(1, suit, 40 if i == 0 else 20) for i, suit in enumerate(rng.sample(list(Suit), rng.randint(0, 2)))]
         deck_count = rng.choice([0, 0, 2, 10, 20])
         is_turn = rng.random() < 0.8
-        allowed = legal(hand=hand, sings=sings, played=played, deck_count=deck_count, is_turn=is_turn)
+        first_trick = rng.random() < 0.2
+        situation = {"hand": hand, "sings": sings, "played": played, "deck_count": deck_count,
+                     "is_turn": is_turn, "first_trick": first_trick}
+        allowed = legal(**situation)
         for suit in Suit:
             try:
-                try_sing(suit, hand=hand, sings=sings, played=played, deck_count=deck_count, is_turn=is_turn)
+                try_sing(suit, **situation)
                 accepted = True
             except InvalidMoveError:
                 accepted = False

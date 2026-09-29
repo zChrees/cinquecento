@@ -9,11 +9,12 @@ from dataclasses import replace
 import pytest
 
 from app.game.engine.actions import PlayCardAction, SingAction
-from app.game.engine.cards import Suit
+from app.game.engine.cards import Card, Suit
 from app.game.engine.deck import full_deck
 from app.game.engine.errors import EngineError, InvalidMoveError
 from app.game.engine.game import apply_game, game_legal_actions, new_game, new_hand
 from app.game.engine.rules import MARIANNA
+from app.game.engine.singing import singable_suits
 from app.game.engine.trick import trick_winner
 
 TARGETS = MARIANNA.target_scores
@@ -188,6 +189,9 @@ def test_canto_che_porta_a_n_non_chiude_la_partita(target):
     # Mazzo in ordine: il posto 1 ha denari 6-10, cioè Cavallo e Re di denari
     game = new_game(2, target, rng=random.Random(1))
     game = replace(game, first_seat=1, hand=new_hand(2, 1, full_deck()), scores=(0, target - 40))
+    # Nella prima presa non si canta (P64): il Fante del posto 1 batte il 2, e il posto 1 apre la seconda
+    game = apply_game(game, PlayCardAction(1, Card.from_code("denari-8")))
+    game = apply_game(game, PlayCardAction(0, Card.from_code("denari-2")))
     game = apply_game(game, SingAction(1, Suit.DENARI))
     assert game.hand.sings[0].points == 40
     assert game.scores == (0, target - 40)
@@ -197,6 +201,25 @@ def test_canto_che_porta_a_n_non_chiude_la_partita(target):
     assert game.finished
     assert game.result.winner_team == 1
     assert game.scores[1] >= target
+
+
+@pytest.mark.parametrize("players", MODES)
+def test_nella_prima_presa_di_ogni_mano_nessuno_canta(players):
+    # P64: vale in ogni mano, non solo nella prima della partita. "blocked" conta le volte in cui,
+    # dalla seconda mano in poi, chi è di turno nella prima presa avrebbe potuto cantare senza la regola
+    blocked = 0
+    for seed in range(40):
+        rng = random.Random(seed)
+        game = new_game(players, 500, rng=rng)
+        while not game.finished and game.hand_number <= 3:
+            hand, seat = game.hand, game.hand.turn_seat
+            if hand.last_trick is None:
+                assert game_legal_actions(game, seat).sing == ()
+                blocked += game.hand_number > 1 and bool(singable_suits(
+                    hand=hand.hands[seat], sings=hand.sings, played_cards=hand.played_cards,
+                    deck_count=len(hand.deck), is_turn=True, first_trick=False))
+            game = apply_game(game, random_move(game, rng), rng=rng)
+    assert blocked > 0
 
 
 def test_a_partita_finita_niente_mosse():

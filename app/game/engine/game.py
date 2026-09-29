@@ -70,6 +70,11 @@ class LegalActions:
     sing: tuple[Suit, ...]  # nell'ordine fisso di Suit
 
 
+def _in_first_trick(state: HandState) -> bool:
+    """Prima presa della mano: nessuna presa chiusa, e last_trick riparte da None a ogni mano (P58)."""
+    return state.last_trick is None
+
+
 def legal_actions(state: HandState, seat: int, rules: RuleSet = MARIANNA) -> LegalActions:
     """Le mosse ammesse per quel posto adesso: vuote se non è il suo turno."""
     if state.finished or seat != state.turn_seat:
@@ -81,6 +86,7 @@ def legal_actions(state: HandState, seat: int, rules: RuleSet = MARIANNA) -> Leg
         played_cards=state.played_cards,
         deck_count=len(state.deck),
         is_turn=True,
+        first_trick=_in_first_trick(state),
         rules=rules,
     )
     # Non c'è obbligo di rispondere al seme: si può giocare qualsiasi carta
@@ -111,6 +117,7 @@ def _apply_sing(state: HandState, action: SingAction, rules: RuleSet) -> HandSta
         played_cards=state.played_cards,
         deck_count=len(state.deck),
         is_turn=True,
+        first_trick=_in_first_trick(state),
         rules=rules,
     )
     # Dopo il canto il turno resta a chi ha cantato: deve ancora giocare la carta

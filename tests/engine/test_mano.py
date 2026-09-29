@@ -97,6 +97,8 @@ def test_presa_2v2_pesca_in_ordine_di_turno_dal_vincitore():
 
 def test_il_canto_lascia_il_turno_e_fissa_la_briscola():
     state = new_hand(2, 1, ORDERED)  # il posto 1 ha Cavallo e Re di denari
+    state = play(state, 1, "denari-8")
+    state = play(state, 0, "denari-2")  # il Fante batte il 2: il posto 1 apre la seconda presa
     state = apply(state, SingAction(1, Suit.DENARI))
     assert state.sings == (Sing(1, Suit.DENARI, 40),)
     assert state.trump == Suit.DENARI
@@ -112,6 +114,8 @@ def test_la_briscola_vince_la_presa_dopo_il_canto():
         i, j = deck.index(old), deck.index(new)
         deck[i], deck[j] = deck[j], deck[i]
     state = new_hand(2, 1, deck)
+    state = play(state, 1, "denari-7")
+    state = play(state, 0, "denari-2")  # il 7 batte il 2: il posto 1 apre la seconda presa
     state = apply(state, SingAction(1, Suit.SPADE))
     state = play(state, 1, "denari-6")
     state = play(state, 0, "denari-1")
@@ -119,6 +123,29 @@ def test_la_briscola_vince_la_presa_dopo_il_canto():
     state = play(state, 0, "coppe-10")
     state = play(state, 1, "spade-9")  # briscola
     assert state.last_trick.winner_seat == 1
+
+
+def test_nella_prima_presa_nessuno_canta():
+    # P64. Posto 1 (apre): denari 6-10, cioè Cavallo e Re di denari; posto 0 (gioca per secondo): denari 1-3,
+    # Cavallo e Re di coppe
+    deck = list(ORDERED)
+    for old, new in {card("denari-4"): card("coppe-9"), card("denari-5"): card("coppe-10")}.items():
+        i, j = deck.index(old), deck.index(new)
+        deck[i], deck[j] = deck[j], deck[i]
+    state = new_hand(2, 1, deck)
+    for seat, suit, code in [(1, Suit.DENARI, "denari-6"), (0, Suit.COPPE, "denari-2")]:
+        assert legal_actions(state, seat).sing == ()
+        with pytest.raises(InvalidMoveError, match="Nella prima presa della mano non si canta"):
+            apply(state, SingAction(seat, suit))
+        state = play(state, seat, code)
+    # Seconda presa: il 6 ha preso, il posto 1 apre e canta 40; poi il posto 0 canta 20
+    assert state.last_trick.winner_seat == 1
+    assert legal_actions(state, 1).sing == (Suit.DENARI,)
+    state = apply(state, SingAction(1, Suit.DENARI))
+    state = play(state, 1, "denari-7")
+    assert legal_actions(state, 0).sing == (Suit.COPPE,)
+    state = apply(state, SingAction(0, Suit.COPPE))
+    assert state.sings == (Sing(1, Suit.DENARI, 40), Sing(0, Suit.COPPE, 20))
 
 
 def test_punti_dei_canti_alla_squadra_nel_2v2():
@@ -141,7 +168,7 @@ def test_punti_dei_canti_alla_squadra_nel_2v2():
         (SingAction(1, Suit.DENARI), NotYourTurnError, "Non è il tuo turno"),
         (PlayCardAction(0, Card.from_code("denari-6")), InvalidMoveError, "Non hai questa carta"),
         (PlayCardAction(0, "denari-1"), InvalidMoveError, "Non hai questa carta"),
-        (SingAction(0, Suit.COPPE), InvalidMoveError, "Re e Cavallo di coppe"),
+        (SingAction(0, Suit.COPPE), InvalidMoveError, "Nella prima presa della mano non si canta"),
         (SingAction(0, "denari"), InvalidMoveError, "Seme non valido"),
         (PlayCardAction(2, Card.from_code("denari-1")), InvalidMoveError, "Posto non valido"),
         (PlayCardAction(-1, Card.from_code("denari-1")), InvalidMoveError, "Posto non valido"),
@@ -223,6 +250,10 @@ def test_ogni_passo_rispetta_le_regole(players, seed):
         if closed and not before.deck:
             # A mazzo finito non cambia niente: si gioca con le carte in mano, senza pescare
             assert sum(map(len, after.hands)) == sum(map(len, before.hands)) - 1
+        # Nella prima presa della mano nessuno canta (P64)
+        if before.last_trick is None:
+            assert legal_actions(before, before.turn_seat).sing == ()
+            assert after.sings == ()
         # Chi non è di turno non ha mosse
         for seat in range(players):
             if seat != before.turn_seat:

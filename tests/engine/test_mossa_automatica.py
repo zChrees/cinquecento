@@ -90,6 +90,9 @@ def test_non_canta_mai():
     # Mazzo in ordine: il posto 1 ha denari 6-10, cioè Cavallo e Re di denari
     game = new_game(2, 300, rng=random.Random(0))
     game = replace(game, first_seat=1, hand=new_hand(2, 1, full_deck()))
+    # Nella prima presa non si canta (P64): il Fante del posto 1 batte il 2, e il posto 1 apre la seconda
+    game = apply_game(game, PlayCardAction(1, Card.from_code("denari-8")))
+    game = apply_game(game, PlayCardAction(0, Card.from_code("denari-2")))
     assert game_legal_actions(game, 1).sing == (Suit.DENARI,)
     action = auto_move(game, rng=random.Random(0))
     assert action == PlayCardAction(1, Card.from_code("denari-6"))

@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### P64 — Niente canto nella prima presa della mano (29/09/2026)
+
+- **Branch**: fix/p64-niente-canto-prima-presa
+- **File** (lista definitiva per 9.2, confermata da Giuseppe prima di cominciare): modificati `app/game/engine/singing.py`, `app/game/engine/game.py`, `docs/REGOLE-GIOCO.md` ("Svolgimento di una mano", punto 3, e "Canti"), `tests/engine/test_canti.py`, `tests/engine/test_mano.py`, `tests/engine/test_partita.py`, `tests/sockets/test_partita.py`, **`tests/engine/test_mossa_automatica.py`** (fuori lista, mio, con l'ok di Giuseppe: `test_non_canta_mai` metteva la coppia a inizio mano), questo file. `state.py` non cambia
+- **Regola** (interpretazione confermata da Giuseppe il 29/09): durante la **prima presa di ogni mano** (non solo della prima mano della partita) nessuno canta, né 40 né 20, nemmeno chi gioca dopo il primo; dalla seconda presa valgono le regole di sempre
+- **Come**: `singable_suits` e `sing` hanno il parametro obbligatorio `first_trick`, controllato per primo in `_refusal` (così le due funzioni danno sempre la stessa risposta); `game.py` lo ricava da `state.last_trick is None` (`_in_first_trick`: `last_trick` riparte da None a ogni mano, P58). Messaggio: "Nella prima presa della mano non si canta." (codice `illegal_move` nel tempo reale). La pagina non cambia: `legal.sing` nella prima presa è vuoto
+- **Controlli**: **1404 PASS** in 8 suite, tutto PASS (7 nuovi nella suite `engine`: 4 in `test_canti.py`, 1 in `test_mano.py`, 2 in `test_partita.py`; più 6 test cambiati, tra cui `test_canto_mostrato_a_tutti` della suite `sockets`), `ruff check .` pulito. Con il codice di prima falliscono 37 test del motore [T] e `test_canto_mostrato_a_tutti` [T]
+- **Decisioni prese**: nessuna nuova (regola del 29/09, `DECISIONI.md`; interpretazione "ogni mano" confermata)
+- **Domande nuove**: nessuna
+- **Punti delicati**: un test che vuole un canto deve prima chiudere la prima presa (nei test del motore: posto 1 con il mazzo in ordine gioca il Fante di denari, il posto 0 il 2). La prova delle 3.000 situazioni ora sceglie a caso anche `first_trick`. `test_canto_mostrato_a_tutti` (suite `sockets`) cerca una partita in cui chi apre ha una coppia (e il canto gli viene rifiutato) e chi apre la seconda presa può cantare, e gioca la prima presa con le carte calcolate dal motore. Gli esempi in `app/static/dev/*.json` non li ho toccati (sono della pagina e li leggono i test di Christian)
+- **Note per gli altri**: **chi è di turno sui documenti**: spuntare P64, lista definitiva in 9.2, togliere "(da confermare all'inizio di P64)" in `DECISIONI.md` e aggiungere la regola al punto delicato "Regole del canto" di `CLAUDE.md`. **Christian**: niente da fare nella pagina; in una partita vera nella prima presa il pulsante "Canta" non compare
+
 ### P63 — Richiesta di amicizia con spazi prima o dopo il nome (29/09/2026)
 
 - **Branch**: fix/p63-spazi-username
