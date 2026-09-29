@@ -22,6 +22,21 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: registrati i lotti del 29/09 (29/09/2026)
+
+- **Branch**: docs/registra-29-09-christian
+- **File**: modificati `SCALETTA.md` (tracker, sezioni 3, 4, 6, 9 e 9.2), `DECISIONI.md` (Progetto e tempi, Tecnologia, Dati, Sicurezza, Interfaccia, Gioco, Processo), `DA-DECIDERE.md`, `CLAUDE.md` (riga "Stato", "Regole git", "Convenzioni", punti delicati, "Testing"), `docs/CONTRATTO-SOCKET.md` (5.4: `cannot_write`, D41), questo file
+- **Controlli**: nessuno (soli documenti); 1320 PASS dall'ultimo giro (P33)
+- **Registrati**: di Christian i quattro riepiloghi del 29/09 (test del pannello amici dopo P48 con le decisioni del giorno, D40, pagina di P58, P33). Di Giuseppe e di Antonio niente di nuovo dopo l'ultimo aggiornamento (fermi a "Documenti: registrati P58, P31 e P32" e a P27)
+- **Tracker**: spuntati **P33** e **P62** (punto nuovo: font delle icone nel progetto, D40); nota a P48 (test sistemati) e a P58 (pagina fatta); **P60 tolto** (barrato, anche in sezione 4, 9 e 9.2; tolto dalle dipendenze di P36); punto nuovo **P61** (regole della password, D8) proposto a Giuseppe, **da confermare con lui**; lista definitiva di P33 in 9.2; P38 si installa da `main`; P39 con ngrok e QR code; righe nuove in sezione 3 (`InviteDialog.js`, `auth/forms.py`) e 6 (`app/static/fonts/`); "Da dove si parte" riscritto
+- **Decisioni registrate**: D1 in parte (cosa si consegna), D5, D8, D10, D20, D29, D40, D41, D42 chiuse; `main` come branch di produzione con i soli file del sito (sostituisce "portare `dev` in `main` non si propone"); contratto con Antonio assente (ok di Giuseppe e Christian); test solo delle suite toccate mentre si lavora, tutte prima del commit (e la seconda proposta abbandonata); P60 tolto; ultima presa della mano al tavolo (P58); le tre di P33. Le decisioni vecchie che cambiano hanno la nota "Aggiornata il 29/09/2026"
+- **Domande**: restano aperte D1 (solo la data), D21 e D31; nessuna nuova
+- **Punti delicati** (in `CLAUDE.md`): nuovi quelli di icone (P62), connessione (P33), test nel browser e tempo reale; aggiornati Home (P22: niente più font delle icone da 5,4 MB) e Momenti del tavolo (P57/P58)
+- **Da revisionare, Giuseppe** (scelte fatte da me mentre ero di turno, che toccano anche te: se qualcosa non va, scrivilo nel tuo riepilogo):
+  - **P61** (regole della password) è scritto come tuo, perché accesso e account sono passati a te: se non lo vuoi, dillo e lo prendo io o lo assegna chi è di turno;
+  - in "Da dove si parte" il tuo ordine è: P59 (dopo il pull di P33), P61, `auth.js` se confermato, il blocco occasionale delle suite, P38 e P39 (da `main`, con ngrok e QR code);
+  - nel contratto 5.4 ho scritto `cannot_write` (D41); l'esempio in `app/static/dev/amici_esempio.json` non lo ha ancora (non l'ho toccato: è un file che i test leggono, e con i soli documenti non si lanciano i test).
+
 ### P33 — Errori e connessione nell'interfaccia (29/09/2026)
 
 - **Branch**: feature/p33-connessione

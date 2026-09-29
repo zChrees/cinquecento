@@ -247,7 +247,7 @@ Con `friends:changed` la pagina ricarica la lista con `GET /friends/`: così la 
 
 | Evento | Chi → chi | Dati | Risposta |
 |---|---|---|---|
-| `chat:history` | pagina → server | `{"user_id", "before_id"}` | `ok` con `data` = `{"messages", "has_more", "can_write"}` |
+| `chat:history` | pagina → server | `{"user_id", "before_id"}` | `ok` con `data` = `{"messages", "has_more", "can_write", "cannot_write"}` |
 | `chat:send` | pagina → server | `{"request_id", "user_id", "text"}` | `ok` con `data` = `{"message"}`, o errore |
 | `chat:read` | pagina → server | `{"user_id"}` | `ok` |
 | `chat:message` | server → destinatario (e alle altre schede di chi scrive) | `{"message"}` | — |
@@ -255,4 +255,5 @@ Con `friends:changed` la pagina ricarica la lista con `GET /friends/`: così la 
 - **Messaggio**: `{"id", "from_user_id", "to_user_id", "text", "sent_at"}`.
 - `chat:history` restituisce al massimo 50 messaggi, **dal più vecchio al più nuovo**; `before_id` è `null` per gli ultimi, oppure l'`id` del messaggio più vecchio già caricato per quelli prima. Aprire la chat segna come letti i messaggi ricevuti; con la chat aperta, `chat:read` segna quelli appena arrivati.
 - `can_write` è `false` se l'amicizia è finita o c'è un blocco: la conversazione si legge ma non si scrive (D24), e `chat:send` risponde `not_friends` o `blocked`.
+- `cannot_write` dice perché (D41, approvata da Giuseppe e Christian il 29/09/2026; era già nel codice da P48): `null` se si può scrivere, altrimenti `"not_friends"` o `"blocked"`, così la pagina scrive "Bloccato" e non solo che non si può scrivere. È un campo in più: chi non lo legge non si rompe. L'esempio in `app/static/dev/amici_esempio.json` non lo ha ancora.
 - `text`: al massimo 1000 caratteri (D26) e non vuoto né fatto solo di spazi, altrimenti `invalid_data`; si salva così com'è, senza correzioni; più di 1 messaggio al secondo → `too_fast`. Il testo si mostra **sempre con `textContent`**, mai come HTML, e non va mai nei log.
