@@ -211,15 +211,20 @@ function onInviteUpdate({ invite_id: id, status } = {}) {
   }
 }
 
+// P65: più avvisi di fila (blocca, sblocca, richiesta, accetta) fanno partire più letture;
+// le risposte possono arrivare in un altro ordine, e vale solo quella dell'ultima partita
+let friendsRequest = 0;
+
 async function loadFriends() {
   const url = document.querySelector('[data-friends-button]')?.dataset.friendsUrl;
   if (!url) return;
+  const mine = ++friendsRequest;
   try {
     const response = await fetch(`${url.replace(/\/$/, '')}/`, {
       headers: { Accept: 'application/json' }, credentials: 'same-origin',
     });
     const body = await response.json();
-    if (!body.ok) return;
+    if (!body.ok || mine !== friendsRequest) return;
     realFriends = true;
     state.friends = body.data.friends;
   } catch {

@@ -224,7 +224,7 @@ Il 2v2 con gli amici non passa da `queue:join`: la coppia o il gruppo di tre ent
 | `friends:presence` | server → gli amici di chi cambia stato | `{"user_id", "presence"}` (`"online"`, `"in_game"`, `"offline"`) |
 | `friends:changed` | server → l'utente | `{"reason"}`: `"request_received"`, `"request_accepted"`, `"request_declined"`, `"friend_removed"`, `"blocked"` |
 
-Con `friends:changed` la pagina ricarica la lista con `GET /friends/`: così la forma della lista resta una sola.
+Con `friends:changed` la pagina ricarica la lista con `GET /friends/`: così la forma della lista resta una sola. `friends:changed` arriva a tutte le schede **di tutti e due** gli utenti, anche di chi ha fatto il cambiamento (P65: accetta, rifiuta, annulla, togli amicizia), così la home e le altre schede rileggono la lista; `"blocked"` arriva solo a chi blocca o sblocca (chi viene bloccato riceve `"friend_removed"`, e dello sblocco non sa niente).
 
 ### 5.3 Inviti a partita (P47, D27)
 

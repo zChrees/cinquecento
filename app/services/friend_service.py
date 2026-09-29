@@ -179,25 +179,35 @@ def _sent(result):
     return result
 
 
+# P65: gli avvisi arrivano a tutti e due, anche alle schede di chi ha fatto l'azione:
+# la home (lista degli amici da invitare) e le altre schede rileggono la lista. Prima
+# chi accettava una richiesta non vedeva il nuovo amico nella carta "Gioca con un amico"
+# finché non ricaricava la pagina.
+
+
 def accept_request(user_id, other_id):
     if _write(_accept_request, user_id, check_user_id(other_id)):
         _changed(other_id, "request_accepted")
+        _changed(user_id, "request_accepted")
 
 
 def decline_request(user_id, other_id):
     if _write(_delete_pending, user_id, other_id, user_id):
         _changed(other_id, "request_declined")
+        _changed(user_id, "request_declined")
 
 
 def cancel_request(user_id, other_id):
     if _write(_delete_pending, user_id, user_id, other_id):
         _changed(other_id, "request_declined")  # la richiesta che aveva ricevuto non c'è più
+        _changed(user_id, "request_declined")
 
 
 def remove_friend(user_id, other_id):
     if _write(_remove_friend, user_id, other_id):
         invites.cancel_all_of(user_id, only_with=other_id)
         _changed(other_id, "friend_removed")
+        _changed(user_id, "friend_removed")
 
 
 def block(user_id, request_id, other_id):
@@ -215,7 +225,8 @@ def _blocked(user_id, other_id):
 
 
 def unblock(user_id, other_id):
-    _write(_unblock, user_id, other_id)
+    if _write(_unblock, user_id, other_id):
+        _changed(user_id, "blocked")  # solo chi sblocca: l'elenco dei bloccati è cambiato; l'altro non lo sa
 
 
 def _write(action, *args):
@@ -317,6 +328,8 @@ def _unblock(user_id, other_id):
     row = friend_repo.get_block(user_id, other_id)
     if row is not None:
         friend_repo.delete(row)
+        return True
+    return False
 
 
 def _check_limits(user_id, other_id):

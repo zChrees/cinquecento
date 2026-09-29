@@ -7,12 +7,14 @@ Socket.IO simulati che accettano gli inviti. Controlla: nel 2v2 si invitano fino
 amici e i punti restano fermi, "Gioca" si accende appena uno accetta; con tre amici
 tutti e quattro vanno al tavolo; con due il gruppo entra in coda e la schermata di
 coda mostra compagno e avversari; nel 1v1 resta un invito alla volta.
+P65: un amico bloccato, sbloccato e di nuovo amico torna nella carta senza ricaricare.
 Se né Chrome né Edge sono installati i controlli nel browser si saltano.
 """
 
 import importlib.util
 import re
 import threading
+import time
 import uuid
 from pathlib import Path
 
@@ -27,6 +29,7 @@ from app.realtime.invites import invites
 from app.realtime.matchmaking import matchmaker
 from app.realtime.presence import presence
 from app.realtime.room_manager import find_room_of_user, rooms
+from app.repositories import friend_repo
 from app.services import auth_service, friend_service
 from tests.browser import (
     TEST_COOKIE,
@@ -176,18 +179,38 @@ def _open_modal(browser, server, users, mode):
     quando si apre: se è ancora quella finta, si chiude e si riapre."""
     browser.open(f"{server}/", 390, 844, "document.querySelector('[data-online-count]')?.textContent === '4'",
                  timeout=60)
+    _open_card(browser, users, mode)
+
+
+def _open_card(browser, users, mode):
+    """Apre la carta "Gioca con un amico" finché, entro WAIT secondi, non mostra i tre amici
+    veri (la lista la rilegge la pagina da sola: la carta disegna quella che c'è quando si
+    apre). Conta il tempo, non i tentativi: senza finestra l'animazione non dura niente e
+    dieci aperture possono finire prima che arrivi la risposta di GET /friends/."""
     expected = sorted(users[name] for name in FRIENDS)
     rows = f"[...{MODAL}.querySelectorAll('[data-invite-user]')].map((b) => Number(b.dataset.inviteUser))"
-    for _ in range(10):
+    deadline = time.monotonic() + WAIT
+    while True:
         browser.click(f"[data-tile][data-kind='amico'][data-mode='{mode}']")
-        # aperta e ferma (durante l'animazione la carta non si chiude)
-        browser.wait_js(f"{MODAL}?.open && {MODAL}.querySelector('.mode-modal__flip')"
-                        ".getAnimations({ subtree: true }).length === 0", "carta aperta")
+        _wait_card_still(browser, open_=True)
         if sorted(browser.js(rows)) == expected:
             return
-        browser.key("Escape", "Escape", 27)
-        browser.wait_js(f"!{MODAL}.open", "carta chiusa")
-    pytest.fail(f"la carta non mostra i tre amici veri: {browser.js(rows)}", pytrace=False)
+        if time.monotonic() > deadline:
+            pytest.fail(f"la carta non mostra i tre amici veri: {browser.js(rows)}", pytrace=False)
+        _close_card(browser)
+        time.sleep(0.1)
+
+
+def _wait_card_still(browser, open_):
+    """Carta aperta (o chiusa) e ferma: durante l'animazione non si chiude."""
+    state = f"{MODAL}?.open" if open_ else f"!{MODAL}?.open"
+    browser.wait_js(f"{state} && !({MODAL}?.querySelector('.mode-modal__flip')"
+                    ".getAnimations({ subtree: true }).length)", "carta ferma")
+
+
+def _close_card(browser):
+    browser.key("Escape", "Escape", 27)
+    _wait_card_still(browser, open_=False)
 
 
 def _invite_button(users, name):
@@ -258,3 +281,35 @@ def test_nel_1v1_un_invito_alla_volta(browser, server, users, friends):
     enabled = browser.js(f"[...{MODAL}.querySelectorAll('[data-invite-user]')].filter((b) => !b.disabled).length")
     assert enabled == 0
     assert browser.js(f"{PLAY}.disabled") is True
+
+
+def test_amico_bloccato_sbloccato_e_di_nuovo_amico_torna_nella_carta(app, browser, server, users, friends):
+    """P65: Mario blocca Giulia, la sblocca, Giulia gli manda la richiesta e Mario accetta
+    (da un'altra scheda, come il pannello amici): senza ricaricare la home, Giulia torna
+    tra gli amici online nella carta "Gioca con un amico"."""
+    _open_modal(browser, server, users, "2v2")
+    _close_card(browser)
+    mario, giulia = users["Mario"], users["Giulia"]
+    loaded = ("performance.getEntriesByType('resource')"
+              ".filter((e) => new URL(e.name).pathname === '/friends/').length")
+    before = browser.js(loaded)
+    try:
+        with app.app_context():
+            friend_service.block(mario, uuid.uuid4().hex, giulia)
+            friend_service.unblock(mario, giulia)
+            friend_service.send_request(giulia, uuid.uuid4().hex, "Mario")
+        # Prima di accettare la pagina ha finito di rileggere la lista dopo i tre avvisi
+        # (blocca, sblocca, richiesta: home e pannello amici, 6 letture), così l'unica
+        # rilettura che può riportare Giulia è quella dopo l'accettazione
+        browser.wait_js(f"{loaded} >= {before + 6}"
+                        " && document.querySelector('[data-friends-badge]').textContent === '1'",
+                        "lista riletta dopo la richiesta")
+        with app.app_context():
+            friend_service.accept_request(mario, giulia)
+        _open_card(browser, users, "2v2")
+    finally:
+        with app.app_context():
+            if giulia not in {u.id for u in friend_repo.friends_of(mario)}:
+                friend_service.unblock(mario, giulia)
+                friend_service.send_request(giulia, uuid.uuid4().hex, "Mario")
+                friend_service.accept_request(mario, giulia)

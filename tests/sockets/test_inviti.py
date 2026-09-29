@@ -166,6 +166,72 @@ def test_friends_changed_dopo_richiesta_e_blocco(server, connect, ids):
             friend_service.unblock(ids["Primo"], ids["Terzo"])
 
 
+def test_blocca_sblocca_amici_di_nuovo_tutte_e_due_le_liste_si_aggiornano(server, connect, ids):
+    """P65: blocca → sblocca → richiesta → accetta. Chi accetta (da una scheda) deve
+    rileggere la lista anche nelle altre schede, per esempio la home con la carta
+    "Gioca con un amico": prima friends:changed arrivava solo all'altro."""
+    app = server["app"]
+    primo, secondo = connect("Primo"), connect("Secondo")
+    changed_primo, changed_secondo = Events(primo, "friends:changed"), Events(secondo, "friends:changed")
+    try:
+        with app.app_context():
+            friend_service.send_request(ids["Primo"], uuid.uuid4().hex, "Secondo")
+            friend_service.accept_request(ids["Secondo"], ids["Primo"])
+            friend_service.block(ids["Primo"], uuid.uuid4().hex, ids["Secondo"])
+            friend_service.unblock(ids["Primo"], ids["Secondo"])
+        changed_primo.items.clear()
+        changed_secondo.items.clear()
+        with app.app_context():
+            friend_service.send_request(ids["Primo"], uuid.uuid4().hex, "Secondo")
+            friend_service.accept_request(ids["Secondo"], ids["Primo"])
+        changed_primo.wait_for(lambda c: c == {"reason": "request_accepted"})
+        changed_secondo.wait_for(lambda c: c == {"reason": "request_accepted"})  # anche chi ha accettato
+        with app.app_context():
+            listed = {f["user_id"]: f["presence"] for f in friend_service.overview(ids["Secondo"])["friends"]}
+        assert listed == {ids["Primo"]: "online"}
+    finally:
+        with app.app_context():
+            friend_service.remove_friend(ids["Primo"], ids["Secondo"])
+
+
+@pytest.mark.parametrize("action, reason", [
+    ("accept", "request_accepted"),
+    ("decline", "request_declined"),
+    ("cancel", "request_declined"),
+    ("remove", "friend_removed"),
+    ("unblock", "blocked"),
+])
+def test_chi_cambia_la_lista_la_rilegge_anche_nelle_altre_schede(server, connect, ids, action, reason):
+    """P65: ogni cambiamento di amicizie arriva anche alle schede di chi lo fa (Primo).
+    La scheda si collega dopo la preparazione: gli avvisi di prima non le arrivano."""
+    app = server["app"]
+    with app.app_context():
+        if action in ("accept", "decline"):
+            friend_service.send_request(ids["Secondo"], uuid.uuid4().hex, "Primo")
+        elif action == "cancel":
+            friend_service.send_request(ids["Primo"], uuid.uuid4().hex, "Secondo")
+        elif action == "remove":
+            friend_service.send_request(ids["Primo"], uuid.uuid4().hex, "Secondo")
+            friend_service.accept_request(ids["Secondo"], ids["Primo"])
+        else:
+            friend_service.block(ids["Primo"], uuid.uuid4().hex, ids["Secondo"])
+    changed = Events(connect("Primo"), "friends:changed")
+    try:
+        with app.app_context():
+            {
+                "accept": lambda: friend_service.accept_request(ids["Primo"], ids["Secondo"]),
+                "decline": lambda: friend_service.decline_request(ids["Primo"], ids["Secondo"]),
+                "cancel": lambda: friend_service.cancel_request(ids["Primo"], ids["Secondo"]),
+                "remove": lambda: friend_service.remove_friend(ids["Primo"], ids["Secondo"]),
+                "unblock": lambda: friend_service.unblock(ids["Primo"], ids["Secondo"]),
+            }[action]()
+        assert changed.wait_for() == {"reason": reason}
+    finally:
+        with app.app_context():
+            friend_service.remove_friend(ids["Primo"], ids["Secondo"])
+            friend_service.unblock(ids["Primo"], ids["Secondo"])
+
+
 # --- Inviti (5.3) ---------------------------------------------------------------
 
 

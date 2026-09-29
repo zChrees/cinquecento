@@ -22,6 +22,20 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### P65 — Amico sbloccato che non compare online nella carta-pulsante (29/09/2026)
+
+- **Branch**: fix/p65-amico-sbloccato-online
+- **File** (lista definitiva per 9.2): modificati `app/services/friend_service.py`, `app/static/js/pages/home.js`, `docs/CONTRATTO-SOCKET.md` (5.2, una frase), `tests/sockets/test_inviti.py`, `tests/frontend/test_inviti_2v2.py`, questo file. Non toccati `presence.py`, `friends_events.py`, `home_events.py`, `ModeModal.js`
+- **Cause trovate** [T], due:
+  1. **server**: `friends:changed` arrivava solo **all'altro** utente, mai a chi faceva il cambiamento. Chi accettava una richiesta (dal pannello amici) aggiornava il pannello, ma la home non rileggeva la lista: nella carta "Gioca con un amico" il nuovo amico non c'era finché non si ricaricava la pagina. Nel giro blocca → sblocca → richiesta → accetta è proprio chi accetta a restare senza l'amico. Ora `accept_request`, `decline_request`, `cancel_request`, `remove_friend` avvisano **tutti e due**, e `unblock` avvisa chi sblocca con `"blocked"` (l'elenco dei bloccati è cambiato; l'altro non sa niente, come per il blocco);
+  2. **pagina**: più avvisi di fila (blocca, sblocca, richiesta, accetta) fanno partire più letture di `GET /friends/` in `home.js`; se una risposta vecchia arrivava per ultima, sovrascriveva la lista nuova. Ora vale solo la risposta dell'**ultima lettura partita** (`friendsRequest`)
+- **Contratto 5.2** (una frase, vale con l'ok di Giuseppe e Christian): `friends:changed` arriva alle schede di tutti e due, anche di chi ha fatto il cambiamento; `"blocked"` solo a chi blocca o sblocca. Le pagine non leggono il motivo, rileggono sempre la lista: nessun cambiamento nel loro codice
+- **Controlli**: **1370 PASS** in 8 suite, tutto PASS (7 nuovi: 6 `sockets`, 1 `frontend`), `ruff check .` pulito. Con il codice di prima falliscono tutti [T]: blocca → sblocca → richiesta → accetta con le due liste aggiornate; ogni cambiamento arriva anche alla scheda di chi lo fa (accetta, rifiuta, annulla, togli, sblocca); nel browser Giulia torna nella carta senza ricaricare (10 giri su 10 senza errori)
+- **Decisioni prese**: nessuna (comportamento già previsto: la pagina deve rileggere la lista)
+- **Domande nuove**: nessuna
+- **Punti delicati**: nei test del browser la carta si riapre per un certo **tempo**, non un numero di volte: senza finestra l'animazione non dura niente e dieci aperture finiscono prima che arrivi la risposta di `GET /friends/`. `FriendsPanel.js` (di Christian) rilegge la lista a ogni avviso come `home.js`, ma senza il controllo sull'ultima lettura: lo stesso scambio di risposte può capitare nel pannello [D]; lo propongo per P34
+- **Note per gli altri**: **Christian**: serve il tuo ok alla frase del contratto 5.2; guarda il punto delicato su `FriendsPanel.js`. **Chi è di turno sui documenti**: spuntare P65, lista definitiva in 9.2
+
 ### P66 — Mossa automatica dopo il rientro (29/09/2026)
 
 - **Branch**: fix/p66-mossa-automatica-rientro
