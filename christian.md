@@ -22,6 +22,28 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P34 — Rifinitura mobile e accessibilità (29/09/2026)
+
+- **Branch**: fix/p34-rifinitura
+- **File** (lista definitiva per 9.2, confermata da Christian): creato `tests/frontend/test_rifinitura.py`; modificati `app/static/js/components/Table.js`, `FriendsPanel.js`, `TablePhrases.js` (solo il commento), `app/templates/main/index.html`, `app/templates/game/table.html`
+- **Controlli**: suite `frontend` 158 PASS (8 nuovi), suite `api` 280 PASS, `ruff check` pulito; tutte le suite non lanciate
+- **Come l'ho cercato**: un controllo a mano, fuori dal progetto, di 9 pagine e finestre a 360×640 e 390×844 (home, statistiche, amici, carta-modal, impostazioni, accesso, registrazione, tavolo 1v1 e 2v2): nessuna pagina scorre e niente esce dallo schermo (tranne le carte decorative dello sfondo della home, volute) [T]; accessibilità con **axe-core** 4.10.2 (caricato solo nel browser di prova, **non** nel repository) [T]
+- **Fatto**: (1) **titolo principale** (`<h1>`, visibile solo ai lettori di schermo) nella home e al tavolo, che non l'avevano; (2) le **icone dei canti** accanto al nome hanno `role="img"`: prima l'etichetta "Ha cantato 40 a coppe" su uno span senza ruolo non si leggeva; (3) **"indietro" dopo un ricaricamento** con il pannello amici aperto: il browser teneva nella cronologia lo stato vecchio del pannello (`friendsPanel: 'chat'`) e, riaperto il pannello, "indietro" non lo chiudeva; ora all'avvio lo stato vecchio si toglie (il test fallisce senza la correzione [T]); (4) commento di `TablePhrases.js` aggiornato a P71; (5) test: una carta si gioca con la sola tastiera (Tab e Invio)
+- **Già a posto**, nessuna modifica: la lista del pannello amici che una risposta vecchia sovrascrive (segnalato da Giuseppe in P65): `FriendsPanel.js` ha già il controllo sull'ultima lettura (`loadSeq` in `load()`) [L]; il difetto della presa sui portatili bassi, sparito con P70 (secondo lotto)
+- **Resta per chiudere P34**: il "Fatto quando" chiede la prova **su un telefono vero**, e il **contrasto** delle scritte sopra il panno axe non lo sa misurare (lo sfondo è un'immagine): da guardare a occhio sul telefono. **Non spuntare P34** finché non è fatta la prova dal telefono
+- **Decisioni prese**: nessuna
+- **Domande nuove**: nessuna
+- **Punti delicati**: nei test del browser `Browser.key` di `tests/browser.py` manda il tasto senza carattere: per "premere" un pulsante con Invio serve anche `text` con il carattere a capo (`chr(13)`), come in `test_rifinitura.py`
+- **Cosa devono fare gli altri**: **Giuseppe, richiesta di Christian** (29/09/2026, sera: Christian esce): **prova tu dal telefono** P34 e la grafica nuova del tavolo (P69, P70, P71), in una partita vera con due telefoni (o telefono e PC) sulla stessa rete. Cosa guardare, e cosa scrivere nel tuo riepilogo per ogni voce (va / non va, con il telefono usato):
+  - **zoom** (P69): al tavolo il doppio tocco e il tocco lungo su una carta non ingrandiscono e non aprono menù; lo zoom con due dita funziona ancora;
+  - **fine mano** (P69): durante l'ultima presa e il riepilogo le carte non si giocano; con "Ok" si torna a giocare;
+  - **frasi a raffica** (P69, ancora aperto): toccando più volte il pulsante delle frasi partono più frasi di una ogni 3 secondi? I fumetti arrivano davvero anche all'altro telefono?
+  - **grafica** (P71): seme della briscola sopra il mazzo e nel tondo a sinistra sopra la mano (dopo il canto del 40); niente "Carte franche" né "mazziere"; mazzo a destra e più grande; carte giocate più grandi; pulsante delle frasi sopra la mano a destra, elenco verso l'alto;
+  - **animazioni** (P70): lancio fluido della carta che ruota; ventagli degli avversari dal bordo (in alto dietro la barra, nel 2v2 ai lati); pescata dopo ogni presa (prima chi ha preso); mescolata e distribuzione dopo il riepilogo; niente scatti o carte che ripartono quando arriva un fumetto;
+  - **carte bianche** (P70): le carte diventano ancora bianche per un attimo? (la correzione non si poteva provare sul PC);
+  - **P34**: tutte le pagine (home, pannelli, impostazioni, accesso, tavolo) si usano bene sul telefono; le scritte sopra il panno si leggono (contrasto); dopo aver ricaricato la pagina con la chat aperta, "indietro" chiude il pannello amici.
+  Se qualcosa non va, **non correggere i file del tavolo** (sono di Christian): scrivilo nel riepilogo, lo sistemo io
+
 ### P70 (terzo lotto) — Mescolata e distribuzione (29/09/2026)
 
 - **Branch**: fix/p70-distribuzione

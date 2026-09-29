@@ -27,6 +27,8 @@
 {% block page_script %}<script type="module" src="{{ url_for('static', filename='js/pages/game.js') }}"></script>{% endblock %}
 
 {% block content %}
+{# P34: titolo principale per i lettori di schermo (il tavolo lo ridisegna game.js) #}
+<h1 class="visually-hidden">Partita a Cinquecento</h1>
 <div class="table" data-table data-game-id="{{ game_id }}"{% if demo_url %} data-demo-url="{{ demo_url }}"{% endif %}>
   <p class="table__message" data-table-message>Caricamento della partita…</p>
 </div>

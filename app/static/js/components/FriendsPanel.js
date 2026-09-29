@@ -520,6 +520,14 @@ export function initFriendsPanel(button) {
     else closeNow();
   }
 
+  // P34: dopo un ricaricamento con il pannello aperto il browser tiene ancora lo stato
+  // del pannello nella cronologia ({friendsPanel: 'chat'}), ma il pannello è chiuso: si
+  // toglie, altrimenti al pannello riaperto "indietro" non lo chiuderebbe
+  if (history.state?.friendsPanel) {
+    const { friendsPanel, ...rest } = history.state;
+    history.replaceState(Object.keys(rest).length ? rest : null, '');
+  }
+
   window.addEventListener('popstate', () => {
     if (!dialog.open) return;
     const layer = history.state?.friendsPanel;

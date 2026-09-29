@@ -56,7 +56,8 @@ function SingBadges(view, seat) {
     el('span', {
       class: `sing-badge sing-badge--${sing.suit}`,
       data: { singSeat: seat, suit: sing.suit },
-      attrs: { title: `Ha cantato ${sing.points} a ${sing.suit}`, 'aria-label': `Ha cantato ${sing.points} a ${sing.suit}` },
+      // P34: con role="img" l'etichetta si legge (su uno span senza ruolo non vale)
+      attrs: { role: 'img', title: `Ha cantato ${sing.points} a ${sing.suit}`, 'aria-label': `Ha cantato ${sing.points} a ${sing.suit}` },
     }, [
       el('img', { attrs: { src: `${IMG_BASE}asso-${sing.suit}-figura.webp`, alt: '' } }),
       el('span', { text: sing.points, attrs: { 'aria-hidden': 'true' } }),

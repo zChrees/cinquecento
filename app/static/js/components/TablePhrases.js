@@ -1,9 +1,9 @@
 /**
  * Frasi del tavolo nella pagina (P56, D24; contratto 3.2).
  *
- * - PhrasesButton: il pulsante in alto a destra del tavolo (icona del fumetto,
+ * - PhrasesButton: il pulsante sopra la mano, a destra (P71; icona del fumetto,
  *   etichetta accessibile "Frasi"; su computer anche la scritta).
- * - PhrasesMenu: l'elenco delle frasi, sotto il pulsante, come pillole che vanno a
+ * - PhrasesMenu: l'elenco delle frasi, sopra il pulsante (P71), come pillole che vanno a
  *   capo; l'elenco è quello ricevuto dal server con game:phrases (la pagina non ne
  *   tiene una copia sua).
  * - PhraseBubble: il fumetto accanto all'avatar di chi ha parlato.
