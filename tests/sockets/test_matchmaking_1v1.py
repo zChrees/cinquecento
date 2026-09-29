@@ -68,7 +68,8 @@ def test_valori_di_d16_da_config():
 def test_stato_della_coda_nella_forma_del_contratto(queue, clock):
     status = queue.join(_player(1), "1v1", 300, 1540.4)
     assert status == {"mode": "1v1", "target_score": 300, "seconds_waiting": 0,
-                      "rating_range": {"min": 1440, "max": 1640}, "partner": None}
+                      "rating_range": {"min": 1440, "max": 1640}, "partner": None,
+                      "opponents": []}
     clock.now += 23.7
     assert queue.status(1)["seconds_waiting"] == 23
     assert queue.status(1)["rating_range"] == {"min": 1340, "max": 1740}
@@ -260,7 +261,8 @@ def test_due_giocatori_vicini_si_abbinano_subito(connect, ids):
 
     answer = _join(primo, 300)
     assert answer == ok({"mode": "1v1", "target_score": 300, "seconds_waiting": 0,
-                         "rating_range": {"min": 1400, "max": 1600}, "partner": None})
+                         "rating_range": {"min": 1400, "max": 1600}, "partner": None,
+                         "opponents": []})
     assert _join(secondo, 300)["ok"] is True
 
     assert all(s.wait() for s in starts), "game:start non arrivato"

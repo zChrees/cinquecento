@@ -21,9 +21,11 @@ import { formatWait } from './QueueOverlay.js';
 
 const CLOSE_AFTER_MS = 4000;   // quanto resta il motivo di un invito finito
 
+// Nel 2v2 chi invita può chiamare fino a tre amici (P59): le squadre si sanno solo quando
+// si entra in coda o comincia la partita, quindi l'invito non dice "in squadra con te"
 function describe(invite) {
-  const role = invite.mode === '2v2' ? 'in squadra con te nel 2v2' : 'contro di te nel 1v1';
-  return `${invite.from.username} ti invita a giocare ${role}, a ${invite.target_score} punti.`;
+  const role = invite.mode === '2v2' ? 'a una partita 2v2 tra amici' : 'a giocare contro di te nel 1v1';
+  return `${invite.from.username} ti invita ${role}, a ${invite.target_score} punti.`;
 }
 
 /**

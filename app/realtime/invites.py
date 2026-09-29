@@ -1,7 +1,10 @@
 """Inviti a partita (P47; decisioni D27, D36; contratto 5.3), in memoria.
 
-- Si invita **un amico alla volta**: chi ha già un invito aperto ("pending" o
-  "accepted"), da mandato o da ricevuto, non può mandarne né riceverne un altro (busy).
+- Nel 1v1 si invita **un amico alla volta**: chi ha già un invito aperto ("pending" o
+  "accepted"), mandato o ricevuto, non può mandarne né riceverne un altro (busy).
+- Nel 2v2 (P59) chi invita può avere aperti fino a GROUP_MAX inviti, tutti 2v2 e agli
+  stessi punti: sono il suo **gruppo** (group_of). Chi riceve ha sempre al massimo un
+  invito aperto, e chi ha un invito ricevuto aperto non ne manda.
 - L'invito "pending" scade dopo INVITE_SECONDS senza risposta ("expired"). Dopo
   "accepted" non scade più (scelta di Giuseppe): resta aperto finché chi ha invitato
   preme "Gioca" ("started"), lo annulla ("cancelled"), l'invitato rifiuta ("declined")
@@ -21,12 +24,14 @@ import time
 from dataclasses import dataclass
 
 from app.realtime.events import EventError
+from app.realtime.room import MODES
 from config import BaseConfig
 
 log = logging.getLogger(__name__)
 
 INVITE_SECONDS = BaseConfig.INVITE_SECONDS  # letto a ogni invito: i test lo riducono
 OPEN = ("pending", "accepted")
+GROUP_MAX = MODES["2v2"] - 1  # nel 2v2 al massimo 3 amici: con chi invita il tavolo è pieno
 
 
 @dataclass
@@ -78,16 +83,29 @@ class Invites:
         with self.lock:
             return next((i for i in self._invites.values() if i.status in OPEN and i.involves(user_id)), None)
 
+    def group_of(self, sender_id):
+        """Gli inviti aperti mandati da `sender_id`, nell'ordine in cui sono partiti
+        (nel 1v1 al massimo uno, nel 2v2 fino a GROUP_MAX)."""
+        with self.lock:
+            return [i for i in self._invites.values() if i.status in OPEN and i.sender.user_id == sender_id]
+
     def data(self, invite):
         return invite.data(self._clock())
 
     # --- Scritture ---
 
     def send(self, sender, recipient, mode, target_score):
-        """Nuovo invito "pending"; busy se uno dei due ha già un invito aperto."""
+        """Nuovo invito "pending". busy se chi riceve ha già un invito aperto, se chi
+        manda ne ha uno ricevuto, o se ne ha già mandati e non si può aggiungerne al
+        gruppo (1v1, punti o modalità diversi, gruppo pieno)."""
         with self.lock:
-            if self.open_of(sender.user_id) is not None:
+            group = self.group_of(sender.user_id)
+            received = self.open_of(sender.user_id) is not None and not group
+            if received or (group and (mode != "2v2" or any(
+                    (i.mode, i.target_score) != (mode, target_score) for i in group))):
                 raise EventError("busy", "Hai già un invito aperto: aspetta la risposta o annullalo.")
+            if len(group) >= GROUP_MAX:
+                raise EventError("busy", f"Hai già invitato {GROUP_MAX} amici: il tavolo è pieno.")
             if self.open_of(recipient.user_id) is not None:
                 raise EventError("busy", f"{recipient.username} ha già un invito in sospeso.")
             self._forget(sender.user_id, recipient.user_id)

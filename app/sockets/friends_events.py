@@ -8,8 +8,11 @@ Inviti: invite:send, invite:accept, invite:decline, invite:cancel, invite:start.
 - L'invitato riceve invite:received; a ogni cambio di stato tutti e due ricevono
   invite:update {"invite_id", "status"} (invites.on_change).
 - invite:start (chi ha invitato, dopo "accepted"): nel 1v1 crea la partita senza
-  rating (D36) e tutti e due ricevono game:start; nel 2v2 la coppia entra nella coda
-  (matchmaker.join_pair, P29) e la risposta è lo stato della coda.
+  rating (D36) e tutti e due ricevono game:start; nel 2v2 (P59) conta quanti amici del
+  gruppo hanno accettato: con uno la coppia entra nella coda (matchmaker.join_pair,
+  P29), con due il gruppo di tre (matchmaker.join_group), e la risposta è lo stato
+  della coda; con tre la partita parte subito, a squadre tirate a sorte e senza
+  rating. Gli inviti del gruppo ancora in attesa diventano "cancelled".
 - Chi chiude tutte le schede perde i suoi inviti aperti ("cancelled",
   connection_events.py).
 
@@ -20,6 +23,7 @@ Nei log solo numeri di utente.
 """
 
 import logging
+import secrets
 from contextlib import nullcontext
 
 from flask import current_app, has_app_context, request
@@ -161,25 +165,48 @@ def on_cancel(data=None):
 
 @handler
 def on_start(data=None):
-    """"Gioca" di chi ha invitato: 1v1 → partita senza rating; 2v2 → la coppia in coda."""
+    """"Gioca" di chi ha invitato: 1v1 → partita senza rating. 2v2 (P59), con gli amici
+    che hanno accettato: uno → la coppia in coda; due → il gruppo di tre in coda (coppia
+    a sorte); tre → partita subito, squadre a sorte, senza rating. Gli inviti del gruppo
+    ancora in attesa si annullano."""
     invite_id = _invite_id(data)
     app, sid = current_app._get_current_object(), request.sid
     with invites.lock:  # un doppio clic non avvia due partite
         invite = invites.accepted_of_sender(invite_id, current_user.id)
-        if not presence.is_online(invite.recipient.user_id):
-            raise EventError("offline", f"{invite.recipient.username} non è più collegato.")
+        group = invites.group_of(invite.sender.user_id) if invite.mode == "2v2" else [invite]
+        accepted = [i for i in group if i.status == "accepted"]
+        for other in accepted:
+            if not presence.is_online(other.recipient.user_id):
+                raise EventError("offline", f"{other.recipient.username} non è più collegato.")
         _check_free(invite.sender.user_id)
-        _check_free(invite.recipient.user_id, invite.recipient.username)
+        for other in accepted:
+            _check_free(other.recipient.user_id, other.recipient.username)
+        friends = [i.recipient for i in accepted]
+        result = None
         if invite.mode == "1v1":
-            try:
-                create_room([invite.sender, invite.recipient], "1v1", invite.target_score, rated=False)
-            except RoomError:
-                raise EventError("busy", "Uno dei due è già in partita.") from None
-            result = None
+            _create([invite.sender, *friends], "1v1", invite.target_score)
+        elif len(friends) == 1:
+            result = matchmaker.join_pair(app, invite.sender, friends[0], invite.target_score, sid)
+        elif len(friends) == 2:
+            result = matchmaker.join_group(app, invite.sender, friends, invite.target_score, sid)
         else:
-            result = matchmaker.join_pair(app, invite.sender, invite.recipient, invite.target_score, sid)
-        invites.mark_started(invite)
+            seats = [invite.sender, *friends]
+            secrets.SystemRandom().shuffle(seats)  # squadre (posti 0 e 2, 1 e 3) e posti a sorte
+            _create(seats, "2v2", invite.target_score)
+        for other in group:
+            if other.status == "accepted":
+                invites.mark_started(other)
+            else:
+                invites.cancel(other.invite_id, invite.sender.user_id)
     return result
+
+
+def _create(seats, mode, target_score):
+    """Partita tra amici, senza rating (D36; P59 per il 2v2 di quattro amici)."""
+    try:
+        create_room(seats, mode, target_score, rated=False)
+    except RoomError:
+        raise EventError("busy", "Uno di voi è già in partita.") from None
 
 
 def register(socketio):

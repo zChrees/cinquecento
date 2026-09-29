@@ -27,7 +27,8 @@
       "min": 1340,
       "max": 1740
     },
-    "partner": null
+    "partner": null,
+    "opponents": []
   },
   "queue:status 2v2 con un amico": {
     "mode": "2v2",
@@ -38,7 +39,30 @@
       "user_id": 44,
       "username": "Giulia",
       "avatar": "cavallo_spade"
-    }
+    },
+    "opponents": []
+  },
+  "queue:status 2v2 con due amici": {
+    "mode": "2v2",
+    "target_score": 150,
+    "seconds_waiting": 8,
+    "rating_range": {
+      "min": 1420,
+      "max": 1620
+    },
+    "partner": null,
+    "opponents": [
+      {
+        "user_id": 44,
+        "username": "Giulia",
+        "avatar": "cavallo_spade"
+      },
+      {
+        "user_id": 51,
+        "username": "Salvo",
+        "avatar": null
+      }
+    ]
   },
   "queue:left": {
     "reason": "partner_left"

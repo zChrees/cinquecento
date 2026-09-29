@@ -199,11 +199,11 @@ La pagina **non calcola regole**: attiva solo le carte di `legal.play` e i pulsa
 | `queue:join` | pagina → server | `{"request_id", "mode", "target_score"}` | `ok` con `data` = stato della coda, o errore (`busy`) |
 | `queue:leave` | pagina → server | `{}` | `ok` (anche se non era in coda) |
 | `queue:status` | server → chi è in coda | stato della coda | — |
-| `queue:left` | server → chi era in coda | `{"reason"}`: `"cancelled"` (ha annullato, anche da un'altra scheda) o `"partner_left"` (nel 2v2 il compagno è uscito) | — |
+| `queue:left` | server → chi era in coda | `{"reason"}`: `"cancelled"` (ha annullato, anche da un'altra scheda) o `"partner_left"` (nel 2v2 è uscito il compagno o un altro amico del gruppo, P59) | — |
 
-Stato della coda (esempio `"queue:status"` in `home_esempio.json`): `mode`, `target_score`, `seconds_waiting` (da quanto è in coda), `rating_range` (`{"min", "max"}` dell'intervallo di rating accettato adesso, oppure `null` quando si accetta qualunque avversario) e `partner` (`{"user_id", "username", "avatar"}` dell'amico compagno nel 2v2, altrimenti `null`). Il server lo rimanda ogni volta che l'intervallo si allarga (ogni 10 secondi, D16); tra un invio e l'altro la pagina conta i secondi da sola. Le code sono separate per modalità e punteggio. Quando la partita è pronta arriva `game:start` (3.2).
+Stato della coda (esempio `"queue:status"` in `home_esempio.json`): `mode`, `target_score`, `seconds_waiting` (da quanto è in coda), `rating_range` (`{"min", "max"}` dell'intervallo di rating accettato adesso, oppure `null` quando si accetta qualunque avversario), `partner` (`{"user_id", "username", "avatar"}` dell'amico compagno nel 2v2, altrimenti `null`) e `opponents` (P59: lista degli avversari già noti, con la stessa forma di `partner`; vuota tranne nel **gruppo di tre amici**, in cui la coppia vede il terzo e il terzo vede la coppia). Il server lo rimanda ogni volta che l'intervallo si allarga (ogni 10 secondi, D16); tra un invio e l'altro la pagina conta i secondi da sola. Le code sono separate per modalità e punteggio. Quando la partita è pronta arriva `game:start` (3.2).
 
-Il 2v2 con un amico non passa da `queue:join`: la coppia entra in coda con `invite:start` (5.3).
+Il 2v2 con gli amici non passa da `queue:join`: la coppia o il gruppo di tre entrano in coda con `invite:start` (5.3).
 
 ---
 
@@ -240,8 +240,15 @@ Con `friends:changed` la pagina ricarica la lista con `GET /friends/`: così la 
 
 - **Invito** (esempio in `amici_esempio.json`): `invite_id`, `from` e `to` (`{"user_id", "username", "avatar"}`), `mode`, `target_score`, `status`, `seconds_left`.
 - `status`: `"pending"` (in attesa), `"accepted"`, `"declined"`, `"expired"` (60 secondi senza risposta), `"cancelled"` (chi invita ha chiuso il modal o si è scollegato), `"started"`.
-- Si invita **un amico alla volta**: un secondo `invite:send` mentre un invito è `pending` o `accepted` risponde `busy`. Dopo un rifiuto o una scadenza chi invita vede un avviso e può invitare un altro amico (D27).
-- **"Gioca" si attiva solo quando lo stato è `accepted`**. Con `invite:start`: nel **1v1** il server crea la partita e manda `game:start` a tutti e due (non conta per il rating); nel **2v2** i due entrano insieme nella coda come coppia e ricevono `queue:status` con `partner` (conta per il rating).
+- Nel **1v1** si invita **un amico alla volta**: un secondo `invite:send` mentre un invito è `pending` o `accepted` risponde `busy`. Dopo un rifiuto o una scadenza chi invita vede un avviso e può invitare un altro amico (D27).
+- Nel **2v2** (P59) chi invita può avere aperti **fino a 3 inviti**, tutti 2v2 e agli stessi punti (il suo **gruppo**); un quarto, o uno con modalità o punti diversi, risponde `busy`. Ogni amico accetta o rifiuta il suo invito. Chi riceve ha sempre **un solo invito aperto**, e chi ha un invito ricevuto aperto non ne manda (`busy`).
+- **"Gioca" si attiva quando almeno un invito è `accepted`**. Con `invite:start` (con l'`invite_id` di un invito accettato; nel 2v2 vale qualunque invito accettato del gruppo): nel **1v1** il server crea la partita e manda `game:start` a tutti e due (non conta per il rating). Nel **2v2** conta quanti amici hanno accettato:
+  - **uno**: i due entrano insieme nella coda come coppia e ricevono `queue:status` con `partner` (conta per il rating);
+  - **due**: i tre entrano nella coda come **gruppo**; due tirati a sorte fanno coppia, il terzo gioca contro di loro con un compagno preso dalla coda; ricevono `queue:status` con `partner` e `opponents` (4) (conta per il rating);
+  - **tre**: la partita parte subito, con squadre e posti tirati a sorte, e tutti e quattro ricevono `game:start` (**non conta** per il rating, come il 1v1 tra amici).
+
+  La risposta è lo stato della coda (`null` quando parte subito la partita). Gli inviti del gruppo accettati diventano `started`, quelli ancora `pending` `cancelled`.
+- L'invito non dice chi altro è stato invitato: nel 2v2 le squadre si sanno quando si entra in coda o comincia la partita.
 
 ### 5.4 Chat tra amici (P48)
 

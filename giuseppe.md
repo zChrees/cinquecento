@@ -22,6 +22,30 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### P59 — 2v2 con più amici invitati (29/09/2026)
+
+- **Branch**: feature/p59-2v2-piu-amici
+- **File** (lista definitiva per 9.2, confermata da Giuseppe prima di cominciare): modificati `app/realtime/invites.py`, `app/sockets/friends_events.py`, `app/realtime/matchmaking.py`, `docs/CONTRATTO-SOCKET.md` (4 e 5.3), `app/static/dev/home_esempio.json`, `app/static/js/pages/home.js`, `app/static/js/components/InviteDialog.js`, **`app/static/js/components/ModeModal.js` e `QueueOverlay.js` (di Christian)**, `tests/sockets/test_inviti.py`, `tests/sockets/test_matchmaking_2v2.py`, `tests/frontend/test_invito_ricevuto.py`, **`tests/api/test_pagina_home.py` (di Christian: una riga, la forma di `queue:status` nell'esempio)**; creato `tests/frontend/test_inviti_2v2.py`; questo file. I CSS (`mode-modal.css`, `queue-overlay.css`) non sono cambiati
+- **Cosa cambia** (decisioni di Giuseppe del 29/09, sulle raccomandazioni di Claude):
+  - nel 2v2 "Gioca con un amico" si invitano **fino a tre amici**, tutti agli stessi punti (i punti restano fermi finché c'è un invito aperto); nel 1v1 resta un amico alla volta. Chi riceve ha sempre un solo invito aperto, e chi ne ha ricevuto uno non ne manda;
+  - **"Gioca" si accende appena un amico accetta**; premendolo, gli inviti ancora in attesa si annullano ("cancelled");
+  - **un amico** che accetta: come prima, la coppia entra in coda (conta per il rating);
+  - **due amici**: il gruppo di tre entra in coda come una voce sola; **due tirati a sorte fanno coppia**, il terzo gioca contro di loro con un compagno preso dalla coda (conta per il rating, come la coppia con un amico, D36). Nella schermata di coda: "Con gli amici · 2v2", "Cerco il quarto giocatore…", "In squadra con …" e "Contro … e …";
+  - **tre amici**: la partita parte subito, **squadre e posti a sorte**, e **non conta per il rating** (come il 1v1 tra amici);
+  - l'invito ricevuto nel 2v2 dice "ti invita a una partita 2v2 tra amici, a N punti" (non più "in squadra con te": le squadre si sanno solo all'avvio).
+- **Contratto** (cambiamento: vale con l'ok di Giuseppe e Christian, regola del 29/09): `queue:status` ha il campo nuovo **`opponents`** (avversari già noti, vuoto tranne nel gruppo di tre; esempio nuovo "queue:status 2v2 con due amici" in `home_esempio.json`); `partner_left` vale anche per un altro amico del gruppo; 5.3 riscritto per il 2v2 con più amici (fino a 3 inviti, "Gioca" con un solo accettato, i tre casi, inviti in attesa annullati). `invite:start` resta `{"invite_id"}`: nel 2v2 vale qualunque invito accettato del gruppo
+- **Controlli**: **1353 PASS** in 8 suite, tutto PASS (19 nuovi: 16 `sockets`, 3 `frontend`), `ruff check .` pulito. Con il server di prima 13 dei test nuovi della suite `sockets` falliscono [T]; `tests/frontend/test_inviti_2v2.py` 15 giri su 15 senza errori. Fuori elenco, mio (P28): `tests/sockets/test_matchmaking_1v1.py`, due controlli con `opponents: []`
+- **Test nel browser con amici simulati**: la carta-modal disegna la lista degli amici all'apertura, e in sviluppo e nei test la pagina parte con quelli finti di `app/static/dev/` finché non arriva `GET /friends/`: il test riapre la carta finché non mostra gli amici veri. Scollegare un client Socket.IO simulato costa circa 3 s: gli amici si collegano una volta per tutto il file (la suite `frontend` è vicina al limite di 120 s del runner quando il PC è carico: in una prova sul codice di `dev` è arrivata a 109 s)
+- **Decisioni prese**: quelle di "Cosa cambia" (Giuseppe, 29/09/2026)
+- **Domande nuove**: nessuna
+- **Punti delicati**: una voce della coda ora sa in che squadra sta ognuno dei suoi giocatori (`Entry.sides`, vuota = tutti insieme): `_balanced_teams` non divide mai una coppia e lascia il gruppo di tre come è stato tirato a sorte. `invites.group_of(utente)` sono gli inviti aperti mandati da quell'utente. `invite:start` tiene il lock degli inviti mentre crea la partita o mette in coda, come prima
+- **Per Christian** (da confermare, perché ho toccato file tuoi; se qualcosa non va dimmelo e lo cambio):
+  - **`ModeModal.js`**: `current.invite` è diventato `current.invites` (una mappa per amico); nel 2v2 "Invita" resta attivo per gli altri amici fino a tre inviti; `onPlay` riceve `invitees` (gli amici che hanno accettato) invece di `invitee`; `onCancelInvite({ friend })` si chiama una volta per ogni invito aperto quando la carta si chiude. Testi nuovi: descrizione del 2v2 con un amico ("Invita fino a tre amici. Con uno siete in squadra, contro una coppia dalla coda; con più amici, squadre a sorte." — la prima versione, più lunga, faceva uscire "Gioca" dalla cornice a 360×640), titolo della lista "Invita da uno a tre amici", suggerimenti quando uno o più amici accettano;
+  - **`QueueOverlay.js`**: titolo "Cerco il quarto giocatore…", sezione "Con gli amici" e riga "Contro …" (`data-queue-opponents`) per il gruppo di tre, con lo stesso stile di "In squadra con …";
+  - **`test_pagina_home.py`**: la forma di `queue:status` nell'esempio ora comprende `opponents`;
+  - resta com'era (difetto che c'era già, non di P59): la lista degli amici nella carta-modal si disegna all'apertura e non si aggiorna finché la carta è aperta;
+  - **contratto**: serve il tuo ok al campo `opponents` e al nuovo 5.3.
+
 ### P61 — Regole della password (29/09/2026)
 
 - **Branch**: feature/p61-password

@@ -62,7 +62,7 @@ def test_invito_ricevuto_con_chi_invita_e_conto_alla_rovescia(home):
                seconds: d.querySelector('[data-invite-seconds]').textContent,
                accept: !d.querySelector('[data-invite-accept]').hidden}}; }})()""")
     assert facts["id"] == invite.invite_id
-    assert "<b>Giulia</b> ti invita a giocare in squadra con te nel 2v2, a 300 punti." in facts["text"]
+    assert "<b>Giulia</b> ti invita a una partita 2v2 tra amici, a 300 punti." in facts["text"]
     assert facts["bold"] is False
     assert re.fullmatch(r"0:5\d|1:00", facts["seconds"])
     assert facts["accept"] is True

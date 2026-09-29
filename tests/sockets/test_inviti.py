@@ -8,7 +8,10 @@ Con il server vero e client simulati:
   accettato mette la coppia in coda;
 - rifiutato, scaduto e annullato avvisano chi ha invitato (invite:update);
 - non si invita chi non è amico, chi è offline o chi è già in partita; un invito alla
-  volta; doppio clic con lo stesso request_id; chi chiude l'ultima scheda annulla.
+  volta nel 1v1; doppio clic con lo stesso request_id; chi chiude l'ultima scheda annulla;
+- 2v2 con più amici (P59): fino a tre amici agli stessi punti; con tre che accettano la
+  partita parte subito senza rating, con due il gruppo entra in coda e il quarto
+  arriva dalla coda, con uno la coppia come prima; "Gioca" annulla gli inviti in attesa.
 """
 
 import threading
@@ -16,17 +19,20 @@ import time
 import uuid
 
 import pytest
+import sqlalchemy as sa
 
 from app.realtime import invites as invites_module
-from app.realtime.events import ok
-from app.realtime.invites import invites
+from app.realtime.events import EventError, ok
+from app.realtime.invites import Invites, invites
 from app.realtime.matchmaking import matchmaker
 from app.realtime.presence import presence
 from app.realtime.room import Player
 from app.realtime.room_manager import create_room, find_room_of_user, rooms
-from app.services import friend_service
+from app.services import auth_service, friend_service
+from config import load_config
 
 WAIT = 5
+PASSWORD = "Password-di-prova-1"  # la stessa di conftest.py
 
 
 class Events:
@@ -59,9 +65,20 @@ def _wait_until(condition, what, timeout=WAIT):
     pytest.fail(f"non è successo: {what}")
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def ids(server):
-    return server["user_ids"]
+    """Gli utenti di conftest.py più "Quarto" (il quarto amico del 2v2, P59), registrato
+    solo se non c'è già (lo usa anche test_matchmaking_2v2.py)."""
+    engine = sa.create_engine(load_config("testing").SQLALCHEMY_DATABASE_URI)
+    try:
+        with engine.connect() as conn:
+            quarto = conn.execute(sa.text("SELECT id FROM utenti WHERE nome_utente = 'Quarto'")).scalar()
+    finally:
+        engine.dispose()
+    if quarto is None:
+        with server["app"].app_context():
+            quarto = auth_service.register("Quarto", "quarto@esempio.it", PASSWORD).id
+    return {**server["user_ids"], "Quarto": quarto}
 
 
 @pytest.fixture
@@ -285,6 +302,154 @@ def test_un_invito_alla_volta(connect, ids, friends):
     assert _invite(primo, ids["Secondo"])["ok"] is True
     answer = _invite(primo, ids["Terzo"])
     assert answer["ok"] is False and answer["error"]["code"] == "busy"
+
+
+def test_un_invito_alla_volta_anche_nel_2v2_verso_il_1v1(connect, ids, friends):
+    friends("Primo", "Secondo")
+    friends("Primo", "Terzo")
+    primo = connect("Primo")
+    connect("Secondo")
+    connect("Terzo")
+    assert _invite(primo, ids["Secondo"], "2v2", 150)["ok"] is True
+    for mode, target in (("1v1", 150), ("2v2", 300)):  # il gruppo ha già modalità e punti
+        answer = _invite(primo, ids["Terzo"], mode, target)
+        assert answer["ok"] is False and answer["error"]["code"] == "busy", (mode, target)
+
+
+# --- 2v2 con più amici (P59) ------------------------------------------------------
+
+
+def _group(connect, ids, friends, names, target_score=300, make_friends=True):
+    """Primo invita `names` nel 2v2 e tutti accettano; restituisce (primo, clients, inviti)."""
+    for name in names if make_friends else ():
+        friends("Primo", name)
+    primo = connect("Primo")
+    clients = {name: connect(name) for name in names}
+    sent = {}
+    for name in names:
+        answer = _invite(primo, ids[name], "2v2", target_score)
+        assert answer["ok"] is True, answer
+        sent[name] = answer["data"]
+    for name in names:
+        assert _call(clients[name], "invite:accept", sent[name]["invite_id"]) == ok()
+    return primo, clients, sent
+
+
+def test_2v2_tre_amici_partita_subito_squadre_a_sorte_senza_rating(connect, ids, friends):
+    names = ("Secondo", "Terzo", "Quarto")
+    primo, clients, sent = _group(connect, ids, friends, names)
+    starts = [Events(c, "game:start") for c in (primo, *clients.values())]
+    updates = Events(primo, "invite:update")
+
+    assert _call(primo, "invite:start", sent["Terzo"]["invite_id"]) == ok()  # vale qualunque invito del gruppo
+    game_ids = {s.wait_for()["game_id"] for s in starts}
+    assert len(game_ids) == 1
+    room = rooms.get(game_ids.pop())
+    assert {p.user_id for p in room.players} == {ids[n] for n in ("Primo", *names)}
+    assert len(room.players) == 4 and room.rated is False and room.game.target_score == 300
+    for invite in sent.values():
+        updates.wait_for(lambda u, i=invite: u == {"invite_id": i["invite_id"], "status": "started"})
+    assert invites.group_of(ids["Primo"]) == []
+
+
+def test_2v2_tre_amici_squadre_diverse_da_una_partita_all_altra(connect, ids, friends):
+    """Le squadre le decide il caso: in 20 partite Primo non ha sempre lo stesso compagno."""
+    names = ("Secondo", "Terzo", "Quarto")
+    for name in names:
+        friends("Primo", name)
+    partners = set()
+    for _ in range(20):
+        primo, clients, sent = _group(connect, ids, friends, names, make_friends=False)
+        start = Events(primo, "game:start")
+        assert _call(primo, "invite:start", sent["Secondo"]["invite_id"]) == ok()
+        room = rooms.get(start.wait_for()["game_id"])
+        seat = room.seat_of(ids["Primo"])
+        partners.add(room.players[(seat + 2) % 4].user_id)
+        room.run(room._stop_timers)
+        rooms.remove(room.id)
+        for client in (primo, *clients.values()):
+            client.disconnect()
+        _wait_until(lambda: presence.count() == 0, "chiusura delle schede")
+        if len(partners) > 1:
+            break
+    assert len(partners) > 1
+
+
+def test_2v2_due_amici_il_gruppo_va_in_coda_e_il_quarto_arriva_dalla_coda(connect, ids, friends):
+    names = ("Secondo", "Terzo")
+    primo, clients, sent = _group(connect, ids, friends, names, target_score=150)
+    queued = {name: Events(clients[name], "queue:status") for name in names}
+    start = Events(primo, "game:start")
+
+    answer = _call(primo, "invite:start", sent["Secondo"]["invite_id"])
+    assert answer["ok"] is True and answer["data"]["mode"] == "2v2"
+    views = {"Primo": answer["data"], **{n: queued[n].wait_for() for n in names}}
+    alone = [n for n, v in views.items() if v["partner"] is None]
+    assert len(alone) == 1 and len(views[alone[0]]["opponents"]) == 2
+    for name in ("Primo", *names):
+        assert ids[name] in matchmaker.queue
+
+    quarto = connect("Quarto")
+    assert quarto.call("queue:join", {"request_id": uuid.uuid4().hex, "mode": "2v2",
+                                      "target_score": 150}, timeout=WAIT)["ok"] is True
+    room = rooms.get(start.wait_for()["game_id"])
+    assert room.rated is True
+    assert room.seat_of(ids["Quarto"]) % 2 == room.seat_of(ids[alone[0]]) % 2
+
+
+def test_2v2_gioca_con_un_solo_accettato_annulla_gli_altri(connect, ids, friends):
+    friends("Primo", "Secondo")
+    friends("Primo", "Terzo")
+    primo, secondo, terzo = connect("Primo"), connect("Secondo"), connect("Terzo")
+    updates_terzo = Events(terzo, "invite:update")
+    first = _invite(primo, ids["Secondo"], "2v2", 500)["data"]
+    second = _invite(primo, ids["Terzo"], "2v2", 500)["data"]
+    assert _call(secondo, "invite:accept", first["invite_id"]) == ok()
+
+    answer = _call(primo, "invite:start", first["invite_id"])
+    assert answer["ok"] is True and answer["data"]["partner"]["user_id"] == ids["Secondo"]
+    assert answer["data"]["opponents"] == []
+    updates_terzo.wait_for(lambda u: u == {"invite_id": second["invite_id"], "status": "cancelled"})
+    assert ids["Terzo"] not in matchmaker.queue
+    assert _call(terzo, "invite:accept", second["invite_id"])["error"]["code"] == "not_found"
+
+
+def test_2v2_gioca_solo_dopo_almeno_un_accettato(connect, ids, friends):
+    friends("Primo", "Secondo")
+    friends("Primo", "Terzo")
+    primo = connect("Primo")
+    connect("Secondo")
+    connect("Terzo")
+    first = _invite(primo, ids["Secondo"], "2v2", 150)["data"]
+    _invite(primo, ids["Terzo"], "2v2", 150)
+    assert _call(primo, "invite:start", first["invite_id"])["error"]["code"] == "not_allowed"
+
+
+def test_2v2_chi_e_nel_gruppo_non_manda_ne_riceve_altri_inviti(connect, ids, friends):
+    friends("Primo", "Secondo")
+    friends("Terzo", "Secondo")
+    friends("Terzo", "Primo")
+    primo, secondo, terzo = connect("Primo"), connect("Secondo"), connect("Terzo")
+    assert _invite(primo, ids["Secondo"], "2v2", 150)["ok"] is True
+    # chi ha ricevuto un invito non ne manda; chi ha già un invito non ne riceve
+    assert _invite(secondo, ids["Terzo"], "2v2", 150)["error"]["code"] == "busy"
+    assert _invite(terzo, ids["Secondo"], "2v2", 150)["error"]["code"] == "busy"
+    assert _invite(terzo, ids["Primo"], "2v2", 150)["error"]["code"] == "busy"
+
+
+def test_2v2_al_massimo_tre_amici():
+    """Il limite del gruppo, con la classe degli inviti da sola (servirebbe un quinto utente)."""
+    group = Invites()
+    me = Player(1, "Io")
+    try:
+        for n in (2, 3, 4):
+            group.send(me, Player(n, f"U{n}"), "2v2", 150)
+        with pytest.raises(EventError) as exc:
+            group.send(me, Player(5, "U5"), "2v2", 150)
+        assert exc.value.code == "busy" and "3 amici" in exc.value.message
+        assert [i.recipient.user_id for i in group.group_of(1)] == [2, 3, 4]
+    finally:
+        group.cancel_all_of(1)
 
 
 def test_doppio_clic_un_solo_invito(connect, ids, friends):

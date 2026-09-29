@@ -91,8 +91,9 @@ def test_forma_dei_dati_finti_usati_dalla_home():
     assert set(home["home:status"]) == {"online_count", "resume"} and home["home:status"]["resume"] is None
     resume = home["home:status con partita in corso"]["resume"]
     assert re.fullmatch(r"/game/[A-Za-z0-9_-]+", resume["url"])
-    for key in ("queue:status", "queue:status 2v2 con un amico"):
-        assert set(home[key]) == {"mode", "target_score", "seconds_waiting", "rating_range", "partner"}, key
+    for key in ("queue:status", "queue:status 2v2 con un amico", "queue:status 2v2 con due amici"):
+        assert set(home[key]) == {"mode", "target_score", "seconds_waiting", "rating_range", "partner",
+                                  "opponents"}, key
     friends = json.loads((DEV / "amici_esempio.json").read_text(encoding="utf-8"))["GET /friends/"]["friends"]
     assert [f for f in friends if f["presence"] == "online"], "serve almeno un amico online da invitare"
     stats = json.loads((DEV / "statistiche_esempio.json").read_text(encoding="utf-8"))

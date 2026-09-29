@@ -204,6 +204,63 @@ def test_la_coppia_rimessa_in_coda_resta_coppia(queue):
     assert queue.status(1)["partner"]["user_id"] == 2 and queue.status(2)["partner"]["user_id"] == 1
 
 
+# --- Gruppo di tre amici (P59): una coppia e il suo avversario ------------------
+
+
+def _group(queue, ratings=(1500, 1500, 1500), target=150):
+    """1 e 2 fanno coppia, 3 gioca contro di loro."""
+    return queue.join_entry((_p(1), _p(2), _p(3)), ratings, "2v2", target, sides=(0, 0, 1))
+
+
+def test_gruppo_di_tre_con_un_singolo_squadre_fisse(queue, clock):
+    _group(queue)
+    _single(queue, clock, 4, 1500)
+    [match] = queue.take_matches()
+    assert _teams(match) == {frozenset({1, 2}), frozenset({3, 4})}
+    assert len(queue) == 0
+
+
+def test_gruppo_di_tre_sempre_diviso_come_deciso(queue, clock):
+    # anche quando squadre diverse sarebbero più bilanciate
+    _group(queue, (1300, 1300, 1700))
+    _single(queue, clock, 4, 1700)
+    clock.now += 500
+    [match] = queue.take_matches()
+    assert _teams(match) == {frozenset({1, 2}), frozenset({3, 4})}
+
+
+def test_gruppo_di_tre_non_gioca_con_una_coppia(queue, clock):
+    _group(queue)
+    queue.join_entry((_p(5), _p(6)), (1500, 1500), "2v2", 150)
+    clock.now += 500
+    assert queue.take_matches() == []
+    _single(queue, clock, 7, 1500)
+    [match] = queue.take_matches()
+    assert set(match.user_ids) == {1, 2, 3, 7}
+    assert 5 in queue and 6 in queue
+
+
+def test_gruppo_di_tre_vede_compagno_e_avversari(queue):
+    statuses = _group(queue)
+    assert statuses[1]["partner"]["user_id"] == 2 and statuses[2]["partner"]["user_id"] == 1
+    assert statuses[1]["opponents"] == [{"user_id": 3, "username": "U3", "avatar": None}]
+    assert statuses[3]["partner"] is None
+    assert [o["user_id"] for o in statuses[3]["opponents"]] == [1, 2]
+    assert queue.status(3) == statuses[3]
+
+
+def test_singolo_e_coppia_senza_avversari_noti(queue):
+    assert queue.join(_p(1), "2v2", 150, 1500)["opponents"] == []
+    statuses = queue.join_entry((_p(2), _p(3)), (1500, 1500), "2v2", 150)
+    assert statuses[2]["opponents"] == [] and statuses[3]["opponents"] == []
+
+
+def test_se_esce_uno_del_gruppo_escono_tutti(queue):
+    _group(queue)
+    entry = queue.leave(3)
+    assert entry.user_ids == (1, 2, 3) and len(queue) == 0
+
+
 # --- Con il server vero --------------------------------------------------------
 
 
@@ -321,6 +378,41 @@ def test_coppia_busy_se_uno_e_gia_in_coda(server, connect, ids):
     with server["app"].app_context(), pytest.raises(Exception) as exc:
         matchmaker.join_pair(server["app"], _user(ids, "Primo"), _user(ids, "Secondo"), 150)
     assert exc.value.code == "busy"
+    assert ids["Primo"] not in matchmaker.queue
+
+
+def test_gruppo_di_tre_con_un_singolo_al_tavolo(server, connect, ids):
+    """P59: il gruppo entra con matchmaker.join_group (come fa invite:start con due
+    amici); la coppia tirata a sorte gioca insieme, il terzo con chi arriva dalla coda."""
+    names = ("Primo", "Secondo", "Terzo")
+    clients = {name: connect(name) for name in names}
+    statuses = {name: Events(clients[name], "queue:status") for name in ("Secondo", "Terzo")}
+    start = Events(clients["Primo"], "game:start")
+    with server["app"].app_context():
+        mine = matchmaker.join_group(server["app"], _user(ids, "Primo"),
+                                     [_user(ids, "Secondo"), _user(ids, "Terzo")], 150)
+    assert all(s.wait() for s in statuses.values()), "il gruppo non ha ricevuto queue:status"
+    views = {"Primo": mine, **{name: s.items[0] for name, s in statuses.items()}}
+    alone = [name for name, v in views.items() if v["partner"] is None]
+    assert len(alone) == 1, views
+    pair = [name for name in names if name not in alone]
+    assert views[pair[0]]["partner"]["user_id"] == ids[pair[1]]
+    assert [o["user_id"] for o in views[pair[0]]["opponents"]] == [ids[alone[0]]]
+    assert {o["user_id"] for o in views[alone[0]]["opponents"]} == {ids[n] for n in pair}
+
+    assert _join(connect("Quarto"))["ok"]
+    assert start.wait(), "game:start non arrivato"
+    room = rooms.get(start.items[0]["game_id"])
+    assert room.rated is True  # dalla coda, come la coppia con un amico (D36)
+    side = {name: room.seat_of(ids[name]) % 2 for name in (*names, "Quarto")}
+    assert side[pair[0]] == side[pair[1]] != side[alone[0]] == side["Quarto"]
+
+
+def test_gruppo_con_utenti_ripetuti_rifiutato(server, ids):
+    with server["app"].app_context(), pytest.raises(Exception) as exc:
+        matchmaker.join_group(server["app"], _user(ids, "Primo"),
+                              [_user(ids, "Secondo"), _user(ids, "Secondo")], 150)
+    assert exc.value.code == "invalid_data"
     assert ids["Primo"] not in matchmaker.queue
 
 

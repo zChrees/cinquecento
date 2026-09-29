@@ -2,7 +2,9 @@
  * Schermata di attesa in coda (P22; DECISIONI.md: "Attesa in coda a tutto
  * schermo", con il tempo trascorso, l'intervallo di rating e "Annulla").
  * Si disegna dallo stato della coda del contratto (4, queue:status):
- * { mode, target_score, seconds_waiting, rating_range: {min, max} | null, partner }.
+ * { mode, target_score, seconds_waiting, rating_range: {min, max} | null, partner,
+ *   opponents }. `opponents` (P59) ha gli avversari già noti: la coppia e il terzo
+ * di un gruppo di tre amici si vedono a vicenda; altrimenti è vuota.
  * La pagina non calcola l'intervallo: lo manda il server (P28), che lo allarga
  * ogni 10 secondi (D16); tra un invio e l'altro la pagina conta solo i secondi,
  * con setQueueSeconds(). Stile in css/components/queue-overlay.css.
@@ -26,7 +28,21 @@ export function formatWait(seconds) {
 
 function titleFor(queue) {
   if (queue.mode === '1v1') return 'Cerco un avversario…';
+  if (queue.opponents?.length) return 'Cerco il quarto giocatore…';   // gruppo di tre amici (P59)
   return queue.partner ? 'Cerco gli avversari…' : 'Cerco compagno e avversari…';
+}
+
+function sectionFor(queue) {
+  if (queue.opponents?.length) return 'Con gli amici';
+  return queue.partner ? 'Con un amico' : 'Partita Veloce';
+}
+
+// "In squadra con Giulia" / "Contro Giulia e Salvo": avatar con l'iniziale e testo
+function playersLine(players, text, data) {
+  return el('p', { class: 'queue-overlay__partner felt-text', data }, [
+    ...players.map((p) => el('span', { class: 'avatar', text: p.username.charAt(0).toUpperCase(), attrs: { 'aria-hidden': 'true' } })),
+    el('span', { text }),
+  ]);
 }
 
 function rangeText(range) {
@@ -42,7 +58,7 @@ function rangeText(range) {
  * @returns {HTMLDialogElement}
  */
 export function QueueOverlay(queue, { imgBase, onCancel }) {
-  const section = queue.partner ? 'Con un amico' : 'Partita Veloce';
+  const section = sectionFor(queue);
   const cancel = el('button', {
     class: 'btn btn--ghost queue-overlay__cancel',
     attrs: { type: 'button' },
@@ -51,10 +67,11 @@ export function QueueOverlay(queue, { imgBase, onCancel }) {
   }, [icon('close'), 'Annulla']);
 
   const partner = queue.partner
-    ? el('p', { class: 'queue-overlay__partner felt-text', data: { queuePartner: queue.partner.user_id } }, [
-      el('span', { class: 'avatar', text: queue.partner.username.charAt(0).toUpperCase(), attrs: { 'aria-hidden': 'true' } }),
-      el('span', { text: `In squadra con ${queue.partner.username}` }),
-    ])
+    ? playersLine([queue.partner], `In squadra con ${queue.partner.username}`, { queuePartner: queue.partner.user_id })
+    : null;
+  const opponents = queue.opponents?.length
+    ? playersLine(queue.opponents, `Contro ${queue.opponents.map((p) => p.username).join(' e ')}`,
+      { queueOpponents: queue.opponents.map((p) => p.user_id).join(' ') })
     : null;
 
   const overlay = el('dialog', {
@@ -74,6 +91,7 @@ export function QueueOverlay(queue, { imgBase, onCancel }) {
       el('p', { class: 'queue-overlay__range felt-text', text: rangeText(queue.rating_range), data: { queueRange: '' } }),
       queue.rating_range ? el('p', { class: 'queue-overlay__hint felt-text', text: "L'intervallo si allarga mentre aspetti." }) : null,
       partner,
+      opponents,
       cancel,
     ]),
   ]);

@@ -3,7 +3,10 @@
 - Una coda per modalità e punteggio (code separate). Ogni utente sta in coda una volta
   sola: un secondo queue:join (un'altra scheda, un request_id nuovo) riceve `busy`.
 - In coda ci sono **voci**: un giocatore singolo, oppure nel 2v2 una **coppia già
-  formata** (l'amico compagno, P47: join_pair), che resta sempre nella stessa squadra.
+  formata** (l'amico compagno, P47: join_pair), che resta sempre nella stessa squadra,
+  oppure un **gruppo di tre amici** (P59: join_group): due tirati a sorte fanno
+  coppia, il terzo gioca contro di loro con un compagno preso dalla coda. Ogni voce
+  sa in che squadra sta ciascuno dei suoi giocatori (`sides`).
 - Intervallo di rating accettato (D16): ±MATCH_RANGE_START, che si allarga di
   MATCH_RANGE_STEP ogni MATCH_RANGE_STEP_SECONDS fino a ±MATCH_RANGE_MAX; dopo
   MATCH_ANY_AFTER_SECONDS va bene qualunque avversario (`rating_range` null). Il rating
@@ -15,8 +18,8 @@
 - 2v2 (D17, scelta di Giuseppe): con quattro singoli le squadre si formano in modo che
   le medie delle due squadre siano il più vicine possibile; una coppia gioca contro due
   singoli o contro un'altra coppia.
-- Se esce uno della coppia (Annulla, ultima scheda chiusa) esce tutta la coppia: lui
-  riceve queue:left "cancelled", il compagno "partner_left".
+- Se esce uno della coppia o del gruppo (Annulla, ultima scheda chiusa) esce tutta la
+  voce: lui riceve queue:left "cancelled", gli altri "partner_left".
 - Il controllo delle code gira in un thread, avviato al primo ingresso con
   l'applicazione Flask: prova gli abbinamenti ogni CHECK_SECONDS e subito dopo ogni
   ingresso, e rimanda queue:status quando l'intervallo si allarga. La partita si crea
@@ -74,7 +77,8 @@ def half_width(stage):
 
 @dataclass
 class Entry:
-    """Una voce della coda: un giocatore, o una coppia (stessa squadra)."""
+    """Una voce della coda: un giocatore, una coppia (stessa squadra) o un gruppo di tre
+    (una coppia e il suo avversario)."""
 
     players: tuple  # Player
     ratings: tuple  # float, uno per giocatore
@@ -82,6 +86,7 @@ class Entry:
     target_score: int
     joined_at: float
     stage: object = 0  # ultimo stadio mandato con queue:status
+    sides: tuple = ()  # squadra di ogni giocatore dentro la voce (0 o 1); vuota = tutti insieme
 
     @property
     def user_ids(self):
@@ -95,8 +100,23 @@ class Entry:
     def size(self):
         return len(self.players)
 
+    @property
+    def team_sides(self):
+        return self.sides or (0,) * len(self.players)
+
+    def _side_of(self, user_id):
+        return next(s for p, s in zip(self.players, self.team_sides, strict=True) if p.user_id == user_id)
+
     def partner_of(self, user_id):
-        return next((p for p in self.players if p.user_id != user_id), None)
+        """Il compagno di squadra già nella voce, o None."""
+        side = self._side_of(user_id)
+        return next((p for p, s in zip(self.players, self.team_sides, strict=True)
+                     if p.user_id != user_id and s == side), None)
+
+    def opponents_of(self, user_id):
+        """Gli avversari già nella voce (gruppo di tre), di solito nessuno."""
+        side = self._side_of(user_id)
+        return [p for p, s in zip(self.players, self.team_sides, strict=True) if s != side]
 
 
 @dataclass(frozen=True)
@@ -114,7 +134,8 @@ class Match:
 
 
 def _balanced_teams(entries):
-    """Le due squadre con le medie più vicine, senza dividere le coppie (D17).
+    """Le due squadre con le medie più vicine, senza dividere le coppie (D17) e con i
+    gruppi di tre come sono (la coppia da una parte, il terzo dall'altra).
     Restituisce (squadre, differenza tra le medie)."""
     size = MODES[entries[0].mode] // 2
     best = None
@@ -123,13 +144,26 @@ def _balanced_teams(entries):
             continue
         teams = ([], [])
         for entry, side in zip(entries, sides, strict=True):
-            teams[side].extend(zip(entry.players, entry.ratings, strict=True))
+            for player, rating, own in zip(entry.players, entry.ratings, entry.team_sides, strict=True):
+                teams[side ^ own].append((player, rating))
         if len(teams[0]) != size or len(teams[1]) != size:
             continue
         gap = abs(sum(r for _, r in teams[0]) - sum(r for _, r in teams[1])) / size
         if best is None or gap < best[1]:
             best = (tuple(tuple(p for p, _ in team) for team in teams), gap)
     return best
+
+
+def _user(player):
+    return {"user_id": player.user_id, "username": player.username, "avatar": player.avatar}
+
+
+def _busy_text(count, where):
+    """Il messaggio di busy per una voce di `count` giocatori già "in coda" o "in partita"."""
+    if count == 1:
+        return "Sei già in coda." if where == "in coda" else "Hai già una partita in corso."
+    who = "Tu o il tuo compagno" if count == 2 else "Tu o uno dei tuoi amici"
+    return f"{who} siete già in coda." if where == "in coda" else f"{who} avete già una partita in corso."
 
 
 class MatchQueue:
@@ -144,14 +178,13 @@ class MatchQueue:
         """Mette in coda un giocatore e restituisce il suo stato (queue:status). Già in coda → busy."""
         return self.join_entry((player,), (rating,), mode, target_score)[player.user_id]
 
-    def join_entry(self, players, ratings, mode, target_score):
-        """Mette in coda un giocatore o una coppia; {user_id: stato} per ognuno."""
+    def join_entry(self, players, ratings, mode, target_score, sides=()):
+        """Mette in coda un giocatore, una coppia o un gruppo; {user_id: stato} per ognuno."""
         with self._lock:
             if any(p.user_id in self._entries for p in players):
-                raise EventError("busy", "Sei già in coda." if len(players) == 1
-                                 else "Tu o il tuo compagno siete già in coda.")
+                raise EventError("busy", _busy_text(len(players), "in coda"))
             now = self._clock()
-            entry = Entry(tuple(players), tuple(ratings), mode, target_score, now, stage_of(0))
+            entry = Entry(tuple(players), tuple(ratings), mode, target_score, now, stage_of(0), tuple(sides))
             for user_id in entry.user_ids:
                 self._entries[user_id] = entry
             return {user_id: self._status(entry, now, user_id) for user_id in entry.user_ids}
@@ -208,9 +241,8 @@ class MatchQueue:
             "target_score": entry.target_score,
             "seconds_waiting": int(waited),
             "rating_range": rating_range,
-            "partner": None if partner is None else {
-                "user_id": partner.user_id, "username": partner.username, "avatar": partner.avatar,
-            },
+            "partner": None if partner is None else _user(partner),
+            "opponents": [_user(p) for p in entry.opponents_of(user_id)],
         }
 
     def _accepts(self, entry, other, now):
@@ -297,27 +329,40 @@ class Matchmaker:
             raise EventError("invalid_data", "Non puoi fare coppia con te stesso.")
         return self._join(app, (user, partner), "2v2", target_score, sid)[user.user_id]
 
-    def _join(self, app, users, mode, target_score, sid):
+    def join_group(self, app, user, friends, target_score, sid=None):
+        """Chi invita e due amici (P59, invite:start con due inviti accettati) entrano
+        nella coda 2v2: due tirati a sorte fanno coppia, il terzo gioca contro di loro
+        con un compagno preso dalla coda. Accetta utenti (User) o Player. Restituisce lo
+        stato della coda di `user`; gli altri lo ricevono con queue:status."""
+        user = Player.of(user)
+        players = [user, *(Player.of(f) for f in friends)]
+        if len(players) != 3 or len({p.user_id for p in players}) != 3:
+            raise EventError("invalid_data", "Il gruppo deve avere tre giocatori diversi.")
+        secrets.SystemRandom().shuffle(players)   # la coppia la decide il caso
+        return self._join(app, players, "2v2", target_score, sid, sides=(0, 0, 1),
+                          requester=user.user_id)[user.user_id]
+
+    def _join(self, app, users, mode, target_score, sid, sides=(), requester=None):
         users = tuple(Player.of(u) for u in users)
+        requester = users[0].user_id if requester is None else requester
         if any(find_room_of_user(u.user_id) is not None for u in users):
-            raise EventError("busy", "Hai già una partita in corso." if len(users) == 1
-                             else "Tu o il tuo compagno avete già una partita in corso.")
+            raise EventError("busy", _busy_text(len(users), "in partita"))
         ratings = []
         for user in users:
             value = rating_repo.get_value(user.user_id, mode)
             ratings.append(RATING_INITIAL if value is None else value)
-        statuses = self.queue.join_entry(users, tuple(ratings), mode, target_score)
+        statuses = self.queue.join_entry(users, tuple(ratings), mode, target_score, sides)
         log.info("In coda %s a %s: utenti %s", mode, target_score, list(statuses))
         for user_id, status in statuses.items():
-            skip = sid if user_id == users[0].user_id else None  # la scheda che ha chiesto riceve la risposta
+            skip = sid if user_id == requester else None  # la scheda che ha chiesto riceve la risposta
             socketio.emit("queue:status", status, to=user_channel(user_id), skip_sid=skip)
         self._start(app)
         self._wake.set()
         return statuses
 
     def leave(self, user_id, reason="cancelled"):
-        """Esce dalla coda (anche da un'altra scheda); con una coppia esce anche il compagno,
-        che riceve "partner_left". True se era in coda."""
+        """Esce dalla coda (anche da un'altra scheda); con una coppia o un gruppo escono
+        anche gli altri, che ricevono "partner_left". True se era in coda."""
         entry = self.queue.leave(user_id)
         if entry is None:
             return False

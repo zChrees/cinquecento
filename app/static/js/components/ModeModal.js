@@ -10,17 +10,19 @@
  *                   onPlay, onInvite, onCancelInvite });
  *
  * Il modal non parla con il server: lo fa la pagina con i callback.
- * - onPlay({ kind, mode, targetScore, invitee }): "Gioca" (la coda è di P28,
- *   gli inviti di P47). Il modal si chiude da solo.
+ * - onPlay({ kind, mode, targetScore, invitees }): "Gioca" (la coda è di P28,
+ *   gli inviti di P47); `invitees` sono gli amici che hanno accettato. Il modal si
+ *   chiude da solo.
  * - onInvite({ friend, mode, targetScore }): "Invita" (contratto 5.3, invite:send).
  *   Il risultato arriva con setInviteStatus(userId, status) (invite:update):
  *   "accepted" attiva "Gioca"; "declined", "expired" e "cancelled" chiudono
- *   l'invito con un avviso e si può invitare un altro amico (D27).
- * - onCancelInvite({ friend }): il modal si chiude con un invito aperto e senza
- *   "Gioca" (contratto 5.3: l'invito diventa "cancelled").
+ *   quell'invito con un avviso e si può invitare un altro amico (D27).
+ * - onCancelInvite({ friend }): il modal si chiude senza "Gioca", una chiamata per
+ *   ogni invito aperto (contratto 5.3: l'invito diventa "cancelled").
  * - setModeModalOnline(online) (P33): senza connessione "Gioca" e "Invita" sono spenti.
- * Un invito alla volta: mentre è aperto gli altri "Invita" e i punti sono fermi,
- * perché l'invito porta già i punti scelti.
+ * Nel 1v1 un invito alla volta; nel 2v2 fino a MAX_INVITES["2v2"] amici (P59), e
+ * "Gioca" si attiva appena uno ha accettato. Mentre c'è un invito aperto i punti
+ * sono fermi, perché gli inviti portano già i punti scelti.
  * Con "riduci movimento" il modal compare e sparisce senza animazione.
  * I testi (nomi degli amici compresi) entrano sempre come testo, mai come HTML.
  */
@@ -50,7 +52,7 @@ const MODE_TEXTS = {
     desc: 'Scegli i punti e invita un amico online: la partita parte appena accetta. Non conta per il rating.',
   },
   'amico-2v2': {
-    desc: "Tu e un amico, seduti uno di fronte all'altro, contro una coppia trovata in coda. Conta per il rating 2v2.",
+    desc: 'Invita fino a tre amici. Con uno siete in squadra, contro una coppia dalla coda; con più amici, squadre a sorte.',
   },
 };
 
@@ -74,14 +76,17 @@ const TARGETS = [
 
 const TIMING = { open: 820, close: 620 };
 
+// Inviti aperti insieme per modalità (contratto 5.3; nel 2v2 P59: con chi invita il tavolo è pieno)
+const MAX_INVITES = { '1v1': 1, '2v2': 3 };
+
 let dialog = null;     // il <dialog>, creato alla prima apertura
 let parts = null;      // le sue parti
-let current = null;    // { kind, mode, tile, handlers, invite, started }
+let current = null;    // { kind, mode, tile, handlers, invites, started }; invites: Map user_id -> { friend, status }
 let busy = false;      // animazione in corso: niente doppi clic
 let lastTip = -1;
 let offline = false;  // P33: senza connessione "Gioca" e "Invita" sono spenti (setModeModalOnline)
 let playReady = false;       // "Gioca" si potrebbe premere (connessione a parte)
-let invitesLocked = false;   // un invito è aperto: gli altri "Invita" sono fermi
+let invitesFull = false;     // inviti aperti al massimo: gli altri "Invita" sono fermi
 
 function reduceMotion() {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -262,44 +267,72 @@ export function setModeModalOnline(online) {
   offline = !online;
   if (!dialog) return;
   parts.play.disabled = !playReady || offline;
-  for (const button of parts.inviteList.querySelectorAll('.invite__btn')) button.disabled = invitesLocked || offline;
+  refreshInviteButtons();
 }
 
-/** Invito aperto: punti e altri "Invita" fermi; senza invito tutto si può di nuovo scegliere. */
-function lockInvites(locked) {
-  invitesLocked = locked;
-  for (const button of parts.inviteList.querySelectorAll('.invite__btn')) button.disabled = locked || offline;
-  for (const input of dialog.querySelectorAll('input[name="target"]')) input.disabled = locked;
+/** "Invita" si preme solo per chi non ha già un invito aperto, finché c'è posto. */
+function refreshInviteButtons() {
+  for (const button of parts.inviteList.querySelectorAll('.invite__btn')) {
+    const invited = Boolean(current?.invites.has(Number(button.dataset.inviteUser)));
+    button.disabled = invited || invitesFull || offline;
+  }
+}
+
+/** Dopo ogni cambio degli inviti aperti: punti fermi se ce n'è uno, "Invita" e "Gioca". */
+function refreshInvites() {
+  const open = current.invites.size;
+  invitesFull = open >= MAX_INVITES[current.mode];
+  refreshInviteButtons();
+  for (const input of dialog.querySelectorAll('input[name="target"]')) input.disabled = open > 0;
+  setPlayReady(acceptedFriends().length > 0);
+}
+
+function acceptedFriends() {
+  return [...current.invites.values()].filter((i) => i.status === 'accepted').map((i) => i.friend);
+}
+
+function inviteButton(userId) {
+  return parts.inviteList.querySelector(`[data-invite-user="${CSS.escape(String(userId))}"]`);
 }
 
 function sendInvite(friend) {
-  if (!current || current.invite || busy) return;
+  if (!current || busy || current.invites.has(friend.user_id) || invitesFull) return;
   if (!navigator.onLine) {
     parts.inviteHint.textContent = 'Sei offline: potrai invitare appena torna la connessione.';
     return;
   }
-  current.invite = { friend, status: 'pending' };
-  lockInvites(true);
-  const button = parts.inviteList.querySelector(`[data-invite-user="${CSS.escape(String(friend.user_id))}"]`);
-  setInviteButton(button, 'pending', friend.username);
+  current.invites.set(friend.user_id, { friend, status: 'pending' });
+  const button = inviteButton(friend.user_id);
+  if (button) setInviteButton(button, 'pending', friend.username);
+  refreshInvites();
   parts.inviteHint.textContent = `Invito inviato a ${friend.username}. Aspettiamo che accetti…`;
   current.handlers.onInvite?.({ friend, mode: current.mode, targetScore: selectedTarget() });
 }
 
+/** Il suggerimento sotto la lista quando un amico accetta (nel 2v2 si può aspettare gli altri). */
+function acceptedHint() {
+  const names = acceptedFriends().map((f) => f.username);
+  const who = names.length === 1 ? `${names[0]} ha accettato` : `${names.join(' e ')} hanno accettato`;
+  const waiting = [...current.invites.values()].some((i) => i.status === 'pending');
+  if (waiting) return `${who}: puoi giocare subito (chi non ha ancora risposto resta fuori) o aspettare gli altri.`;
+  // Quattro amici al tavolo: come il 1v1 tra amici, non conta per il rating (P59)
+  return names.length === 3 ? `${who}: puoi giocare! Tra quattro amici non conta per il rating.` : `${who}: puoi giocare!`;
+}
+
 /**
- * Risultato dell'invito (contratto 5.3, invite:update): "accepted", "declined",
- * "expired" o "cancelled". Gli stati di un invito diverso da quello aperto si ignorano.
+ * Risultato di un invito (contratto 5.3, invite:update): "accepted", "declined",
+ * "expired" o "cancelled". Gli stati di amici senza un invito aperto si ignorano.
  */
 export function setInviteStatus(userId, status) {
-  const invite = current?.invite;
-  if (!invite || invite.friend.user_id !== userId) return;
+  const invite = current?.invites.get(userId);
+  if (!invite) return;
   const { friend } = invite;
-  const button = parts.inviteList.querySelector(`[data-invite-user="${CSS.escape(String(userId))}"]`);
+  const button = inviteButton(userId);
   if (status === 'accepted') {
     invite.status = 'accepted';
-    setInviteButton(button, 'accepted', friend.username);
-    parts.inviteHint.textContent = `${friend.username} ha accettato: puoi giocare!`;
-    setPlayReady(true);
+    if (button) setInviteButton(button, 'accepted', friend.username);
+    refreshInvites();
+    parts.inviteHint.textContent = acceptedHint();
     return;
   }
   const notes = {
@@ -308,10 +341,9 @@ export function setInviteStatus(userId, status) {
     cancelled: `L'invito a ${friend.username} è stato annullato.`,
   };
   if (!notes[status]) return;
-  current.invite = null;
-  setInviteButton(button, 'idle', friend.username);
-  lockInvites(false);
-  setPlayReady(false);
+  current.invites.delete(userId);
+  if (button) setInviteButton(button, 'idle', friend.username);
+  refreshInvites();
   parts.inviteHint.textContent = notes[status];
 }
 
@@ -432,7 +464,7 @@ export function openModeModal({ kind, mode, tile, ratings = null, friends = [], 
   if (!MODE_TEXTS[`${kind}-${mode}`]) return;
   if (!dialog) build();
   if (dialog.open || busy) return;
-  current = { kind, mode, tile, handlers: { onPlay, onInvite, onCancelInvite }, invite: null, started: false };
+  current = { kind, mode, tile, handlers: { onPlay, onInvite, onCancelInvite }, invites: new Map(), started: false };
 
   renderTexts(kind, mode, ratings);
   dialog.dataset.kind = kind;   // per il CSS: con un amico, sui telefoni bassi, meno testi
@@ -442,10 +474,12 @@ export function openModeModal({ kind, mode, tile, ratings = null, friends = [], 
   parts.invite.hidden = !withFriend;
   setPlayReady(!withFriend);   // con un amico: solo dopo che ha accettato
   if (withFriend) {
-    parts.inviteTitle.textContent = mode === '2v2' ? 'Invita il tuo compagno di squadra' : 'Invita un amico da sfidare';
-    parts.inviteHint.textContent = "Potrai giocare quando l'amico avrà accettato.";
+    parts.inviteTitle.textContent = mode === '2v2' ? 'Invita da uno a tre amici' : 'Invita un amico da sfidare';
+    parts.inviteHint.textContent = mode === '2v2'
+      ? 'Potrai giocare appena un amico avrà accettato.'
+      : "Potrai giocare quando l'amico avrà accettato.";
     renderInviteList(friends);
-    lockInvites(false);
+    refreshInvites();
   }
 
   dialog.showModal();
@@ -455,10 +489,10 @@ export function openModeModal({ kind, mode, tile, ratings = null, friends = [], 
 /** Chiude la carta-modal (X, Esc, tocco fuori). Un invito aperto si annulla. */
 export function closeModeModal() {
   if (!dialog?.open || busy) return;
-  const invite = current.invite;
-  if (invite && !current.started) {
-    current.invite = null;
-    current.handlers.onCancelInvite?.({ friend: invite.friend });
+  if (!current.started) {
+    const open = [...current.invites.values()];
+    current.invites.clear();
+    for (const invite of open) current.handlers.onCancelInvite?.({ friend: invite.friend });
   }
   flip(false);
 }
@@ -469,7 +503,7 @@ function onPlayClick() {
     kind: current.kind,
     mode: current.mode,
     targetScore: selectedTarget(),
-    invitee: current.invite?.friend ?? null,
+    invitees: acceptedFriends(),
   };
   setPlayReady(false);   // niente doppio clic
   current.started = true;

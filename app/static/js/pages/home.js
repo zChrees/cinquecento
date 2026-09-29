@@ -19,10 +19,12 @@
  * - Inviti a partita (P47, contratto 5.3): la lista degli amici da invitare viene
  *   da GET /friends/ e si rilegge con friends:presence e friends:changed. "Invita"
  *   manda invite:send; invite:update aggiorna la carta-modal (setInviteStatus);
- *   chiudere la carta con un invito aperto manda invite:cancel; "Gioca" dopo
- *   l'accettazione manda invite:start (1v1: arriva game:start; 2v2: la risposta è
- *   lo stato della coda con il compagno). L'invito ricevuto si apre in una
- *   finestra (components/InviteDialog.js) con "Rifiuta" e "Accetta".
+ *   chiudere la carta con inviti aperti manda invite:cancel per ognuno; "Gioca"
+ *   dopo l'accettazione manda invite:start (1v1: arriva game:start; 2v2: la
+ *   risposta è lo stato della coda con compagno e avversari già noti, oppure con
+ *   tre amici arriva game:start). Nel 2v2 gli inviti aperti possono essere fino a
+ *   tre (P59). L'invito ricevuto si apre in una finestra (components/InviteDialog.js)
+ *   con "Rifiuta" e "Accetta".
  * - Il resto per ora viene dai dati finti di app/static/dev/ (attributi
  *   data-demo-*, solo in sviluppo e nei test): i rating di "In breve", e lo stato
  *   della home e gli amici finché non arrivano quelli veri. Con ?demo=rientro
@@ -140,20 +142,20 @@ function showMessage(text, kind = 'info') {
 // Inviti a partita (P47, contratto 5.3)
 // ------------------------------------------------------------
 
-let outgoing = null;     // invito mandato e aperto: { id, friendId, status }
+const outgoing = new Map();   // inviti mandati e aperti: invite_id -> { friendId, status }
 let incoming = null;     // finestra dell'invito ricevuto (InviteDialog)
 let realFriends = false; // è arrivata la lista vera: i dati finti non la sostituiscono più
-let sending = false;     // invite:send in attesa di risposta
-let cancelAfterSend = false;   // la carta si è chiusa prima della risposta: si annulla appena arriva
+const sending = new Set();         // amici con invite:send in attesa di risposta
+const cancelAfterSend = new Set(); // la carta si è chiusa prima della risposta: si annullano appena arriva
 
 async function sendInvite({ friend, mode, targetScore }) {
-  sending = true;
-  cancelAfterSend = false;
+  sending.add(friend.user_id);
+  cancelAfterSend.delete(friend.user_id);
   const answer = await send(EVENTS.INVITE_SEND, {
     request_id: newRequestId(), user_id: friend.user_id, mode, target_score: targetScore,
   });
-  sending = false;
-  if (answer.ok && cancelAfterSend) {
+  sending.delete(friend.user_id);
+  if (answer.ok && cancelAfterSend.delete(friend.user_id)) {
     send(EVENTS.INVITE_CANCEL, { invite_id: answer.data.invite_id });
     return;
   }
@@ -162,25 +164,29 @@ async function sendInvite({ friend, mode, targetScore }) {
     setInviteStatus(friend.user_id, 'cancelled');   // si può invitare di nuovo
     return;
   }
-  outgoing = { id: answer.data.invite_id, friendId: friend.user_id, status: answer.data.status };
+  outgoing.set(answer.data.invite_id, { friendId: friend.user_id, status: answer.data.status });
 }
 
-function cancelInvite() {
-  if (sending) cancelAfterSend = true;
-  if (!outgoing) return;
-  send(EVENTS.INVITE_CANCEL, { invite_id: outgoing.id });
-  outgoing = null;
+function cancelInvite({ friend }) {
+  if (sending.has(friend.user_id)) cancelAfterSend.add(friend.user_id);
+  for (const [id, invite] of outgoing) {
+    if (invite.friendId !== friend.user_id) continue;
+    send(EVENTS.INVITE_CANCEL, { invite_id: id });
+    outgoing.delete(id);
+  }
 }
 
 async function startInvite() {
-  if (!outgoing || outgoing.status !== 'accepted') return;
-  const answer = await send(EVENTS.INVITE_START, { invite_id: outgoing.id });
+  // Nel 2v2 vale qualunque invito accettato: il server avvia tutto il gruppo (P59)
+  const id = [...outgoing].find(([, invite]) => invite.status === 'accepted')?.[0];
+  if (!id) return;
+  const answer = await send(EVENTS.INVITE_START, { invite_id: id });
   if (!answer.ok) {
     showMessage(answer.error.message, 'error');
     return;
   }
-  outgoing = null;
-  if (answer.data) showQueue(answer.data);   // 2v2: la coppia è in coda; 1v1: arriva game:start
+  outgoing.clear();
+  if (answer.data) showQueue(answer.data);   // 2v2 con uno o due amici: in coda; altrimenti arriva game:start
 }
 
 function onInviteReceived(invite) {
@@ -193,10 +199,11 @@ function onInviteReceived(invite) {
 }
 
 function onInviteUpdate({ invite_id: id, status } = {}) {
-  if (outgoing && outgoing.id === id) {
-    outgoing.status = status;
-    if (status !== 'started') setInviteStatus(outgoing.friendId, status);
-    if (status !== 'pending' && status !== 'accepted') outgoing = null;
+  const mine = outgoing.get(id);
+  if (mine) {
+    mine.status = status;
+    if (status !== 'started') setInviteStatus(mine.friendId, status);
+    if (status !== 'pending' && status !== 'accepted') outgoing.delete(id);
   }
   if (incoming && incoming.inviteId === id) {
     incoming.setStatus(status);
@@ -264,7 +271,8 @@ function closeQueue() {
 
 function onQueueLeft({ reason } = {}) {
   if (reason === 'partner_left' && state.queue) {
-    showMessage('Il tuo compagno è uscito dalla coda.', 'info');
+    const group = state.queue.opponents?.length > 0;   // gruppo di tre amici (P59)
+    showMessage(group ? 'Un amico del tuo gruppo è uscito dalla coda.' : 'Il tuo compagno è uscito dalla coda.', 'info');
   }
   closeQueue();
 }
@@ -287,15 +295,14 @@ function showStatus(status) {
 // ------------------------------------------------------------
 
 let wasOnline = false;       // la pagina è già stata collegata
-let staleInvite = null;      // invito mandato rimasto aperto mentre mancava la connessione
+const staleInvites = [];     // inviti mandati rimasti aperti mentre mancava la connessione
 
 function onConnection(now) {
   const online = now === 'connected';
   setModeModalOnline(online);
   incoming?.setOnline(online);
   if (online) {
-    if (staleInvite) send(EVENTS.INVITE_CANCEL, { invite_id: staleInvite });
-    staleInvite = null;
+    for (const id of staleInvites.splice(0)) send(EVENTS.INVITE_CANCEL, { invite_id: id });
     if (wasOnline) loadFriends();   // presenze cambiate mentre si era scollegati
     wasOnline = true;
     return;
@@ -304,11 +311,11 @@ function onConnection(now) {
   // Chi resta senza schede esce dalla coda (DECISIONI.md, P28): se si è ancora in coda
   // (un'altra scheda aperta) al ritorno arriva queue:status e la schermata si riapre
   if (realQueue && state.queue) closeQueue();
-  if (outgoing) {
-    staleInvite = outgoing.id;
-    setInviteStatus(outgoing.friendId, 'cancelled');
-    outgoing = null;
+  for (const [id, invite] of outgoing) {
+    staleInvites.push(id);
+    setInviteStatus(invite.friendId, 'cancelled');
   }
+  outgoing.clear();
 }
 
 function goToTable({ url } = {}) {
