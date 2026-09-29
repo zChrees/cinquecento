@@ -223,6 +223,47 @@
   gap: 6px;
 }
 
+/*
+ * Riga sopra la mano (P71): la briscola a sinistra, tu al centro, il pulsante delle
+ * frasi a destra, larga quanto la mano. L'elenco delle frasi si apre da qui verso
+ * l'alto (table-phrases.css).
+ */
+.table__me {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  justify-self: stretch;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.table__me > .seat {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.trump-badge {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
+  display: inline-grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: var(--shadow-2);
+}
+
+.trump-badge img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
 .seat--bottom {
   flex-direction: row;
   gap: 10px;

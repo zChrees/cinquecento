@@ -1,8 +1,8 @@
 /**
  * Presa in corso al centro del tavolo (P21): ogni carta sta dal lato di chi l'ha
  * giocata (in basso la tua, poi destra, in alto e sinistra, come i posti).
- * Accanto, il mazzo coperto con le carte rimaste e la briscola (oppure "Carte
- * franche" finché nessuno ha cantato 40). Stile in css/components/trick.css.
+ * Accanto, il mazzo coperto con le carte rimaste e sopra il seme della briscola
+ * (P71). Stile in css/components/trick.css.
  * P57: LastTrick, la presa appena chiusa, per un momento.
  */
 
@@ -54,25 +54,22 @@ export function LastTrick(lastTrick, positionOf, winnerText) {
 }
 
 /**
- * Mazzo e briscola.
+ * Mazzo coperto con le carte rimaste e, al centro sopra il mazzo, il seme della
+ * briscola (P71): niente nome del seme (lo leggono solo i lettori di schermo) e
+ * niente scritta prima del canto del 40. A mazzo finito non c'è niente: la briscola
+ * resta nel segno accanto alla mano (Table.js).
  * @param {number} deckCount carte rimaste nel mazzo
- * @param {string|null} trump seme di briscola, null = carte franche
+ * @param {string|null} trump seme di briscola, null finché nessuno ha cantato 40
+ * @returns {HTMLElement|null}
  */
 export function DeckAndTrump(deckCount, trump) {
-  const deck = deckCount > 0
-    ? el('div', { class: 'deck', data: { deckCount }, attrs: { 'aria-label': `Mazzo: ${deckCount} carte` } }, [
-      CardBack(),
-      el('span', { class: 'deck__count', text: deckCount, attrs: { 'aria-hidden': 'true' } }),
-    ])
-    : el('p', { class: 'deck deck--empty', data: { deckCount: 0 }, text: 'Mazzo finito' });
-
-  const trumpInfo = trump
-    ? el('div', { class: `trump trump--${trump}`, data: { trump } }, [
-      el('img', { class: 'trump__suit', attrs: { src: `${IMG_BASE}asso-${trump}-figura.webp`, alt: '' } }),
-      el('span', { class: 'trump__text' }, [el('small', { text: 'Briscola' }), ` ${trump}`]),
-    ])
-    : el('div', { class: 'trump trump--none', data: { trump: '' } }, [
-      el('span', { class: 'trump__text', text: 'Carte franche' }),
-    ]);
-  return el('div', { class: 'deck-trump' }, [deck, trumpInfo]);
+  if (deckCount <= 0) return null;
+  const label = trump ? `Mazzo: ${deckCount} carte. Briscola: ${trump}` : `Mazzo: ${deckCount} carte`;
+  return el('div', { class: 'deck', data: { deckCount }, attrs: { role: 'img', 'aria-label': label } }, [
+    CardBack(),
+    trump
+      ? el('img', { class: 'deck__trump', data: { trump }, attrs: { src: `${IMG_BASE}asso-${trump}-figura.webp`, alt: '' } })
+      : null,
+    el('span', { class: 'deck__count', text: deckCount, attrs: { 'aria-hidden': 'true' } }),
+  ]);
 }

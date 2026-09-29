@@ -5,7 +5,7 @@
  */
 
 .table__center {
-  --trick-card: 48px;
+  --trick-card: 60px;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -100,21 +100,31 @@
   to { opacity: 0; translate: var(--away-x) var(--away-y); }
 }
 
-/* Mazzo coperto con le carte rimaste, e sotto la briscola */
-.deck-trump {
-  display: grid;
-  justify-items: center;
-  gap: 6px;
-  color: var(--on-navbar);
-  text-shadow: var(--relief-text);
-}
-
+/*
+ * Mazzo coperto con le carte rimaste e, al centro sopra il mazzo, il seme della
+ * briscola (P71). Sul telefono, nel 1v1, il mazzo sta sul bordo destro del tavolo.
+ */
 .deck {
   position: relative;
+  flex: none;
 }
 
 .deck .card {
-  --card-w: 40px;
+  --card-w: 56px;
+}
+
+.deck__trump {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 62%;
+  aspect-ratio: 1;
+  padding: 4px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: var(--shadow-2);
+  object-fit: contain;
+  translate: -50% -50%;
 }
 
 .deck__count {
@@ -133,38 +143,30 @@
   text-shadow: none;
 }
 
-.deck--empty {
-  font-size: 0.8rem;
-  font-weight: 700;
-}
+/*
+ * Telefono: la presa resta al centro e il mazzo va a destra. Nel 1v1 sul bordo
+ * destro, a metà del tavolo; nel 2v2 nell'angolo in alto a destra, libero accanto
+ * al compagno (a metà c'è il giocatore di destra).
+ */
+@media (max-width: 639px) {
+  .table__board--1v1 .table__center {
+    position: relative;
+    align-self: stretch;
+    justify-self: stretch;
+  }
 
-.trump {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
+  .table__board--1v1 .deck {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    translate: 0 -50%;
+  }
 
-.trump__suit {
-  width: 28px;
-  height: 28px;
-  object-fit: contain;
-  filter: drop-shadow(0 1px 2px var(--halo));
-}
-
-.trump__text {
-  display: grid;
-  font-family: var(--font-title);
-  font-weight: 700;
-  line-height: 1.1;
-}
-
-.trump__text small {
-  font-family: var(--font-text);
-  font-size: 0.7rem;
-}
-
-.trump--none .trump__text {
-  font-size: 0.85rem;
+  .table__board--2v2 .deck {
+    position: absolute;
+    top: 0;
+    right: 8px;
+  }
 }
 
 /* Tablet e computer: carte della presa più grandi, ma più piccole sugli schermi bassi */
@@ -175,7 +177,7 @@
   }
 
   .deck .card {
-    --card-w: 52px;
+    --card-w: 60px;
   }
 }
 

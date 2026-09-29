@@ -209,7 +209,9 @@ def test_tavolo_1v1_nel_browser(server, tmp_path):
     # Presa, mazzo, briscola, turno
     assert page.having("data-trick")[0]["attrs"]["data-count"] == str(len(view["trick"]["cards"]))
     assert page.having("data-deck-count")[0]["attrs"]["data-deck-count"] == str(view["deck_count"])
+    # P71: il seme della briscola sopra il mazzo e sopra la mano
     assert page.having("data-trump")[0]["attrs"]["data-trump"] == view["trump"]
+    assert page.having("data-trump-badge")[0]["attrs"]["data-trump-badge"] == view["trump"]
     turn = page.having("data-turn", "yes")
     assert len(turn) == 1 and turn[0]["attrs"]["data-seat"] == str(view["turn"]["seat"])
     assert len(page.having("data-timer")) == 1
@@ -230,10 +232,14 @@ def test_tavolo_2v2_nel_browser(server, tmp_path):
     assert all("disabled" in b["attrs"] for b in buttons)
     assert not page.having("data-sing-button")
 
-    # Carte franche, turno di Rosalia (scollegata)
-    assert page.having("data-trump")[0]["attrs"]["data-trump"] == ""
+    # Nessuno ha cantato 40: niente seme né scritta al posto della briscola (P71);
+    # turno di Rosalia (scollegata)
+    assert not page.having("data-trump") and not page.having("data-trump-badge")
     turn = page.having("data-turn", "yes")
     assert len(turn) == 1 and turn[0]["attrs"]["data-seat"] == "3"
     assert "scollegato · 48 s" in turn[0]["text"]
     partner = next(e for e in page.having("data-seat", "2") if e["tag"] == "section")
     assert "compagno" in partner["text"]
+    # P71: niente più "mazziere" né "Carte franche"
+    table = page.having("data-mode", "2v2")[0]["text"]
+    assert "mazziere" not in table and "Carte franche" not in table

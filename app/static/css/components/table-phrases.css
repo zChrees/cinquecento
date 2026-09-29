@@ -1,11 +1,14 @@
 /*
- * Frasi del tavolo (P56), create da js/components/TablePhrases.js: il pulsante in
- * alto a destra, l'elenco sotto il pulsante e il fumetto accanto all'avatar di chi
- * ha parlato (a destra per chi sta in alto; sopra per te e per chi sta ai lati, così
- * non tocca il tuo nome, la tua mano e le carte del canto di P57).
+ * Frasi del tavolo (P56), create da js/components/TablePhrases.js: il pulsante sopra
+ * la mano a destra (P71, nella riga .table__me di table.css), l'elenco che si apre
+ * verso l'alto e il fumetto accanto all'avatar di chi ha parlato (a destra per chi
+ * sta in alto; sopra per te e per chi sta ai lati, così non tocca il tuo nome, la
+ * tua mano e le carte del canto di P57).
  */
 
 .phrases-button {
+  grid-column: 3;
+  grid-row: 1;
   justify-self: end;
 }
 
@@ -14,12 +17,17 @@
   display: none;
 }
 
-/* L'elenco: sotto il pulsante, sopra tutto il resto del tavolo */
+/*
+ * L'elenco: sopra il pulsante, verso l'alto, sopra tutto il resto del tavolo ma mai
+ * sopra la mano; se lo schermo è basso l'elenco scorre al suo interno.
+ */
 .phrases-menu {
   position: absolute;
-  top: 52px;
+  bottom: calc(100% + 8px);
   right: 0;
   z-index: 20;
+  overflow-y: auto;
+  max-height: 60dvh;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
@@ -131,7 +139,7 @@
 }
 
 @keyframes phrases-in {
-  from { opacity: 0; transform: translateY(-6px); }
+  from { opacity: 0; transform: translateY(6px); }
 }
 
 @keyframes phrase-pop {
@@ -141,9 +149,5 @@
 @media (min-width: 640px) {
   .phrases-button__text {
     display: inline;
-  }
-
-  .phrases-menu {
-    top: 56px;
   }
 }

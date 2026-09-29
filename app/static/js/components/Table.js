@@ -8,7 +8,8 @@
  *   [Esci]        Punteggio
  *              (giocatore in alto)
  *   (sinistra)  presa · mazzo  (destra)
- *   (tu) pulsanti Canta · la tua mano
+ *   [briscola]     (tu)      [Frasi]
+ *   pulsanti Canta · la tua mano
  *
  * La pagina non calcola regole: le carte giocabili sono legal.play e i canti
  * legal.sing (entrambi vuoti quando non è il tuo turno).
@@ -16,8 +17,10 @@
  * I momenti del tavolo (P57) arrivano in `moments`, già decisi da pages/game.js,
  * che sa quando cominciano e quando finiscono: la presa appena chiusa, il
  * riepilogo di fine mano e le carte del canto (D15). Qui si disegnano soltanto.
- * Allo stesso modo le frasi del tavolo (P56) arrivano in `phrases`: pulsante in
- * alto a destra, elenco sotto il pulsante e fumetti accanto a chi ha parlato.
+ * Allo stesso modo le frasi del tavolo (P56) arrivano in `phrases`: pulsante sopra
+ * la mano a destra (P71), elenco che si apre verso l'alto e fumetti accanto a chi
+ * ha parlato. Sopra la mano a sinistra il seme della briscola (P71), che resta anche
+ * a mazzo finito, quando sparisce il seme sopra il mazzo.
  * Stile in css/components/table.css, trick.css, hand-summary.css e css/pages/game.css.
  */
 
@@ -82,7 +85,6 @@ function Seat(view, player, position, sang = null, phrase = null) {
 
   const notes = [];
   if (partner) notes.push('compagno');
-  if (player.seat === view.dealer_seat) notes.push('mazziere');
   if (!player.connected) {
     const left = player.reconnect_seconds_left;
     notes.push(left === null ? 'scollegato' : `scollegato · ${Math.ceil(left)} s`);
@@ -133,6 +135,16 @@ function Result(view) {
   ]);
 }
 
+/** Il seme della briscola sopra la mano, a sinistra (P71); niente prima del canto del 40. */
+function TrumpBadge(trump) {
+  if (!trump) return null;
+  return el('span', {
+    class: 'trump-badge',
+    data: { trumpBadge: trump },
+    attrs: { role: 'img', 'aria-label': `Briscola: ${trump}`, title: `Briscola: ${trump}` },
+  }, [el('img', { attrs: { src: `${IMG_BASE}asso-${trump}-figura.webp`, alt: '' } })]);
+}
+
 /** "Prendi tu", "Prende Turi". */
 function winnerText(view, seat) {
   if (seat === view.you.seat) return 'Prendi tu';
@@ -175,9 +187,7 @@ export function Table(view, { onPlay, onSing, onLeave }, status = '', moments = 
       on: { click: onLeave },
     }, [icon('logout'), 'Esci']),
     Scoreboard(view),
-    phrases ? PhrasesButton(phrases) : null,
   ]);
-  const menu = phrases && phrases.open ? PhrasesMenu(phrases.list, phrases) : null;
 
   const board = el('div', { class: `table__board table__board--${view.mode}` }, [
     ...others.map((player) =>
@@ -191,8 +201,15 @@ export function Table(view, { onPlay, onSing, onLeave }, status = '', moments = 
     summary ? HandSummary(view, summary, { onClose: onCloseSummary }) : null,
   ]);
 
-  const mine = el('div', { class: 'table__mine' }, [
+  // Sopra la mano: la briscola a sinistra, tu al centro, le frasi a destra (P71)
+  const meRow = el('div', { class: 'table__me' }, [
+    TrumpBadge(view.trump),
     Seat(view, me, 'bottom', sang[me.seat], bubbles[me.seat]),
+    phrases ? PhrasesButton(phrases) : null,
+    phrases && phrases.open ? PhrasesMenu(phrases.list, phrases) : null,
+  ]);
+  const mine = el('div', { class: 'table__mine' }, [
+    meRow,
     SingButtons(view.legal.sing, view.sings, onSing),
     Hand(view.hand, { playable: view.legal.play, onPlay }),
     el('p', { class: 'table__status', text: status, data: { tableStatus: '' }, attrs: { role: 'status', 'aria-live': 'polite' } }),
@@ -203,5 +220,5 @@ export function Table(view, { onPlay, onSing, onLeave }, status = '', moments = 
   return el('div', {
     class: 'table__inner',
     data: { mode: view.mode, version: view.version, status: view.status },
-  }, [topbar, board, mine, result, menu]);
+  }, [topbar, board, mine, result]);
 }

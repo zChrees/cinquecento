@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P71 — Grafica del tavolo (29/09/2026)
+
+- **Branch**: fix/p71-grafica-tavolo
+- **File**: creato `tests/api/test_grafica_tavolo.py`; modificati `app/static/js/components/Trick.js`, `Table.js`, `app/static/css/components/trick.css`, `table.css`, `table-phrases.css`, `tests/api/test_pagina_tavolo.py`
+- **Controlli**: suite `api` 274 PASS (6 nuovi), suite `frontend` 125 PASS, `ruff check` pulito; tutte le suite non lanciate (le lancia Christian quando lo chiede)
+- **Fatto**: (1) via "Carte franche": prima del 40 accanto al mazzo non c'è niente; (2) il seme della briscola (la figura dell'Asso) sta al centro sopra il mazzo, senza nome (resta nell'etichetta per i lettori di schermo); a mazzo finito spariscono mazzo, seme e la scritta "Mazzo finito"; (3) sopra la mano, a sinistra, un tondo con il seme della briscola (dal 40 a fine mano, anche a mazzo finito; marcatore `data-trump-badge`); (4) via "mazziere"; (5) il pulsante delle frasi è sopra la mano a destra (riga `.table__me`: briscola, tu, frasi) e l'elenco si apre verso l'alto senza coprire la mano; (6) al telefono carte della presa da 48 a 60 px e mazzo da 40 a 56 px; il mazzo nel 1v1 sta sul bordo destro a metà tavolo, nel 2v2 nell'angolo in alto a destra (a metà c'è il giocatore di destra). Su tablet e computer la presa resta com'era e il mazzo passa da 52 a 60 px
+- **Decisioni prese**: segno della briscola accanto alla mano = tondo con il seme a sinistra sopra la mano (scelta di Christian); mazzo del 2v2 al telefono nell'angolo in alto a destra (scelta di Claude: a metà a destra c'è il giocatore di destra); sul computer la presa non si ingrandisce (la richiesta era per il telefono, e più grande coprirebbe l'avversario sui portatili bassi) (da registrare in `DECISIONI.md`, Interfaccia)
+- **Contratto di P59** (richiesta di Giuseppe): **ok di Christian** al campo `opponents` di `queue:status` e al nuovo 5.3 (2v2 con più amici); con l'ok di Giuseppe il cambiamento vale (regola del 29/09/2026)
+- **Domande nuove**: nessuna
+- **Punti delicati**: (a) **difetto già presente prima di P71**, trovato con il test nuovo: sui portatili bassi, nel 1v1, la presa entra nel posto dell'avversario (17 px a 1280×720, 33 px a 1366×657; misurato anche sul codice di prima [T]): da sistemare in **P34**; il test lo salta solo per 1280×720, con un commento; (b) il test nuovo sta nella suite `api` (come `test_pagina_tavolo.py` e `test_pagina_home.py`, che usano già il browser): nella suite `frontend` superava il limite di 120 s del runner (116 s senza, in questo giro); Giuseppe nel frattempo ha portato il limite a 240 s; (c) il commento in cima a `TablePhrases.js` dice ancora "pulsante in alto a destra": non l'ho toccato perché fuori dall'elenco del punto
+- **Cosa devono fare gli altri**: niente
+
 ### P69 — Tocchi e clic al tavolo (29/09/2026)
 
 - **Branch**: fix/p69-tocchi-tavolo
