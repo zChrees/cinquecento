@@ -27,16 +27,22 @@
  *   data-demo-*, solo in sviluppo e nei test): i rating di "In breve", e lo stato
  *   della home e gli amici finché non arrivano quelli veri. Con ?demo=rientro
  *   l'avviso di rientro resta quello finto (si prova senza una partita vera).
+ * - Connessione (P33): l'avviso in cima alla pagina lo mostra core/socket.js. Senza
+ *   connessione "Gioca", "Invita" e i pulsanti dell'invito ricevuto sono spenti; la
+ *   schermata di coda si chiude e un invito mandato si considera annullato (il server
+ *   toglie dalla coda e annulla gli inviti di chi chiude tutte le schede). Al ritorno:
+ *   home:status e, se si è ancora in coda, queue:status arrivano da soli; l'invito
+ *   rimasto aperto si annulla con invite:cancel; la lista degli amici si rilegge.
  * - Carte-pulsante: senza login aprono "Accedi o registrati" (P40); con il login
  *   la carta-modal della modalità (components/ModeModal.js).
  */
 
 import { initLayout, isLoggedIn } from '../core/layout.js';
-import { connect, on, send } from '../core/socket.js';
+import { connect, isConnected, on, onStatus, send } from '../core/socket.js';
 import { EVENTS } from '../core/events.js';
 import { openLoginPrompt } from '../components/LoginPrompt.js';
 import { initCardBackground } from '../components/CardBackground.js';
-import { openModeModal, setInviteStatus } from '../components/ModeModal.js';
+import { openModeModal, setInviteStatus, setModeModalOnline } from '../components/ModeModal.js';
 import { openInviteDialog } from '../components/InviteDialog.js';
 import { QueueOverlay, enableQueueCancel, setQueueSeconds } from '../components/QueueOverlay.js';
 import { ResumeBanner } from '../components/ResumeBanner.js';
@@ -183,7 +189,7 @@ function onInviteReceived(invite) {
   incoming = openInviteDialog(invite, {
     onAccept: () => send(EVENTS.INVITE_ACCEPT, { invite_id: invite.invite_id }),
     onDecline: () => send(EVENTS.INVITE_DECLINE, { invite_id: invite.invite_id }),
-  });
+  }, isConnected());
 }
 
 function onInviteUpdate({ invite_id: id, status } = {}) {
@@ -274,6 +280,35 @@ function showStatus(status) {
   realStatus = true;
   state.status = status;
   render(state);
+}
+
+// ------------------------------------------------------------
+// Connessione (P33)
+// ------------------------------------------------------------
+
+let wasOnline = false;       // la pagina è già stata collegata
+let staleInvite = null;      // invito mandato rimasto aperto mentre mancava la connessione
+
+function onConnection(now) {
+  const online = now === 'connected';
+  setModeModalOnline(online);
+  incoming?.setOnline(online);
+  if (online) {
+    if (staleInvite) send(EVENTS.INVITE_CANCEL, { invite_id: staleInvite });
+    staleInvite = null;
+    if (wasOnline) loadFriends();   // presenze cambiate mentre si era scollegati
+    wasOnline = true;
+    return;
+  }
+  if (!wasOnline) return;
+  // Chi resta senza schede esce dalla coda (DECISIONI.md, P28): se si è ancora in coda
+  // (un'altra scheda aperta) al ritorno arriva queue:status e la schermata si riapre
+  if (realQueue && state.queue) closeQueue();
+  if (outgoing) {
+    staleInvite = outgoing.id;
+    setInviteStatus(outgoing.friendId, 'cancelled');
+    outgoing = null;
+  }
 }
 
 function goToTable({ url } = {}) {
@@ -389,6 +424,7 @@ if (isLoggedIn()) {
   on(EVENTS.INVITE_UPDATE, onInviteUpdate);
   on(EVENTS.FRIENDS_PRESENCE, loadFriends);
   on(EVENTS.FRIENDS_CHANGED, loadFriends);
+  onStatus(onConnection);
   connect();
   loadFriends();
 }

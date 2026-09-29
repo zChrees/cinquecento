@@ -22,6 +22,27 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P33 — Errori e connessione nell'interfaccia (29/09/2026)
+
+- **Branch**: feature/p33-connessione
+- **File** (lista definitiva per 9.2, confermata da me prima di cominciare; Giuseppe non stava lavorando a P59): creati `app/static/js/components/Banner.js`, `app/static/css/components/banner.css`, `tests/frontend/test_niente_alert.py` e, in più, `tests/frontend/test_banner_connessione.py`; modificati `app/static/js/core/socket.js`, `app/templates/base.html` (il CSS dell'avviso), `pages/game.js`, `pages/home.js`, `components/ModeModal.js`, `components/InviteDialog.js` (non era tra i probabili: i pulsanti dell'invito ricevuto), `components/FriendsPanel.js`, `components/ChatWindow.js`, `tests/frontend/test_base.py` (12 CSS in `base.html`, non più 11), questo file
+- **Cosa cambia**:
+  - **avviso in cima alla pagina** (sotto la navbar, sopra le finestre aperte grazie al *popover*), in ogni pagina che usa il tempo reale; lo decide `socket.js` dallo stato della connessione: "Connessione persa: riprovo a collegarmi…" mentre Socket.IO riprova (sparisce da solo al ritorno); "Sei stato scollegato (per esempio sei uscito da un'altra scheda): ricarica la pagina." con **Ricarica**, quando il server chiude e non si riprova (P32); "Non sei più collegato al tuo account: ricarica la pagina." se il login non vale più; al **primo collegamento** "Collegamento al server in corso…" solo dopo 3 secondi (così non lampeggia a ogni apertura). Lasciando la pagina (tavolo, "Esci") l'avviso non compare;
+  - **pulsanti spenti senza connessione**, solo quelli del tempo reale: al tavolo carte, "Canta" e frasi; nella home "Gioca", "Invita" e "Accetta"/"Rifiuta" dell'invito ricevuto; nella chat "Invia". Quelli che usano HTTP (richieste di amicizia, statistiche, "Esci") restano attivi. I componenti continuano a non parlare con il server: la pagina li avvisa con `setModeModalOnline(online)`, `invite.setOnline(online)`, `setChatOnline(chat, online)`;
+  - **al ritorno la pagina si aggiorna da sola**: il tavolo con `game:join` (c'era già); la home riceve `home:status` e, se si è ancora in coda, `queue:status`, e rilegge gli amici; il pannello amici rilegge la lista e la chat aperta riceve i messaggi arrivati nel frattempo;
+  - al tavolo la riga di stato non scrive più "Connessione persa…": lo dice l'avviso.
+- **Controlli**: **1320 PASS** in 8 suite (7 nuovi), `ruff check .` pulito, giro completo in 290 s. Test nuovi: `test_niente_alert.py` (3: niente `alert`/`confirm`/`prompt` nel JS, tranne `js/vendor/`, e nei template, senza contare i commenti; l'espressione stessa è provata) e `test_banner_connessione.py` (4, nel browser con il server e il database dei test: connessione persa e tornata nella home con la carta-modal aperta, chat con "Invia" spento e il messaggio arrivato nel frattempo, scollegamento deciso dal server con "Ricarica", primo collegamento lento). Con il codice di prima i 4 test nel browser falliscono [T]. **Non provati nel browser** [L]: carte e canti spenti al tavolo (serve una partita vera: la prova `?demo=` non si collega) e i pulsanti dell'invito ricevuto
+- **Decisioni prese** (mie, 29/09/2026, sulla proposta di Claude; **chi è di turno le registra** in `DECISIONI.md`, Interfaccia):
+  1. un solo avviso comune in cima alla pagina per la connessione, con i testi qui sopra; al primo collegamento solo dopo 3 secondi;
+  2. senza connessione si spengono solo i pulsanti del tempo reale; quelli HTTP restano attivi;
+  3. **quando la connessione cade la schermata di coda si chiude e un invito mandato si considera annullato**: il server fa uscire dalla coda e annulla gli inviti di chi chiude tutte le schede (P28, P47), e al ritorno non manda niente per dirlo; se si è ancora in coda (un'altra scheda aperta) `queue:status` al ritorno riapre la schermata. L'invito rimasto aperto sul server si annulla al ritorno con `invite:cancel`
+- **Domande nuove**: nessuna
+- **Punti delicati**:
+  - `socket.js` ora importa `components/Banner.js` (come `core/layout.js` importa i pannelli): ogni pagina che chiama `connect()`, `on()` o `send()` ha l'avviso; il pannello amici si collega in ogni pagina con la navbar e il login, quindi l'avviso c'è anche nelle impostazioni;
+  - un componente nuovo con pulsanti del tempo reale deve spegnerli senza connessione: la pagina lo avvisa con `onStatus` di `socket.js` (vedi home e pannello amici);
+  - nei test la connessione "cade" bloccando nel browser le richieste a `/socket.io/` e chiudendo il collegamento dal server (`socketio.server.eio.disconnect`): così la pagina riprova da sola come dopo un calo di rete; `disconnect_user` invece è lo scollegamento deciso (niente nuovi tentativi)
+- **Cosa devono fare gli altri**: **Giuseppe**: P33 tocca `home.js` e `ModeModal.js`, che P59 può toccare: fai il pull prima di cominciare P59; se aggiungi pulsanti del tempo reale (per esempio la scelta di più amici), spegnili con `setModeModalOnline`. **Chi è di turno sui documenti**: spuntare P33, lista definitiva in 9.2, le tre decisioni in `DECISIONI.md`, i punti delicati in `CLAUDE.md`
+
 ### P58 (pagina) — Ultima presa della mano al tavolo, e due test instabili (29/09/2026)
 
 - **Branch**: feature/p58-ultima-presa-pagina

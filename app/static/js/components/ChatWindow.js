@@ -7,6 +7,7 @@
  *                             onSend, onLoadMore, onBack, onClose });
  *   appendMessage(chat, message, meId);
  *   disableWriting(chat, 'Bloccato: non potete più scrivervi.');
+ *   setChatOnline(chat, false);   // P33: senza connessione "Invia" è spento
  *
  * I messaggi hanno la forma del contratto (5.4): { id, from_user_id, to_user_id,
  * text, sent_at }. Il testo entra SEMPRE come testo (textContent), mai come HTML,
@@ -62,6 +63,13 @@ export function disableWriting(chat, text) {
     chat.querySelector('[data-chat-messages]').before(notice);
   }
   notice.textContent = text;
+}
+
+/** P33: senza connessione "Invia" è spento; al ritorno si riaccende, se si può ancora scrivere. */
+export function setChatOnline(chat, online) {
+  chat.toggleAttribute('data-offline', !online);
+  const input = chat.querySelector('#chat-input');
+  chat.querySelector('[data-chat-form] button[type="submit"]').disabled = !online || input.disabled;
 }
 
 /**
@@ -165,7 +173,7 @@ export function ChatWindow({
       }
     } finally {
       if (!input.disabled) {
-        send.disabled = false;
+        send.disabled = chat.hasAttribute('data-offline');
         input.focus();
       }
     }

@@ -101,14 +101,14 @@ def test_risorse_esterne_solo_da_google_fonts(home):
 
 def test_i_css_della_base_esistono(app, home):
     client = app.test_client()
-    # base.html carica 11 CSS: 7 di P19, navbar.css e stats-panel.css (P40),
-    # friends-panel.css e chat.css (P46); la home ne aggiunge altri suoi (P22),
-    # che devono esistere anche loro
+    # base.html carica 12 CSS: 7 di P19, navbar.css e stats-panel.css (P40),
+    # friends-panel.css e chat.css (P46), banner.css (P33); la home ne aggiunge
+    # altri suoi (P22), che devono esistere anche loro
     base_css = re.findall(r"url_for\('static', filename='(css/[^']+)'\)", (TEMPLATES / "base.html").read_text(encoding="utf-8"))
-    assert len(base_css) == 11
+    assert len(base_css) == 12
     paths = re.findall(r'href="(/static/[^"]+)"', home)
     css = [path for path in paths if path.startswith("/static/css/")]  # prima ci sono le icone (P42)
-    assert css[:11] == [f"/static/{name}" for name in base_css]
+    assert css[:12] == [f"/static/{name}" for name in base_css]
     for path in paths:
         response = client.get(path)
         assert response.status_code == 200, path

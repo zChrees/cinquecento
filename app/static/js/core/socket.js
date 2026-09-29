@@ -12,12 +12,22 @@
  *   mostrare: nessuna azione parte se la connessione manca.
  * - Chi non ha fatto il login viene rifiutato dal server: lo stato diventa
  *   'not_logged_in' e non si riprova.
+ * - P33: un avviso in cima alla pagina (components/Banner.js) dice lo stato della
+ *   connessione in ogni pagina che si collega: "Connessione persa: riprovo…" mentre
+ *   Socket.IO riprova (sparisce da solo al ritorno); "Sei stato scollegato…" con
+ *   "Ricarica" quando il server chiude la connessione e non si riprova (per esempio
+ *   "Esci" da un'altra scheda, P32) o quando il login non vale più. Al primo
+ *   collegamento l'avviso compare solo se ci mette più di FIRST_CONNECT_MS.
+ *   Le pagine spengono i loro pulsanti del tempo reale con onStatus / isConnected.
  */
 
 import { io } from '../vendor/socket.io.min.js';
 import { NOT_LOGGED_IN } from './events.js';
+import { hideBanner, showBanner } from '../components/Banner.js';
 
 const ANSWER_TIMEOUT_MS = 10000;
+const FIRST_CONNECT_MS = 3000;
+const RELOAD = { label: 'Ricarica', onClick: () => window.location.reload() };
 
 const NO_CONNECTION = Object.freeze({
   ok: false,
@@ -30,11 +40,39 @@ const NO_ANSWER = Object.freeze({
 
 let socket = null;
 let status = 'disconnected';
+let everConnected = false;   // la pagina si è già collegata almeno una volta
+let slowTimer = 0;
+let leavingPage = false;     // si sta lasciando la pagina: la connessione chiusa non è un problema
 const statusListeners = new Set();
+
+window.addEventListener('beforeunload', () => { leavingPage = true; });
+window.addEventListener('pageshow', () => { leavingPage = false; });   // tornati con "indietro"
+
+/** L'avviso in cima alla pagina per lo stato attuale (P33). */
+function updateBanner() {
+  clearTimeout(slowTimer);
+  if (leavingPage) return;
+  if (status === 'connected') {
+    hideBanner();
+  } else if (status === 'connecting') {
+    if (everConnected) showBanner({ text: 'Connessione persa: riprovo a collegarmi…' });
+    else slowTimer = setTimeout(() => showBanner({ text: 'Collegamento al server in corso…' }), FIRST_CONNECT_MS);
+  } else if (status === NOT_LOGGED_IN) {
+    showBanner({ text: 'Non sei più collegato al tuo account: ricarica la pagina.', kind: 'error', action: RELOAD });
+  } else {
+    showBanner({
+      text: 'Sei stato scollegato (per esempio sei uscito da un\'altra scheda): ricarica la pagina.',
+      kind: 'error',
+      action: RELOAD,
+    });
+  }
+}
 
 function setStatus(next) {
   if (next === status) return;
   status = next;
+  if (status === 'connected') everConnected = true;
+  updateBanner();
   statusListeners.forEach((listener) => listener(status));
 }
 

@@ -21,16 +21,19 @@
  * La chat (ChatWindow.js) è quella vera (P48, contratto 5.4): chat:history
  * all'apertura (e "Messaggi precedenti"), chat:send, chat:read, chat:message.
  * Con un blocco o senza più amicizia si legge ma non si scrive, e la chat lo dice.
+ * P33: senza connessione "Invia" della chat è spento (l'avviso in cima alla pagina
+ * lo mostra core/socket.js); al ritorno si rilegge la lista e la chat aperta
+ * riceve i messaggi arrivati nel frattempo.
  * Si chiude con la X, con Esc, toccando fuori e con "indietro" del browser o del
  * telefono (dalla chat, "indietro" torna alla lista).
  * Tutti i testi degli utenti entrano come testo, mai come HTML.
  */
 
 import { el, icon } from '../utils/dom.js';
-import { on, send } from '../core/socket.js';
+import { on, onStatus, send } from '../core/socket.js';
 import { EVENTS } from '../core/events.js';
 import { confirmModal, openModal } from './Modal.js';
-import { ChatWindow, appendMessage } from './ChatWindow.js';
+import { ChatWindow, appendMessage, disableWriting, setChatOnline } from './ChatWindow.js';
 
 const PRESENCE_LABEL = { online: 'Online', in_game: 'In partita', offline: 'Offline' };
 const GROUPS = [['online', 'Online'], ['in_game', 'In partita'], ['offline', 'Offline']];
@@ -534,6 +537,29 @@ export function initFriendsPanel(button) {
     const inside = event.clientX >= r.left && event.clientX <= r.right
       && event.clientY >= r.top && event.clientY <= r.bottom;
     if (!inside) requestClose();
+  });
+
+  // --- Connessione (P33) ---
+  let wasOnline = false;
+
+  // Al ritorno della connessione: i messaggi arrivati nel frattempo nella chat aperta
+  async function refreshChat() {
+    const other = Number(chatView?.dataset.chatWith);
+    if (!other) return;
+    const answer = await send(EVENTS.CHAT_HISTORY, { user_id: other, before_id: null });
+    if (!answer.ok || Number(chatView?.dataset.chatWith) !== other) return;
+    for (const message of answer.data.messages) appendMessage(chatView, message, meId);
+    if (!answer.data.can_write) disableWriting(chatView, CHAT_CLOSED[answer.data.cannot_write] ?? 'Non puoi più scrivere a questo utente.');
+  }
+
+  onStatus((now) => {
+    const online = now === 'connected';
+    if (chatView) setChatOnline(chatView, online);
+    if (online && wasOnline) {
+      load();
+      refreshChat();
+    }
+    if (online) wasOnline = true;
   });
 
   button.addEventListener('click', open);

@@ -9,6 +9,8 @@
  *   game:play_card e game:sing, con la version della vista su cui si è deciso;
  *   finché non arriva la risposta carte e pulsanti restano disattivati.
  * - Se la partita si apre in un'altra scheda (game:replaced, D14) questa si ferma.
+ * - P33: senza connessione carte, canti e frasi sono spenti; l'avviso in cima alla
+ *   pagina lo mostra core/socket.js; al ritorno game:join rimanda la vista attuale.
  * - P25: "Esci", dopo la conferma, manda game:leave (la partita è persa per abbandono)
  *   e poi torna alla home; a partita finita torna alla home senza chiedere.
  *   I secondi del turno e quelli per rientrare di chi è scollegato arrivano con la
@@ -39,7 +41,7 @@
  */
 
 import { initLayout } from '../core/layout.js';
-import { connect, on, onStatus, send } from '../core/socket.js';
+import { connect, isConnected, on, onStatus, send } from '../core/socket.js';
 import { EVENTS, NOT_LOGGED_IN } from '../core/events.js';
 import { confirmModal } from '../components/Modal.js';
 import { Table } from '../components/Table.js';
@@ -167,8 +169,10 @@ function render(next) {
   }
   // La presa chiusa lascia il posto alla presa nuova appena qualcuno gioca
   if (lastTrick && view.trick.cards.length) hideLastTrick();
-  // Mentre si aspetta la risposta a una mossa nessuna carta e nessun canto sono attivi
-  const shown = timed(waiting || leaving ? { ...view, legal: NO_MOVES } : view);
+  // Mentre si aspetta la risposta a una mossa, o senza connessione (P33), nessuna carta
+  // e nessun canto sono attivi
+  const offline = !demo && !isConnected();
+  const shown = timed(waiting || leaving || offline ? { ...view, legal: NO_MOVES } : view);
   const moments = {
     lastTrick,
     summary,
@@ -178,7 +182,7 @@ function render(next) {
   const phrasesShown = phrases && {
     list: phrases,
     open: phrasesOpen,
-    disabled: phraseSending || performance.now() < phrasePausedUntil,
+    disabled: offline || phraseSending || performance.now() < phrasePausedUntil,
     onToggle: () => { phrasesOpen = !phrasesOpen; redraw(); },
     onPick: sendPhrase,
     bubbles: Object.fromEntries(Object.entries(bubbles).map(([seat, { text }]) => [seat, text])),
@@ -406,8 +410,8 @@ function startGame() {
       join(); // anche dopo una riconnessione: il server rimanda la vista attuale
     } else if (now === NOT_LOGGED_IN) {
       showMessage('Accedi per giocare.');
-    } else if (view) {
-      setStatus('Connessione persa: riprovo a collegarmi…');
+    } else {
+      redraw();   // P33: l'avviso è in cima alla pagina (socket.js); qui si spengono carte e canti
     }
   });
   connect();

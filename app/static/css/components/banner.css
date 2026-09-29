@@ -1,0 +1,64 @@
+/*
+ * Avviso in cima alla pagina (P33, components/Banner.js): stato della connessione.
+ * Sotto la navbar, al centro, con lo stesso aspetto dei messaggi brevi (layout.css).
+ * Con popover sta nel "top layer": vanno annullati i valori predefiniti del browser.
+ */
+
+.banner {
+  position: fixed;
+  inset: auto;
+  top: calc(var(--navbar-h) + env(safe-area-inset-top));
+  left: 50%;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: max-content;
+  max-width: calc(100% - 2 * var(--gutter));
+  margin: 0;
+  padding: 10px 12px 10px 16px;
+  border: 0;
+  border-radius: var(--radius-m);
+  background: var(--text);
+  color: var(--bg);
+  font-weight: 700;
+  line-height: 1.35;
+  box-shadow: var(--shadow-2);
+  transform: translateX(-50%);
+  overflow: visible;
+}
+
+.banner .icon {
+  flex: none;
+  font-size: 20px;
+  color: var(--yellow);
+}
+
+.banner--error {
+  background: var(--danger-strong);
+  color: var(--on-primary);
+}
+
+.banner--error .icon {
+  color: var(--on-primary);
+}
+
+.banner__action {
+  flex: none;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.banner__spin {
+  animation: banner-spin 1.2s linear infinite;
+}
+
+@keyframes banner-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .banner__spin {
+    animation: none;
+  }
+}

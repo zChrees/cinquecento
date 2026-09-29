@@ -7,6 +7,7 @@
  *
  *   const dialog = openInviteDialog(invite, { onAccept, onDecline });
  *   dialog.setStatus('accepted' | 'declined' | 'expired' | 'cancelled' | 'started');
+ *   dialog.setOnline(false);   // P33: senza connessione "Accetta" e "Rifiuta" sono spenti
  *
  * onAccept e onDecline mandano la richiesta e restituiscono la risposta del server
  * ({ok, error}): finché non arriva i pulsanti sono disattivati (doppio clic).
@@ -30,9 +31,10 @@ function describe(invite) {
  * @param {object} handlers
  * @param {Function} handlers.onAccept   () => Promise<{ok, error}>
  * @param {Function} handlers.onDecline  () => Promise<{ok, error}>
- * @returns {{ setStatus: Function, close: Function, inviteId: string }}
+ * @param {boolean} [online]           c'è la connessione quando si apre (P33)
+ * @returns {{ setStatus: Function, setOnline: Function, close: Function, inviteId: string }}
  */
-export function openInviteDialog(invite, { onAccept, onDecline }) {
+export function openInviteDialog(invite, { onAccept, onDecline }, online = true) {
   const from = invite.from.username;
   let status = invite.status;
   let waiting = false;     // richiesta in attesa di risposta
@@ -82,7 +84,7 @@ export function openInviteDialog(invite, { onAccept, onDecline }) {
     accept.hidden = status !== 'pending';
     decline.textContent = status === 'accepted' ? 'Esci' : 'Rifiuta';
     const open = status === 'pending' || status === 'accepted';
-    for (const button of [accept, decline]) button.disabled = waiting || !open;
+    for (const button of [accept, decline]) button.disabled = waiting || !open || !online;
     closeButton.disabled = waiting;
     const notes = {
       accepted: `Hai accettato: aspettiamo che ${from} avvii la partita…`,
@@ -128,6 +130,12 @@ export function openInviteDialog(invite, { onAccept, onDecline }) {
     if (status !== 'pending' && status !== 'accepted') setTimeout(close, CLOSE_AFTER_MS);
   }
 
+  function setOnline(next) {
+    if (closed || next === online) return;
+    online = next;
+    render();
+  }
+
   function close() {
     if (closed) return;
     closed = true;
@@ -149,5 +157,5 @@ export function openInviteDialog(invite, { onAccept, onDecline }) {
   render();
   document.body.append(dialog);
   dialog.showModal();
-  return { setStatus, close, inviteId: invite.invite_id };
+  return { setStatus, setOnline, close, inviteId: invite.invite_id };
 }
