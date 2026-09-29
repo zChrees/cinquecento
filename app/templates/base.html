@@ -8,8 +8,10 @@
   - content: il contenuto.
   - navbar: predefinito partials/navbar.html (P40); una pagina senza navbar lo svuota.
   L'icona della scheda (P42) è in img/favicon.svg, con le copie PNG accanto.
-  Le risorse esterne (font e icone da Google Fonts) si caricano SOLO qui e sono
-  solo quelle elencate in docs/prototipo/LEGGIMI.md.
+  Le risorse esterne (i font del testo da Google Fonts) si caricano SOLO qui e sono
+  solo quelle elencate in docs/prototipo/LEGGIMI.md. Il font delle icone è nel
+  progetto (D40): un'icona nuova va aggiunta a fonts/icone.txt e il font va
+  riscaricato (LEGGIMI.md, "Icone").
   Gli attributi data-user-* del <body> e il meta csrf-token sono fissati dal
   contratto (docs/CONTRATTO-SOCKET.md, 1.5): vuoti per chi non ha fatto il login.
 #}
@@ -28,7 +30,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block">
+  {# Icone (D40): font nel progetto con solo le icone usate (fonts/icone.txt), chiesto subito #}
+  <link rel="preload" href="{{ url_for('static', filename='fonts/material-symbols-rounded.woff2') }}" as="font" type="font/woff2" crossorigin>
 
   <link rel="stylesheet" href="{{ url_for('static', filename='css/base/reset.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/base/variables.css') }}">

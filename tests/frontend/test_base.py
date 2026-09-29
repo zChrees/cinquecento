@@ -23,7 +23,7 @@ TEMPLATES = ROOT / "app" / "templates"
 VARIABLES = STATIC / "css" / "base" / "variables.css"
 PROTOTYPE_CSS = ROOT / "docs" / "prototipo" / "prototipo.css"
 
-# Google Fonts: font Fredoka e Nunito, icone Material Symbols (docs/prototipo/LEGGIMI.md, "Risorse esterne")
+# Google Fonts: font Fredoka e Nunito (docs/prototipo/LEGGIMI.md, "Risorse esterne"); le icone sono nel progetto (D40)
 ALLOWED_ORIGINS = {"https://fonts.googleapis.com", "https://fonts.gstatic.com"}
 
 # Colori scritti a mano: #abc, #aabbcc, rgb(), hsl() e simili, nomi di colore

@@ -135,7 +135,19 @@ Da ricordare per le pagine vere: le immagini CC BY-SA richiedono una **riga di c
 |---|---|---|---|
 | Font **Fredoka** (500, 600, 700) | Google Fonts | Titoli e numeri (vedi tabella sotto) | SIL Open Font License |
 | Font **Nunito** (400, 600, 700, 800) | Google Fonts | Tutto il resto del testo | SIL Open Font License |
-| Icone **Material Symbols Rounded** | Google Fonts | Icone dell'interfaccia (niente emoji) | Apache 2.0 |
+| Icone **Material Symbols Rounded** | Google Fonts, **copiate nel progetto** nelle pagine vere (D40, sotto); il prototipo le chiede ancora a Google | Icone dell'interfaccia (niente emoji) | Apache 2.0 |
+
+### Icone (D40)
+
+Nelle pagine vere il font delle icone non arriva da Google: è il file `app/static/fonts/material-symbols-rounded.woff2`, con **solo le icone usate** (elencate in `app/static/fonts/icone.txt`, una per riga, in ordine alfabetico), riempite e con spessore 500. Pesa circa 6 KB invece di 5,4 MB e `base.html` lo precarica, così le icone compaiono subito. `tests/frontend/test_icone.py` segnala un'icona usata nel codice che manca nel file, o una nel file che non si usa più.
+
+Per aggiungere un'icona (i nomi sono quelli di [fonts.google.com/icons](https://fonts.google.com/icons)):
+
+1. aggiungi il nome in `icone.txt`, al suo posto in ordine alfabetico;
+2. apri in Chrome questo indirizzo, mettendo dopo `icon_names=` tutti i nomi di `icone.txt` separati da virgole, senza spazi:
+   `https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,1,0&icon_names=arrow_back,bolt,...&display=block`
+3. nella pagina che si apre copia l'indirizzo dopo `src: url(` (comincia con `https://fonts.gstatic.com/`), aprilo e salva il file che scarica come `app/static/fonts/material-symbols-rounded.woff2`, al posto di quello vecchio;
+4. lancia `python tests/esegui_tutti.py frontend`.
 
 ### Dove si usa ogni font
 
