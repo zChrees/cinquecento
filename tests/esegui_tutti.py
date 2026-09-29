@@ -35,7 +35,7 @@ if str(BASE_DIR) not in sys.path:
 SUITES = ("runner", "engine", "db", "api", "services", "sockets", "frontend", "e2e")
 PROTECTED = (".env.example", "migrations/*.sql", "app/static/dev/*.json")
 TEST_PORT = 5099
-SUITE_TIMEOUT = 120  # secondi per suite
+SUITE_TIMEOUT = 240  # secondi per suite (29/09/2026: la suite frontend da sola ne dura circa 110)
 
 # Conteggi nell'ultima riga di pytest, per esempio "3 failed, 655 passed in 12.34s"
 COUNTS = re.compile(r"(\d+) (passed|failed|errors?|skipped|xfailed|xpassed)")
