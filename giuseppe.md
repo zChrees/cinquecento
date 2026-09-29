@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### P66 — Mossa automatica dopo il rientro (29/09/2026)
+
+- **Branch**: fix/p66-mossa-automatica-rientro
+- **File** (lista definitiva per 9.2): modificati `app/realtime/room.py` (`_apply`, una condizione), `tests/sockets/test_timer_riconnessione.py` (4 test nuovi), questo file. Non toccati `game_events.py` e `connection_events.py`
+- **Causa trovata** [T]: non era il rientro. In `Room._apply` il timer del turno ripartiva solo se **cambiava il posto di turno**; quando chi gioca l'ultima carta della presa la vince, apre lui la presa dopo e il posto di turno resta lo stesso, quindi il timer non ripartiva e **nessuna carta automatica partiva più** per quel giocatore (turno fermo a 0 secondi finché non giocava). Dal telefono si vedeva come "esco, rientro e la carta non parte", ma succedeva a chiunque chiudesse e vincesse una presa e poi non giocasse. Riprodotto anche senza nessuno scollegamento: dopo 2 carte automatiche la partita si fermava
+- **Correzione**: il timer riparte **dopo ogni carta giocata** (anche se tocca di nuovo allo stesso posto); dopo un canto no, il tempo di chi ha cantato continua a scorrere (come in P25)
+- **Controlli**: **1363 PASS** in 8 suite, tutto PASS (4 nuovi nella suite `sockets`), `ruff check .` pulito. Con il codice di prima i 4 test nuovi falliscono [T]: nessuno gioca e le carte automatiche vanno avanti per 10 carte (e c'è una presa vinta da chi l'ha chiusa); rientro e poi turno scaduto; turno scaduto mentre era fuori e poi rientro; scheda nuova al tavolo prima che la vecchia si chiuda (come un telefono che torna al browser)
+- **Decisioni prese**: nessuna
+- **Domande nuove**: nessuna
+- **Punti delicati**: in `_apply` il "turno nuovo" si decide dal tipo di mossa (ogni carta sì, un canto no), non dal posto di turno; se un giorno una mossa nuova (per esempio della CPU, P68) passa da `_apply`, vale la stessa regola
+- **Note per gli altri**: **chi è di turno sui documenti**: spuntare P66 e aggiornare il punto delicato "Timer (P25)" di `CLAUDE.md` (il timer riparte dopo ogni carta). **Christian**: niente da fare nella pagina
+
 ### P59 — 2v2 con più amici invitati (29/09/2026)
 
 - **Branch**: feature/p59-2v2-piu-amici

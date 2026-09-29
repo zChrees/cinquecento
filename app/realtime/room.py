@@ -243,7 +243,10 @@ class Room:
         if self.game.finished:
             self._stop_timers()
             self._save()
-        elif self.game.hand.turn_seat != before.hand.turn_seat or self.game.hand_number != before.hand_number:
+        elif not isinstance(action, SingAction):
+            # Dopo ogni carta è un turno nuovo, anche quando tocca di nuovo allo stesso posto
+            # (chi chiude la presa e la vince apre la successiva): prima di P66 il timer
+            # ripartiva solo se cambiava il posto di turno, e in quel caso non ripartiva più
             self._start_turn()
         # Dopo un canto il turno resta a chi ha cantato: il suo tempo continua a scorrere
 

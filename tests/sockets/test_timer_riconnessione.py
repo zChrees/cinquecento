@@ -1,4 +1,6 @@
 """P25: timer del turno, scollegamento e rientro, abbandono (D12, D13).
+P66: il timer riparte dopo ogni carta, anche quando il turno resta allo stesso posto,
+e la carta automatica parte anche dopo essere usciti e rientrati.
 
 Client simulati contro il server vero (conftest.py). I tempi si riducono a pochi
 decimi di secondo cambiando TURN_SECONDS e RECONNECT_SECONDS di app/realtime/room.py
@@ -332,3 +334,77 @@ def test_a_partita_finita_i_timer_si_fermano(connect, new_room):
     time.sleep(0.6)  # più di un turno e di un rientro: nessuna mossa, nessun nuovo abbandono
     assert room.abandoned_seats == (0,)
     assert room.version == version + 1  # solo lo scollegamento
+
+
+# --- Mossa automatica dopo il rientro (P66) ---
+
+
+def _moves(view):
+    """Carte giocate finora: 10 per giocatore all'inizio, meno quelle ancora in mano o nel mazzo."""
+    return sum(p["cards_in_hand"] for p in view["players"]) + view["deck_count"]
+
+
+def test_nessuno_gioca_le_carte_automatiche_non_si_fermano(connect, new_room):
+    """Chi chiude la presa e la vince apre la successiva: il turno resta a lui, ma è un
+    turno nuovo e il timer riparte (P66: prima si fermava lì per sempre)."""
+    room = new_room(["Primo", "Secondo"], turn=30)
+    seats = sit(connect, room, ["Primo", "Secondo"])
+    start = seats[0].last
+    shorten_turn(room, 0.15)
+    after = seats[0].wait_for(lambda v: _moves(v) <= _moves(start) - 10)
+    assert any(v["last_trick"] and v["last_trick"]["winner_seat"] == v["last_trick"]["cards"][-1]["seat"]
+               for v in seats[0].views), "nessuna presa vinta da chi l'ha chiusa: il caso non è provato"
+    assert after["status"] == "playing"
+
+
+def test_rientro_poi_turno_scaduto_mossa_automatica(connect, new_room):
+    """Chi ha il turno esce (scheda chiusa) e rientra: allo scadere del turno la carta
+    automatica parte come prima, e continua a partire nei turni dopo."""
+    room = new_room(["Primo", "Secondo"], turn=30, reconnect=30)
+    seats = sit(connect, room, ["Primo", "Secondo"])
+    names = ["Primo", "Secondo"]
+    turn = seats[0].last["turn"]["seat"]
+    seats[turn].client.disconnect()
+    seats[1 - turn].wait_for(lambda v: not v["players"][turn]["connected"])
+
+    back = Seat(connect(names[turn]))
+    assert back.call("game:join", {"game_id": room.id}) == ok()
+    start = back.wait_for(lambda v: v["players"][turn]["connected"])
+    shorten_turn(room, 0.3)
+    after = back.wait_for(lambda v: _moves(v) <= _moves(start) - 3)  # tre carte automatiche di fila
+    assert after["status"] == "playing"
+
+
+def test_turno_scaduto_mentre_era_fuori_poi_rientro(connect, new_room):
+    """Il turno scade mentre chi l'aveva è scollegato: la carta automatica parte lo stesso,
+    e dopo il rientro le carte automatiche continuano."""
+    room = new_room(["Primo", "Secondo"], turn=30, reconnect=30)
+    seats = sit(connect, room, ["Primo", "Secondo"])
+    names = ["Primo", "Secondo"]
+    turn = seats[0].last["turn"]["seat"]
+    start = seats[0].last
+    seats[turn].client.disconnect()
+    seats[1 - turn].wait_for(lambda v: not v["players"][turn]["connected"])
+    shorten_turn(room, 0.3)
+    seats[1 - turn].wait_for(lambda v: _moves(v) <= _moves(start) - 2)
+
+    back = Seat(connect(names[turn]))
+    assert back.call("game:join", {"game_id": room.id}) == ok()
+    joined = back.wait_for(lambda v: v["players"][turn]["connected"])
+    back.wait_for(lambda v: _moves(v) <= _moves(joined) - 2)
+
+
+def test_rientro_con_la_pagina_ricaricata_mentre_la_vecchia_e_ancora_aperta(connect, new_room):
+    """Come un telefono che torna al browser: la scheda nuova entra al tavolo prima che la
+    vecchia si scolleghi (D14); quando la vecchia si chiude, il timer continua."""
+    room = new_room(["Primo", "Secondo"], turn=30, reconnect=30)
+    seats = sit(connect, room, ["Primo", "Secondo"])
+    names = ["Primo", "Secondo"]
+    turn = seats[0].last["turn"]["seat"]
+    back = Seat(connect(names[turn]))
+    assert back.call("game:join", {"game_id": room.id}) == ok()
+    joined = back.wait_for(lambda v: v["players"][turn]["connected"])
+    seats[turn].client.disconnect()  # la scheda vecchia, già sostituita
+    shorten_turn(room, 0.3)
+    after = back.wait_for(lambda v: _moves(v) <= _moves(joined) - 3)
+    assert after["players"][turn]["connected"]
