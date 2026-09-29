@@ -244,6 +244,27 @@ def test_username_esatto_con_le_maiuscole(mario, nina):
     assert mario.request("Nina")[0] == 200
 
 
+@pytest.mark.parametrize("written", [" Nina", "Nina ", "  Nina  ", "\tNina\n"])
+def test_spazi_prima_o_dopo_il_nome_trovano_l_utente(mario, nina, written):
+    """P63: dal telefono capita di scrivere il nome con uno spazio in più; uno username
+    non ha mai spazi (D7), quindi il server li toglie prima di cercarlo."""
+    status, body = mario.request(written)
+    assert status == 200 and body["data"]["username"] == "Nina"
+    assert [r["username"] for r in mario.overview()["requests_out"]] == ["Nina"]
+
+
+def test_spazio_in_mezzo_al_nome_resta_un_utente_che_non_c_e(mario, nina):
+    status, body = mario.request("Ni na")
+    assert_error((status, body), 404, "not_found")
+    assert body["error"]["message"] == "Nessun utente con questo username."
+
+
+def test_nome_di_soli_spazi_rifiutato(app, mario):
+    status, body = mario.request("   ")
+    assert (status, body["error"]["code"]) == (400, "invalid_data")
+    assert rows(app, "amicizie") == 0
+
+
 def test_rifiutare_cancella_la_richiesta(app, mario, nina):
     mario.request("Nina")
     assert nina.decline(mario) == (200, {"ok": True})

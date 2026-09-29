@@ -117,7 +117,13 @@ def check_user_id(value):
 
 
 def check_username(value):
+    """Lo username scritto per cercare un utente, senza spazi all'inizio e alla fine (P63:
+    dal telefono capita di aggiungerne uno). Non è una correzione silenziosa di un dato
+    valido: uno username non contiene mai spazi (D7). Uno spazio in mezzo resta, e
+    l'utente non si trova."""
     maximum = current_app.config["USERNAME_MAX"]
+    if isinstance(value, str):
+        value = value.strip()
     if not isinstance(value, str) or not 1 <= len(value) <= maximum:
         raise EventError("invalid_data", f"Scrivi uno username (al massimo {maximum} caratteri).")
     return value
@@ -170,7 +176,7 @@ def iso_utc(moment):
 
 def send_request(user_id, request_id, username):
     check_request_id(request_id)
-    check_username(username)
+    username = check_username(username)
     return recent.run(user_id, "request", request_id, lambda: _sent(_write(_send_request, user_id, username)))
 
 

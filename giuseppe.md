@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### P63 — Richiesta di amicizia con spazi prima o dopo il nome (29/09/2026)
+
+- **Branch**: fix/p63-spazi-username
+- **File** (quelli della scaletta): modificati `app/services/friend_service.py` (`check_username`, `send_request`), `tests/api/test_amicizie.py`, questo file
+- **Cosa cambia**: `check_username` toglie spazi, tab e a capo **all'inizio e alla fine** prima dei controlli di lunghezza, e la richiesta cerca il nome ripulito: " Nina " trova Nina. Uno spazio **in mezzo** resta e si rifiuta con il messaggio di sempre ("Nessun utente con questo username."); un nome fatto solo di spazi è vuoto e si rifiuta con `invalid_data`. Il pannello amici non controlla il nome prima di mandarlo, quindi basta il server
+- **Controlli**: **1389 PASS** in 8 suite, tutto PASS (6 nuovi nella suite `api`, dalla rotta vera `POST /friends/requests`), `ruff check .` pulito. Con il codice di prima 5 dei 6 falliscono [T] (passa quello dello spazio in mezzo, che non cambia)
+- **Decisioni prese**: nessuna (già presa il 29/09: gli spazi attorno allo username si tolgono)
+- **Domande nuove**: nessuna
+- **Punti delicati**: la collation degli username (`utf8mb4_0900_as_cs`) è NO PAD: senza la pulizia "Nina " non trovava Nina
+- **Note per gli altri**: **chi è di turno sui documenti**: spuntare P63
+
 ### P65 — Amico sbloccato che non compare online nella carta-pulsante (29/09/2026)
 
 - **Branch**: fix/p65-amico-sbloccato-online
