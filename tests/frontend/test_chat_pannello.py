@@ -95,7 +95,10 @@ def _open_chat(browser, server, friend_id, width, height):
 
 
 def test_aprire_la_chat_azzera_i_non_letti(browser, server, users):
-    browser.open(f"{server}/", 390, 844, f"{BADGE} === {UNREAD}", timeout=60)
+    # Anche collegati al tempo reale (1 online): senza, chat:history non parte e la chat non si apre
+    browser.open(f"{server}/", 390, 844,
+                 f"{BADGE} === {UNREAD} && document.querySelector('[data-online-count]')?.textContent === '1'",
+                 timeout=60)
     browser.click("[data-friends-button]")
     browser.wait_js(f"document.querySelector(\"[data-chat-open='{users['Giulia']}']\") !== null", "lista degli amici")
     unread = browser.js(f"document.querySelector('[data-user-id=\"{users['Giulia']}\"] [data-unread]').dataset.unread")

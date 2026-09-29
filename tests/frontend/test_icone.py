@@ -130,7 +130,10 @@ def browser(tmp_path):
 
 def test_icone_disegnate_nel_browser(browser):
     b, url = browser
-    b.open(f"{url}/", 390, 844, "document.querySelector('[data-friends-button] .icon') !== null")
+    # Si aspetta anche il collegamento al tempo reale (1 online), come negli altri test della
+    # home: chiudere a collegamento a metà blocca a volte il server del file dopo
+    b.open(f"{url}/", 390, 844, "document.querySelector('[data-friends-button] .icon') !== null"
+           " && document.querySelector('[data-online-count]')?.textContent === '1'", timeout=60)
     assert b.js("document.fonts.check('24px \"Material Symbols Rounded\"')") is True
     icons = b.js("""[...document.querySelectorAll('.icon')].filter((e) => e.offsetWidth > 0)
         .map((e) => ({name: e.textContent, width: e.offsetWidth,

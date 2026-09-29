@@ -143,8 +143,9 @@ def _trick_closed_1v1(base, winner=0):
     return view
 
 
-def _new_hand(base, hand_number):
-    """Comincia la mano hand_number: last_hand è quella appena finita."""
+def _new_hand(base, hand_number, closing=None):
+    """Comincia la mano hand_number: last_hand è quella appena finita; `closing` è la
+    presa che l'ha chiusa (last_hand.last_trick, P58). Senza, la forma di prima di P58."""
     view = copy.deepcopy(base)
     view["version"] += 1
     view["hand_number"] = hand_number
@@ -155,8 +156,15 @@ def _new_hand(base, hand_number):
     view["last_hand"] = {"hand_number": hand_number - 1, "teams": [
         {"team": 0, "card_points": 48, "sing_points": 20, "hand_total": 68},
         {"team": 1, "card_points": 72, "sing_points": 40, "hand_total": 112}]}
+    if closing is not None:
+        view["last_hand"]["last_trick"] = closing
     view["scores"] = [{"team": 0, "total": 273}, {"team": 1, "total": 247}]
     return view
+
+
+# Presa che chiude la mano nel 1v1: Turi (posto 1) prende con l'Asso di spade
+CLOSING_1V1 = {"winner_seat": 1, "cards": [
+    {"seat": 0, "card": _card("spade", 4)}, {"seat": 1, "card": _card("spade", 1)}]}
 
 
 def test_prima_vista_senza_momenti(browser, server):
@@ -237,6 +245,44 @@ def test_riepilogo_di_fine_mano_1v1(browser, server):
 
     browser.click("[data-hand-summary-close]")
     assert not _exists(browser, "[data-hand-summary]")
+
+
+def test_fine_mano_prima_l_ultima_presa_poi_il_riepilogo(browser, server):
+    # P58: la carta che chiude la mano si vede, poi arriva il riepilogo
+    base = _view("1v1")
+    _open(browser, server, "1v1")
+    _send_state(browser, _new_hand(base, 4, closing=CLOSING_1V1))
+
+    closed = browser.js("""(() => {
+      const t = document.querySelector('[data-last-trick]');
+      return t && { winner: t.dataset.winnerSeat, count: t.dataset.count,
+        text: t.querySelector('.trick__winner').textContent,
+        winnerCard: t.querySelector('.trick__card--winner').dataset.trickSeat };
+    })()""")
+    assert closed == {"winner": "1", "count": "2", "text": "Prende Turi", "winnerCard": "1"}
+    assert not _exists(browser, "[data-hand-summary]")
+    _check_fits(browser, "[data-last-trick]")
+
+    elapsed = _wait_gone(browser, "[data-last-trick]", 6)
+    assert elapsed >= 1.0
+    assert _exists(browser, "[data-hand-summary][data-hand-number='3']")
+
+
+def test_fine_mano_carta_nuova_apre_subito_il_riepilogo(browser, server):
+    # La mano nuova non aspetta: alla prima carta la presa sparisce e compare il riepilogo
+    base = _view("1v1")
+    _open(browser, server, "1v1")
+    started = _new_hand(base, 4, closing=CLOSING_1V1)
+    _send_state(browser, started)
+    assert _exists(browser, "[data-last-trick]")
+
+    later = copy.deepcopy(started)
+    later["version"] += 1
+    later["trick"] = {"leader_seat": 1, "cards": [{"seat": 1, "card": _card("denari", 5)}]}
+    _send_state(browser, later)
+    assert not _exists(browser, "[data-last-trick]")
+    assert _exists(browser, "[data-hand-summary][data-hand-number='3']")
+    assert browser.js("document.querySelector('[data-trick]').dataset.count") == "1"
 
 
 def test_riepilogo_si_chiude_da_solo(browser, server):

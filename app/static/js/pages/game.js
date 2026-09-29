@@ -18,9 +18,10 @@
  *   (mai alla prima vista, né dopo un rientro nella pagina):
  *   - presa appena chiusa (last_trick cambiato nella stessa mano): resta al centro
  *     per LAST_TRICK_MS, o finché qualcuno gioca la prima carta della presa nuova;
- *     la mano non si blocca mai. L'ultima presa di una mano non arriva (il motore
- *     comincia subito la mano nuova, con last_trick null): si vede il riepilogo;
- *   - riepilogo di fine mano (hand_number salito): SUMMARY_MS, o fino a "Ok";
+ *     la mano non si blocca mai;
+ *   - fine mano (hand_number salito): prima l'ultima presa della mano, che arriva in
+ *     last_hand.last_trick (P58: la mano nuova parte con last_trick null), come una
+ *     presa qualsiasi; poi il riepilogo di fine mano per SUMMARY_MS, o fino a "Ok";
  *   - carte del canto (game:sang, D15): accanto a chi ha cantato per show_seconds.
  *   Con "riduci movimento" i tempi sono gli stessi, senza animazioni.
  * - P56, frasi del tavolo (D24): l'elenco arriva con game:phrases a ogni game:join
@@ -67,6 +68,7 @@ let lastTrick = null;
 let lastTrickTimer = 0;
 let summary = null;
 let summaryTimer = 0;
+let nextSummary = null; // riepilogo che aspetta la fine dell'ultima presa della mano
 const sang = {}; // posto → { event, timer }
 
 // Frasi del tavolo (P56)
@@ -108,9 +110,27 @@ function redraw() {
   if (view && !replaced) render(view);
 }
 
+/** Toglie la presa chiusa; se era l'ultima della mano, apre il riepilogo che aspettava. */
 function hideLastTrick() {
   clearTimeout(lastTrickTimer);
   lastTrick = null;
+  if (nextSummary) {
+    const waitingSummary = nextSummary;
+    nextSummary = null;
+    openSummary(waitingSummary);
+  }
+}
+
+function showLastTrick(trick) {
+  hideLastTrick();
+  lastTrick = trick;
+  lastTrickTimer = setTimeout(() => { hideLastTrick(); redraw(); }, LAST_TRICK_MS);
+}
+
+function openSummary(lastHand) {
+  closeSummary();
+  summary = lastHand;
+  summaryTimer = setTimeout(() => { summary = null; redraw(); }, SUMMARY_MS);
 }
 
 function closeSummary() {
@@ -118,20 +138,23 @@ function closeSummary() {
   summary = null;
 }
 
-/** Momenti che cominciano con la vista nuova (P57): presa appena chiusa, fine mano. */
+/** Momenti che cominciano con la vista nuova (P57, P58): presa appena chiusa, fine mano. */
 function noticeMoments(previous, next) {
   if (!previous) return; // prima vista: niente da mostrare "per un momento"
   if (next.hand_number !== previous.hand_number) hideLastTrick();
   if (next.last_trick && next.hand_number === previous.hand_number
       && JSON.stringify(next.last_trick) !== JSON.stringify(previous.last_trick)) {
-    hideLastTrick();
-    lastTrick = next.last_trick;
-    lastTrickTimer = setTimeout(() => { lastTrick = null; redraw(); }, LAST_TRICK_MS);
+    showLastTrick(next.last_trick);
   }
   if (next.hand_number > previous.hand_number && next.last_hand) {
     closeSummary();
-    summary = next.last_hand;
-    summaryTimer = setTimeout(() => { summary = null; redraw(); }, SUMMARY_MS);
+    if (next.last_hand.last_trick) {
+      // Prima la presa che ha chiuso la mano, poi il riepilogo (quando la presa sparisce)
+      showLastTrick(next.last_hand.last_trick);
+      nextSummary = next.last_hand;
+    } else {
+      openSummary(next.last_hand);
+    }
   }
 }
 
