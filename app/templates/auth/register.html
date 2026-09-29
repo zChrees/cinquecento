@@ -15,10 +15,16 @@
 {% endblock %}
 
 {% macro field(input, type, autocomplete) %}
+{#- Le regole del campo (description nel modulo, per ora solo la password: P61) si
+    leggono prima dell'invio, sotto il campo, e il lettore di schermo le collega. #}
+{% set attrs = {"aria-invalid": "true"} if input.errors else {} %}
+{% if input.description %}{% set attrs = dict(attrs, **{"aria-describedby": input.id ~ "-hint"}) %}{% endif %}
 <div class="field{% if input.errors %} field--error{% endif %}">
   <label class="field__label" for="{{ input.id }}">{{ input.label.text }}</label>
-  {{ input(class_="input", type=type, autocomplete=autocomplete, required=true,
-           **({"aria-invalid": "true"} if input.errors else {})) }}
+  {{ input(class_="input", type=type, autocomplete=autocomplete, required=true, **attrs) }}
+  {% if input.description %}
+  <p class="field__hint" id="{{ input.id }}-hint" data-field-hint="{{ input.name }}">{{ input.description }}</p>
+  {% endif %}
   {% for error in input.errors %}
   <p class="field__error" role="alert">{{ error }}</p>
   {% endfor %}

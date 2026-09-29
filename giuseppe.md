@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### P61 — Regole della password (29/09/2026)
+
+- **Branch**: feature/p61-password
+- **P61 confermato da Giuseppe**: lo faccio io, come proposto da Christian
+- **File** (lista definitiva per 9.2): modificati `app/blueprints/auth/forms.py`, `app/templates/auth/register.html`, `tests/api/test_auth.py`, questo file. **Non serve `config.py`**: `PASSWORD_MIN = 8` c'era già, le altre regole sono fisse (D8). Non toccato `auth/routes.py`: il testo delle regole arriva alla pagina come `description` del campo
+- **Cosa cambia**: la registrazione vuole almeno 8 caratteri, **una maiuscola, un numero e un simbolo** (D8); "simbolo" = un carattere che non è una lettera, un numero o uno spazio, quindi va bene qualunque segno (anche `€`), e lo spazio no. **Ogni regola che manca ha il suo messaggio**, tutti insieme sotto il campo (una password "corta" riceve quattro messaggi). Sotto il campo password, prima dell'invio, c'è la riga "Almeno 8 caratteri, con almeno una lettera maiuscola, un numero e un simbolo (per esempio ! ? @ # - _)." (classe `field__hint` già in `form.css`, collegata al campo con `aria-describedby`). Il login non controlla le regole: chi ha già un account entra con la sua password
+- **Controlli**: 14 test nuovi in `tests/api/test_auth.py` (ogni regola mancante, più regole mancanti insieme, spazio non simbolo, maiuscola accentata, esattamente 8 caratteri, riga delle regole nella pagina, account con password vecchia che entra); con il codice di prima 8 falliscono [T]. Le password di tutti i test (`Password-di-prova-1` e simili) rispettano già le regole [L], nessuna da cambiare. `ruff check .` pulito. Giro completo: **1334 PASS** in 8 suite, tutto PASS, 262 s
+- **Decisioni prese**: nessuna (applicata D8)
+- **Domande nuove**: nessuna
+- **Punti delicati**: nella macro `field` di `register.html` gli attributi del campo si uniscono in un dizionario (`attrs`) prima di passarli, perché Jinja accetta un solo `**` per chiamata; un campo con `description` nel modulo mostra da solo la riga delle regole
+- **Note per gli altri**: **chi è di turno sui documenti**: spuntare P61, lista definitiva in 9.2 (senza `config.py`). **Christian**: niente da fare; la riga delle regole usa lo stile `field__hint` che c'era già
+
 ### Documenti: registrati P58, P31 e P32 (29/09/2026)
 
 - **Branch**: docs/registra-p58-p31-p32

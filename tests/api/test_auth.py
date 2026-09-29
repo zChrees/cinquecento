@@ -172,6 +172,70 @@ def test_dati_non_validi_rifiutati_con_messaggio(app, client, fields, message):
     assert not logged_in(client)
 
 
+# --- Regole della password (P61, D8) ---
+
+NO_UPPER = "almeno una lettera maiuscola"
+NO_NUMBER = "almeno un numero"
+NO_SYMBOL = "almeno un simbolo"
+
+
+@pytest.mark.parametrize(("password", "missing"), [
+    ("password-di-prova-1", {NO_UPPER}),
+    ("Password-di-prova", {NO_NUMBER}),
+    ("Passworddiprova1", {NO_SYMBOL}),
+    ("Password di prova 1", {NO_SYMBOL}),       # lo spazio non è un simbolo
+    ("passworddiprova", {NO_UPPER, NO_NUMBER, NO_SYMBOL}),
+    ("PASSWORD1234", {NO_SYMBOL}),
+])
+def test_password_senza_una_regola_rifiutata_con_un_messaggio_per_regola(app, client, password, missing):
+    text = page_text(register(client, password=password))
+    for rule in (NO_UPPER, NO_NUMBER, NO_SYMBOL):
+        assert (f"La password deve contenere {rule}" in text) == (rule in missing), rule
+    assert users(app) == []
+    assert not logged_in(client)
+
+
+def test_password_corta_senza_regole_dice_tutto_quello_che_manca(app, client):
+    text = page_text(register(client, password="corta"))
+    assert "almeno 8 caratteri" in text
+    for rule in (NO_UPPER, NO_NUMBER, NO_SYMBOL):
+        assert f"La password deve contenere {rule}" in text
+    assert users(app) == []
+
+
+@pytest.mark.parametrize("password", [
+    "Password-di-prova-1",
+    "Àbcdefg1!",            # maiuscola accentata
+    "Abcdefg1€",            # qualunque segno vale come simbolo
+    "abcdefG9.",
+    "Aa1_Aa1_",             # esattamente 8 caratteri
+])
+def test_password_con_tutte_le_regole_accettata(app, client, password):
+    response = register(client, password=password)
+    assert response.status_code == 302
+    assert len(users(app)) == 1
+
+
+def test_le_regole_si_leggono_prima_dell_invio(client):
+    page = page_text(client.get("/auth/register"))
+    hint = re.search(r'<p class="field__hint" id="password-hint" data-field-hint="password">([^<]*)</p>', page)
+    assert hint, "manca la riga con le regole della password"
+    for words in ("Almeno 8 caratteri", "maiuscola", "numero", "simbolo"):
+        assert words in hint[1]
+    assert 'aria-describedby="password-hint"' in page
+    # Solo la password ha le regole scritte sotto
+    assert page.count("field__hint") == 1
+
+
+def test_account_con_una_password_vecchia_entra_ancora(app, client):
+    """Le regole valgono solo per le password nuove: il login non le controlla."""
+    with app.app_context():
+        auth_service.register("Vecchio", "vecchio@esempio.it", "semplice")
+    response = login(client, username="Vecchio", password="semplice")
+    assert response.status_code == 302
+    assert logged_in(client)
+
+
 # --- Login e logout ---
 
 
