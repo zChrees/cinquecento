@@ -139,6 +139,25 @@
   --card-w: 56px;
 }
 
+/*
+ * Mescolata a inizio mano (P70): due mezzi mazzi escono ai lati del mazzo e rientrano,
+ * due volte. La durata (0,6 s) è SHUFFLE_MS di pages/game.js; il ritardo lo scrive
+ * Trick.js. Con "riduci movimento" niente mescolata (reset.css).
+ */
+.deck__half {
+  position: absolute;
+  inset: 0;
+  animation: deck-riffle 0.6s ease-in-out both;
+}
+
+.deck__half--left { --riffle-x: -70%; --riffle-turn: -10deg; }
+.deck__half--right { --riffle-x: 70%; --riffle-turn: 10deg; }
+
+@keyframes deck-riffle {
+  0%, 50%, 100% { translate: 0 0; rotate: 0deg; }
+  25%, 75% { translate: var(--riffle-x) -6%; rotate: var(--riffle-turn); }
+}
+
 .deck__trump {
   position: absolute;
   top: 50%;

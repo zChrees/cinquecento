@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P70 (terzo lotto) — Mescolata e distribuzione (29/09/2026)
+
+- **Branch**: fix/p70-distribuzione
+- **File**: creato `tests/frontend/test_distribuzione.py`; modificati `app/static/js/pages/game.js`, `app/static/js/components/Hand.js`, `Trick.js`, `Table.js`, `app/static/css/components/trick.css`, `hand.css`
+- **Controlli**: **1397 PASS** in 8 suite, tutto PASS (giro completo chiesto da Christian; 6 test nuovi nella suite `frontend`), `ruff check` pulito
+- **Fatto**: (1) a ogni mano nuova (non alla prima vista) le carte della mano nuova restano **nascoste** finché si vedono l'ultima presa e il riepilogo; (2) chiuso il riepilogo (da solo dopo 5 s o con "Ok") il mazzo si **mescola**: due mezzi mazzi escono ai lati e rientrano, due volte (0,6 s, `SHUFFLE_MS` = `deck-riffle`, un test li confronta); (3) poi le carte partono **una alla volta**, a giro dal giocatore dopo il mazziere, 0,08 s l'una dall'altra (`DEAL_STEP_MS`), con le animazioni della pescata: nel ventaglio dell'avversario o nella tua mano; in tutto circa 1,8 s nel 1v1 e 2,6 s nel 2v2; (4) fino alla fine un tocco sulle proprie carte non gioca niente; (5) come per il resto di P70, un ridisegno a metà non fa ripartire niente, e con "riduci movimento" non c'è distribuzione. **P70 è finito** (tre lotti)
+- **Decisioni prese**: nessuna nuova (distribuzione dopo il riepilogo, decisa da Christian nel primo lotto); scelte di Claude: mescolata di 0,6 s con due mezzi mazzi, 0,08 s tra una carta e l'altra
+- **Domande nuove**: nessuna
+- **Punti delicati**: la distribuzione aspetta in `game.js` (`dealWaiting`) e parte in `render` quando non ci sono più presa chiusa né riepilogo (`startDeal`); l'ordine delle carte lo calcola `dealOrder` da `dealer_seat` e dalle carte in mano di ognuno. Chi apre la mano nuova perde fino a circa 8,5 s dei suoi 30 (ultima presa, riepilogo, distribuzione): il timer lo conta il server, come deciso
+- **Cosa devono fare gli altri**: niente
+
 ### P70 (secondo lotto) — Carte degli avversari e pescata (29/09/2026)
 
 - **Branch**: fix/p70-carte-avversari

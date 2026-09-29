@@ -165,6 +165,8 @@ function winnerText(view, seat) {
  * @param {object} [moments.thrown] P70: carta ("coppe-10") → millisecondi dal lancio, per le carte in volo
  * @param {object} [moments.drawnSeats] P70: posto di un avversario → millisecondi dalla sua pescata
  * @param {object} [moments.drawnCards] P70: carta pescata da te ("coppe-10") → millisecondi dalla pescata
+ * @param {object|null} [moments.deal] P70, distribuzione a inizio mano: { shuffled: ms dalla
+ *   mescolata o null, mine: carta → ms dalla partenza, seats: posto → [ms per carta] }
  * @param {object|null} [moments.summary] il riepilogo di fine mano (last_hand)
  * @param {function} [moments.onCloseSummary] pulsante "Ok" del riepilogo
  * @param {object} [moments.sang] posto → evento game:sang da mostrare
@@ -180,7 +182,7 @@ function winnerText(view, seat) {
 export function Table(view, { onPlay, onSing, onLeave }, status = '', moments = {}, phrases = null) {
   const {
     lastTrick = null, lastTrickFor = 0, thrown = {}, drawnSeats = {}, drawnCards = {},
-    summary = null, onCloseSummary = null, sang = {},
+    deal = null, summary = null, onCloseSummary = null, sang = {},
   } = moments;
   const bubbles = phrases ? phrases.bubbles : {};
   const positionOf = positionFn(view);
@@ -204,7 +206,7 @@ export function Table(view, { onPlay, onSing, onLeave }, status = '', moments = 
       lastTrick
         ? LastTrick(lastTrick, positionOf, winnerText(view, lastTrick.winner_seat), { shownFor: lastTrickFor, thrown })
         : Trick(view.trick, positionOf, thrown),
-      DeckAndTrump(view.deck_count, view.trump),
+      DeckAndTrump(view.deck_count, view.trump, deal ? deal.shuffled : null),
     ]),
     summary ? HandSummary(view, summary, { onClose: onCloseSummary }) : null,
   ]);
@@ -219,13 +221,14 @@ export function Table(view, { onPlay, onSing, onLeave }, status = '', moments = 
   const mine = el('div', { class: 'table__mine' }, [
     meRow,
     SingButtons(view.legal.sing, view.sings, onSing),
-    Hand(view.hand, { playable: view.legal.play, onPlay, drawn: drawnCards }),
+    Hand(view.hand, { playable: view.legal.play, onPlay, drawn: drawnCards, dealt: deal ? deal.mine : {} }),
     el('p', { class: 'table__status', text: status, data: { tableStatus: '' }, attrs: { role: 'status', 'aria-live': 'polite' } }),
   ]);
 
   // P70: le carte coperte degli altri, a ventaglio dal bordo dello schermo dal loro lato
   const edgeHands = others.map((player) =>
-    EdgeHand(player.cards_in_hand, positionOf(player.seat), drawnSeats[player.seat] ?? null));
+    EdgeHand(player.cards_in_hand, positionOf(player.seat), drawnSeats[player.seat] ?? null,
+      deal ? deal.seats[player.seat] ?? null : null));
 
   // A fine partita il riquadro arriva dopo che si è vista l'ultima presa
   const result = view.result && !lastTrick ? Result(view) : null;

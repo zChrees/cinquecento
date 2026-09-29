@@ -96,13 +96,26 @@ export function LastTrick(lastTrick, positionOf, winnerText, { shownFor = 0, thr
  * resta nel segno accanto alla mano (Table.js).
  * @param {number} deckCount carte rimaste nel mazzo
  * @param {string|null} trump seme di briscola, null finché nessuno ha cantato 40
+ * @param {number|null} [shuffled] P70: millisecondi dall'inizio della mescolata a inizio
+ *   mano, o null: due mezzi mazzi si aprono ai lati e si richiudono
  * @returns {HTMLElement|null}
  */
-export function DeckAndTrump(deckCount, trump) {
+export function DeckAndTrump(deckCount, trump, shuffled = null) {
   if (deckCount <= 0) return null;
   const label = trump ? `Mazzo: ${deckCount} carte. Briscola: ${trump}` : `Mazzo: ${deckCount} carte`;
-  return el('div', { class: 'deck', data: { deckCount }, attrs: { role: 'img', 'aria-label': label } }, [
+  const riffle = shuffled == null ? [] : ['left', 'right'].map((side) => {
+    const half = CardBack();
+    half.classList.add('deck__half', `deck__half--${side}`);
+    half.style.animationDelay = `${Math.round(-shuffled)}ms`;
+    return half;
+  });
+  return el('div', {
+    class: 'deck',
+    data: { deckCount, ...(shuffled == null ? {} : { shuffling: '' }) },
+    attrs: { role: 'img', 'aria-label': label },
+  }, [
     CardBack(),
+    ...riffle,
     trump
       ? el('img', { class: 'deck__trump', data: { trump }, attrs: { src: `${IMG_BASE}asso-${trump}-figura.webp`, alt: '' } })
       : null,

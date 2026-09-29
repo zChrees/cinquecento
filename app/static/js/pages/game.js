@@ -37,6 +37,11 @@
  *   - P70, pescata: quando il mazzo cala nella stessa mano, ognuno pesca a turno
  *     partendo da chi ha preso (DRAW_STEP_MS l'uno dall'altro, DRAW_MS ciascuno): la
  *     carta arriva nel ventaglio dell'avversario, o nella propria mano.
+ *   - P70, distribuzione: a ogni mano nuova (non alla prima vista) le carte restano
+ *     nascoste finché si vedono l'ultima presa e il riepilogo; poi il mazzo si
+ *     mescola (SHUFFLE_MS) e le carte partono una alla volta, a giro dal giocatore
+ *     dopo il mazziere (DEAL_STEP_MS l'una dall'altra). Fino alla fine un tocco sulle
+ *     proprie carte non gioca niente.
  *   Con "riduci movimento" i tempi sono gli stessi, senza animazioni.
  * - P56, frasi del tavolo (D24): l'elenco arriva con game:phrases a ogni game:join
  *   (la pagina non ne tiene una copia sua; senza elenco il pulsante non c'è). Una
@@ -73,6 +78,9 @@ const BUBBLE_MS = 4000;
 const THROW_MS = 400; // come la durata di card-throw in css/components/trick.css (P70)
 const DRAW_MS = 500; // come la durata di card-draw in css/components/hand.css (P70)
 const DRAW_STEP_MS = 150; // tra la pescata di un giocatore e quella del successivo
+const SHUFFLE_MS = 600; // come la durata di deck-riffle in css/components/trick.css (P70)
+const DEAL_STEP_MS = 80; // tra una carta distribuita e la successiva
+const HIDDEN = -1e6; // "parte tra molto": la carta resta nascosta finché la distribuzione non comincia
 
 let view = null;
 let viewAt = 0; // quando è arrivata la vista (performance.now), per far scendere i secondi
@@ -94,6 +102,10 @@ let throwTimer = 0;
 const drawsBySeat = new Map(); // P70: posto → performance.now() della sua pescata (anche nel futuro)
 const drawsOfMine = new Map(); // P70: throwKey(carta pescata da te) → performance.now() della pescata
 let drawTimer = 0;
+let dealWaiting = false; // P70: mano nuova, la distribuzione aspetta la fine di presa e riepilogo
+let dealAt = 0; // P70: performance.now() dell'inizio della mescolata
+let dealEnd = 0; // P70: performance.now() dell'ultima carta arrivata
+let dealTimer = 0;
 
 // Frasi del tavolo (P56)
 let phrases = null; // elenco di game:phrases: [{code, text}]
@@ -246,11 +258,66 @@ function noticeDraws(previous, next) {
   drawTimer = setTimeout(redraw, (Math.min(drawn, n) - 1) * DRAW_STEP_MS + DRAW_MS);
 }
 
+/**
+ * P70: a chi va, in ordine, ogni carta distribuita: a giro dal giocatore dopo il
+ * mazziere, una carta alla volta. Restituisce [{ seat, index }] (index = posizione
+ * nella mano di quel giocatore).
+ */
+function dealOrder(current) {
+  const n = current.players.length;
+  const first = (current.dealer_seat + 1) % n;
+  const counts = current.players.map((player) => (player.seat === current.you.seat ? current.hand.length : player.cards_in_hand));
+  const order = [];
+  for (let round = 0; round < Math.max(...counts); round += 1) {
+    for (let step = 0; step < n; step += 1) {
+      const seat = (first + step) % n;
+      if (round < counts[seat]) order.push({ seat, index: round });
+    }
+  }
+  return order;
+}
+
+function startDeal() {
+  dealWaiting = false;
+  dealAt = performance.now();
+  const cards = dealOrder(view).length;
+  dealEnd = dealAt + SHUFFLE_MS + Math.max(cards - 1, 0) * DEAL_STEP_MS + DRAW_MS;
+  clearTimeout(dealTimer);
+  dealTimer = setTimeout(redraw, dealEnd - dealAt);
+}
+
+function dealing() {
+  return dealWaiting || performance.now() < dealEnd;
+}
+
+/** P70: i tempi della distribuzione per il tavolo, o null se non c'è. */
+function dealMoments(current) {
+  if (!dealing()) return null;
+  const now = performance.now();
+  const mine = {};
+  const seats = {};
+  dealOrder(current).forEach(({ seat, index }, k) => {
+    const since = dealWaiting ? HIDDEN : now - (dealAt + SHUFFLE_MS + k * DEAL_STEP_MS);
+    if (seat === current.you.seat) mine[throwKey(current.hand[index])] = since;
+    else (seats[seat] ??= [])[index] = since;
+  });
+  const shuffled = !dealWaiting && now - dealAt < SHUFFLE_MS ? now - dealAt : null;
+  return { shuffled, mine, seats };
+}
+
+/** P70: con la mano nuova la distribuzione aspetta; parte quando presa e riepilogo spariscono. */
+function noticeDeal(previous, next) {
+  if (reducedMotion() || next.hand_number <= previous.hand_number || next.status !== 'playing') return;
+  dealWaiting = true;
+  dealEnd = 0;
+}
+
 /** Momenti che cominciano con la vista nuova (P57, P58): presa appena chiusa, fine mano. */
 function noticeMoments(previous, next) {
   if (!previous) return; // prima vista: niente da mostrare "per un momento"
   noticeThrows(previous, next);
   noticeDraws(previous, next);
+  noticeDeal(previous, next);
   if (next.hand_number !== previous.hand_number) hideLastTrick();
   if (next.last_trick && next.hand_number === previous.hand_number
       && JSON.stringify(next.last_trick) !== JSON.stringify(previous.last_trick)) {
@@ -277,6 +344,8 @@ function render(next) {
   }
   // La presa chiusa lascia il posto alla presa nuova appena qualcuno gioca
   if (lastTrick && view.trick.cards.length) hideLastTrick();
+  // P70: finiti ultima presa e riepilogo, comincia la distribuzione della mano nuova
+  if (dealWaiting && !lastTrick && !nextSummary && !summary) startDeal();
   // Mentre si aspetta la risposta a una mossa, senza connessione (P33) o a fine mano,
   // finché si vedono l'ultima presa della mano e il riepilogo (P69), nessuna carta e
   // nessun canto sono attivi
@@ -290,6 +359,7 @@ function render(next) {
     thrown: flying(),
     drawnSeats: drawn.seats,
     drawnCards: drawn.cards,
+    deal: dealMoments(view),
     summary,
     onCloseSummary: () => { closeSummary(); redraw(); },
     sang: Object.fromEntries(Object.entries(sang).map(([seat, { event }]) => [seat, event])),
@@ -414,8 +484,8 @@ async function sendMove(event, data) {
 }
 
 function onPlay(card) {
-  // P70: finché una carta vola sul tavolo non se ne gioca un'altra
-  if (Object.keys(flying()).length) return;
+  // P70: finché una carta vola sul tavolo, o si distribuisce, non se ne gioca un'altra
+  if (Object.keys(flying()).length || dealing()) return;
   if (demo) {
     setStatus(`Prova: hai scelto ${cardName(card)}. In partita la carta va al server.`);
     return;

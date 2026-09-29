@@ -8,7 +8,7 @@
  *   Hand(view.hand, { playable: view.legal.play, onPlay: (card) => ... })
  *   Hand(cards)                     // sola lettura (es. pagina di prova)
  *   HiddenHand(3)                   // carte coperte (fila semplice)
- *   EdgeHand(3, 'top', drawn)       // P70: carte coperte di un avversario, dal bordo
+ *   EdgeHand(3, 'top', drawn, dealt) // P70: carte coperte di un avversario, dal bordo
  *
  * Stile in css/components/hand.css.
  */
@@ -22,16 +22,20 @@ import { Card, CardBack, sameCard } from './Card.js';
  * @param {Array<{suit: string, rank: number}>} [options.playable] carte giocabili (solo con onPlay)
  * @param {function} [options.onPlay] chiamata con la carta toccata
  * @param {object} [options.drawn] P70: carta ("coppe-10") → millisecondi da quando è stata pescata
+ * @param {object} [options.dealt] P70: carta ("coppe-10") → millisecondi da quando è partita nella distribuzione
  * @returns {HTMLElement}
  */
-export function Hand(cards, { playable = [], onPlay = null, drawn = {} } = {}) {
+export function Hand(cards, { playable = [], onPlay = null, drawn = {}, dealt = {} } = {}) {
   const items = cards.map((card) => {
     const item = Card(card, onPlay ? { onPlay, playable: playable.some((legal) => sameCard(legal, card)) } : {});
-    // P70: la carta appena pescata vola dal mazzo nella mano (millisecondi dalla pescata)
-    const since = drawn[`${card.suit}-${card.rank}`];
+    // P70: la carta appena pescata, o distribuita a inizio mano, vola dal mazzo nella
+    // mano (millisecondi da quando parte; negativo = parte tra poco, e fino ad allora
+    // non si vede)
+    const key = `${card.suit}-${card.rank}`;
+    const since = dealt[key] ?? drawn[key];
     if (since != null) {
-      item.classList.add('card--drawn-mine');
-      item.dataset.drawn = '';
+      item.classList.add(dealt[key] != null ? 'card--dealt-mine' : 'card--drawn-mine');
+      item.dataset[dealt[key] != null ? 'dealt' : 'drawn'] = '';
       item.style.animationDelay = `${Math.round(-since)}ms`;
     }
     return item;
@@ -63,13 +67,18 @@ export function HiddenHand(count) {
  * @param {number} count carte in mano (cards_in_hand)
  * @param {string} side 'top' | 'left' | 'right'
  * @param {number|null} [drawn] millisecondi dalla pescata, o null
+ * @param {Array<number>|null} [dealt] P70, distribuzione: per ogni carta i millisecondi
+ *   da quando è partita dal mazzo (negativi: parte tra poco e fino ad allora non si vede)
  * @returns {HTMLElement}
  */
-export function EdgeHand(count, side, drawn = null) {
+export function EdgeHand(count, side, drawn = null, dealt = null) {
   const items = Array.from({ length: count }, (_, i) => {
     const back = CardBack();
     back.style.setProperty('--i', i);
-    if (drawn != null) {
+    if (dealt && dealt[i] != null) {
+      back.classList.add('card--dealt');
+      back.style.animationDelay = `${Math.round(-dealt[i])}ms`;
+    } else if (drawn != null) {
       back.classList.add(i === count - 1 ? 'card--drawn' : 'card--making-room');
       back.style.animationDelay = `${Math.round(-drawn)}ms`;
     }
@@ -77,7 +86,7 @@ export function EdgeHand(count, side, drawn = null) {
   });
   const hand = el('div', {
     class: `edge-hand edge-hand--${side}`,
-    data: { edgeHand: side, count, ...(drawn != null ? { drawing: '' } : {}) },
+    data: { edgeHand: side, count, ...(drawn != null ? { drawing: '' } : {}), ...(dealt ? { dealing: '' } : {}) },
     attrs: { role: 'group', 'aria-label': `${count} carte coperte` },
   }, items);
   hand.style.setProperty('--n', count);
