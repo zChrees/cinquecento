@@ -6,6 +6,7 @@ Comando (finché P6 non aggiunge il runner): python -m pytest tests/engine
 import json
 import random
 from dataclasses import replace
+from itertools import pairwise
 from pathlib import Path
 
 import pytest
@@ -194,6 +195,7 @@ def test_valori_come_nel_contratto():
     assert view["trick"] == {"leader_seat": 0, "cards": []}
     assert view["last_trick"] is None and view["trump"] is None and view["sings"] == []
     assert view["scores"] == [{"team": 0, "total": 0}, {"team": 1, "total": 0}]
+    assert view["hand_points"] == [{"team": 0, "total": 0}, {"team": 1, "total": 0}]
     assert view["last_hand"] is None and view["result"] is None
     assert view["turn"] == {"seat": 0}
     assert view["legal"] == {"play": [], "sing": []}  # non è il turno del posto 2
@@ -222,9 +224,78 @@ def test_riepilogo_dell_ultima_mano():
     assert view["last_trick"] is None
     assert len(view["last_hand"]["last_trick"]["cards"]) == 2
     assert view["scores"] == [{"team": team, "total": second.scores[team]} for team in (0, 1)]
-    # I punti delle carte prese nella mano in corso non si vedono
+    # Il tabellone resta fermo durante la mano: i punti della mano in corso stanno in hand_points (P67)
     later = next(game for game in states if game.hand_number == 2 and game.hand.last_trick is not None)
     assert player_view(later, 0)["scores"] == view["scores"]
+
+
+# --- Punti della mano in corso (P67, D44) -------------------------------------------
+
+
+def expected_hand_points(hand):
+    points = [sum(card.points for card in taken) for taken in hand.captured]
+    for done in hand.sings:
+        points[done.seat % 2] += done.points
+    return [{"team": team, "total": points[team]} for team in (0, 1)]
+
+
+@pytest.mark.parametrize("seed", range(5))
+@pytest.mark.parametrize("players", MODES)
+def test_punti_della_mano_in_corso(players, seed):
+    """Carte prese più canti di tutte e due le squadre, uguali per tutti i posti."""
+    for game in all_states(players, 300, seed):
+        views = [player_view(game, seat) for seat in range(players)]
+        assert views[0]["hand_points"] == expected_hand_points(game.hand)
+        # Tutti vedono i punti di tutte e due le squadre (D44)
+        assert all(view["hand_points"] == views[0]["hand_points"] for view in views)
+
+
+@pytest.mark.parametrize("players", MODES)
+def test_punti_della_mano_ripartono_da_zero(players):
+    states = all_states(players, 500, 5)
+    for before, after in pairwise(states):
+        view = player_view(after, 0)
+        if after.hand_number != before.hand_number:
+            # Mano nuova: da zero, e i punti della mano finita passano in last_hand e nel tabellone
+            assert view["hand_points"] == [{"team": 0, "total": 0}, {"team": 1, "total": 0}]
+            assert [team["hand_total"] for team in view["last_hand"]["teams"]] == list(after.last_hand.totals)
+        elif not after.finished:
+            # Durante la mano i punti salgono (una presa o un canto) o restano uguali (una carta)
+            old = player_view(before, 0)["hand_points"]
+            assert all(new["total"] >= prev["total"] for new, prev in zip(view["hand_points"], old, strict=True))
+
+
+@pytest.mark.parametrize("players", MODES)
+def test_punti_della_mano_dopo_presa_e_canto(players):
+    states = all_states(players, 500, 6)
+    # Prima presa chiusa della partita: i suoi punti vanno solo a chi l'ha vinta
+    closed = next(game for game in states if game.hand.last_trick is not None)
+    winner = closed.hand.last_trick.winner_seat % 2
+    points = [0, 0]
+    points[winner] = sum(play.card.points for play in closed.hand.last_trick.plays)
+    assert player_view(closed, 0)["hand_points"] == [{"team": 0, "total": points[0]}, {"team": 1, "total": points[1]}]
+    # Un canto aggiunge subito i suoi punti alla squadra di chi canta, e niente all'altra
+    before, after = next(
+        (a, b)
+        for seed in range(6, 20)
+        for game_states in [all_states(players, 500, seed)]
+        for a, b in pairwise(game_states)
+        if b.hand_number == a.hand_number and len(b.hand.sings) > len(a.hand.sings)
+    )
+    sing = after.hand.sings[-1]
+    old = player_view(before, 0)["hand_points"]
+    new = player_view(after, 0)["hand_points"]
+    assert new[sing.seat % 2]["total"] == old[sing.seat % 2]["total"] + sing.points
+    assert new[1 - sing.seat % 2] == old[1 - sing.seat % 2]
+
+
+def test_punti_della_mano_a_partita_finita():
+    final = all_states(4, 150, 7)[-1]
+    view = player_view(final, 0)
+    # A partita finita la mano in corso è l'ultima: i suoi punti sono quelli del riepilogo
+    assert [team["total"] for team in view["hand_points"]] == [
+        team["hand_total"] for team in view["last_hand"]["teams"]
+    ]
 
 
 def test_vista_a_partita_finita():

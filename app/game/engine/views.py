@@ -1,7 +1,7 @@
 """Vista di un giocatore (P15): solo quello che quel posto può vedere.
 
 Mai le carte in mano agli altri, l'ordine o il contenuto del mazzo, le carte già
-prese nella mano in corso (docs/CONTRATTO-SOCKET.md, 3.3).
+prese nella mano in corso (docs/CONTRATTO-SOCKET.md, 3.3): di quelle si vedono solo i punti (P67).
 
 Il motore non sa nulla della stanza: la vista che produce ha i campi di gioco del
 contratto, e la stanza (P24, P25) aggiunge i suoi. ROOM_FIELDS li elenca.
@@ -9,9 +9,16 @@ contratto, e la stanza (P24, P25) aggiunge i suoi. ROOM_FIELDS li elenca.
 
 from app.game.engine.cards import Card
 from app.game.engine.errors import EngineError
-from app.game.engine.game import game_legal_actions
+from app.game.engine.game import game_legal_actions, hand_result
 from app.game.engine.rules import MARIANNA, RuleSet
-from app.game.engine.state import TEAMS, GameState, HandResult, LastTrick, team_of
+from app.game.engine.state import (
+    TEAMS,
+    GameState,
+    HandResult,
+    HandState,
+    LastTrick,
+    team_of,
+)
 
 MODES = {2: "1v1", 4: "2v2"}
 
@@ -48,6 +55,7 @@ def player_view(game: GameState, seat: int, rules: RuleSet = MARIANNA) -> dict:
         "deck_count": len(hand.deck),
         "sings": [{"seat": done.seat, "suit": done.suit.value, "points": done.points} for done in hand.sings],
         "scores": _scores(game.scores),
+        "hand_points": _hand_points(hand, rules),
         "last_hand": _last_hand(game),
         "turn": None if game.finished else {"seat": hand.turn_seat},
         "legal": {
@@ -77,6 +85,20 @@ def _last_trick(last: LastTrick) -> dict:
 
 def _scores(scores: tuple[int, ...]) -> list[dict]:
     return [{"team": team, "total": scores[team]} for team in range(TEAMS)]
+
+
+def _hand_points(hand: HandState, rules: RuleSet) -> list[dict]:
+    """Punti della mano in corso di tutte e due le squadre (P67, D44): carte prese più canti.
+
+    Le carte prese restano nascoste, si vede solo quanto valgono. A mano finita (fine
+    partita) sono i punti del riepilogo, bonus dell'ultima presa compreso.
+    """
+    if hand.finished:
+        return _scores(hand_result(hand, rules).totals)
+    points = [sum(card.points for card in taken) for taken in hand.captured]
+    for done in hand.sings:
+        points[team_of(done.seat)] += done.points
+    return _scores(tuple(points))
 
 
 def _last_hand(game: GameState) -> dict | None:

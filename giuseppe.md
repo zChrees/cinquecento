@@ -22,6 +22,19 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### P67 — Punti della mano in corso nella vista (30/09/2026)
+
+- **Branch**: feature/p67-punti-mano
+- **File** (quelli della scaletta, tranne il contratto): modificati `app/game/engine/views.py`, `app/static/dev/vista_1v1.json`, `vista_2v2.json` (campo nuovo e una frase nella `_nota`), `tests/engine/test_viste.py`, questo file. `state.py` e `game.py` non cambiano: la vista li ricava da `captured` e `sings` della mano
+- **Cosa cambia** (D44, chiusa da Christian il 30/09): campo nuovo **`hand_points`**, stessa forma di `scores`: `[{"team": 0, "total": N}, {"team": 1, "total": M}]`. Sono i punti della **mano in corso** di **tutte e due le squadre** (carte prese più canti), uguali nella vista di ogni giocatore; partono da 0 a ogni mano e salgono a ogni presa chiusa e a ogni canto; la presa in corso non conta finché non si chiude. A partita finita sono quelli dell'ultima mano (uguali a `last_hand`, eventuale bonus dell'ultima presa compreso). Le **carte** prese restano nascoste: si vede solo quanto valgono. `scores` non cambia (tabellone fermo fino a fine mano)
+- **Esempi**: 1v1 a 21 (Mario) e 47 (Turi: 7 di carte più il 40); 2v2 a 13 (squadra di Mario) e 11 (Giulia, l'Asso di spade dell'ultima presa)
+- **Controlli**: **1455 PASS** in 8 suite, tutto PASS (14 nuovi nella suite `engine`), `ruff check .` pulito. Con il codice di prima falliscono 15 test [T]
+- **Decisioni prese**: nome e forma del campo (`hand_points`, come `scores`: scelta di Claude, un valore per squadra come chiesto da Christian); **da confermare con Christian**
+- **Domande nuove**: nessuna
+- **Punti delicati**: `_hand_points` in `views.py` somma i punti come `hand_result` di `game.py`, ma senza il bonus dell'ultima presa finché la mano non è finita (oggi il bonus è 0, `MARIANNA`): se cambiano le regole dei punti vanno cambiati tutti e due
+- **Contratto non ancora aggiornato** (scelta di Giuseppe: in questo lotto l'unico `.md` toccato è questo file): in `docs/CONTRATTO-SOCKET.md`, 3.3, vanno (1) una riga nella tabella dopo `scores`: "`hand_points` | per ogni squadra: `{"team", "total"}`, i punti della **mano in corso** (carte prese più canti, P67, D44), uguali per tutti i giocatori; partono da 0 a ogni mano e salgono a ogni presa chiusa e a ogni canto (la presa in corso non conta finché non si chiude). A partita finita sono quelli dell'ultima mano, come in `last_hand`"; (2) la frase finale "si nascondono solo i punti delle carte prese…" diventa "dal 30/09/2026 (D44) si vedono subito anche i punti delle carte prese di tutte e due le squadre, in `hand_points`: restano nascoste solo le carte prese (tranne l'ultima presa, `last_trick`)"
+- **Note per il contratto o per gli altri**: **Christian**: serve il tuo ok al campo `hand_points` e alle due frasi del contratto qui sopra (regola del 29/09: vale con l'ok di tutti e due); da qui parte **P72**. Gli esempi di `app/static/dev/` hanno il campo nuovo: i tuoi test del tavolo passano senza cambiamenti. **Chi è di turno sui documenti**: spuntare P67; nel "Cosa e perché" di P67 e P72 della scaletta c'è ancora "solo i punti della propria squadra", superato da D44
+
 ### P64 — Niente canto nella prima presa della mano (29/09/2026)
 
 - **Branch**: fix/p64-niente-canto-prima-presa
