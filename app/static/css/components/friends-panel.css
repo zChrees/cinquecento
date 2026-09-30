@@ -213,7 +213,10 @@
   font-size: 0.85rem;
 }
 
-/* Avatar piccoli negli elenchi (anche nella carta-modal della home): iniziale, colori a rotazione */
+/*
+ * Avatar piccoli negli elenchi (anche nella carta-modal della home): l'immagine
+ * (P43, regole comuni in navbar.css) o l'iniziale, con i colori a rotazione
+ */
 .mini-avatar {
   display: inline-grid;
   place-items: center;

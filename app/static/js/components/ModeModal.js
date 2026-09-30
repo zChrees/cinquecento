@@ -28,6 +28,7 @@
  */
 
 import { clear, el, icon } from '../utils/dom.js';
+import { Avatar } from './Avatar.js';
 
 // Testi della faccia per ogni modalità: solo regole e decisioni già prese
 // (rating: 1v1 contro un amico non conta, 2v2 con un amico sì; code separate per punteggio).
@@ -209,9 +210,10 @@ function colorIndex(name) {
   return sum % 4;
 }
 
-function miniAvatar(name) {
+// Immagine dell'avatar (P43) o iniziale su un colore a rotazione
+function miniAvatar(friend) {
   return el('span', { class: 'mini-avatar__wrap', attrs: { 'aria-hidden': 'true' } }, [
-    el('span', { class: `mini-avatar mini-avatar--${colorIndex(name)}`, text: name.charAt(0).toUpperCase() }),
+    Avatar(friend, `mini-avatar mini-avatar--${colorIndex(friend.username)}`),
     el('span', { class: 'mini-avatar__status' }),
   ]);
 }
@@ -236,7 +238,7 @@ function inviteRow(friend) {
     on: { click: () => sendInvite(friend) },
   });
   const row = el('li', { class: 'invite__item', data: { userId: friend.user_id } }, [
-    miniAvatar(friend.username),
+    miniAvatar(friend),
     el('span', { class: 'invite__name', text: friend.username }),
     button,
   ]);

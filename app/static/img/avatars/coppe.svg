@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+<!-- Avatar Coppe (P43): disegnato da Claude per Cinquecento, nessuna licenza di terzi -->
+<defs><clipPath id="c"><circle cx="32" cy="32" r="32"/></clipPath></defs>
+<circle cx="32" cy="32" r="32" fill="#d93636"/>
+<g clip-path="url(#c)"><path fill="#fff8ec" d="M19 16h26c0 11-5.5 18.5-13 19.5C24.5 34.5 19 27 19 16z"/><ellipse cx="32" cy="16" rx="11" ry="2.2" fill="#9e2020"/><rect x="29.5" y="34" width="5" height="11" rx="1" fill="#fff8ec"/><ellipse cx="32" cy="39.5" rx="4.8" ry="2.2" fill="#fff8ec"/><path fill="#fff8ec" d="M20.5 51c0-4.2 5-6.8 11.5-6.8s11.5 2.6 11.5 6.8z"/><path fill="none" stroke="#9e2020" stroke-width="1.6" d="M22.5 22h19"/></g>
+<circle cx="32" cy="32" r="29" fill="none" stroke="#fff8ec" stroke-opacity=".4" stroke-width="1.5"/>
+</svg>

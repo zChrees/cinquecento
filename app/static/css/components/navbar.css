@@ -125,7 +125,12 @@
   letter-spacing: 0.02em;
 }
 
-/* Avatar: per ora l'iniziale (o l'icona per chi non ha fatto il login); le immagini arrivano con P43 */
+/*
+ * Avatar: l'immagine del set (P43) o l'iniziale (o l'icona per chi non ha fatto
+ * il login). Le regole .avatar--img e .avatar__img valgono per ogni avatar
+ * (anche .mini-avatar degli elenchi e .avatar-choice__face delle impostazioni):
+ * questo file è caricato da base.html in tutte le pagine.
+ */
 .avatar {
   display: inline-grid;
   place-items: center;
@@ -150,6 +155,20 @@
   width: 56px;
   height: 56px;
   font-size: 1.5rem;
+}
+
+/* Con l'immagine il disegno riempie il tondo (ha già il suo sfondo) */
+.avatar--img {
+  overflow: hidden;
+}
+
+.avatar__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  pointer-events: none;
+  user-select: none;
 }
 
 /*

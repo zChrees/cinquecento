@@ -8,7 +8,7 @@
  *       <p class="settings__back"> link alla home </p>
  *     </section>
  *   </main>
- * Finché non ci sono le immagini (P43), ogni avatar è un riquadro con il nome.
+ * Ogni avatar è un riquadro con l'immagine (P43; "Iniziale": la lettera) e il nome.
  * Colori solo dalle variabili di variables.css.
  */
 
@@ -64,7 +64,7 @@
   align-items: center;
   justify-content: center;
   gap: 4px;
-  min-height: 64px;
+  min-height: 76px;
   padding: 8px 6px;
   border: 2px solid var(--border);
   border-radius: var(--radius-m);
@@ -83,8 +83,8 @@
 .avatar-choice__face {
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: var(--primary);
   color: var(--on-primary);

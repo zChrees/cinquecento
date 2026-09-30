@@ -32,6 +32,7 @@
 import { el, icon } from '../utils/dom.js';
 import { on, onStatus, send } from '../core/socket.js';
 import { EVENTS } from '../core/events.js';
+import { Avatar } from './Avatar.js';
 import { confirmModal, openModal } from './Modal.js';
 import { ChatWindow, appendMessage, disableWriting, setChatOnline } from './ChatWindow.js';
 
@@ -120,9 +121,10 @@ function colorIndex(name) {
   return sum % 4;
 }
 
-function miniAvatar(name, presence = null) {
+// Immagine dell'avatar (P43) o iniziale su un colore a rotazione
+function miniAvatar(user, presence = null) {
   return el('span', { class: 'mini-avatar__wrap', attrs: { 'aria-hidden': 'true' } }, [
-    el('span', { class: `mini-avatar mini-avatar--${colorIndex(name)}`, text: name.charAt(0).toUpperCase() }),
+    Avatar(user, `mini-avatar mini-avatar--${colorIndex(user.username)}`),
     presence ? el('span', { class: `mini-avatar__status mini-avatar__status--${presence}` }) : null,
   ]);
 }
@@ -138,7 +140,7 @@ function iconButton(name, label, extra = {}) {
 
 function row({ user, status, presence, extra = null, actions, modifier = '' }) {
   return el('li', { class: `friend ${modifier}`.trim(), data: { userId: user.user_id } }, [
-    miniAvatar(user.username, presence),
+    miniAvatar(user, presence),
     el('span', { class: 'friend__text' }, [
       el('span', { class: 'friend__name', text: user.username }),
       el('span', { class: 'friend__status', text: status }),

@@ -1,8 +1,10 @@
 {% extends "base.html" %}
+{% from "partials/avatar.html" import avatar %}
 {#
   Impostazioni (P17): scelta dell'avatar e cancellazione dell'account.
-  `avatars` è AVATARS di app/services/avatars.py (codice -> nome). Finché non ci
-  sono le immagini (P43) ogni avatar mostra il suo nome; "Iniziale" = nessun avatar.
+  `avatars` è AVATARS di app/services/avatars.py (codice -> nome). Ogni scelta
+  mostra l'immagine (P43, macro di partials/avatar.html) e il nome; "Iniziale" =
+  nessun avatar.
   Il comportamento (conferma con la password, doppio clic) sta in js/pages/profile.js;
   lo stile in css/pages/profile.css, più le classi di layout.css, form.css e button.css (P19).
 #}
@@ -33,6 +35,7 @@
         {% for code, name in avatars.items() %}
         <label class="avatar-choice" data-avatar="{{ code }}">
           <input class="avatar-choice__input" type="radio" name="avatar" value="{{ code }}"{% if current_user.avatar == code %} checked{% endif %}>
+          {{ avatar(current_user.username, code, "avatar-choice__face") }}
           <span class="avatar-choice__name">{{ name }}</span>
         </label>
         {% endfor %}

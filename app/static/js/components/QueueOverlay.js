@@ -18,6 +18,7 @@
  */
 
 import { el, icon } from '../utils/dom.js';
+import { Avatar } from './Avatar.js';
 
 /** Secondi come m:ss (83 → "1:23"). */
 export function formatWait(seconds) {
@@ -37,10 +38,10 @@ function sectionFor(queue) {
   return queue.partner ? 'Con un amico' : 'Partita Veloce';
 }
 
-// "In squadra con Giulia" / "Contro Giulia e Salvo": avatar con l'iniziale e testo
+// "In squadra con Giulia" / "Contro Giulia e Salvo": avatar (P43) e testo
 function playersLine(players, text, data) {
   return el('p', { class: 'queue-overlay__partner felt-text', data }, [
-    ...players.map((p) => el('span', { class: 'avatar', text: p.username.charAt(0).toUpperCase(), attrs: { 'aria-hidden': 'true' } })),
+    ...players.map((p) => Avatar(p)),
     el('span', { text }),
   ]);
 }

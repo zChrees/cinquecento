@@ -27,6 +27,7 @@
  */
 
 import { el, icon } from '../utils/dom.js';
+import { Avatar } from './Avatar.js';
 import { Card } from './Card.js';
 import { EdgeHand, Hand } from './Hand.js';
 import { HandSummary } from './HandSummary.js';
@@ -94,7 +95,7 @@ function Seat(view, player, position, sang = null, phrase = null) {
   }
 
   const avatar = el('span', { class: 'seat__avatar' }, [
-    el('span', { class: 'avatar', text: player.username.slice(0, 1).toUpperCase(), attrs: { 'aria-hidden': 'true' } }),
+    Avatar(player),
     isTurn ? Timer(view.turn) : null,
     phrase ? PhraseBubble(player.username, phrase, position) : null,
   ]);
