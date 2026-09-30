@@ -41,6 +41,15 @@ home_events.py manda loro home:status (l'avviso di rientro sparisce), friends_ev
 avvisa i loro amici (friends:presence). Quando comincia le chiama `create_room`
 (room_manager.py) con `start_listeners`. Si chiamano in un thread a parte, fuori dal
 lock della stanza (guardano anche le altre stanze e il database).
+
+P68 (D43): partita 1v1 contro la CPU. I posti della CPU (`cpu_seats`) hanno un
+giocatore finto (CPU_PLAYER, user_id 0: nessun utente vero ha 0) che non è tra i
+membri, risulta sempre collegato e gioca da sé: quando tocca a lui la stanza aspetta
+qualche secondo (per non giocare mentre la pagina mostra la presa o il riepilogo) e
+sceglie con cpu_move dalla sua vista, sotto il lock e con il numero di turno, come il
+timer. Se canta, la stanza manda game:sang a tutti e aspetta di nuovo prima della carta.
+La partita non si salva e non conta per il rating; gli avvisi di inizio e fine
+partita vanno solo ai giocatori veri.
 """
 
 import logging
@@ -56,6 +65,7 @@ from app.extensions import socketio
 from app.game.engine.actions import PlayCardAction, SingAction
 from app.game.engine.auto_move import auto_move
 from app.game.engine.cards import Card, Rank
+from app.game.engine.cpu import cpu_move
 from app.game.engine.game import apply_game, new_game
 from app.game.engine.views import card_to_dict, player_view
 from app.realtime.events import room_channel
@@ -70,6 +80,11 @@ TURN_SECONDS = BaseConfig.TURN_SECONDS
 RECONNECT_SECONDS = BaseConfig.RECONNECT_SECONDS
 SING_SHOW_SECONDS = 3  # D15: per quanto la pagina mostra Re e Cavallo cantati
 MODE_OF_PLAYERS = {n: mode for mode, n in MODES.items()}
+
+# P68: attese della CPU prima di giocare, sui tempi della pagina (js/pages/game.js)
+CPU_SECONDS = 1.5  # dopo la carta dell'avversario (lancio: 0,4 s)
+CPU_AFTER_TRICK_SECONDS = 2.5  # presa appena chiusa: ultima presa 1,5 s più la pescata
+CPU_NEW_HAND_SECONDS = 9  # mano nuova: ultima presa, riepilogo (5 s), mescolata e distribuzione
 
 # P44, P47: funzioni chiamate con (user_id dei giocatori, app) a inizio e fine partita,
 # in un thread a parte (fuori dal lock)
@@ -105,6 +120,9 @@ class Player:
         return cls(user_id=user.id, username=user.username, avatar=user.avatar)
 
 
+CPU_PLAYER = Player(user_id=0, username="CPU")  # P68: nessun utente vero ha id 0
+
+
 class Room:
     def __init__(self, room_id):
         self.id = room_id
@@ -114,6 +132,7 @@ class Room:
 
         # Partita (P24): None finché start() non la fa partire
         self.players = ()  # Player per posto
+        self.cpu_seats = frozenset()  # P68: posti giocati dalla CPU
         self.rated = True
         self.game = None
         self.version = 0
@@ -134,6 +153,9 @@ class Room:
         self._started_at = None
         self._moves = []  # MoveRecord, nell'ordine della partita
         self._saved = False
+
+        # CPU (P68): timer della prossima mossa
+        self._cpu_timer = None
 
         # Frasi del tavolo (P55): posto -> ora (time.monotonic) dell'ultima frase; mai il testo
         self.phrase_times = {}
@@ -159,12 +181,16 @@ class Room:
 
     # --- Partita (P24) ---
 
-    def start(self, players, target_score, rated=True, rng=None):
-        """Mette i giocatori ai posti (nell'ordine dato) e fa partire la partita del motore."""
+    def start(self, players, target_score, rated=True, rng=None, cpu_seats=()):
+        """Mette i giocatori ai posti (nell'ordine dato) e fa partire la partita del motore.
+
+        `cpu_seats` (P68): i posti giocati dalla CPU; i membri sono solo i giocatori veri.
+        """
         with self.lock:
             self._rng = rng if rng is not None else secrets.SystemRandom()
             self.players = tuple(players)
-            self.members = {p.user_id for p in self.players}
+            self.cpu_seats = frozenset(cpu_seats)
+            self.members = set(self.human_ids)
             self.rated = rated
             self.game = new_game(len(self.players), target_score, self._rng)
             self.version = 1
@@ -175,6 +201,11 @@ class Room:
             self._moves = []
             self._saved = False
             self._start_turn()
+
+    @property
+    def human_ids(self):
+        """user_id dei giocatori veri, in ordine di posto (P68: senza la CPU)."""
+        return tuple(p.user_id for seat, p in enumerate(self.players) if seat not in self.cpu_seats)
 
     @property
     def finished(self):
@@ -262,6 +293,7 @@ class Room:
         timer.daemon = True
         self._turn_timer = timer
         timer.start()
+        self._schedule_cpu()
 
     def _turn_expired(self, token):
         with self.lock:
@@ -276,10 +308,53 @@ class Room:
             log.info("Tempo scaduto nella stanza %s: mossa automatica", self.id)
             self.broadcast_states()
 
+    # --- CPU (P68, D43) ---
+
+    def _schedule_cpu(self):
+        """Se tocca alla CPU, la sua mossa parte dopo l'attesa giusta (sotto il lock)."""
+        if self._cpu_timer is not None:
+            self._cpu_timer.cancel()
+            self._cpu_timer = None
+        hand = self.game.hand
+        if self.finished or hand.turn_seat not in self.cpu_seats:
+            return
+        if hand.trick:
+            delay = CPU_SECONDS
+        elif hand.last_trick is not None:
+            delay = CPU_AFTER_TRICK_SECONDS
+        elif self.game.hand_number > 1:
+            delay = CPU_NEW_HAND_SECONDS
+        else:
+            delay = CPU_SECONDS  # prima mano: la pagina non mostra la distribuzione
+        timer = threading.Timer(delay, self._cpu_turn, args=(self._turn_token,))
+        timer.daemon = True
+        self._cpu_timer = timer
+        timer.start()
+
+    def _cpu_turn(self, token):
+        with self.lock:
+            if token != self._turn_token or self.finished:
+                return  # turno già passato (per esempio la mossa automatica), o partita finita
+            seat = self.game.hand.turn_seat
+            try:
+                action = cpu_move(self.view_for(seat), self._rng)
+                if isinstance(action, SingAction):
+                    socketio.emit("game:sang", self.sing(seat, action.suit), to=self.channel)
+                    self._schedule_cpu()  # il turno resta alla CPU: ora la carta, dopo un'altra attesa
+                else:
+                    self._apply(action, "gioca_carta", card_details(action.card))
+            except Exception:
+                log.exception("Mossa della CPU non riuscita nella stanza %s", self.id)
+                return
+            self.broadcast_states()
+
     def _stop_timers(self):
         if self._turn_timer is not None:
             self._turn_timer.cancel()
             self._turn_timer = None
+        if self._cpu_timer is not None:
+            self._cpu_timer.cancel()
+            self._cpu_timer = None
         self._turn_token += 1
         for _deadline, timer in self._reconnect.values():
             timer.cancel()
@@ -338,7 +413,10 @@ class Room:
         if self._saved:
             return
         self._saved = True
-        notify(finish_listeners, (p.user_id for p in self.players), self._app)
+        notify(finish_listeners, self.human_ids, self._app)
+        if self.cpu_seats:
+            log.info("Partita contro la CPU nella stanza %s: non si salva (D43)", self.id)
+            return
         if self._app is None:
             log.warning("Partita della stanza %s non salvata: nessuna applicazione Flask", self.id)
             return
@@ -396,7 +474,7 @@ class Room:
                     user_id=player.user_id,
                     username=player.username,
                     avatar=player.avatar,
-                    connected=entry["seat"] in self.sids,
+                    connected=entry["seat"] in self.sids or entry["seat"] in self.cpu_seats,
                     reconnect_seconds_left=None if waiting is None else round(max(0.0, waiting[0] - now), 1),
                 )
             if view["turn"] is not None:

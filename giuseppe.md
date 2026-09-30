@@ -22,6 +22,26 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### P68 — Partita contro la CPU: mosse e stanza (30/09/2026)
+
+- **Branch**: feature/p68-cpu
+- **File** (lista definitiva per 9.2: quella "probabile" della scaletta, senza contratto, `match_service.py` e database, che non servono): creati `app/game/engine/cpu.py`, `tests/engine/test_cpu.py`, `tests/sockets/test_cpu.py`; modificati `app/realtime/room.py`, `app/realtime/room_manager.py`, `app/sockets/lobby_events.py` (l'evento nuovo sta qui, niente file nuovo da registrare), questo file
+- **D43, scelte di Giuseppe** (30/09/2026, sulle raccomandazioni di Claude; **da confermare con Christian**, perché D43 è una decisione comune):
+  1. **strategia "giocatore medio"**: canta appena può (con più semi, quello di cui ha più carte); quando risponde prende se può farlo senza briscola, con la carta più economica; usa la briscola solo se la presa vale almeno 10 punti (a mazzo finito basta che valga qualcosa); altrimenti scarta la carta che vale meno; quando apre gioca basso e tiene Assi, Tre e briscole; a mazzo finito apre con la briscola più forte; scartando non rompe una coppia Re + Cavallo ancora da cantare;
+  2. **solo 1v1**;
+  3. la partita **non si salva** e non conta per statistiche e rating (nessuna modifica al database);
+  4. nella home si avvia con **una scelta nella carta-modal** (accanto a Partita Veloce e Gioca con un amico), non con una carta-pulsante nuova (P73, Christian);
+  5. la CPU si chiama **"CPU"**, senza avatar (la pagina mostra l'iniziale), e prima di giocare aspetta **1,5 s** (2,5 s dopo una presa chiusa, 9 s a inizio di una mano nuova, sui tempi di `game.js`: ultima presa, riepilogo, mescolata e distribuzione)
+- **Come funziona**: `cpu_move(vista)` nel motore sceglie **dalla sola vista della CPU** (non può vedere carte altrui: un test scambia le carte nascoste e la mossa non cambia). Nella stanza il posto della CPU ha `CPU_PLAYER` (`user_id` 0, nessun utente vero ha 0), non è tra i membri, risulta sempre collegato e gioca da sé con un timer sotto il lock e con il numero di turno (come la mossa automatica: un timer vecchio non fa niente). Se canta, la stanza manda `game:sang` a tutti e aspetta di nuovo prima della carta. Il timer dei 30 secondi resta anche per la CPU, come riserva
+- **Controlli**: **1526 PASS** in 8 suite, tutto PASS (71 nuovi: 55 `engine`, 16 `sockets`), `ruff check .` pulito. La CPU contro la mossa automatica vince il 97% delle partite (400 partite per posto) [T]; il test chiede almeno 75 su 100
+- **Contratto: da aggiungere** (annotazione per chi aggiorna `docs/CONTRATTO-SOCKET.md`; ok di Giuseppe e Christian). Proposta per la sezione 4 (o una 4.1 "Partita contro la CPU"):
+  - `cpu:start` | pagina → server | `{"request_id", "target_score"}` | `ok` con `data` = `{"game_id"}`, o errore: `invalid_data` (punteggio non tra 150, 300, 500, `request_id` mancante), `busy` ("Sei già in coda: annulla la ricerca prima di giocare contro la CPU.", "Hai un invito aperto: annullalo prima di giocare contro la CPU.", "Sei già in partita.");
+  - la partita è 1v1, tu al posto 0 e la CPU all'1 (chi comincia lo tira a sorte il motore); arriva `game:start` (3.2) come dalla coda; lo stesso `request_id` ripetuto riceve la stessa risposta, senza una seconda partita;
+  - nella vista (3.3) la CPU è il giocatore con `user_id` **0**, `username` "CPU", `avatar` null, `connected` sempre true, `reconnect_seconds_left` null; `rated` è false
+- **Domanda** (per Christian): alla pagina basta riconoscere la CPU da `user_id` 0, o vuoi un campo esplicito nella vista (per esempio `cpu: true` per giocatore)? Sarebbe un cambiamento del 3.3 e degli esempi: lo aggiungo io se serve
+- **Punti delicati**: la CPU **non è un membro** della stanza (`room.members` e `room.human_ids` hanno solo i giocatori veri): così non risulta mai "già in partita" e può giocare in più stanze insieme; gli avvisi di inizio e fine partita (`start_listeners`, `finish_listeners`) e `game:start` vanno solo a `human_ids`. La mossa della CPU parte da `_start_turn` (`_schedule_cpu`) e, dopo un canto, di nuovo da `_cpu_turn`; `_stop_timers` ferma anche il suo timer. Una stanza con `cpu_seats` non passa mai da `match_service.save_match` (lo scrive nel log, INFO). `cpu:start` gira sotto `invites.lock` come `invite:start`. Nei test le attese della CPU si riducono con `monkeypatch` su `CPU_SECONDS`, `CPU_AFTER_TRICK_SECONDS`, `CPU_NEW_HAND_SECONDS` di `room.py`
+- **Note per gli altri**: **Christian** (P73): il nome dell'evento `cpu:start` va aggiunto in `app/static/js/core/events.js` (non l'ho toccato: non era nella lista del punto); la risposta ha `game_id` ma il passaggio al tavolo lo fa `game:start`, come per la coda; senza connessione il pulsante va spento (P33). **Chi è di turno sui documenti**: spuntare P68, lista definitiva in 9.2, spostare D43 in `DECISIONI.md` (dopo l'ok di Christian), aggiungere il punto delicato "CPU (P68)" in `CLAUDE.md`
+
 ### P67 — Punti della mano in corso nella vista (30/09/2026)
 
 - **Branch**: feature/p67-punti-mano

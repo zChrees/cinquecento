@@ -6,6 +6,9 @@ quello che succede dentro una stanza passa dal lock della stanza (room.py).
 Funzioni esposte da P24, che altri punti usano senza modificare questo file:
 - create_room(giocatori, modalità, punteggio): per la coda (P28, P29) e gli inviti (P47);
 - find_room_of_user(user_id): per il rientro in partita (P44).
+
+P68: create_room(..., cpu_seats=(1,)) crea la partita contro la CPU (il giocatore
+CPU_PLAYER di room.py a quei posti): la CPU può essere in più partite insieme.
 """
 
 import secrets
@@ -40,12 +43,13 @@ class RoomManager:
             self._rooms[room.id] = room
             return room
 
-    def create_room(self, players, mode, target_score, rated=True, rng=None, announce=True):
+    def create_room(self, players, mode, target_score, rated=True, rng=None, announce=True, cpu_seats=()):
         """Crea la stanza e fa partire la partita; ogni giocatore riceve game:start (contratto 3.2).
 
         `players` in ordine di posto: nel 2v2 i posti 0 e 2 sono una squadra, 1 e 3 l'altra
         (contratto 3.1). Accetta oggetti Player o utenti (User). `rated` è False solo nel
         1v1 contro un amico (D36). Un giocatore già in una partita in corso → RoomError.
+        `cpu_seats` (P68): i posti giocati dalla CPU, che non riceve game:start.
         """
         if mode not in MODES:
             raise RoomError(f'Modalità non valida: "{mode}".')
@@ -55,20 +59,21 @@ class RoomManager:
         if len({p.user_id for p in players}) != len(players):
             raise RoomError("Lo stesso giocatore non può avere due posti.")
         with self._lock:
-            busy = [p.username for p in players if self._room_of(p.user_id) is not None]
+            busy = [p.username for seat, p in enumerate(players)
+                    if seat not in cpu_seats and self._room_of(p.user_id) is not None]
             if busy:
                 raise RoomError(f"Già in partita: {', '.join(busy)}.")
             room = Room(self._new_id())
             try:
-                room.start(players, target_score, rated=rated, rng=rng)
+                room.start(players, target_score, rated=rated, rng=rng, cpu_seats=cpu_seats)
             except EngineError as exc:
                 raise RoomError(str(exc)) from None
             self._rooms[room.id] = room
-        room_module.notify(room_module.start_listeners, (p.user_id for p in players), room._app)  # P47
+        room_module.notify(room_module.start_listeners, room.human_ids, room._app)  # P47
         if announce:
-            for player in players:
+            for user_id in room.human_ids:
                 socketio.emit("game:start", {"game_id": room.id, "url": f"/game/{room.id}"},
-                              to=user_channel(player.user_id))
+                              to=user_channel(user_id))
         return room
 
     def find_room_of_user(self, user_id):
