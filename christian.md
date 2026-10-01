@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: registrati i lotti dal 29/09 al 01/10 (01/10/2026)
+
+- **Branch**: docs/registra-30-09-01-10
+- **File**: modificati `SCALETTA.md` (tracker, sezioni 3, 4, 5, 9 e 9.2), `DECISIONI.md` (Interfaccia, Gioco, Processo), `DA-DECIDERE.md` (D31, D43; D44 tolta), `CLAUDE.md` (riga "Stato", Testing, punti delicati), `docs/CONTRATTO-SOCKET.md` (3.3: `hand_points`, chiesto da Giuseppe a chi è di turno), questo file
+- **Controlli**: nessuno (soli documenti); ultimo giro completo 1526 PASS (P68), più gli 8 di P72 (suite `api` e `frontend` PASS)
+- **Registrati**: `giuseppe.md` da P61 a P68 (P61, P59 con il runner a 240 s, P66, P65, P63, P64, P67, P68); `christian.md` da P69 a P72 (P69, P71, i tre lotti di P70, P34, P43, P72); niente di nuovo in `antonio.md`
+- **Tracker**: spuntati P43, P59, P61, P63, P64, P65, P66, P67, P69, P70, P71, P72; **non spuntati** P34 (manca la prova su un telefono vero) e P68 (in `dev` a metà: strategia della CPU da rifare); P53 barrato (tolto il 30/09). Liste definitive in 9.2 per P34 (parte nel codice), P43, P59, P61, P64, P65, P66, P68, P69–P72. "Da dove si parte" riscritto
+- **Decisioni registrate**: tocchi a fine mano (P69), grafica del tavolo (P71), animazioni (P70), avatar in stile piatto (P43), niente tema scuro (P53), D44 chiusa (punti al tavolo), etichetta dei punti (P72), P64 confermata per ogni mano, dettagli del 2v2 con più amici (P59), runner a 240 s, cambiamenti al contratto approvati (P59, P65, P67)
+- **Domande**: D44 chiusa; D43 aggiornata (strategia "giocatore medio" scartata il 01/10, le altre proposte di Giuseppe da discutere, preferenza per `cpu: true`); D31 aggiornata (resta da tagliare, eventualmente, solo la CPU)
+- **Punti delicati nuovi in `CLAUDE.md`**: amici e avvisi (P63, P65), 2v2 con più amici (P59), punti della mano (P67, P72), animazioni (P70), tocchi al tavolo (P69, P34), avatar (P43), CPU (P68); aggiornati "Regole del canto" (P64) e "Timer" (P66)
+- **Cosa devono fare gli altri**: **Giuseppe**: leggi "Da dove si parte" in `SCALETTA.md`: prima D43 insieme, poi P68 rifatto, poi P38 e P39; il contratto 3.3 ora ha `hand_points`
+
 ### P72 — Punti della mano in corso al tavolo (01/10/2026)
 
 - **Branch**: feature/p72-punti-mano
