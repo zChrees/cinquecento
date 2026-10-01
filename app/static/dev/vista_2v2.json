@@ -1,5 +1,5 @@
 {
-  "_nota": "Vista di Mario (posto 0, squadra 0 con Salvo), 2v2 a 300, prima mano, terza presa: turno di Rosalia, che è scollegata. Nessuno ha cantato: carte franche. Due prese chiuse: la prima (13 punti) alla squadra di Mario, la seconda (l'Asso di spade, 11) a Giulia; la presa in corso non conta ancora (hand_points, P67). Contratto: docs/CONTRATTO-SOCKET.md, 3.3.",
+  "_nota": "Vista di Mario (posto 0, squadra 0 con Salvo), 2v2 a 300, prima mano, terza presa: turno di Rosalia, che è scollegata. Nessuno ha cantato: carte franche. Due prese chiuse: la prima (13 punti) alla squadra di Mario, la seconda (l'Asso di spade, 11) a Giulia; la presa in corso non conta ancora (hand_points, P67); per ora la vince Salvo con il Tre di denari (trick.winning_seat, P75). Contratto: docs/CONTRATTO-SOCKET.md, 3.3.",
   "game_id": "e5f6a7b8",
   "version": 19,
   "mode": "2v2",
@@ -92,7 +92,8 @@
           "rank": 3
         }
       }
-    ]
+    ],
+    "winning_seat": 2
   },
   "last_trick": {
     "winner_seat": 1,

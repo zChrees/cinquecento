@@ -177,7 +177,7 @@ Esempi completi: `vista_1v1.json` e `vista_2v2.json`. La vista contiene **solo q
 | `you` | `{"seat"}`: il tuo posto |
 | `players` | per ogni posto: `seat`, `team`, `user_id`, `username`, `avatar`, `cards_in_hand` (solo il numero), `connected`, `reconnect_seconds_left` (secondi che restano per rientrare se è scollegato, altrimenti `null`) |
 | `hand` | le **tue** carte |
-| `trick` | la presa in corso: `leader_seat` (chi l'ha aperta) e `cards`, un elenco di `{"seat", "card"}` nell'ordine in cui sono state giocate |
+| `trick` | la presa in corso: `leader_seat` (chi l'ha aperta), `cards`, un elenco di `{"seat", "card"}` nell'ordine in cui sono state giocate, e `winning_seat`, il posto della carta che vincerebbe la presa se finisse adesso (P75: lo decide il server con la stessa regola di chi prende; cambia quando una carta nuova la supera), `null` quando sul tavolo non c'è nessuna carta |
 | `last_trick` | l'ultima presa chiusa: `winner_seat` e `cards`; `null` a inizio mano. Serve a mostrare per un momento com'è finita |
 | `trump` | seme di briscola, oppure `null` finché nessuno ha cantato 40 (carte franche) |
 | `deck_count` | carte rimaste nel mazzo |

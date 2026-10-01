@@ -12,10 +12,12 @@ from pathlib import Path
 import pytest
 
 from app.game.engine.actions import PlayCardAction, SingAction
-from app.game.engine.cards import Suit
+from app.game.engine.cards import Card, Suit
 from app.game.engine.deck import full_deck
 from app.game.engine.errors import EngineError, InvalidMoveError
 from app.game.engine.game import apply_game, game_legal_actions, new_game
+from app.game.engine.singing import Sing
+from app.game.engine.state import TrickPlay
 from app.game.engine.views import (
     ROOM_FIELDS,
     ROOM_PLAYER_FIELDS,
@@ -192,7 +194,7 @@ def test_valori_come_nel_contratto():
     assert view["hand_number"] == 1 and view["dealer_seat"] == 3
     assert view["you"] == {"seat": 2}
     assert [(p["seat"], p["team"]) for p in view["players"]] == [(0, 0), (1, 1), (2, 0), (3, 1)]
-    assert view["trick"] == {"leader_seat": 0, "cards": []}
+    assert view["trick"] == {"leader_seat": 0, "cards": [], "winning_seat": None}
     assert view["last_trick"] is None and view["trump"] is None and view["sings"] == []
     assert view["scores"] == [{"team": 0, "total": 0}, {"team": 1, "total": 0}]
     assert view["hand_points"] == [{"team": 0, "total": 0}, {"team": 1, "total": 0}]
@@ -296,6 +298,63 @@ def test_punti_della_mano_a_partita_finita():
     assert [team["total"] for team in view["hand_points"]] == [
         team["hand_total"] for team in view["last_hand"]["teams"]
     ]
+
+
+# --- Carta che sta vincendo la presa (P75) -------------------------------------------
+
+
+def expected_winning_seat(plays, trump):
+    """La regola scritta di nuovo, senza il motore: la briscola più forte, se c'è, sennò la più forte del seme di uscita."""
+    lead = plays[0].card.suit
+    pool = [play for play in plays if play.card.suit == trump] or [play for play in plays if play.card.suit == lead]
+    return max(pool, key=lambda play: play.card.strength).seat
+
+
+@pytest.mark.parametrize("seed", range(5))
+@pytest.mark.parametrize("players", MODES)
+def test_carta_che_sta_vincendo_la_presa(players, seed):
+    seen = set()
+    for game in all_states(players, 300, seed):
+        hand = game.hand
+        views = [player_view(game, seat) for seat in range(players)]
+        expected = expected_winning_seat(hand.trick, hand.trump) if hand.trick else None
+        # Uguale per tutti i posti, null senza carte sul tavolo
+        assert all(view["trick"]["winning_seat"] == expected for view in views)
+        seen.add(len(hand.trick))
+    assert seen == set(range(players))  # provate tutte le prese a metà, da 0 a players - 1 carte
+
+
+@pytest.mark.parametrize("players", MODES)
+def test_carta_che_sta_vincendo_coincide_con_chi_prende(players):
+    """Prima dell'ultima carta, chi sta vincendo più l'ultima carta dà proprio chi prende la presa."""
+    checked = 0
+    for before, after in pairwise(all_states(players, 300, 8)):
+        if after.hand_number != before.hand_number or len(before.hand.trick) != players - 1:
+            continue
+        last = after.hand.last_trick
+        assert last is not None and last.plays[:-1] == before.hand.trick
+        leading = player_view(before, 0)["trick"]["winning_seat"]
+        final = last.plays[-1]
+        overtakes = expected_winning_seat(last.plays, before.hand.trump) == final.seat
+        assert last.winner_seat == (final.seat if overtakes else leading)
+        checked += 1
+    assert checked > 10
+
+
+def test_la_briscola_giocata_dopo_passa_avanti():
+    game = new_game(4, 300, rng=random.Random(2))
+    plays = (
+        TrickPlay(0, Card.from_code("coppe-1")),
+        TrickPlay(1, Card.from_code("coppe-3")),
+    )
+    game = replace(game, hand=replace(game.hand, sings=(Sing(1, Suit("spade"), 40),), leader_seat=0, turn_seat=2, trick=plays[:1]))
+    assert player_view(game, 3)["trick"]["winning_seat"] == 0  # una carta sola vince sempre
+    game = replace(game, hand=replace(game.hand, trick=plays))
+    assert player_view(game, 3)["trick"]["winning_seat"] == 0  # l'Asso batte il Tre
+    game = replace(game, hand=replace(game.hand, trick=(*plays, TrickPlay(2, Card.from_code("spade-2")))))
+    assert player_view(game, 3)["trick"]["winning_seat"] == 2  # il 2 di briscola batte l'Asso
+    game = replace(game, hand=replace(game.hand, sings=()))
+    assert player_view(game, 3)["trick"]["winning_seat"] == 0  # a carte franche no
 
 
 def test_vista_a_partita_finita():

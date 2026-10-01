@@ -19,6 +19,17 @@ def trick_winner(cards: Sequence[Card], trump: Suit | None) -> int:
     """
     if len(cards) not in MARIANNA.player_counts:
         raise EngineError("Una presa completa ha 2 o 4 carte.")
+    return winning_position(cards, trump)
+
+
+def winning_position(cards: Sequence[Card], trump: Suit | None) -> int:
+    """Come trick_winner, ma anche a presa non finita (P75): la carta che la vincerebbe se finisse lì.
+
+    trick_winner la usa per la presa completa, così la vista e il motore non possono dare
+    risposte diverse.
+    """
+    if not 1 <= len(cards) <= max(MARIANNA.player_counts):
+        raise EngineError("Una presa ha da 1 a 4 carte.")
     if not all(isinstance(card, Card) for card in cards):
         raise EngineError("La presa contiene qualcosa che non è una carta.")
     if len(set(cards)) != len(cards):

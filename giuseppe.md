@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### P75 — La carta che sta vincendo la presa nella vista (01/10/2026)
+
+- **Branch**: feature/p75-carta-vincente
+- **File**: modificati `app/game/engine/views.py`, `docs/CONTRATTO-SOCKET.md` (3.3, riga di `trick`), `app/static/dev/vista_1v1.json`, `vista_2v2.json` (campo nuovo e una frase nella `_nota`), `tests/engine/test_viste.py`, questo file. **Fuori elenco**, con l'ok di Giuseppe (file suoi, nessun conflitto): `app/game/engine/trick.py` e `tests/engine/test_presa.py`, perché `trick_winner` accettava solo prese complete (2 o 4 carte)
+- **Cosa cambia**: dentro `trick` c'è **`winning_seat`**, il posto della carta che vincerebbe la presa se finisse adesso; `null` quando sul tavolo non c'è nessuna carta; uguale nella vista di ogni giocatore. Lo calcola `winning_position(carte, briscola)` di `trick.py`, che vale per prese da 1 a 4 carte; `trick_winner` fa i suoi controlli di prima (presa completa) e poi chiama proprio lei, così vista e motore non possono dare risposte diverse. Esempi: 1v1 `winning_seat` 1 (Turi, che ha aperto), 2v2 `winning_seat` 2 (Salvo, Tre di denari sul 7)
+- **Controlli**: **1561 PASS** in 8 suite, tutto PASS (27 nuovi nella suite `engine`: 14 in `test_presa.py`, 13 in `test_viste.py`), `ruff check .` pulito. I test confrontano il campo con la regola riscritta a mano in ogni momento di 10 partite intere, controllano che "chi sta vincendo prima dell'ultima carta, più l'ultima carta" dia proprio chi prende la presa, e provano a mano la briscola giocata dopo (2 di spade sull'Asso di coppe)
+- **Decisioni prese** (Giuseppe, sulla raccomandazione di Claude; **da confermare con Christian** il nome): il campo si chiama `winning_seat` e sta **dentro `trick`**, come `winner_seat` sta dentro `last_trick`; indica il posto e non la carta, perché ogni posto gioca una sola carta per presa
+- **Domande nuove**: nessuna
+- **Punti delicati**: la regola di chi prende sta solo in `winning_position` di `trick.py`; i controlli in più di `trick_winner` (2 o 4 carte) restano lì
+- **Note per gli altri**: **Christian**: da qui parte **P76** (evidenziare la carta di `trick.winning_seat`); i tuoi test del tavolo passano senza cambiamenti; serve il tuo ok al nome del campo. Il contratto 3.3 è già aggiornato in questo branch (cambio approvato da tutti e due il 01/10). **Chi è di turno sui documenti**: spuntare P75, lista definitiva (con `trick.py` e `test_presa.py`) in 9.2 o nella nota del tracker
+
 ### P68 — Partita contro la CPU: mosse e stanza (30/09/2026)
 
 - **Branch**: feature/p68-cpu

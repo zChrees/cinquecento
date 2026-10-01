@@ -11,7 +11,7 @@ import pytest
 from app.game.engine.cards import Card, Suit
 from app.game.engine.deck import full_deck
 from app.game.engine.errors import EngineError
-from app.game.engine.trick import trick_winner
+from app.game.engine.trick import trick_winner, winning_position
 
 SUITS_OR_NONE = [None, "denari", "coppe", "spade", "bastoni"]
 
@@ -117,6 +117,46 @@ def test_molte_prese_da_4_con_seme_fisso(trump_name):
     for _ in range(2000):
         trick = rng.sample(deck, 4)
         check_rule(trick, trump, trick_winner(trick, trump))
+
+
+# --- Presa non ancora finita (P75) -----------------------------------------
+
+
+@pytest.mark.parametrize("trump_name", SUITS_OR_NONE)
+def test_presa_finita_stessa_risposta_di_trick_winner(trump_name):
+    trump = suit(trump_name)
+    rng = random.Random(75)
+    deck = full_deck()
+    for _ in range(1000):
+        trick = rng.sample(deck, rng.choice((2, 4)))
+        assert winning_position(trick, trump) == trick_winner(trick, trump)
+
+
+@pytest.mark.parametrize("trump_name", SUITS_OR_NONE)
+def test_presa_a_meta_segue_la_regola(trump_name):
+    trump = suit(trump_name)
+    rng = random.Random(76)
+    deck = full_deck()
+    for _ in range(1000):
+        trick = rng.sample(deck, rng.choice((1, 2, 3)))
+        check_rule(trick, trump, winning_position(trick, trump))
+
+
+def test_presa_a_meta_esempi():
+    assert winning_position(cards("bastoni-2"), suit("spade")) == 0
+    assert winning_position(cards("coppe-1", "coppe-3", "spade-2"), suit("spade")) == 2
+    assert winning_position(cards("coppe-1", "coppe-3", "spade-2"), None) == 0
+
+
+@pytest.mark.parametrize("count", [0, 5])
+def test_presa_a_meta_numero_di_carte_sbagliato(count):
+    with pytest.raises(EngineError, match="da 1 a 4 carte"):
+        winning_position(full_deck()[:count], None)
+
+
+def test_presa_a_meta_carta_ripetuta():
+    with pytest.raises(EngineError, match="due volte"):
+        winning_position(cards("coppe-1", "coppe-3", "coppe-1"), None)
 
 
 # --- Prese non valide ------------------------------------------------------

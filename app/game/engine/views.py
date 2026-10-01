@@ -19,6 +19,7 @@ from app.game.engine.state import (
     LastTrick,
     team_of,
 )
+from app.game.engine.trick import winning_position
 
 MODES = {2: "1v1", 4: "2v2"}
 
@@ -49,7 +50,7 @@ def player_view(game: GameState, seat: int, rules: RuleSet = MARIANNA) -> dict:
             for other in range(game.num_players)
         ],
         "hand": [card_to_dict(card) for card in hand.hands[seat]],
-        "trick": {"leader_seat": hand.leader_seat, "cards": _plays(hand.trick)},
+        "trick": _trick(hand),
         "last_trick": None if hand.last_trick is None else _last_trick(hand.last_trick),
         "trump": None if hand.trump is None else hand.trump.value,
         "deck_count": len(hand.deck),
@@ -77,6 +78,14 @@ def player_view(game: GameState, seat: int, rules: RuleSet = MARIANNA) -> dict:
 
 def _plays(plays) -> list[dict]:
     return [{"seat": play.seat, "card": card_to_dict(play.card)} for play in plays]
+
+
+def _trick(hand: HandState) -> dict:
+    # Chi sta vincendo la presa in corso (P75), con la stessa regola di chi la prende; null senza carte
+    winning = None
+    if hand.trick:
+        winning = hand.trick[winning_position([play.card for play in hand.trick], hand.trump)].seat
+    return {"leader_seat": hand.leader_seat, "cards": _plays(hand.trick), "winning_seat": winning}
 
 
 def _last_trick(last: LastTrick) -> dict:
