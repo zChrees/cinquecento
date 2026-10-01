@@ -22,6 +22,16 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: punti nuovi dalla prova a mano del 01/10 (01/10/2026)
+
+- **Branch**: docs/cose-da-sistemare-01-10
+- **File**: modificati `SCALETTA.md` (obiettivo: consegna spostata; tracker; sezione 4, nuova parte "Correzioni e richieste dalla prova a mano del 01/10/2026"; sezioni 9 e 9.2), `DECISIONI.md` (Progetto, Interfaccia, Gioco), `DA-DECIDERE.md` (D1, D45 nuova), `CLAUDE.md` (Progetto e riga "Stato"), questo file. La lista di partenza è in `cose-da-sistemare.txt` (non tracciato)
+- **Controlli**: nessuno (soli documenti); ultimo giro completo 1526 PASS (P68), più gli 8 di P72
+- **Punti nuovi**: Giuseppe **P75** (carta che sta vincendo la presa nella vista), **P82** (giocatori online veri senza login: oggi senza login si vede il 24 finto di `home_esempio.json`), **P83** (invito accettato e poi annullato: chi ha accettato resta ad aspettare; visto nel 2v2, da provare anche nel 1v1), **P84** ("Cala le carte": regola, motore e stanza); Christian **P74** (tavolo da computer), **P76** (presa affiancata e carta che vince evidenziata), **P77** (briscola solo sul mazzo), **P78** (animazioni più realistiche), **P79** (carte bianche per qualche secondo), **P80** (frasi del tavolo di lato da computer), **P81** (tastiera della chat sul telefono), **P85** (pulsante "Cala le carte")
+- **Decisioni registrate**: consegna spostata (nuova data da fissare); tavolo da computer (da 1024 px in su); presa affiancata con la carta vincente decisa dal server (cambio del contratto 3.3 approvato da Giuseppe e Christian); briscola solo sul mazzo, che resta a mazzo finito (cambia P71); animazioni in fila e pescata una carta alla volta; frasi del tavolo di lato da computer; regola "Cala le carte" (solo a mazzo finito; carte del giocatore o della squadra, compagno compreso, che vincono ogni presa rimasta in qualunque ordine; mai se un avversario può ancora cantare)
+- **Domande**: **D45** nuova (dettagli di "Cala le carte": quando si preme, presa iniziata, chi preme nel 2v2, canto della propria squadra, come si mostrano le carte calate); D1 aggiornata
+- **Cosa devono fare gli altri**: **Giuseppe**: in "Da dove si parte" prima P83, P82 e P75 (P75 sblocca P76 di Christian), poi D45 insieme e P84; D43 e P68 restano. P82 e P83 possono toccare `home.js`, `InviteDialog.js` o `ModeModal.js`: avvisa Christian prima
+
 ### Documenti: registrati i lotti dal 29/09 al 01/10 (01/10/2026)
 
 - **Branch**: docs/registra-30-09-01-10

@@ -6,7 +6,7 @@ Il 29/09/2026 sono state chiuse D5, D8, D10, D20, D29, D40, D41 e D42; il 30/09/
 
 ## Processo e gruppo
 
-- [ ] **D1 — Data esatta di consegna**. Cosa si consegna è deciso il 29/09/2026 (repository, dimostrazione dal vivo e relazione scritta, da scrivere alla fine: `DECISIONI.md`, Progetto e tempi); manca solo il giorno esatto.
+- [ ] **D1 — Data esatta di consegna**. Cosa si consegna è deciso il 29/09/2026 (repository, dimostrazione dal vivo e relazione scritta, da scrivere alla fine: `DECISIONI.md`, Progetto e tempi); manca solo il giorno esatto. **01/10/2026**: la consegna intorno al 03/10 è stata **spostata**; la nuova data non è ancora fissata.
 
 ## Tempi
 
@@ -17,6 +17,7 @@ Il 29/09/2026 sono state chiuse D5, D8, D10, D20, D29, D40, D41 e D42; il 30/09/
 - [ ] **D43 — Partita contro la CPU** (P68, P73): (1) **come sceglie le mosse** la CPU, visto che non devono essere casuali (per esempio: quando prende e quando lascia, quando usa la briscola, quando canta); (2) solo **1v1** o anche **2v2** (CPU come compagno o come avversari); (3) la partita si **salva** e conta per **statistiche e rating**? (4) **dove si avvia** nella home, che non scorre: una carta-pulsante nuova o una scelta dentro quelle che ci sono; (5) nome e avatar della CPU e quanto aspetta prima di giocare. Da decidere insieme (Christian e Giuseppe).
   - **30/09/2026, proposta di Giuseppe** (già in `dev` con P68, riepilogo in `giuseppe.md`): (1) strategia "giocatore medio" (canta appena può; prende senza briscola con la carta più economica; briscola solo per prese da almeno 10 punti; scarta la carta che vale meno; apre basso); (2) solo 1v1; (3) non si salva e non conta; (4) una scelta nella carta-modal; (5) nome "CPU", senza avatar, 1,5 s prima di giocare.
   - **01/10/2026, Christian**: la strategia (1) è **scartata**: contro la CPU si vince troppo facilmente; serve un modo diverso, più forte, di scegliere le mosse, da cercare insieme. I punti (2)–(5) restano proposte da discutere. Per riconoscere la CPU nella vista Christian preferisce un campo **`cpu: true`** per giocatore, se non complica troppo, invece di `user_id` 0. Il contratto di `cpu:start` resta aperto.
+- [ ] **D45 — "Cala le carte": i dettagli** (P84, P85). La regola è decisa il 01/10/2026 (`DECISIONI.md`, Gioco: solo a mazzo finito, carte del giocatore o della squadra che vincono tutte le prese rimaste in qualunque ordine, mai se un avversario può ancora cantare). Restano da fissare, tra Giuseppe e Christian, all'inizio di P84: (1) **quando** si può premere: in qualunque momento, solo nel proprio turno, o solo a inizio presa (con nessuna carta sul tavolo)? (2) a **presa iniziata**, la presa in corso conta nel controllo "vincono tutte le prese"? (3) nel 2v2 chi può premere: **tutti e due** i giocatori della squadra o solo chi ha il turno? (4) se a poter cantare è **la propria squadra**, calando si rinuncia al canto o il pulsante resta nascosto anche lì? (5) come si **mostrano** le carte calate e per quanto tempo prima del riepilogo (P85).
 
 ## Messa in servizio
 
