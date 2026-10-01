@@ -103,11 +103,12 @@ class Friend:
                               allow_redirects=False, timeout=WAIT)
         assert answer.status_code == 302, "login di prova non riuscito"
         cookie = "; ".join(f"{k}={v}" for k, v in session.cookies.items())
-        self.received, self.starts = [], []
+        self.received, self.starts, self.updates = [], [], []
         self._cond = threading.Condition()
         self.client = sio_client.Client(reconnection=False)
         self.client.on("invite:received", lambda data: self._add(self.received, data))
         self.client.on("game:start", lambda data: self._add(self.starts, data))
+        self.client.on("invite:update", lambda data: self._add(self.updates, data))
         self.client.connect(url, headers={"Cookie": cookie}, transports=["websocket"], wait_timeout=WAIT)
 
     def _add(self, items, data):
@@ -125,6 +126,11 @@ class Friend:
         answer = self.client.call("invite:accept", {"invite_id": invite["invite_id"]}, timeout=WAIT)
         assert answer["ok"] is True, answer
 
+    def update(self, status):
+        """Aspetta invite:update con quello stato (contratto 5.3)."""
+        with self._cond:
+            assert self._cond.wait_for(lambda: any(u["status"] == status for u in self.updates), WAIT),                 f"invite:update {status} non arrivato: {self.updates}"
+
     def game_start(self):
         return self._wait(self.starts, "game:start")
 
@@ -133,6 +139,7 @@ class Friend:
         with self._cond:
             self.received.clear()
             self.starts.clear()
+            self.updates.clear()
 
 
 @pytest.fixture(scope="module")
@@ -313,3 +320,54 @@ def test_amico_bloccato_sbloccato_e_di_nuovo_amico_torna_nella_carta(app, browse
                 friend_service.unblock(mario, giulia)
                 friend_service.send_request(giulia, uuid.uuid4().hex, "Mario")
                 friend_service.accept_request(mario, giulia)
+
+
+@pytest.mark.parametrize("mode", ["1v1", "2v2"])
+def test_invito_accettato_e_carta_chiusa_l_amico_lo_sa(browser, server, users, friends, mode):
+    """P83: Giulia accetta, poi Mario chiude la carta: Giulia riceve "cancelled" e torna libera."""
+    _open_modal(browser, server, users, mode)
+    _invite(browser, users, ("Giulia",))
+    friends["Giulia"].accept()
+    browser.wait_js(f"!{PLAY}.disabled", "Gioca attivo dopo il sì")
+    _close_card(browser)
+    friends["Giulia"].update("cancelled")
+    assert invites.open_of(users["Giulia"]) is None
+
+
+def _network(browser, offline):
+    browser.send("Network.enable")
+    browser.send("Network.emulateNetworkConditions", offline=offline, latency=0,
+                 downloadThroughput=-1, uploadThroughput=-1)
+
+
+def test_invitato_che_perde_la_connessione_non_resta_ad_aspettare(browser, server, users, friends):
+    """P83, il difetto della prova a mano: Mario accetta l'invito di Giulia e poi il suo
+    telefono perde la rete senza avvisare. Il server annulla l'invito (Mario è rimasto senza
+    schede), ma "cancelled" non può arrivargli: la finestra lo dice da sola e, tornata la
+    connessione, non resta su "aspettiamo che Giulia avvii la partita"."""
+    dialog = "document.querySelector('[data-invite-dialog]')"
+    browser.open(f"{server}/", 390, 844, "document.querySelector('[data-online-count]')?.textContent === '4'",
+                 timeout=60)
+    answer = friends["Giulia"].client.call("invite:send", {
+        "request_id": uuid.uuid4().hex, "user_id": users["Mario"], "mode": "2v2", "target_score": 300,
+    }, timeout=WAIT)
+    assert answer["ok"] is True, answer
+    browser.wait_js(f"{dialog}?.open", "finestra dell'invito")
+    browser.js(f"{dialog}.querySelector('[data-invite-accept]').click()")
+    browser.wait_js(f"{dialog}.dataset.inviteStatus === 'accepted'", "invito accettato")
+
+    _network(browser, offline=True)
+    friends["Giulia"].update("cancelled")  # il server ha annullato (Mario senza schede)
+    browser.wait_js(f"{dialog}.dataset.inviteStatus === 'connection_lost'", "invito annullato nella finestra")
+    note = browser.js(f"{dialog}.querySelector('[data-invite-note]').textContent")
+    assert note == "La connessione è caduta: l'invito è stato annullato."
+    _network(browser, offline=False)
+    browser.wait_js(f"!{dialog} && document.querySelector('[data-online-count]')?.textContent === '4'",
+                    "finestra chiusa e di nuovo collegato", timeout=30)
+    # Mario è di nuovo libero: Giulia lo può invitare ancora
+    friends["Giulia"].forget()
+    answer = friends["Giulia"].client.call("invite:send", {
+        "request_id": uuid.uuid4().hex, "user_id": users["Mario"], "mode": "1v1", "target_score": 150,
+    }, timeout=WAIT)
+    assert answer["ok"] is True, answer
+    browser.wait_js(f"{dialog}?.dataset.inviteStatus === 'pending'", "nuovo invito ricevuto")

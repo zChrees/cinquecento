@@ -7,12 +7,15 @@
  *
  *   const dialog = openInviteDialog(invite, { onAccept, onDecline });
  *   dialog.setStatus('accepted' | 'declined' | 'expired' | 'cancelled' | 'started');
+ *   dialog.setStatus('connection_lost');   // P83: solo della pagina, la connessione è caduta
  *   dialog.setOnline(false);   // P33: senza connessione "Accetta" e "Rifiuta" sono spenti
  *
  * onAccept e onDecline mandano la richiesta e restituiscono la risposta del server
  * ({ok, error}): finché non arriva i pulsanti sono disattivati (doppio clic).
  * Con "started" la finestra si chiude (la pagina va al tavolo o in coda); con gli
  * altri stati finali mostra il motivo e si chiude dopo qualche secondo.
+ * "connection_lost" non viene dal server: quando la connessione cade il server annulla
+ * gli inviti di chi resta senza schede, ma l'avviso non può arrivare (P83).
  * I nomi degli utenti entrano sempre come testo, mai come HTML.
  */
 
@@ -93,6 +96,7 @@ export function openInviteDialog(invite, { onAccept, onDecline }, online = true)
       expired: "L'invito è scaduto.",
       cancelled: `${from} ha annullato l'invito.`,
       declined: 'Hai rifiutato l\'invito.',
+      connection_lost: "La connessione è caduta: l'invito è stato annullato.",
     };
     note.textContent = notes[status] ?? '';
   }

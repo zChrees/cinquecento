@@ -31,7 +31,7 @@
  *   l'avviso di rientro resta quello finto (si prova senza una partita vera).
  * - Connessione (P33): l'avviso in cima alla pagina lo mostra core/socket.js. Senza
  *   connessione "Gioca", "Invita" e i pulsanti dell'invito ricevuto sono spenti; la
- *   schermata di coda si chiude e un invito mandato si considera annullato (il server
+ *   schermata di coda si chiude e un invito mandato o ricevuto (P83) si considera annullato (il server
  *   toglie dalla coda e annulla gli inviti di chi chiude tutte le schede). Al ritorno:
  *   home:status e, se si è ancora in coda, queue:status arrivano da soli; l'invito
  *   rimasto aperto si annulla con invite:cancel; la lista degli amici si rilegge.
@@ -321,6 +321,10 @@ function onConnection(now) {
     setInviteStatus(invite.friendId, 'cancelled');
   }
   outgoing.clear();
+  // P83: anche l'invito ricevuto il server lo annulla, ma l'avviso non arriverebbe mai:
+  // senza questo, dopo "Accetta" si resterebbe ad aspettare per sempre
+  incoming?.setStatus('connection_lost');
+  incoming = null;
 }
 
 function goToTable({ url } = {}) {

@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### P83 — Invito accettato e poi annullato: chi ha accettato resta ad aspettare (01/10/2026)
+
+- **Branch**: fix/p83-invito-annullato
+- **File** (lista definitiva per 9.2): modificati `app/static/js/pages/home.js` (**di Christian**: 4 righe in `onConnection` e una parola nel commento in cima, con l'ok di Giuseppe; Christian va avvisato), `app/static/js/components/InviteDialog.js` (stato `connection_lost` e la sua frase), `tests/frontend/test_inviti_2v2.py` (3 test nuovi, `Friend` ora registra anche `invite:update`), questo file. **Non toccati** `invites.py` e `friends_events.py`: il server era già giusto
+- **Causa** [T]: non era la chiusura della carta. Provate X, tocco fuori ed Esc, con e senza animazioni, nel 1v1 e nel 2v2, con uno o due amici e ricaricando la pagina: l'annullamento arriva sempre. Il difetto è la **connessione dell'invitato che cade in silenzio** (telefono con lo schermo bloccato, cambio di app o di rete) dopo "Accetta": il server, visto che è rimasto senza schede, annulla l'invito (`cancel_all_of` in `on_disconnect`, P47) e manda "cancelled", ma la pagina è scollegata e non lo riceve; tornata la connessione, la finestra restava per sempre su "aspettiamo che … avvii la partita…". Chi invitava vedeva invece "annullato", e per questo sembrava che fosse stato lui
+- **Correzione** (scelta di Giuseppe sulla raccomandazione di Claude, come P33 per gli inviti mandati): quando la connessione cade, anche l'invito **ricevuto** si considera annullato: la finestra mostra "La connessione è caduta: l'invito è stato annullato." e si chiude dopo 4 secondi; al ritorno l'utente è libero e può essere invitato di nuovo. Nessun cambio al contratto: `connection_lost` è uno stato **solo della pagina**
+- **Controlli**: **1564 PASS** in 8 suite, tutto PASS (3 nuovi nella suite `frontend`: carta chiusa dopo l'accettazione nel 1v1 e nel 2v2, rete persa dall'invitato), `ruff check .` pulito. Senza la correzione il test della rete persa fallisce [T]. La suite `frontend` ora dura circa 167 s
+- **Decisioni prese**: invito ricevuto annullato quando cade la connessione (estende la decisione P33 "Connessione nell'interfaccia", punto 3, all'invito ricevuto)
+- **Domande nuove**: nessuna
+- **Punti delicati**: nei test la rete "sparisce in silenzio" con `Network.emulateNetworkConditions` (`offline=True`) di Chrome, diverso dal calo di P33 (`socketio.server.eio.disconnect`): chiudendo dal server, il server fa in tempo a mandare gli ultimi avvisi prima di chiudere e il difetto non si vede. Rischio residuo [D]: con un'altra scheda aperta il server non annulla l'invito, ma la scheda caduta lo mostra annullato (stesso compromesso di P33 per gli inviti mandati)
+- **Note per gli altri**: **Christian**: ho toccato `home.js` (solo `onConnection`, sotto il ciclo degli inviti mandati); se hai modifiche aperte su `home.js` fai il pull prima. **Chi è di turno sui documenti**: spuntare P83, lista definitiva in 9.2, aggiornare la decisione P33 (Interfaccia, punto 3) con l'invito ricevuto
+
 ### P75 — La carta che sta vincendo la presa nella vista (01/10/2026)
 
 - **Branch**: feature/p75-carta-vincente
