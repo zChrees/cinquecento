@@ -10,7 +10,7 @@
  *   [Esci]        Punteggio
  *              (giocatore in alto)
  *   (sinistra)  presa · mazzo  (destra)
- *   [briscola]     (tu)      [Frasi]
+ *   [briscola · punti] (tu)  [Frasi]
  *   pulsanti Canta · la tua mano
  *
  * La pagina non calcola regole: le carte giocabili sono legal.play e i canti
@@ -23,6 +23,8 @@
  * la mano a destra (P71), elenco che si apre verso l'alto e fumetti accanto a chi
  * ha parlato. Sopra la mano a sinistra il seme della briscola (P71), che resta anche
  * a mazzo finito, quando sparisce il seme sopra il mazzo.
+ * I punti della mano in corso (P72, D44): i tuoi accanto alla briscola; quelli degli
+ * avversari a sinistra dell'avversario in alto (1v1) o sopra quello a sinistra (2v2).
  * Stile in css/components/table.css, trick.css, hand-summary.css e css/pages/game.css.
  */
 
@@ -81,8 +83,23 @@ function SangCards(sang, position) {
   ]);
 }
 
+/**
+ * Punti di una squadra nella mano in corso (P72, D44): sul telefono solo il numero,
+ * da 1024 px in su "N punti" (la parola si nasconde in table.css).
+ */
+function HandPoints(points, label) {
+  return el('span', {
+    class: 'hand-points',
+    data: { handPoints: points.total, team: points.team },
+    attrs: { role: 'img', 'aria-label': `${label}: ${points.total}`, title: `${label}: ${points.total}` },
+  }, [
+    el('span', { class: 'hand-points__total', text: points.total }),
+    el('span', { class: 'hand-points__word', text: ' punti', attrs: { 'aria-hidden': 'true' } }),
+  ]);
+}
+
 /** Un giocatore al tavolo: avatar (con l'anello del tempo se tocca a lui), nome, stato. */
-function Seat(view, player, position, sang = null, phrase = null) {
+function Seat(view, player, position, sang = null, phrase = null, points = null) {
   const isTurn = view.turn !== null && view.turn.seat === player.seat;
   const isMe = player.seat === view.you.seat;
   const partner = view.mode === '2v2' && !isMe && player.team === view.players[view.you.seat].team;
@@ -94,7 +111,11 @@ function Seat(view, player, position, sang = null, phrase = null) {
     notes.push(left === null ? 'scollegato' : `scollegato · ${Math.ceil(left)} s`);
   }
 
+  // P72: in alto i punti stanno a sinistra dell'avatar, per non alzare il posto
+  // (sui portatili bassi la presa toccherebbe l'avversario); a sinistra sopra l'avatar
+  const pointsBeside = position === 'top';
   const avatar = el('span', { class: 'seat__avatar' }, [
+    pointsBeside ? points : null,
     Avatar(player),
     isTurn ? Timer(view.turn) : null,
     phrase ? PhraseBubble(player.username, phrase, position) : null,
@@ -109,6 +130,7 @@ function Seat(view, player, position, sang = null, phrase = null) {
     data: { seat: player.seat, position, team: player.team, turn: isTurn ? 'yes' : 'no' },
     attrs: { 'aria-label': `${player.username}${isTurn ? ', di turno' : ''}` },
   }, [
+    pointsBeside ? null : points,
     avatar,
     label,
     SingBadges(view, player.seat),
@@ -170,6 +192,8 @@ function winnerText(view, seat) {
  * @param {object|null} [moments.deal] P70, distribuzione a inizio mano: { shuffled: ms dalla
  *   mescolata o null, mine: carta → ms dalla partenza, seats: posto → [ms per carta] }
  * @param {object|null} [moments.summary] il riepilogo di fine mano (last_hand)
+ * @param {Array|null} [moments.handPoints] P72: punti della mano da mostrare al posto di
+ *   hand_points (a fine mano, quelli della mano appena chiusa)
  * @param {function} [moments.onCloseSummary] pulsante "Ok" del riepilogo
  * @param {object} [moments.sang] posto → evento game:sang da mostrare
  * @param {object|null} [phrases] frasi del tavolo (P56); null finché l'elenco non arriva
@@ -191,6 +215,22 @@ export function Table(view, { onPlay, onSing, onLeave }, status = '', moments = 
   const me = view.players.find((player) => player.seat === view.you.seat);
   const others = view.players.filter((player) => player.seat !== view.you.seat);
 
+  // P72 (D44): i punti della mano in corso, i tuoi sopra la tua mano; quelli degli
+  // avversari una volta sola, sotto il ventaglio in alto (1v1) o accanto a quello a sinistra (2v2)
+  const handPoints = moments.handPoints ?? view.hand_points ?? [];
+  const myPoints = handPoints.find((points) => points.team === me.team);
+  const theirPoints = handPoints.find((points) => points.team !== me.team);
+  const theirSeat = others.find((player) => positionOf(player.seat) === (view.mode === '2v2' ? 'left' : 'top'));
+  const points = {};
+  if (myPoints) {
+    points[me.seat] = HandPoints(myPoints,
+      view.mode === '2v2' ? 'Punti della tua squadra in questa mano' : 'I tuoi punti in questa mano');
+  }
+  if (theirPoints && theirSeat) {
+    points[theirSeat.seat] = HandPoints(theirPoints,
+      view.mode === '2v2' ? 'Punti degli avversari in questa mano' : `Punti di ${theirSeat.username} in questa mano`);
+  }
+
   const topbar = el('header', { class: 'table__top' }, [
     el('button', {
       class: 'btn btn--ghost btn--small table__leave',
@@ -203,7 +243,7 @@ export function Table(view, { onPlay, onSing, onLeave }, status = '', moments = 
 
   const board = el('div', { class: `table__board table__board--${view.mode}` }, [
     ...others.map((player) =>
-      Seat(view, player, positionOf(player.seat), sang[player.seat], bubbles[player.seat])),
+      Seat(view, player, positionOf(player.seat), sang[player.seat], bubbles[player.seat], points[player.seat])),
     el('div', { class: 'table__center' }, [
       lastTrick
         ? LastTrick(lastTrick, positionOf, winnerText(view, lastTrick.winner_seat), { shownFor: lastTrickFor, thrown })
@@ -213,9 +253,9 @@ export function Table(view, { onPlay, onSing, onLeave }, status = '', moments = 
     summary ? HandSummary(view, summary, { onClose: onCloseSummary }) : null,
   ]);
 
-  // Sopra la mano: la briscola a sinistra, tu al centro, le frasi a destra (P71)
+  // Sopra la mano: la briscola e i tuoi punti a sinistra, tu al centro, le frasi a destra (P71, P72)
   const meRow = el('div', { class: 'table__me' }, [
-    TrumpBadge(view.trump),
+    el('div', { class: 'table__me-side' }, [TrumpBadge(view.trump), points[me.seat] ?? null]),
     Seat(view, me, 'bottom', sang[me.seat], bubbles[me.seat]),
     phrases ? PhrasesButton(phrases) : null,
     phrases && phrases.open ? PhrasesMenu(phrases.list, phrases) : null,

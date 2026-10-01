@@ -335,6 +335,11 @@ function noticeMoments(previous, next) {
   }
 }
 
+/** P72: i punti di una mano finita (last_hand) nella forma di hand_points. */
+function handTotals(lastHand) {
+  return lastHand.teams.map(({ team, hand_total: total }) => ({ team, total }));
+}
+
 /** Ridisegna il tavolo dalla vista. È l'unico punto che tocca il DOM del tavolo. */
 function render(next) {
   if (next !== view) {
@@ -361,6 +366,8 @@ function render(next) {
     drawnCards: drawn.cards,
     deal: dealMoments(view),
     summary,
+    // P72: finché si vedono l'ultima presa e il riepilogo, i punti della mano appena chiusa
+    handPoints: handEnding ? handTotals(nextSummary || summary) : null,
     onCloseSummary: () => { closeSummary(); redraw(); },
     sang: Object.fromEntries(Object.entries(sang).map(([seat, { event }]) => [seat, event])),
   };

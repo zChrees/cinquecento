@@ -286,10 +286,19 @@
   grid-row: 1;
 }
 
-.trump-badge {
+/* A sinistra della riga: la briscola e i tuoi punti della mano (P72) */
+.table__me-side {
   grid-column: 1;
   grid-row: 1;
   justify-self: start;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.trump-badge {
+  flex: none;
   display: inline-grid;
   place-items: center;
   width: 42px;
@@ -303,6 +312,39 @@
   width: 30px;
   height: 30px;
   object-fit: contain;
+}
+
+/*
+ * Punti di una squadra nella mano in corso (P72, D44): sul telefono solo il
+ * numero, da 1024 px in su anche "punti" (nascosto qui sotto).
+ */
+.hand-points {
+  flex: none;
+  min-width: 32px;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--card-face);
+  box-shadow: var(--shadow-1);
+  color: var(--text);
+  font-family: var(--font-title);
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1.3;
+  text-align: center;
+  white-space: nowrap;
+  text-shadow: none;
+}
+
+.hand-points__word {
+  display: none;
+}
+
+/* Dell'avversario in alto: a sinistra dell'avatar (a destra escono le sue frasi) */
+.seat__avatar > .hand-points {
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 10px);
+  translate: 0 -50%;
 }
 
 .seat--bottom {
@@ -366,5 +408,9 @@
 
   .edge-hand {
     --edge-card: 56px;
+  }
+
+  .hand-points__word {
+    display: inline;
   }
 }
