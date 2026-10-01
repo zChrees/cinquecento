@@ -22,6 +22,16 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: seconda lista della prova a mano del 01/10 (01/10/2026)
+
+- **Branch**: docs/cose-da-sistemare-01-10-b
+- **File**: modificati `SCALETTA.md` (tracker, sezione 4 in fondo a "Correzioni e richieste dalla prova a mano del 01/10/2026", sezioni 9 e 9.2), `DECISIONI.md` (Interfaccia), `CLAUDE.md` (riga "Stato"), questo file
+- **Controlli**: nessuno (soli documenti)
+- **Punti nuovi**: Giuseppe **P88** (rating dei giocatori nella vista: oggi non c'è; contratto da approvare insieme); Christian **P86** (mazzo più grande da computer), **P87** ("Esci", tabellone e punti della mano più moderni e minimal: stili proposti nel punto), **P89** (rating di ogni giocatore umano al tavolo da computer, dopo P88), **P90** (sul telefono via il tabellone, il punteggio resta nel riepilogo di fine mano; "Esci" che non si sovrappone)
+- **Decisioni registrate**: "Seconda lista del tavolo" in `DECISIONI.md` (cambia D44 solo sul telefono: niente tabellone)
+- **Domande**: nessuna nuova
+- **Cosa devono fare gli altri**: **Giuseppe**: P88 (prima il nome del campo e "provvisorio" sì o no, da approvare con Christian); meglio subito dopo P75, perché tocca gli stessi esempi della vista (non serve aspettare P84)
+
 ### Documenti: punti nuovi dalla prova a mano del 01/10 (01/10/2026)
 
 - **Branch**: docs/cose-da-sistemare-01-10

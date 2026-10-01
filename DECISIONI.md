@@ -151,6 +151,7 @@
 - 01/10/2026 — **Briscola solo sul mazzo** (P77; cambia P71 del 29/09/2026): via il **tondo con il seme** sopra la mano; il seme della briscola si vede solo sul mazzo e, quando il mazzo **finisce**, **resta** al suo posto fino a fine mano (prima spariva con il mazzo). Motivo: scelta di Christian.
 - 01/10/2026 — **Animazioni più realistiche** (P78): le carte della pescata arrivano **una alla volta**, nell'ordine in cui si pesca; il lancio di una carta parte solo **dopo la fine del lancio precedente** (le animazioni si mettono in fila). Motivo: richiesta di Christian.
 - 01/10/2026 — **Frasi del tavolo di lato, da computer** (P80): da 1024 px in su l'elenco delle frasi del tavolo si apre come pannello sul **lato destro**, senza coprire il tavolo; sul telefono resta com'è. Motivo: richiesta di Christian.
+- 01/10/2026 — **Seconda lista del tavolo** (P86–P90): (1) da computer il **mazzo** è più grande (P86); (2) **"Esci"** e **punti** (tabellone e punti della mano) con una grafica più moderna e minimal, scelta nel punto tra le proposte di Claude (P87); (3) da computer, accanto a ogni giocatore umano, il suo **rating**, che il server aggiunge alla vista (P88, contratto da approvare da Giuseppe e Christian; P89); (4) sul **telefono** il **tabellone si toglie**: il punteggio della partita si vede solo nel riepilogo di fine mano (cambia "il tabellone in alto resta com'è" di D44, solo sul telefono), e **"Esci"** non deve sovrapporsi a niente (P90). Motivo: richieste di Christian dalla prova a mano con Giuseppe.
 
 ## Gioco
 
