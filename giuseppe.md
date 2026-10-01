@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### P88 — Rating dei giocatori nella vista (01/10/2026)
+
+- **Branch**: feature/p88-rating-vista
+- **File** (quelli della scaletta): modificati `app/realtime/room_manager.py`, `app/realtime/room.py`, `app/game/engine/views.py` (solo `ROOM_PLAYER_FIELDS`: il campo lo aggiunge la stanza, il motore non cambia), `docs/CONTRATTO-SOCKET.md` (3.3, riga di `players`), `app/static/dev/vista_1v1.json`, `vista_2v2.json`, questo file; creato `tests/sockets/test_rating_vista.py`. `stats_service.py` (di Christian) è solo **usato**, non modificato
+- **Cosa cambia**: ogni giocatore della vista ha **`rating`** = `{"value", "provisional"}`, nella modalità della partita, con la stessa forma e gli stessi numeri di `ratings` del pannello statistiche (2.1: valore arrotondato con la metà per eccesso, 1500 senza riga, "provvisorio" per le prime 10 partite che contano); `null` per la CPU. Si legge **una volta sola**, in `create_room`, prima del lock dell'elenco delle stanze (è una lettura del database), e resta fermo per tutta la partita. C'è anche nelle partite che non contano (1v1 tra amici). Fuori da Flask o con il database che non risponde è `null` per tutti (ERROR nel log) e la partita parte lo stesso
+- **Esempi**: 1v1 Mario 1523, Turi 1478 provvisorio; 2v2 Mario 1540, Giulia 1612, Salvo 1500 provvisorio, Rosalia 1455
+- **Controlli**: **1571 PASS** in 8 suite, tutto PASS (7 nuovi nella suite `sockets`: 1v1 dal tavolo vero, 2v2 con il rating della modalità giusta, rating fermo a inizio partita, partita tra amici, CPU, stanza fuori da Flask, database che non risponde), `ruff check .` pulito
+- **Decisioni prese** (Giuseppe, sulla raccomandazione di Claude; **da confermare con Christian**, contratto 3.3): nome `rating` e forma `{"value", "provisional"}`, come nel pannello statistiche; "provvisorio" sì, così la pagina può scegliere se mostrarlo
+- **Domande nuove**: nessuna
+- **Punti delicati**: `create_room` va chiamata dentro Flask anche per il rating (come per il salvataggio, P26): una stanza creata fuori da Flask ha `rating` null. Se cambia come il pannello statistiche calcola valore o "provvisorio", cambia anche qui (stessa funzione, `stats_service.stats_of`)
+- **Note per gli altri**: **Christian**: serve il tuo ok al campo (nome e forma) prima del merge in `dev`; da qui parte **P89**. I tuoi test del tavolo leggono gli esempi con il campo nuovo e passano. **Chi è di turno sui documenti**: spuntare P88
+
 ### P83 — Invito accettato e poi annullato: chi ha accettato resta ad aspettare (01/10/2026)
 
 - **Branch**: fix/p83-invito-annullato

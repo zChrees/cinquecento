@@ -18,6 +18,10 @@
       "user_id": 12,
       "username": "Mario",
       "avatar": null,
+      "rating": {
+        "value": 1540,
+        "provisional": false
+      },
       "cards_in_hand": 5,
       "connected": true,
       "reconnect_seconds_left": null
@@ -28,6 +32,10 @@
       "user_id": 44,
       "username": "Giulia",
       "avatar": "cavallo_spade",
+      "rating": {
+        "value": 1612,
+        "provisional": false
+      },
       "cards_in_hand": 4,
       "connected": true,
       "reconnect_seconds_left": null
@@ -38,6 +46,10 @@
       "user_id": 45,
       "username": "Salvo",
       "avatar": null,
+      "rating": {
+        "value": 1500,
+        "provisional": true
+      },
       "cards_in_hand": 4,
       "connected": true,
       "reconnect_seconds_left": null
@@ -48,6 +60,10 @@
       "user_id": 46,
       "username": "Rosalia",
       "avatar": "denari",
+      "rating": {
+        "value": 1455,
+        "provisional": false
+      },
       "cards_in_hand": 5,
       "connected": false,
       "reconnect_seconds_left": 48.0

@@ -9,16 +9,26 @@ Funzioni esposte da P24, che altri punti usano senza modificare questo file:
 
 P68: create_room(..., cpu_seats=(1,)) crea la partita contro la CPU (il giocatore
 CPU_PLAYER di room.py a quei posti): la CPU può essere in più partite insieme.
+
+P88: create_room legge una volta sola il rating di ogni giocatore vero nella modalità
+della partita (gli stessi numeri del pannello statistiche, stats_service.stats_of) e
+la stanza lo mette nella vista; serve il contesto di Flask, come per il salvataggio (P26).
 """
 
+import logging
 import secrets
 import threading
+
+from flask import has_app_context
 
 from app.extensions import socketio
 from app.game.engine.errors import EngineError
 from app.realtime import room as room_module
 from app.realtime.events import user_channel
 from app.realtime.room import MODES, Player, Room
+from app.services import stats_service
+
+log = logging.getLogger(__name__)
 
 
 class RoomError(ValueError):
@@ -58,6 +68,7 @@ class RoomManager:
             raise RoomError(f"Nel {mode} servono {MODES[mode]} giocatori, non {len(players)}.")
         if len({p.user_id for p in players}) != len(players):
             raise RoomError("Lo stesso giocatore non può avere due posti.")
+        ratings = _ratings_of(players, mode, cpu_seats)  # database: prima del lock dell'elenco
         with self._lock:
             busy = [p.username for seat, p in enumerate(players)
                     if seat not in cpu_seats and self._room_of(p.user_id) is not None]
@@ -65,7 +76,7 @@ class RoomManager:
                 raise RoomError(f"Già in partita: {', '.join(busy)}.")
             room = Room(self._new_id())
             try:
-                room.start(players, target_score, rated=rated, rng=rng, cpu_seats=cpu_seats)
+                room.start(players, target_score, rated=rated, rng=rng, cpu_seats=cpu_seats, ratings=ratings)
             except EngineError as exc:
                 raise RoomError(str(exc)) from None
             self._rooms[room.id] = room
@@ -103,6 +114,26 @@ class RoomManager:
     def __len__(self):
         with self._lock:
             return len(self._rooms)
+
+
+def _ratings_of(players, mode, cpu_seats):
+    """Per posto, il rating del giocatore in quella modalità ({"value", "provisional"}, P88),
+    None per la CPU. Fuori da Flask, o se il database non risponde, None per tutti: la
+    partita parte lo stesso, senza rating al tavolo."""
+    if not has_app_context():
+        return None
+    try:
+        ratings = []
+        for seat, player in enumerate(players):
+            if seat in cpu_seats:
+                ratings.append(None)
+                continue
+            rating = stats_service.stats_of(player.user_id)["ratings"][mode]
+            ratings.append({"value": rating["value"], "provisional": rating["provisional"]})
+        return tuple(ratings)
+    except Exception:
+        log.exception("Rating dei giocatori %s non letti", [p.user_id for p in players])
+        return None
 
 
 rooms = RoomManager()

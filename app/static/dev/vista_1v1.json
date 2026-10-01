@@ -18,6 +18,10 @@
       "user_id": 12,
       "username": "Mario",
       "avatar": null,
+      "rating": {
+        "value": 1523,
+        "provisional": false
+      },
       "cards_in_hand": 5,
       "connected": true,
       "reconnect_seconds_left": null
@@ -28,6 +32,10 @@
       "user_id": 31,
       "username": "Turi",
       "avatar": "re_coppe",
+      "rating": {
+        "value": 1478,
+        "provisional": true
+      },
       "cards_in_hand": 4,
       "connected": true,
       "reconnect_seconds_left": null

@@ -133,6 +133,7 @@ class Room:
         # Partita (P24): None finché start() non la fa partire
         self.players = ()  # Player per posto
         self.cpu_seats = frozenset()  # P68: posti giocati dalla CPU
+        self.ratings = ()  # P88: per posto {"value", "provisional"}, o None (CPU, o letto fuori da Flask)
         self.rated = True
         self.game = None
         self.version = 0
@@ -181,15 +182,17 @@ class Room:
 
     # --- Partita (P24) ---
 
-    def start(self, players, target_score, rated=True, rng=None, cpu_seats=()):
+    def start(self, players, target_score, rated=True, rng=None, cpu_seats=(), ratings=None):
         """Mette i giocatori ai posti (nell'ordine dato) e fa partire la partita del motore.
 
         `cpu_seats` (P68): i posti giocati dalla CPU; i membri sono solo i giocatori veri.
+        `ratings` (P88): per posto il rating da mostrare, letto da create_room; None = nessuno.
         """
         with self.lock:
             self._rng = rng if rng is not None else secrets.SystemRandom()
             self.players = tuple(players)
             self.cpu_seats = frozenset(cpu_seats)
+            self.ratings = tuple(ratings) if ratings is not None else (None,) * len(self.players)
             self.members = set(self.human_ids)
             self.rated = rated
             self.game = new_game(len(self.players), target_score, self._rng)
@@ -474,6 +477,7 @@ class Room:
                     user_id=player.user_id,
                     username=player.username,
                     avatar=player.avatar,
+                    rating=self.ratings[entry["seat"]],
                     connected=entry["seat"] in self.sids or entry["seat"] in self.cpu_seats,
                     reconnect_seconds_left=None if waiting is None else round(max(0.0, waiting[0] - now), 1),
                 )
