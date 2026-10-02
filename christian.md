@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: registrati i lotti dal 01/10 sera al 02/10 e aggiunto P91 (02/10/2026)
+
+- **Branch**: docs/lotti-02-10
+- **File**: modificati `SCALETTA.md` (tracker, sezione 4 con P88 approvato e il dettaglio di P91, sezione 9 con "Da dove si parte" e la tabella, sezione 9.2 con le liste definitive di P74, P77, P79, P90 e P83 e la voce di P91), `DECISIONI.md` (Interfaccia: P83 nella decisione P33, scelte di P74 e P90; Processo: contratto di P75 e P88), `CLAUDE.md` (riga "Stato", numero dei controlli, 8 punti delicati nuovi), questo file. `DA-DECIDERE.md` non cambia
+- **Controlli**: nessuno (soli documenti). Ultimo giro completo 1571 PASS (Giuseppe, P88); poi `api` 320 e `frontend` 185 PASS (Christian, P74)
+- **Riepiloghi registrati**: `giuseppe.md` P75, P83, P88; `christian.md` P79, P81, P90, P77, P74; `antonio.md` niente di nuovo
+- **Decisioni registrate**: contratto 3.3 di `trick.winning_seat` (P75) e `rating` (P88) **approvato da Christian**; invito ricevuto annullato quando cade la connessione (P83, aggiunta alla decisione P33); tabellone in alto a destra, avatar a sinistra del ventaglio in alto e carte degli avversari da 72 px (P74); "Esci" solo icona sotto 1024 px (P90)
+- **Punto nuovo**: **P91** (Christian), suite `frontend` sotto il limite di tempo (tracker, sezioni 4, 9 e 9.2)
+- **Domande**: nessuna nuova
+- **Cosa devono fare gli altri**: **Giuseppe**: P82, poi D43 e D45 insieme a Christian; se P91 tocca `tests/esegui_tutti.py`, Christian ti avvisa prima
+
 ### P74 — Tavolo da computer: avatar, carte degli avversari, "Esci", tabellone e propri punti (02/10/2026)
 
 - **Branch**: feature/p74-tavolo-computer
