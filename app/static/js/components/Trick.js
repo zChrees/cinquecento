@@ -7,6 +7,8 @@
  * P70: la carta appena giocata vola al suo posto (lancio); i tempi li decide
  * pages/game.js e qui diventano ritardi delle animazioni, così un ridisegno a metà
  * non le fa ripartire da capo.
+ * P76: le carte stanno a croce senza coprirsi e la carta che sta vincendo (o che
+ * ha preso, nella presa chiusa) è sollevata e bordata (trick__card--winner).
  */
 
 import { el } from '../utils/dom.js';
@@ -43,12 +45,17 @@ export function throwKey(card) {
  * @returns {HTMLElement}
  */
 export function Trick(trick, positionOf, thrown = {}) {
+  // P76: la carta che sta vincendo la presa la dice il server (trick.winning_seat, P75)
+  const winning = trick.cards.find(({ seat }) => seat === trick.winning_seat);
   const cards = trick.cards.map(({ seat, card }) =>
-    el('div', { class: `trick__card trick__card--${positionOf(seat)}`, data: { trickSeat: seat } },
-      [ThrownCard(card, thrown[throwKey(card)])]),
+    el('div', {
+      class: `trick__card trick__card--${positionOf(seat)}${seat === trick.winning_seat ? ' trick__card--winner' : ''}`,
+      data: { trickSeat: seat, ...(seat === trick.winning_seat ? { winning: '' } : {}) },
+    }, [ThrownCard(card, thrown[throwKey(card)])]),
   );
   const label = trick.cards.length
     ? `Presa in corso: ${trick.cards.map(({ card }) => cardName(card)).join(', ')}`
+      + (winning ? `. Sta vincendo: ${cardName(winning.card)}` : '')
     : 'Presa in corso: nessuna carta';
   return el('div', { class: 'trick', data: { trick: '', count: trick.cards.length }, attrs: { role: 'group', 'aria-label': label } }, cards);
 }

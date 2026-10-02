@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P76 — Presa con le carte a croce e la carta che vince evidenziata (03/10/2026)
+
+- **Branch**: feature/p76-presa-affiancata
+- **File** (lista approvata da Christian per 9.2): modificati `app/static/js/components/Trick.js`, `app/static/css/components/trick.css`, questo file; creato `tests/api/test_presa_affiancata.py`. `Table.js` non è servito (la presa riceve già `trick.winning_seat`)
+- **Cosa cambia**: le carte della presa (in corso e appena chiusa, P57) stanno **a croce senza coprirsi**: in alto e in basso una sopra l'altra, nel 2v2 sinistra e destra nelle colonne accanto, ruotate appena. La carta di `trick.winning_seat` (P75) ha il **bordo giallo ed è sollevata e un po' più grande** (`trick__card--winner`, marcatore `data-winning`); il segno si sposta quando il server dice che vince un'altra carta; i lettori di schermo sentono "Sta vincendo: …". La presa chiusa usa la stessa evidenza per chi ha preso. Nel 2v2 sul telefono le carte della presa si misurano sulla colonna centrale (container query, `100cqw`): circa 45 px a 360, 60 dai telefoni larghi; altrove come prima
+- **Controlli**: solo i test del tavolo, tutti PASS: `test_presa_affiancata.py` **5** nuovi (carte che non si coprono e almeno 44 px, presa in corso e chiusa, 1v1 e 2v2, a 360×640, 390×844, 768×1024, 1024×768, 1280×720, 1440×900, senza scorrimento; evidenza su `winning_seat`, che si sposta e sparisce con la presa vuota; presa chiusa), `test_grafica_tavolo.py` 16, `test_pagina_tavolo.py`, `test_punti_mano.py`, `test_tavolo_telefono.py`, `test_carte_avversari.py`, `test_lancio_carta.py`, `test_momenti_tavolo.py`. `ruff check` dei test pulito. Suite complete non lanciate (su richiesta di Christian)
+- **Decisioni prese** (Christian, 03/10/2026): disposizione **a croce** (scartata la fila nell'ordine di gioco, raccomandata da Claude); evidenza **sollevata + bordo** (raccomandazione di Claude; scartata l'etichetta "Vince")
+- **Domande nuove**: nessuna
+- **Punti delicati**: nel 2v2 sul telefono `.table__center` è un contenitore (`container-type: inline-size`) e si allarga alla colonna (`justify-self: stretch`): la croce non deve mai uscire dalla colonna centrale, altrimenti copre i giocatori ai lati (la colonna è metà del tavolo, circa 156 px a 360). **Difetto trovato, non corretto qui** (è di P74, `table.css`): da computer la mano ha la colonna larga "auto", quindi finché le immagini delle carte non sono caricate le carte in mano sono larghe 27 px invece di 94 e presa e mazzo stanno 45–90 px più in basso; per questo `test_mazzo_finito_resta_il_seme_dov_era_il_mazzo[1280x720-2v2]` fallisce circa una volta su sei, anche su `dev` senza P76
+- **Cosa devono fare gli altri**: niente. **Chi è di turno sui documenti**: spuntare P76, lista definitiva in 9.2, in `DECISIONI.md` croce ed evidenza; il difetto della mano da computer (sopra) se Christian lo fa diventare un punto
+
 ### P86 — Mazzo più grande, da computer (03/10/2026)
 
 - **Branch**: feature/p86-mazzo-computer
