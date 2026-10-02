@@ -148,6 +148,99 @@ def test_mazzo_finito_resta_il_seme_dov_era_il_mazzo(browser, server, mode, size
     assert "Mazzo finito" not in browser.js("document.querySelector('[data-table]').innerText")
 
 
+# P74: le parti del tavolo da computer, ciascuna come elenco di rettangoli
+DESKTOP_PARTS = r"""(() => {
+  const rects = (s) => [...document.querySelectorAll(s)].map((e) => {
+    const b = e.getBoundingClientRect(); return { l: b.left, t: b.top, r: b.right, b: b.bottom, w: b.width }; });
+  const parts = {
+    leave: rects('[data-leave]'), scoreboard: rects('[data-scoreboard]'),
+    trick: rects('[data-trick] .card'), deck: rects('[data-deck-count] .card'),
+    hand: rects('.table__mine .hand .card'), sing: rects('[data-sing-button]'),
+    phrasesButton: rects('[data-phrases-button]'),
+  };
+  for (const fan of document.querySelectorAll('[data-edge-hand]')) {
+    parts[`fan-${fan.dataset.edgeHand}`] = rects(`[data-edge-hand="${fan.dataset.edgeHand}"] > .card`);
+  }
+  for (const seat of document.querySelectorAll('.seat')) {
+    const p = seat.dataset.position;
+    parts[`avatar-${p}`] = [...seat.querySelectorAll('.seat__avatar > .avatar')].map((e) => {
+      const b = e.getBoundingClientRect(); return { l: b.left, t: b.top, r: b.right, b: b.bottom, w: b.width }; });
+    parts[`label-${p}`] = [...seat.querySelectorAll(':scope > .seat__label')].map((e) => {
+      const b = e.getBoundingClientRect(); return { l: b.left, t: b.top, r: b.right, b: b.bottom, w: b.width }; });
+    parts[`bubble-${p}`] = [...seat.querySelectorAll('.phrase-bubble')].map((e) => {
+      const b = e.getBoundingClientRect(); return { l: b.left, t: b.top, r: b.right, b: b.bottom, w: b.width }; });
+  }
+  for (const points of document.querySelectorAll('[data-hand-points]')) {
+    const where = points.closest('.table__me-side') ? 'me' : points.closest('.seat').dataset.position;
+    parts[`points-${where}`] = [points].map((e) => {
+      const b = e.getBoundingClientRect(); return { l: b.left, t: b.top, r: b.right, b: b.bottom, w: b.width }; });
+  }
+  return { parts, w: innerWidth, h: innerHeight,
+           scrollH: document.scrollingElement.scrollHeight, scrollW: document.scrollingElement.scrollWidth };
+})()"""
+
+
+def _span(rects):
+    """Il rettangolo che contiene tutti quelli dell'elenco."""
+    return {"l": min(r["l"] for r in rects), "t": min(r["t"] for r in rects),
+            "r": max(r["r"] for r in rects), "b": max(r["b"] for r in rects)}
+
+
+@pytest.mark.parametrize("mode", ["1v1", "2v2"])
+@pytest.mark.parametrize("size", [(1024, 768), (1280, 720), (1440, 900)], ids=lambda s: f"{s[0]}x{s[1]}")
+def test_tavolo_da_computer(browser, server, mode, size):
+    base = _view(mode)
+    _open(browser, server, mode, size)
+    view = _state(base)
+    for player in view["players"]:
+        if player["seat"] != view["you"]["seat"]:
+            player["cards_in_hand"] = 5
+    _dispatch(browser, "demo:state", view)
+    # Un fumetto per ogni giocatore, con la frase più lunga
+    longest = max(table_phrases.phrases_event()["phrases"], key=lambda p: len(p["text"]))
+    for player in view["players"]:
+        _dispatch(browser, "demo:phrase", {"seat": player["seat"], "code": longest["code"]})
+    box = browser.js(DESKTOP_PARTS)
+    parts, w = box["parts"], box["w"]
+    assert box["scrollH"] <= box["h"] and box["scrollW"] <= w
+
+    # "Esci" nell'angolo in alto a sinistra, il tabellone in quello in alto a destra
+    leave, scoreboard = parts["leave"][0], parts["scoreboard"][0]
+    assert leave["l"] <= 24 and leave["t"] <= 24
+    assert scoreboard["r"] >= w - 32 and scoreboard["t"] <= 24
+
+    # Carte degli avversari da 72 px (larghezza della carta, non del rettangolo ruotato)
+    widths = browser.js("[...document.querySelectorAll('[data-edge-hand] > .card')].map((c) => c.offsetWidth)")
+    assert widths and all(width == 72 for width in widths)
+
+    # Ogni avversario accanto al suo ventaglio: in alto a sinistra, ai lati verso il centro
+    top_fan, top_avatar = _span(parts["fan-top"]), parts["avatar-top"][0]
+    top_seat = browser.js("""(() => { const b = document.querySelector('.seat--top').getBoundingClientRect();
+      return { l: b.left, r: b.right }; })()""")
+    assert top_avatar["r"] <= parts["label-top"][0]["l"]   # punti, avatar, nome, poi le carte
+    assert top_seat["r"] <= top_fan["l"] <= top_seat["r"] + 40
+    assert top_avatar["t"] < top_fan["b"]
+    if mode == "2v2":
+        left_fan, right_fan = _span(parts["fan-left"]), _span(parts["fan-right"])
+        assert left_fan["r"] <= parts["avatar-left"][0]["l"] <= left_fan["r"] + 40
+        assert right_fan["l"] - 40 <= parts["avatar-right"][0]["r"] <= right_fan["l"]
+
+    # Il tuo avatar a sinistra della mano, i tuoi punti a destra, alla stessa altezza
+    hand = _span(parts["hand"])
+    me, points = parts["avatar-bottom"][0], parts["points-me"][0]
+    assert me["r"] <= hand["l"] and hand["r"] <= points["l"]
+    for part in (me, points):
+        assert hand["t"] <= (part["t"] + part["b"]) / 2 <= hand["b"]
+
+    # Niente si sovrappone: ogni coppia di parti diverse
+    names = [name for name in parts if parts[name]]
+    for i, a in enumerate(names):
+        for b in names[i + 1:]:
+            for ra in parts[a]:
+                for rb in parts[b]:
+                    assert not _overlap(ra, rb), f"{a} tocca {b}"
+
+
 def test_mazzo_finito_senza_briscola_niente(browser, server):
     base = _view("2v2")
     _open(browser, server, "2v2")

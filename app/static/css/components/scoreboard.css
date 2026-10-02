@@ -53,3 +53,31 @@
     display: none;
   }
 }
+
+/* P74: da computer nell'angolo in alto a destra, speculare a "Esci", un po' più grande */
+@media (min-width: 1024px) {
+  .scoreboard {
+    position: fixed;
+    z-index: 1;
+    top: 14px;
+    right: 24px;
+    text-align: right;
+  }
+
+  .scoreboard__teams {
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  .score__name {
+    font-size: 1rem;
+  }
+
+  .score__total {
+    font-size: 1.8rem;
+  }
+
+  .scoreboard__info {
+    font-size: 0.85rem;
+  }
+}

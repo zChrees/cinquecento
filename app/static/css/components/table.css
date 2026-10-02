@@ -409,11 +409,91 @@
     font-size: 1.5rem;
   }
 
+  /* P74: carte degli avversari più grandi (prima 56 px) */
   .edge-hand {
-    --edge-card: 56px;
+    --edge-card: 72px;
   }
 
   .hand-points__word {
     display: inline;
   }
+
+  /*
+   * P74, tavolo da computer: "Esci" nell'angolo in alto a sinistra (il tabellone
+   * va nell'angolo opposto, scoreboard.css); gli avversari accanto alle loro carte.
+   */
+  .table__leave {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+  }
+
+  /* In alto (avversario nel 1v1, compagno nel 2v2): punti, avatar e nome a sinistra del ventaglio */
+  .seat--top {
+    position: fixed;
+    z-index: 1;
+    top: 14px;
+    right: calc(50% + var(--top-fan-half));
+    flex-direction: row;
+    gap: 10px;
+  }
+
+  .seat--top .seat__label {
+    text-align: left;
+  }
+
+  /* Ai lati (2v2): avatar e nome subito dentro il ventaglio, verso il centro */
+  .seat--left,
+  .seat--right {
+    position: fixed;
+    z-index: 1;
+    top: 50%;
+    translate: 0 -50%;
+    padding: 0;
+  }
+
+  .seat--left { left: var(--side-fan-reach); }
+  .seat--right { right: var(--side-fan-reach); }
+
+  /* In basso: il tuo avatar a sinistra della mano, i tuoi punti a destra */
+  .table__mine {
+    position: relative;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-areas:
+      ".  sing   phrases"
+      "me hand   points"
+      ".  status .";
+    column-gap: 20px;
+  }
+
+  .table__me {
+    display: contents;
+  }
+
+  .table__me > .seat {
+    grid-area: me;
+    justify-self: end;
+  }
+
+  .table__me-side {
+    grid-area: points;
+    justify-self: start;
+  }
+
+  .table__mine > .sing-buttons { grid-area: sing; }
+  .table__mine > .hand { grid-area: hand; }
+  .table__mine > .table__status { grid-area: status; }
+  .table__mine .phrases-button {
+    grid-area: phrases;
+    justify-self: start;
+  }
+}
+
+/*
+ * P74: dove finiscono i ventagli, con 5 carte da 72 px (misurati: 114 px dal centro
+ * quello in alto, 49 px dal bordo quelli ai lati), più circa 15 px di margine
+ */
+.table__inner {
+  --top-fan-half: 128px;
+  --side-fan-reach: 64px;
 }

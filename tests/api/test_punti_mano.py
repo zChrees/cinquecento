@@ -124,6 +124,27 @@ def test_sul_computer_n_punti(browser, server, mode):
         assert p["text"] == p["total"], p
 
 
+MY_POINTS_AND_HAND = """(() => { const r = (e) => { const b = e.getBoundingClientRect();
+    return { l: b.left, t: b.top, r: b.right, b: b.bottom }; };
+  return { points: r(document.querySelector('.table__me-side [data-hand-points]')),
+           hand: r(document.querySelector('.table__mine .hand')) }; })()"""
+
+
+@pytest.mark.parametrize("mode", ["1v1", "2v2"])
+@pytest.mark.parametrize("size", [(1280, 720), (1440, 900)], ids=lambda s: f"{s[0]}x{s[1]}")
+def test_sul_computer_i_tuoi_punti_a_destra_della_mano(browser, server, mode, size):
+    # P74: da computer i tuoi punti stanno a destra della mano, alla sua altezza
+    _open(browser, server, mode, size)
+    box = browser.js(MY_POINTS_AND_HAND)
+    points, hand = box["points"], box["hand"]
+    assert hand["r"] <= points["l"] <= hand["r"] + 40
+    assert hand["t"] <= (points["t"] + points["b"]) / 2 <= hand["b"]
+    # Sul telefono restano sopra la mano, a sinistra
+    _resize(browser, PHONE)
+    box = browser.js(MY_POINTS_AND_HAND)
+    assert box["points"]["b"] <= box["hand"]["t"] and box["points"]["r"] <= (box["hand"]["l"] + box["hand"]["r"]) / 2
+
+
 def test_i_punti_salgono_con_la_vista(browser, server):
     view = _view("1v1")
     _open(browser, server, "1v1")

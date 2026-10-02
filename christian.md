@@ -22,6 +22,22 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P74 — Tavolo da computer: avatar, carte degli avversari, "Esci", tabellone e propri punti (02/10/2026)
+
+- **Branch**: feature/p74-tavolo-computer
+- **File** (lista approvata da Christian per 9.2): modificati `app/static/css/components/table.css`, `scoreboard.css`, `table-phrases.css`, `tests/api/test_grafica_tavolo.py`, `tests/api/test_punti_mano.py`, questo file. `Table.js` e `test_carte_avversari.py` non sono serviti
+- **Cosa cambia** (solo da 1024 px in su, sul telefono niente):
+  - **"Esci"** fisso nell'angolo in alto a sinistra; **tabellone** fisso in quello in alto a destra, un po' più grande e allineato a destra;
+  - **carte degli avversari** da 56 a **72 px**;
+  - **in alto** (avversario nel 1v1, compagno nel 2v2): punti della mano, avatar e nome **a sinistra del ventaglio**; il suo fumetto scende sotto l'avatar;
+  - **ai lati** (2v2): avatar subito dentro il ventaglio, verso il centro; i fumetti escono di fianco all'avatar, verso il centro (sopra quello di sinistra ci sono i punti);
+  - **in basso**: il tuo avatar a sinistra della mano, i tuoi punti a destra; "Canta" sopra la mano, "Frasi" sopra a destra (lo sposterà P80); il tuo fumetto si allarga verso sinistra, per non coprire la mano.
+- **Controlli**: suite `api` **320 PASS** (149 s), `frontend` **185 PASS** (212 s). 10 controlli nuovi: `test_tavolo_da_computer` (1v1 e 2v2 a 1024×768, 1280×720 e 1440×900, con 5 carte agli avversari e un fumetto per ognuno: angoli, 72 px, avatar accanto ai ventagli, tuoi avatar e punti ai lati della mano, nessuna sovrapposizione fra presa, mazzo, ventagli, avatar, nomi, punti, fumetti, mano e pulsanti, niente scorrimento) e `test_sul_computer_i_tuoi_punti_a_destra_della_mano` (e sul telefono ancora sopra). Il giro completo delle 8 suite non l'ho fatto
+- **Decisioni prese** (Christian, 02/10/2026, sulle raccomandazioni di Claude): **tabellone in alto a destra** (scartati: a sinistra a metà altezza, in basso a destra); avatar in alto **a sinistra** del ventaglio (scartato: a destra); carte degli avversari **72 px** (scartato: 80)
+- **Domande nuove**: nessuna
+- **Punti delicati**: da computer "Esci", tabellone e posti degli avversari sono `position: fixed`, come i ventagli: il posto in alto si allinea a `--top-fan-half` e quelli ai lati a `--side-fan-reach` (in `table.css`, misurati con 5 carte da 72 px). **Se cambia la misura delle carte coperte, vanno rimisurati** (lo segnala `test_tavolo_da_computer`). Da computer `.table__me` è `display: contents`, e i suoi figli stanno nella griglia di `.table__mine`: l'elenco delle frasi si apre rispetto a `.table__mine` (P80 lo rifà)
+- **Cosa devono fare gli altri**: niente. **Chi è di turno sui documenti**: spuntare P74; in `DECISIONI.md` le tre scelte qui sopra (posizione del tabellone, lato dell'avatar in alto, 72 px)
+
 ### P77 — Briscola solo sul mazzo, anche a mazzo finito (02/10/2026)
 
 - **Branch**: feature/p77-briscola-sul-mazzo

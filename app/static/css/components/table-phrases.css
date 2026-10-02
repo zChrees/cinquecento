@@ -151,3 +151,67 @@
     display: inline;
   }
 }
+
+/*
+ * P74: da computer chi sta in alto ha il ventaglio subito a destra del nome: il
+ * fumetto scende sotto l'avatar, con la punta in alto, verso il centro del tavolo.
+ */
+@media (min-width: 1024px) {
+  .phrase-bubble--top {
+    top: calc(100% + 10px);
+    left: 0;
+    max-width: 220px;
+    translate: none;
+  }
+
+  .phrase-bubble--top::after {
+    top: auto;
+    right: auto;
+    bottom: 100%;
+    left: 20px;
+    border-right-color: transparent;
+    border-bottom-color: var(--surface);
+    translate: none;
+  }
+
+  /* Il tuo avatar sta a sinistra della mano: il fumetto si allarga verso sinistra */
+  .phrase-bubble--bottom {
+    left: auto;
+    right: 0;
+  }
+
+  .phrase-bubble--bottom::after {
+    left: auto;
+    right: 14px;
+  }
+
+  /* Ai lati (2v2): accanto all'avatar, verso il centro (sopra ci sono i punti della mano) */
+  .phrase-bubble--left,
+  .phrase-bubble--right {
+    top: 50%;
+    bottom: auto;
+    translate: 0 -50%;
+  }
+
+  .phrase-bubble--left { left: calc(100% + 10px); }
+  .phrase-bubble--right { right: calc(100% + 10px); }
+
+  .phrase-bubble--left::after,
+  .phrase-bubble--right::after {
+    top: 50%;
+    border-top-color: transparent;
+    translate: 0 -50%;
+  }
+
+  .phrase-bubble--left::after {
+    left: auto;
+    right: 100%;
+    border-right-color: var(--surface);
+  }
+
+  .phrase-bubble--right::after {
+    right: auto;
+    left: 100%;
+    border-left-color: var(--surface);
+  }
+}
