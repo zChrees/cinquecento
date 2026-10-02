@@ -15,6 +15,7 @@
  *   Card({ suit: 'coppe', rank: 10 }, { onPlay, playable })   // pulsante nella mano
  *   CardBack()                                               // carta coperta
  *   reuseCardImages(root)   // P70: prima di ridisegnare, riusa le immagini già caricate
+ *   preloadCardImages()     // P79: scarica subito tutte le immagini del tavolo
  *
  * Stile in css/components/card.css.
  */
@@ -31,8 +32,40 @@ export const RANK_NAMES = {
 const FACE_BASE = new URL('../../img/cards/', import.meta.url).href;
 const BACK_URL = new URL('../../img/cards-bg/dorso.webp', import.meta.url).href;
 
+// P79: assi "figura" di briscola e canti, gli stessi file che usano Table.js e Trick.js
+const FIGURE_BASE = new URL('../../img/cards-bg/', import.meta.url).href;
+
 // P70: immagini della pagina di prima, da riusare al prossimo ridisegno (reuseCardImages)
 let reusable = new Map();
+
+// P79: immagini scaricate all'apertura del tavolo (preloadCardImages)
+let preloaded = null;
+
+/**
+ * Scarica subito tutte le immagini che il tavolo può mostrare: le 40 facce, il
+ * dorso e i quattro assi "figura" (P79). Senza, l'immagine di una carta si
+ * scaricava la prima volta che la carta compariva e, con una rete lenta, la carta
+ * restava bianca per qualche secondo. Le immagini restano in memoria (`preloaded`),
+ * così il browser non le butta via. Chiamata più volte, scarica una volta sola.
+ * @returns {Promise<boolean>} true quando sono tutte pronte, false se una non è arrivata
+ */
+export function preloadCardImages() {
+  if (preloaded) return preloaded.ready;
+  const urls = [BACK_URL];
+  for (const suit of SUITS) {
+    urls.push(`${FIGURE_BASE}asso-${suit}-figura.webp`);
+    for (let rank = 1; rank <= 10; rank += 1) urls.push(`${FACE_BASE}${suit}-${rank}.webp`);
+  }
+  const images = urls.map((src) => {
+    const img = new Image();
+    img.src = src;
+    return img;
+  });
+  const ready = Promise.all(images.map((img) => img.decode().then(() => true, () => false)))
+    .then((results) => results.every(Boolean));
+  preloaded = { images, ready };
+  return ready;
+}
 
 /**
  * Prende da `root` le immagini delle carte già disegnate, così le carte del

@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P79 — Carte bianche per qualche secondo al tavolo (02/10/2026)
+
+- **Branch**: fix/p79-carte-bianche
+- **File**: modificati `app/static/js/components/Card.js` (`preloadCardImages`), `app/static/js/pages/game.js` (la chiama dopo il `load` e mette `data-cards-ready` su `[data-table]`), questo file; creato `tests/api/test_carte_pronte.py` (nella suite `api` e non in `frontend`, perché dura circa 35 s e `frontend` è vicina ai 240 s). Tutti nell'elenco "probabili" di 9.2 tranne il test nuovo, che il punto prevede
+- **Causa** [T]: l'immagine di una carta si scaricava solo la prima volta che la carta compariva (pescata, giocata dall'avversario). Con la rete rallentata a 1,5 s per richiesta, 5 s dopo l'apertura del tavolo, 5 carte su 15 erano ancora bianche nel momento in cui comparivano
+- **Correzione**: appena la pagina del tavolo ha finito di caricarsi, si scaricano le 40 facce, il dorso e i 4 assi "figura" (briscola e canti). Le immagini restano in memoria, così il browser non le butta via. Il peso è quello di P35: sono gli stessi file, scaricati prima. Partire dopo il `load` evita che ogni apertura della pagina aspetti 45 immagini: prima ogni test del tavolo era più lento di circa il 14% [T]
+- **Controlli**: suite `api` 291 PASS, `frontend` 183 PASS (3 nuovi: carte nuove, briscola e canto mai bianchi con la rete lenta, segnale anche senza rete lenta). Il primo giro di `frontend` si è fermato al limite di 240 s con 2 FAIL (`test_frasi_pagina.py`), che da soli passano; al secondo giro era tutto PASS. Il giro completo delle 8 suite non l'ho fatto
+- **Decisioni prese**: nessuna (spec del punto)
+- **Domande nuove**: nessuna
+- **Punti delicati**: le immagini create con `new Image()` fanno aspettare il `load` della pagina, che `Browser.open` dei test attende: uno scaricamento grande all'avvio va fatto dopo il `load`. Nei test la rete lenta si ottiene con `Network.emulateNetworkConditions` (dopo `Network.enable`)
+- **Cosa devono fare gli altri**: niente. **Chi è di turno sui documenti**: spuntare P79; lista definitiva dei file in 9.2
+
 ### Documenti: seconda lista della prova a mano del 01/10 (01/10/2026)
 
 - **Branch**: docs/cose-da-sistemare-01-10-b

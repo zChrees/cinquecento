@@ -43,6 +43,9 @@
  *     dopo il mazziere (DEAL_STEP_MS l'una dall'altra). Fino alla fine un tocco sulle
  *     proprie carte non gioca niente.
  *   Con "riduci movimento" i tempi sono gli stessi, senza animazioni.
+ * - P79: appena si apre il tavolo si scaricano tutte le immagini delle carte
+ *   (preloadCardImages), altrimenti con una rete lenta una carta mai vista restava
+ *   bianca per qualche secondo; quando sono pronte [data-table] ha data-cards-ready.
  * - P56, frasi del tavolo (D24): l'elenco arriva con game:phrases a ogni game:join
  *   (la pagina non ne tiene una copia sua; senza elenco il pulsante non c'è). Una
  *   frase scelta parte con game:send_phrase; dopo l'invio il pulsante resta spento
@@ -62,7 +65,7 @@ import { connect, isConnected, on, onStatus, send } from '../core/socket.js';
 import { EVENTS, NOT_LOGGED_IN } from '../core/events.js';
 import { confirmModal } from '../components/Modal.js';
 import { Table } from '../components/Table.js';
-import { cardName, reuseCardImages } from '../components/Card.js';
+import { cardName, preloadCardImages, reuseCardImages } from '../components/Card.js';
 import { throwKey } from '../components/Trick.js';
 
 initLayout();
@@ -611,6 +614,17 @@ function startGame() {
   });
   connect();
 }
+
+// P79: tutte le immagini delle carte subito, così nessuna carta resta bianca quando
+// compare; data-cards-ready (per i test) quando sono pronte. Dopo il load della
+// pagina: prima le immagini già sul tavolo, e il load non aspetta le altre 45
+function preloadCards() {
+  preloadCardImages().then((ok) => {
+    if (ok) root.dataset.cardsReady = '1';
+  });
+}
+if (document.readyState === 'complete') preloadCards();
+else window.addEventListener('load', preloadCards, { once: true });
 
 if (demo) {
   // Solo nella prova: viste e canti finti mandati dai test o dalla console (P57)
