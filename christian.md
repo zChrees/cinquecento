@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P89 — Rating dei giocatori al tavolo, da computer (03/10/2026)
+
+- **Branch**: feature/p89-rating-tavolo
+- **File** (dall'elenco probabile di 9.2, tutti di Christian): modificati `app/static/js/components/Table.js`, `app/static/css/components/table.css`, questo file; creato `tests/api/test_rating_tavolo.py`
+- **Cosa cambia**: da 1024 px in su, accanto al nome di ogni giocatore (tu, avversari, compagno) c'è una **pillola con il rating** (campo `rating` della vista, P88); se il rating è **provvisorio** la pillola è **tratteggiata e vuota**, e i lettori di schermo e il passaggio del mouse dicono "provvisorio". Chi ha `rating` null (la CPU) non ha la pillola. Sotto 1024 px non si vede. Il nome ora sta in `.seat__title` insieme alla pillola (`[data-rating]`, `[data-provisional]`)
+- **Controlli**: solo i test del tavolo, tutti PASS: `test_rating_tavolo.py` **14** nuovi (pillola accanto al nome con il numero giusto, tratteggiata solo se provvisoria, 1v1 e 2v2 a 1024×768, 1280×720, 1440×900, senza scorrimento; niente pillola con `rating` null; niente a 360, 412 e 768 px), `test_grafica_tavolo.py` (il test da computer misura le etichette con la pillola dentro: niente si sovrappone), più altri 14 file del tavolo e delle pagine, **135 PASS**. `ruff check` dei test pulito. Suite complete non lanciate (su richiesta di Christian)
+- **Decisioni prese** (Christian, 03/10/2026, sulle raccomandazioni di Claude): **pillola accanto al nome** (scartata: nella riga sotto il nome); provvisorio = **pillola tratteggiata** (scartati: la scritta "provv." e nessuna distinzione)
+- **Domande nuove**: nessuna
+- **Punti delicati**: nessuno nuovo
+- **Cosa devono fare gli altri**: niente. **Chi è di turno sui documenti**: spuntare P89, lista definitiva in 9.2, le due scelte in `DECISIONI.md`
+
 ### Correzione — Da computer la mano non aspetta le immagini delle carte (03/10/2026)
 
 - **Branch**: fix/mano-da-computer (difetto di P74 trovato durante P76; correzione chiesta da Christian, senza un punto della scaletta)

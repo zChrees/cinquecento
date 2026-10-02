@@ -98,6 +98,25 @@ function HandPoints(points, label) {
   ]);
 }
 
+/**
+ * P89: il rating del giocatore (campo rating della vista, P88) in una pillola accanto
+ * al nome, solo da computer (table.css); tratteggiata se è ancora provvisorio. La CPU
+ * e chi non ha il rating (null) non hanno la pillola.
+ */
+function Rating(rating) {
+  if (!rating) return null;
+  const { value, provisional } = rating;
+  return el('span', {
+    class: `seat__rating${provisional ? ' seat__rating--provisional' : ''}`,
+    data: { rating: value, ...(provisional ? { provisional: '' } : {}) },
+    attrs: { title: `Rating ${value}${provisional ? ', provvisorio' : ''}` },
+  }, [
+    el('span', { class: 'visually-hidden', text: 'rating ' }),
+    String(value),
+    provisional ? el('span', { class: 'visually-hidden', text: ', provvisorio' }) : null,
+  ]);
+}
+
 /** Un giocatore al tavolo: avatar (con l'anello del tempo se tocca a lui), nome, stato. */
 function Seat(view, player, position, sang = null, phrase = null, points = null) {
   const isTurn = view.turn !== null && view.turn.seat === player.seat;
@@ -121,7 +140,10 @@ function Seat(view, player, position, sang = null, phrase = null, points = null)
     phrase ? PhraseBubble(player.username, phrase, position) : null,
   ]);
   const label = el('div', { class: 'seat__label' }, [
-    el('span', { class: 'seat__name', text: isMe ? `${player.username} (tu)` : player.username }),
+    el('span', { class: 'seat__title' }, [
+      el('span', { class: 'seat__name', text: isMe ? `${player.username} (tu)` : player.username }),
+      Rating(player.rating),
+    ]),
     notes.length ? el('span', { class: 'seat__note', text: notes.join(' · ') }) : null,
   ]);
 

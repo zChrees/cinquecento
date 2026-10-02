@@ -122,6 +122,36 @@
   text-overflow: ellipsis;
 }
 
+/* Nome e, da computer, la pillola del rating (P89) */
+.seat__title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.seat__rating {
+  display: none;
+  flex: none;
+  padding: 0 7px;
+  border: 1.5px solid var(--card-face);
+  border-radius: var(--radius-pill);
+  background: var(--card-face);
+  color: var(--text);
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 18px;
+  text-shadow: none;
+}
+
+/* Rating provvisorio (prime 10 partite): pillola tratteggiata e vuota, non solo un colore */
+.seat__rating--provisional {
+  border-style: dashed;
+  background: transparent;
+  color: var(--card-face);
+}
+
 .seat__note {
   font-size: 0.75rem;
   font-weight: 700;
@@ -359,6 +389,10 @@
   text-align: left;
 }
 
+.seat--bottom .seat__title {
+  justify-content: flex-start;
+}
+
 .sing-buttons {
   display: flex;
   flex-wrap: wrap;
@@ -440,6 +474,15 @@
 
   .seat--top .seat__label {
     text-align: left;
+  }
+
+  .seat--top .seat__title {
+    justify-content: flex-start;
+  }
+
+  /* P89: da computer il rating accanto al nome di ogni giocatore */
+  .seat__rating {
+    display: inline-block;
   }
 
   /* Ai lati (2v2): avatar e nome subito dentro il ventaglio, verso il centro */
