@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Correzione — Da computer la mano non aspetta le immagini delle carte (03/10/2026)
+
+- **Branch**: fix/mano-da-computer (difetto di P74 trovato durante P76; correzione chiesta da Christian, senza un punto della scaletta)
+- **File**: modificati `app/static/css/components/table.css` (una regola da 1024 px in su), `tests/api/test_grafica_tavolo.py`, questo file
+- **Cosa cambia**: da computer la mano sta in una colonna larga quanto il suo contenuto (P74), e finché le immagini delle carte non arrivavano le carte in mano erano larghe 27–30 px invece di 94: presa e mazzo stavano 45–90 px più in basso e poi saltavano su. Ora la mano da computer è larga sempre 5 carte (`rules.hand_size`) con i loro spazi, e niente si sposta. Telefono e tablet non cambiano
+- **Controlli**: test nuovo `test_da_computer_la_mano_non_aspetta_le_immagini` (6 casi: 1v1 e 2v2 a 1024×768, 1280×720, 1440×900, con le immagini delle carte bloccate nel browser): falliva in tutti e 6 i casi prima della correzione, passa dopo. `test_mazzo_finito_resta_il_seme_dov_era_il_mazzo`, che falliva circa una volta su sei, passa 8 giri su 8. Tutti i test del tavolo **123 PASS** (`test_grafica_tavolo`, `test_presa_affiancata`, `test_pagina_tavolo`, `test_punti_mano`, `test_tavolo_telefono`, `test_carte_pronte`, `test_carte_avversari`, `test_lancio_carta`, `test_momenti_tavolo`, `test_distribuzione`, `test_frasi_pagina`, `test_tocchi_tavolo`). Suite complete non lanciate (su richiesta di Christian)
+- **Decisioni prese**: nessuna
+- **Domande nuove**: nessuna
+- **Punti delicati**: da computer la larghezza della mano è `5 × --hand-card-max + 4 × --hand-gap` (`table.css`): se cambia il numero di carte in mano (`rules.hand_size`) va cambiato anche qui. Nei test, per bloccare delle richieste con `Network.setBlockedURLs` serve prima `Network.enable` (`tests/browser.py` non lo attiva): senza, il blocco funziona solo a volte
+- **Cosa devono fare gli altri**: niente. **Chi è di turno sui documenti**: registrare il punto delicato qui sopra (P74)
+
 ### P76 — Presa con le carte a croce e la carta che vince evidenziata (03/10/2026)
 
 - **Branch**: feature/p76-presa-affiancata

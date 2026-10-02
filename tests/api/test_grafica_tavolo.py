@@ -245,6 +245,23 @@ def test_tavolo_da_computer(browser, server, mode, size):
                     assert not _overlap(ra, rb), f"{a} tocca {b}"
 
 
+@pytest.mark.parametrize("mode", ["1v1", "2v2"])
+@pytest.mark.parametrize("size", [(1024, 768), (1280, 720), (1440, 900)], ids=lambda s: f"{s[0]}x{s[1]}")
+def test_da_computer_la_mano_non_aspetta_le_immagini(browser, server, mode, size):
+    """Da computer la mano sta in una colonna larga quanto il suo contenuto (P74): prima
+    che arrivassero le immagini le carte erano larghe 27 px e presa e mazzo stavano più
+    in basso, poi saltavano su (e il test del mazzo finito falliva una volta su sei)."""
+    browser.send("Network.enable")
+    browser.send("Network.setBlockedURLs", urls=["*/img/cards/*"])
+    _open(browser, server, mode, size)
+    # Le immagini delle carte in mano non sono arrivate davvero
+    assert browser.js("[...document.querySelectorAll('.table__mine .hand img')].every((i) => i.naturalWidth === 0)")
+    widths = browser.js("[...document.querySelectorAll('.table__mine .hand > .card')].map((c) => c.offsetWidth)")
+    # --hand-card-max di table.css: 13% dell'altezza, tra 60 e 104 px
+    expected = min(max(60, size[1] * 0.13), 104)
+    assert widths and all(abs(width - expected) <= 1 for width in widths), (widths, expected)
+
+
 def test_mazzo_finito_senza_briscola_niente(browser, server):
     base = _view("2v2")
     _open(browser, server, "2v2")

@@ -481,7 +481,15 @@
   }
 
   .table__mine > .sing-buttons { grid-area: sing; }
-  .table__mine > .hand { grid-area: hand; }
+  /*
+   * La colonna della mano è larga quanto il suo contenuto: la mano ha la larghezza di
+   * 5 carte (rules.hand_size), altrimenti finché non arrivano le immagini le carte sono
+   * larghe 27 px e presa e mazzo stanno più in basso, poi saltano su
+   */
+  .table__mine > .hand {
+    grid-area: hand;
+    width: calc(5 * var(--hand-card-max) + 4 * var(--hand-gap));
+  }
   .table__mine > .table__status { grid-area: status; }
   .table__mine .phrases-button {
     grid-area: phrases;
