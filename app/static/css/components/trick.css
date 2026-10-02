@@ -172,6 +172,11 @@
   translate: -50% -50%;
 }
 
+/* P77: mazzo finito, la carta coperta tiene solo il posto del mazzo; resta il seme */
+.deck__slot {
+  visibility: hidden;
+}
+
 .deck__count {
   position: absolute;
   right: -8px;

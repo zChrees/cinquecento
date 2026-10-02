@@ -10,7 +10,7 @@
  *   [Esci]        Punteggio      (P90: sotto 1024 px niente punteggio, Esci solo icona)
  *              (giocatore in alto)
  *   (sinistra)  presa · mazzo  (destra)
- *   [briscola · punti] (tu)  [Frasi]
+ *   [punti]       (tu)       [Frasi]
  *   pulsanti Canta · la tua mano
  *
  * La pagina non calcola regole: le carte giocabili sono legal.play e i canti
@@ -21,9 +21,9 @@
  * riepilogo di fine mano e le carte del canto (D15). Qui si disegnano soltanto.
  * Allo stesso modo le frasi del tavolo (P56) arrivano in `phrases`: pulsante sopra
  * la mano a destra (P71), elenco che si apre verso l'alto e fumetti accanto a chi
- * ha parlato. Sopra la mano a sinistra il seme della briscola (P71), che resta anche
- * a mazzo finito, quando sparisce il seme sopra il mazzo.
- * I punti della mano in corso (P72, D44): i tuoi accanto alla briscola; quelli degli
+ * ha parlato. La briscola si vede solo sul mazzo, e a mazzo finito al suo posto (P77,
+ * DeckAndTrump di Trick.js).
+ * I punti della mano in corso (P72, D44): i tuoi sopra la mano a sinistra; quelli degli
  * avversari a sinistra dell'avversario in alto (1v1) o sopra quello a sinistra (2v2).
  * Stile in css/components/table.css, trick.css, hand-summary.css e css/pages/game.css.
  */
@@ -160,16 +160,6 @@ function Result(view) {
   ]);
 }
 
-/** Il seme della briscola sopra la mano, a sinistra (P71); niente prima del canto del 40. */
-function TrumpBadge(trump) {
-  if (!trump) return null;
-  return el('span', {
-    class: 'trump-badge',
-    data: { trumpBadge: trump },
-    attrs: { role: 'img', 'aria-label': `Briscola: ${trump}`, title: `Briscola: ${trump}` },
-  }, [el('img', { attrs: { src: `${IMG_BASE}asso-${trump}-figura.webp`, alt: '' } })]);
-}
-
 /** "Prendi tu", "Prende Turi". */
 function winnerText(view, seat) {
   if (seat === view.you.seat) return 'Prendi tu';
@@ -253,9 +243,9 @@ export function Table(view, { onPlay, onSing, onLeave }, status = '', moments = 
     summary ? HandSummary(view, summary, { onClose: onCloseSummary }) : null,
   ]);
 
-  // Sopra la mano: la briscola e i tuoi punti a sinistra, tu al centro, le frasi a destra (P71, P72)
+  // Sopra la mano: i tuoi punti a sinistra, tu al centro, le frasi a destra (P71, P72, P77)
   const meRow = el('div', { class: 'table__me' }, [
-    el('div', { class: 'table__me-side' }, [TrumpBadge(view.trump), points[me.seat] ?? null]),
+    el('div', { class: 'table__me-side' }, [points[me.seat] ?? null]),
     Seat(view, me, 'bottom', sang[me.seat], bubbles[me.seat]),
     phrases ? PhrasesButton(phrases) : null,
     phrases && phrases.open ? PhrasesMenu(phrases.list, phrases) : null,

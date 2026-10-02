@@ -306,7 +306,7 @@
   grid-row: 1;
 }
 
-/* A sinistra della riga: la briscola e i tuoi punti della mano (P72) */
+/* A sinistra della riga: i tuoi punti della mano (P72; la briscola sta solo sul mazzo, P77) */
 .table__me-side {
   grid-column: 1;
   grid-row: 1;
@@ -315,23 +315,6 @@
   align-items: center;
   gap: 6px;
   min-width: 0;
-}
-
-.trump-badge {
-  flex: none;
-  display: inline-grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  background: var(--surface);
-  box-shadow: var(--shadow-2);
-}
-
-.trump-badge img {
-  width: 30px;
-  height: 30px;
-  object-fit: contain;
 }
 
 /*

@@ -209,9 +209,10 @@ def test_tavolo_1v1_nel_browser(server, tmp_path):
     # Presa, mazzo, briscola, turno
     assert page.having("data-trick")[0]["attrs"]["data-count"] == str(len(view["trick"]["cards"]))
     assert page.having("data-deck-count")[0]["attrs"]["data-deck-count"] == str(view["deck_count"])
-    # P71: il seme della briscola sopra il mazzo e sopra la mano
-    assert page.having("data-trump")[0]["attrs"]["data-trump"] == view["trump"]
-    assert page.having("data-trump-badge")[0]["attrs"]["data-trump-badge"] == view["trump"]
+    # P71, P77: il seme della briscola solo sopra il mazzo
+    trumps = page.having("data-trump")
+    assert len(trumps) == 1 and trumps[0]["attrs"]["data-trump"] == view["trump"]
+    assert not page.having("data-trump-badge")
     turn = page.having("data-turn", "yes")
     assert len(turn) == 1 and turn[0]["attrs"]["data-seat"] == str(view["turn"]["seat"])
     assert len(page.having("data-timer")) == 1

@@ -90,10 +90,29 @@ export function LastTrick(lastTrick, positionOf, winnerText, { shownFor = 0, thr
 }
 
 /**
+ * P77: mazzo finito, il seme della briscola resta dov'era il mazzo fino a fine mano.
+ * La carta coperta è invisibile e tiene solo il posto, con la misura del mazzo.
+ * @param {string} trump seme di briscola
+ * @returns {HTMLElement}
+ */
+function EmptyDeck(trump) {
+  const slot = CardBack();
+  slot.classList.add('deck__slot');
+  return el('div', {
+    class: 'deck deck--empty',
+    data: { deckEmpty: '' },
+    attrs: { role: 'img', 'aria-label': `Mazzo finito. Briscola: ${trump}` },
+  }, [
+    slot,
+    el('img', { class: 'deck__trump', data: { trump }, attrs: { src: `${IMG_BASE}asso-${trump}-figura.webp`, alt: '' } }),
+  ]);
+}
+
+/**
  * Mazzo coperto con le carte rimaste e, al centro sopra il mazzo, il seme della
  * briscola (P71): niente nome del seme (lo leggono solo i lettori di schermo) e
- * niente scritta prima del canto del 40. A mazzo finito non c'è niente: la briscola
- * resta nel segno accanto alla mano (Table.js).
+ * niente scritta prima del canto del 40. P77: è l'unico posto dove si vede la
+ * briscola; a mazzo finito, al posto del mazzo, resta il seme (EmptyDeck).
  * @param {number} deckCount carte rimaste nel mazzo
  * @param {string|null} trump seme di briscola, null finché nessuno ha cantato 40
  * @param {number|null} [shuffled] P70: millisecondi dall'inizio della mescolata a inizio
@@ -101,7 +120,7 @@ export function LastTrick(lastTrick, positionOf, winnerText, { shownFor = 0, thr
  * @returns {HTMLElement|null}
  */
 export function DeckAndTrump(deckCount, trump, shuffled = null) {
-  if (deckCount <= 0) return null;
+  if (deckCount <= 0) return trump ? EmptyDeck(trump) : null;
   const label = trump ? `Mazzo: ${deckCount} carte. Briscola: ${trump}` : `Mazzo: ${deckCount} carte`;
   const riffle = shuffled == null ? [] : ['left', 'right'].map((side) => {
     const half = CardBack();

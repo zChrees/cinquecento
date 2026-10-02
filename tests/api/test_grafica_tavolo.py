@@ -1,8 +1,9 @@
 """P71: grafica del tavolo dopo la prova sul telefono.
 
 Controlla il "Fatto quando" di SCALETTA.md (P71): il seme della briscola sta al
-centro sopra il mazzo, senza nome, e sparisce con il mazzo; il seme sta anche sopra
-la mano a sinistra e resta a mazzo finito; niente "Carte franche" né "mazziere";
+centro sopra il mazzo, senza nome; P77: è l'unico posto dove si vede (niente tondo
+sopra la mano) e a mazzo finito il seme resta dov'era il mazzo, con la sua misura,
+fino a fine mano; niente "Carte franche" né "mazziere";
 sul telefono, nel 1v1, il mazzo sta sul bordo destro; mazzo e carte della presa sono
 più grandi; il pulsante delle frasi sta sopra la mano a destra e l'elenco si apre
 verso l'alto senza coprire la mano; il tavolo non scorre alle misure di
@@ -74,7 +75,7 @@ def _boxes(browser):
         deck: rect('[data-deck-count]'), deckCard: rect('[data-deck-count] .card'),
         deckTrump: rect('[data-deck-count] [data-trump]'), trick: rect('[data-trick]'),
         trickCard: rect('[data-trick] .card'), center: rect('.table__center'),
-        badge: rect('[data-trump-badge]'), me: rect('.table__mine [data-position="bottom"]'),
+        points: rect('.table__me-side [data-hand-points]'), me: rect('.table__mine [data-position="bottom"]'),
         button: rect('[data-phrases-button]'), hand: rect('.table__mine .hand'),
         w: innerWidth, h: innerHeight,
         scrollH: document.scrollingElement.scrollHeight, scrollW: document.scrollingElement.scrollWidth,
@@ -86,7 +87,7 @@ def _overlap(a, b):
     return a["l"] < b["r"] and a["r"] > b["l"] and a["t"] < b["b"] and a["b"] > b["t"]
 
 
-def test_briscola_sul_mazzo_e_sopra_la_mano_al_telefono(browser, server):
+def test_briscola_solo_sul_mazzo_al_telefono(browser, server):
     base = _view("1v1")
     _open(browser, server, "1v1")
     # Una carta nella presa, per misurarla
@@ -111,23 +112,47 @@ def test_briscola_sul_mazzo_e_sopra_la_mano_al_telefono(browser, server):
     assert box["deckCard"]["w"] >= 56 - 1
     assert box["trickCard"]["w"] >= 60 - 1
 
-    # Sopra la mano: briscola a sinistra, tu al centro, frasi a destra; niente copre la mano
-    badge, me, button, hand = box["badge"], box["me"], box["button"], box["hand"]
-    assert badge["r"] <= me["l"] and me["r"] <= button["l"]
-    for part in (badge, me, button):
+    # P77: la briscola si vede una volta sola, sul mazzo; niente tondo vicino alla mano
+    assert browser.js("document.querySelectorAll('[data-trump]').length") == 1
+    assert browser.js("document.querySelector('[data-trump-badge], .trump-badge')") is None
+
+    # Sopra la mano: i tuoi punti a sinistra, tu al centro, frasi a destra; niente copre la mano
+    points, me, button, hand = box["points"], box["me"], box["button"], box["hand"]
+    assert points["r"] <= me["l"] and me["r"] <= button["l"]
+    for part in (points, me, button):
         assert part["b"] <= hand["t"] + 1
-    assert browser.js("document.querySelector('[data-trump-badge]').getAttribute('aria-label')") == "Briscola: coppe"
     assert browser.js("document.querySelector('.table__top [data-phrases-button]')") is None
 
 
-def test_mazzo_finito_la_briscola_resta_sopra_la_mano(browser, server):
-    base = _view("1v1")
-    _open(browser, server, "1v1")
-    _dispatch(browser, "demo:state", _state(base, deck_count=0))
+@pytest.mark.parametrize("mode", ["1v1", "2v2"])
+@pytest.mark.parametrize("size", [(360, 640), (1280, 720)], ids=lambda s: f"{s[0]}x{s[1]}")
+def test_mazzo_finito_resta_il_seme_dov_era_il_mazzo(browser, server, mode, size):
+    base = _view(mode)
+    _open(browser, server, mode, size)
+    trumped = _state(base, trump="denari", sings=[{"seat": 0, "suit": "denari", "points": 40}])
+    _dispatch(browser, "demo:state", trumped)
+    deck = _boxes(browser)["deck"]
+    _dispatch(browser, "demo:state", _state(trumped, deck_count=0))
+    empty = browser.js("""(() => { const e = document.querySelector('[data-deck-empty]');
+      const t = e.querySelector('[data-trump]'); const b = e.getBoundingClientRect(); const r = t.getBoundingClientRect();
+      return { l: b.left, t: b.top, r: b.right, b: b.bottom, trump: t.dataset.trump, label: e.getAttribute('aria-label'),
+               trumpShown: r.width > 0 && getComputedStyle(t).visibility === 'visible',
+               slotShown: getComputedStyle(e.querySelector('.card')).visibility !== 'hidden' }; })()""")
     assert browser.js("document.querySelector('[data-deck-count]')") is None
-    assert browser.js("document.querySelector('[data-trump]')") is None
-    assert browser.js("document.querySelector('[data-trump-badge]').dataset.trumpBadge") == "coppe"
+    # Stesso posto e stessa misura del mazzo; si vede solo il seme
+    for side in ("l", "t", "r", "b"):
+        assert abs(empty[side] - deck[side]) <= 1, side
+    assert empty["trump"] == "denari" and empty["trumpShown"] is True and empty["slotShown"] is False
+    assert empty["label"] == "Mazzo finito. Briscola: denari"
+    assert browser.js("document.querySelectorAll('[data-trump]').length") == 1
     assert "Mazzo finito" not in browser.js("document.querySelector('[data-table]').innerText")
+
+
+def test_mazzo_finito_senza_briscola_niente(browser, server):
+    base = _view("2v2")
+    _open(browser, server, "2v2")
+    _dispatch(browser, "demo:state", _state(base, deck_count=0))
+    assert browser.js("document.querySelector('[data-deck-count], [data-deck-empty], [data-trump]')") is None
 
 
 def test_prima_del_40_niente_briscola_ne_scritte(browser, server):

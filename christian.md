@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P77 — Briscola solo sul mazzo, anche a mazzo finito (02/10/2026)
+
+- **Branch**: feature/p77-briscola-sul-mazzo
+- **File** (tutti nell'elenco "probabili" di 9.2): modificati `app/static/js/components/Trick.js` (`EmptyDeck`), `app/static/js/components/Table.js` (tolto `TrumpBadge`), `app/static/css/components/trick.css` (`.deck__slot`), `app/static/css/components/table.css` (tolte le regole `.trump-badge`), `tests/api/test_grafica_tavolo.py`, `tests/api/test_punti_mano.py`, `tests/api/test_pagina_tavolo.py`, questo file
+- **Cosa cambia**: il **tondo con il seme** sopra la mano **non c'è più**; a sinistra della tua riga restano solo i tuoi punti della mano (P72). La briscola si vede **solo sul mazzo**; a **mazzo finito**, dov'era il mazzo resta il seme fino a fine mano (`[data-deck-empty]`, con dentro `[data-trump]`; per i lettori di schermo "Mazzo finito. Briscola: …"). Una carta coperta invisibile (`.deck__slot`) tiene il posto e la misura del mazzo, così il seme non si sposta (anche quando P86 ingrandirà il mazzo). Senza briscola, a mazzo finito non c'è niente, come prima
+- **Controlli**: suite `api` **310 PASS** (126 s), `frontend` **185 PASS** (201 s). In `api` 5 controlli nuovi al posto di quello vecchio del mazzo finito ( seme dov'era il mazzo, con la stessa posizione e misura, nel 1v1 e nel 2v2 a 360×640 e 1280×720; niente a mazzo finito senza briscola). Il giro completo delle 8 suite non l'ho fatto
+- **Decisioni prese**: nessuna (spec del punto, decisione del 01/10)
+- **Domande nuove**: nessuna
+- **Punti delicati**: marcatori cambiati: `data-trump-badge` non esiste più; il seme a mazzo finito è `[data-deck-empty] [data-trump]` (`[data-deck-count]` c'è solo con carte nel mazzo). Chi misura il mazzo (P86) deve tenere conto anche di `.deck--empty`
+- **Cosa devono fare gli altri**: niente. **Chi è di turno sui documenti**: spuntare P77 e scrivere i file nella nota del tracker
+
 ### P90 — Tavolo sul telefono: via il tabellone, "Esci" che non si sovrappone (02/10/2026)
 
 - **Branch**: fix/p90-telefono-tabellone

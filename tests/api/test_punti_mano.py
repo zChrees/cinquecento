@@ -91,8 +91,9 @@ def test_1v1_i_tuoi_punti_e_quelli_dell_avversario(browser, server):
     assert points["me"]["text"] == str(mine) and points["top"]["text"] == str(theirs)
     assert points["me"]["label"] == f"I tuoi punti in questa mano: {mine}"
     assert points["top"]["label"] == f"Punti di Turi in questa mano: {theirs}"
-    # I tuoi accanto al seme della briscola, nella riga sopra la mano
-    assert browser.js("document.querySelector('.table__me-side [data-trump-badge]') !== null")
+    # I tuoi nella riga sopra la mano, a sinistra; lì la briscola non c'è più (P77)
+    assert browser.js("document.querySelector('.table__me-side [data-hand-points]') !== null")
+    assert browser.js("document.querySelector('.table__me-side [data-trump]')") is None
 
 
 def test_2v2_una_volta_sola_accanto_al_giocatore_a_sinistra(browser, server):
@@ -171,7 +172,7 @@ RECTS = """(() => {
   const all = (s) => [...document.querySelectorAll(s)].map(rect);
   return {
     points: all('[data-hand-points]'),
-    others: all('[data-edge-hand] > .card, .seat__avatar, .seat__label, [data-trump-badge], [data-phrases-button], '
+    others: all('[data-edge-hand] > .card, .seat__avatar, .seat__label, [data-phrases-button], '
       + '[data-trick], [data-deck-count], .table__mine .hand, [data-scoreboard], [data-leave]'),
     w: innerWidth, h: innerHeight,
     scrollH: document.scrollingElement.scrollHeight, scrollW: document.scrollingElement.scrollWidth,
