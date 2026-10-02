@@ -141,6 +141,12 @@ export function ChatWindow({
     el('label', { class: 'visually-hidden', text: 'Scrivi un messaggio', attrs: { for: 'chat-input' } }),
     input, send, error,
   ]);
+  // P81: toccando "Invia" il fuoco passava al pulsante e il telefono chiudeva la
+  // tastiera (riaperta poi da input.focus()). Il pulsante non prende il fuoco, il clic
+  // resta; sul modulo, così vale anche per un tocco sul pulsante spento durante l'invio
+  form.addEventListener('mousedown', (event) => {
+    if (event.target !== input) event.preventDefault();
+  });
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();

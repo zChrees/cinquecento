@@ -11,6 +11,7 @@ Se né Chrome né Edge sono installati i controlli nel browser si saltano.
 """
 
 import importlib.util
+import json
 import uuid
 from pathlib import Path
 
@@ -20,7 +21,7 @@ import sqlalchemy as sa
 from app import create_app
 from app.extensions import db
 from app.repositories import chat_repo
-from app.services import auth_service, friend_service
+from app.services import auth_service, chat_service, friend_service
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -123,6 +124,56 @@ def test_a_360_il_campo_si_vede_e_i_limiti(browser, server, users):
     assert browser.js("document.querySelector('[data-chat-error]').textContent") == "Scrivi un messaggio."
     assert browser.js("document.querySelector('[data-chat-error]').hidden") is False
     assert browser.js("document.querySelectorAll('.chat__msg').length") == count
+
+
+def _real_clicks(browser, selector, count=1):
+    """`count` clic veri del mouse al centro di `selector` (il pulsante prende il fuoco come con un tocco)."""
+    point = browser.js(f"""(() => {{
+      const b = document.querySelector({json.dumps(selector)}).getBoundingClientRect();
+      return {{ x: b.left + b.width / 2, y: b.top + b.height / 2 }};
+    }})()""")
+    for _ in range(count):
+        for kind in ("mousePressed", "mouseReleased"):
+            browser.send("Input.dispatchMouseEvent", type=kind, x=point["x"], y=point["y"], button="left", clickCount=1)
+
+
+def _write(browser, text, user_id):
+    """Scrive `text` nella casella come da tastiera e conta da qui le volte che perde il fuoco."""
+    chat_service.rate_limit.give_back(user_id)  # il messaggio del test prima non conta (1 al secondo, P48)
+    browser.js("""(() => { const input = document.querySelector('#chat-input');
+      input.focus(); window.blurs = 0; input.addEventListener('blur', () => { window.blurs += 1; }); })()""")
+    browser.send("Input.insertText", text=text)
+
+
+SEND = "[data-chat-form] button[type=submit]"
+FOCUSED = "document.activeElement === document.querySelector('#chat-input')"
+
+
+def test_dopo_invia_la_casella_tiene_il_fuoco(browser, server, users):
+    # P81: toccando "Invia" il fuoco passava al pulsante e il telefono chiudeva la tastiera
+    _open_chat(browser, server, users["Giulia"], 360, 640)
+    mine = browser.js("document.querySelectorAll('.chat__msg--mine').length")
+    _write(browser, "la tastiera resta aperta", users["Mario"])
+    _real_clicks(browser, SEND)
+    # Subito, mentre si aspetta la risposta: casella attiva, con il fuoco, mai perso
+    assert browser.js("document.querySelector('#chat-input').disabled") is False
+    assert browser.js(FOCUSED) is True
+    browser.wait_js(f"document.querySelectorAll('.chat__msg--mine').length === {mine + 1}", "messaggio inviato")
+    assert browser.js(FOCUSED) is True
+    assert browser.js("window.blurs") == 0
+    assert browser.js("document.querySelector('#chat-input').value") == ""
+
+
+def test_doppio_clic_su_invia_un_solo_messaggio(browser, server, users):
+    _open_chat(browser, server, users["Giulia"], 360, 640)
+    mine = browser.js("document.querySelectorAll('.chat__msg--mine').length")
+    _write(browser, "una volta sola", users["Mario"])
+    _real_clicks(browser, SEND, 2)
+    browser.wait_js(f"document.querySelectorAll('.chat__msg--mine').length === {mine + 1}", "messaggio inviato")
+    browser.wait_js(f"document.querySelector('{SEND}').disabled === false", "Invia riacceso")
+    assert browser.js("document.querySelectorAll('.chat__msg--mine').length") == mine + 1
+    assert browser.js("document.querySelector('[data-chat-error]').hidden") is True
+    assert browser.js("window.blurs") == 0
 
 
 def test_indietro_dalla_chat_alla_lista_poi_chiude(browser, server, users):

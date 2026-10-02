@@ -90,6 +90,12 @@
   flex: 1;
 }
 
+/* P81: un tocco su "Invia" spento passa al modulo, che non toglie il fuoco alla
+   casella (Chrome non manda eventi a un pulsante spento): la tastiera resta aperta */
+.chat__form button:disabled {
+  pointer-events: none;
+}
+
 .chat__error {
   width: 100%;
   color: var(--red-strong);

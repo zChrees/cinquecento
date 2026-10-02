@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P81 — La tastiera del telefono si chiude a ogni messaggio della chat (02/10/2026)
+
+- **Branch**: fix/p81-tastiera-chat
+- **File**: modificati `app/static/js/components/ChatWindow.js`, `app/static/css/components/chat.css` (**fuori elenco**, con l'ok di Christian: una regola), `tests/frontend/test_chat_pannello.py` (2 test nuovi), questo file
+- **Causa** [T]: non era la casella spenta (l'ipotesi del punto): durante l'invio si spegne già solo "Invia". Toccando "Invia" il fuoco passava dalla casella al pulsante, e il telefono chiudeva la tastiera; poi `input.focus()` la riapriva. Un secondo tocco mentre il messaggio parte cade sul pulsante spento, e Chrome non manda eventi a un pulsante spento: anche lì la casella perdeva il fuoco
+- **Correzione**: il modulo della chat blocca il `mousedown` fuori dalla casella (il pulsante non prende il fuoco e il clic resta). In `chat.css`, `.chat__form button:disabled { pointer-events: none; }`, così un tocco sul pulsante spento arriva al modulo. La regola contro il doppio invio e quella di P33 (senza connessione) non cambiano
+- **Controlli**: suite `frontend` **185 PASS** in 188 s (2 nuovi: casella con il fuoco dopo un clic vero su "Invia", anche mentre si aspetta la risposta; doppio clic con un solo messaggio e nessuna perdita del fuoco). Senza la correzione falliscono tutti e due [T]. Un giro prima si era fermato al limite di 240 s su `test_banner_connessione.py` (il file da solo passa 3 volte su 3): è il blocco casuale già visto in P79, che conviene seguire. Il giro completo delle 8 suite non l'ho fatto
+- **Decisioni prese**: nessuna (spec del punto)
+- **Domande nuove**: nessuna
+- **Punti delicati**: un test del browser che manda un messaggio in chat deve azzerare il limite di 1 al secondo (`chat_service.rate_limit.give_back`), altrimenti fallisce a volte, quando parte meno di un secondo dopo il messaggio del test prima (succedeva 4 volte su 6 con il server rallentato). Un clic che deve spostare il fuoco come un tocco vero va fatto con `Input.dispatchMouseEvent`, non con `element.click()`
+- **Cosa devono fare gli altri**: niente. **Chi è di turno sui documenti**: spuntare P81; lista dei file con `chat.css`
+
 ### P79 — Carte bianche per qualche secondo al tavolo (02/10/2026)
 
 - **Branch**: fix/p79-carte-bianche
