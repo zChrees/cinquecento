@@ -22,6 +22,19 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P90 — Tavolo sul telefono: via il tabellone, "Esci" che non si sovrappone (02/10/2026)
+
+- **Branch**: fix/p90-telefono-tabellone
+- **File** (lista approvata da Christian per 9.2): modificati `app/static/css/components/scoreboard.css`, `app/static/css/components/table.css`, `app/static/js/components/Table.js`, `tests/frontend/test_carte_avversari.py` (con l'ok di Christian), questo file; creato `tests/api/test_tavolo_telefono.py`
+- **Cosa cambia**: sotto 1024 px il **tabellone non c'è** (`display: none`): il punteggio si legge nel riepilogo di fine mano, e per i lettori di schermo resta lì. **"Esci"** è un tondo da 44 px con la sola icona; la scritta c'è ancora, ma solo per i lettori di schermo (`.table__leave-text`, nascosta come `visually-hidden`). Da computer non cambia niente
+- **Causa** [T]: con 5 carte all'avversario in alto, tra "Esci" e il ventaglio restavano 7 px a 360×640, e a 320×568 "Esci" copriva una carta. Con il carattere di sistema più grande succede anche su telefoni più larghi [D]. Il tabellone invece si accavallava al ventaglio in alto
+- **Controlli**: suite `api` **306 PASS** (15 nuovi: a 320×568, 360×640, 390×844, 412×915, 768×1024 e 844×390, nel 1v1 e nel 2v2, con 5 carte e nomi lunghi: niente tabellone, "Esci" tondo, niente sopra "Esci", almeno 24 px dal ventaglio; da computer tabellone e scritta; riepilogo con il punteggio a 360×640); suite `frontend` **185 PASS** in 222 s. **Attenzione**: oggi la stessa suite ha messo tra 187 e 222 s (limite 240), e due giri si sono fermati al limite. Conviene un punto nuovo che la alleggerisca (per esempio spostando in `api` qualche file lungo del tavolo) o che alzi `SUITE_TIMEOUT`. `test_carte_avversari.py` controllava "la barra sta sopra il ventaglio" toccando il tabellone a 360×640: ora quel controllo si fa a 1280×720. Il giro completo delle 8 suite non l'ho fatto
+- **Decisioni prese** (Christian, 02/10/2026, sulla raccomandazione di Claude): sotto 1024 px "Esci" ha **solo l'icona**. Scartata l'alternativa di far scendere il ventaglio sotto "Esci", che toglieva circa 50 px al centro del tavolo
+- **Domande nuove**: nessuna
+- **Punti delicati**: ingrandire il carattere della pagina (`font-size` su `html`) non cambia il tavolo, che è misurato in px: per provare il "carattere grande" del telefono serve un margine (qui 24 px), non quel trucco. **P87** ridisegna "Esci": deve tenere il tondo sotto 1024 px (lo controlla `test_tavolo_telefono.py`)
+- **Punto nuovo proposto** (Christian, 02/10/2026), da aggiungere al tracker: **P91 (Fase 3, C) — Suite `frontend` sotto il limite di tempo** · piccolo · decisione: no. *Cosa e perché*: la suite dura da 187 a 222 s contro i 240 di `SUITE_TIMEOUT`, e il 02/10 due giri si sono fermati al limite (su `test_frasi_pagina.py` e `test_banner_connessione.py`, che da soli passano). Si spostano in `api` i file lunghi del tavolo che non usano MySQL (per esempio `test_momenti_tavolo.py`, `test_lancio_carta.py`, `test_distribuzione.py`), misurando prima la durata di ciascuno, e si capisce perché a volte un test resta fermo fino al limite. *File*: i test spostati, forse `tests/esegui_tutti.py`. *Fatto quando*: la suite `frontend` sta sotto i 170 s e la suite `api` sotto i 200 s, per 3 giri di fila
+- **Cosa devono fare gli altri**: niente. **Chi è di turno sui documenti**: spuntare P90; la lista dei file in 9.2; in `DECISIONI.md` "Esci" con la sola icona sotto 1024 px; aggiungere **P91** (testo qui sopra) al tracker e alla sezione 9 come punto di Christian
+
 ### P81 — La tastiera del telefono si chiude a ogni messaggio della chat (02/10/2026)
 
 - **Branch**: fix/p81-tastiera-chat

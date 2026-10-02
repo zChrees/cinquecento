@@ -28,6 +28,26 @@
   justify-self: start;
 }
 
+/* P90: sotto 1024 px "Esci" è un tondo con la sola icona, così non arriva mai alle
+   carte dell'avversario in alto, nemmeno con il carattere grande; la scritta resta
+   per i lettori di schermo */
+@media (max-width: 1023px) {
+  .table__leave {
+    width: 44px;
+    padding: 0;
+  }
+
+  .table__leave-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
 /*
  * Al centro: nel 2v2 il compagno in alto, gli avversari a destra e a sinistra,
  * la presa in mezzo; nel 1v1 l'avversario in alto e la presa sotto.

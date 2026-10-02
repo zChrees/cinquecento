@@ -45,3 +45,11 @@
   font-size: 0.75rem;
   font-weight: 700;
 }
+
+/* P90: sul telefono e sul tablet il tabellone non c'è (troppo poco spazio): il
+   punteggio della partita si legge nel riepilogo di fine mano */
+@media (max-width: 1023px) {
+  .scoreboard {
+    display: none;
+  }
+}

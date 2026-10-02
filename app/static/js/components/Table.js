@@ -7,7 +7,7 @@
  * (P70) sono ventagli agganciati al bordo dello schermo dal loro lato, per metà
  * fuori; quello in alto sta dietro la barra con "Esci" e il punteggio.
  *
- *   [Esci]        Punteggio
+ *   [Esci]        Punteggio      (P90: sotto 1024 px niente punteggio, Esci solo icona)
  *              (giocatore in alto)
  *   (sinistra)  presa · mazzo  (destra)
  *   [briscola · punti] (tu)  [Frasi]
@@ -237,7 +237,7 @@ export function Table(view, { onPlay, onSing, onLeave }, status = '', moments = 
       data: { leave: '' },
       attrs: { type: 'button' },
       on: { click: onLeave },
-    }, [icon('logout'), 'Esci']),
+    }, [icon('logout'), el('span', { class: 'table__leave-text', text: 'Esci' })]), // P90: sotto 1024 px solo l'icona
     Scoreboard(view),
   ]);
 

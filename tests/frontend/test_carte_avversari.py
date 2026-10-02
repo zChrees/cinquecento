@@ -96,12 +96,14 @@ def test_ventaglio_in_alto_dietro_la_barra(browser, server):
     assert [(f["side"], f["count"], f["cards"]) for f in box["fans"]] == [("top", 4, 4)]
     fan = box["fans"][0]["box"]
     assert fan["t"] < 0 < fan["b"], "il ventaglio in alto deve uscire per metà dal bordo"
-    # La barra sta sopra: al centro del punteggio si tocca il punteggio, non le carte
+    # Niente più carte coperte sotto il nome
+    assert browser.js("document.querySelector('.seat .hand--hidden')") is None
+    # La barra sta sopra: al centro del punteggio si tocca il punteggio, non le carte.
+    # Da computer: sotto 1024 px il tabellone non c'è (P90)
+    _open(browser, server, "1v1", (1280, 720))
     on_top = browser.js("""(() => { const b = document.querySelector('[data-scoreboard]').getBoundingClientRect();
       return document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2).closest('.table__top') !== null; })()""")
     assert on_top is True
-    # Niente più carte coperte sotto il nome
-    assert browser.js("document.querySelector('.seat .hand--hidden')") is None
 
 
 def test_ventagli_ai_lati_nel_2v2(browser, server):
