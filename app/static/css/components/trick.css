@@ -231,3 +231,10 @@
   }
 }
 
+/* P86: da computer il mazzo è più grande delle carte della presa (anche a mazzo finito, P77) */
+@media (min-width: 1024px) {
+  .deck .card {
+    --card-w: 88px;
+  }
+}
+

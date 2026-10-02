@@ -108,8 +108,9 @@ def test_briscola_solo_sul_mazzo_al_telefono(browser, server):
     assert box["deck"]["r"] >= box["w"] - 40
     assert not _overlap(box["deck"], box["trick"])
 
-    # Mazzo e carte della presa più grandi di prima (40 e 48 px)
-    assert box["deckCard"]["w"] >= 56 - 1
+    # Mazzo e carte della presa più grandi di prima (40 e 48 px); P86 ingrandisce il
+    # mazzo solo da computer: sul telefono resta da 56 px
+    assert abs(box["deckCard"]["w"] - 56) <= 1
     assert box["trickCard"]["w"] >= 60 - 1
 
     # P77: la briscola si vede una volta sola, sul mazzo; niente tondo vicino alla mano
@@ -212,6 +213,9 @@ def test_tavolo_da_computer(browser, server, mode, size):
     # Carte degli avversari da 72 px (larghezza della carta, non del rettangolo ruotato)
     widths = browser.js("[...document.querySelectorAll('[data-edge-hand] > .card')].map((c) => c.offsetWidth)")
     assert widths and all(width == 72 for width in widths)
+
+    # P86: mazzo da 88 px (prima 60), più grande delle carte della presa e lontano da tutto
+    assert browser.js("document.querySelector('[data-deck-count] > .card').offsetWidth") == 88
 
     # Ogni avversario accanto al suo ventaglio: in alto a sinistra, ai lati verso il centro
     top_fan, top_avatar = _span(parts["fan-top"]), parts["avatar-top"][0]

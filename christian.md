@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P86 — Mazzo più grande, da computer (03/10/2026)
+
+- **Branch**: feature/p86-mazzo-computer
+- **File** (lista approvata da Christian per 9.2): modificati `app/static/css/components/trick.css` (una regola da 1024 px in su), `tests/api/test_grafica_tavolo.py`, questo file
+- **Cosa cambia**: da 1024 px in su il mazzo è largo **88 px** (prima 60), un po' più grande delle carte della presa (72–80 px); il seme della briscola sopra il mazzo cresce con lui, e a mazzo finito (P77) resta la stessa misura. Sul telefono resta 56 px, sul tablet 60
+- **Controlli**: solo i test del tavolo toccati, tutti PASS: `test_grafica_tavolo.py` **16** (il test da computer controlla gli 88 px a 1024×768, 1280×720 e 1440×900, in 1v1 e 2v2, e che il mazzo non tocchi niente; quello del telefono che resti 56 px), più `test_pagina_tavolo.py`, `test_punti_mano.py`, `test_carte_avversari.py`, `test_distribuzione.py` **39**. `ruff check` del test pulito. Suite complete non lanciate (su richiesta di Christian)
+- **Decisioni prese** (Christian, 03/10/2026, sulla raccomandazione di Claude): mazzo da **88 px** da computer (scartati 80 e 96). Misurato prima con 72–96 px a 1024×768, 1280×720, 1440×900 e 1920×1080: a tutte le misure il mazzo non tocca presa, ventagli, avatar né la tua mano, e il tavolo non scorre
+- **Domande nuove**: nessuna
+- **Punti delicati**: nessuno nuovo
+- **Cosa devono fare gli altri**: niente. **Chi è di turno sui documenti**: spuntare P86, lista definitiva in 9.2, in `DECISIONI.md` la misura di 88 px
+
 ### Documenti: registrati i lotti dal 01/10 sera al 02/10 e aggiunto P91 (02/10/2026)
 
 - **Branch**: docs/lotti-02-10
