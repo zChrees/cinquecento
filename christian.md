@@ -22,6 +22,16 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: P34 segnato fatto, P9 rimesso in lista (03/10/2026)
+
+- **Branch**: docs/p34-fatto-p9
+- **File**: modificati `SCALETTA.md` (P34 spuntato con la nota; "Da dove si parte" con P9 e senza la prova di P34), `DECISIONI.md` (Processo: P34 fatto), `CLAUDE.md` (riga "Stato"), questo file
+- **Controlli**: nessuno (soli documenti); ultimo giro completo 1643 PASS
+- **Decisioni registrate**: **P34 fatto** (Christian): la prova su un telefono vero è quella del 29/09 con un amico, da cui sono nati P63–P73 e le correzioni del tavolo
+- **Punto rimesso in lista**: **P9** (guida di installazione verificata, `README.md`) era aperto dalla Fase 1 ma "Da dove si parte" non lo nominava più
+- **Domande**: nessuna nuova
+- **Cosa devono fare gli altri**: **Giuseppe**: per P9 servirà un compagno che segua il `README.md` su un altro PC (il "Fatto quando" del punto)
+
 ### Documenti: registrati i lotti del 03/10 (P86, P76, P89, P80, P87, P78 e la correzione di P74) (03/10/2026)
 
 - **Branch**: docs/lotti-03-10
