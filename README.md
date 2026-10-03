@@ -31,11 +31,6 @@ Web-app per giocare online a **Cinquecento**, il gioco di carte siciliano simile
 
 Il riferimento grafico è il prototipo in [docs/prototipo/](docs/prototipo/): si apre con un doppio clic su `index.html`.
 
-> **Stato del progetto (27/09/2026):** c'è lo **scheletro** (P4): `python run.py` mostra una pagina "ok" su `http://localhost:5000`. Il database (P5) e il runner dei test (P6) non ci sono ancora, quindi per ora:
-> - fai i passi 1–5 dell'installazione qui sotto (il passo 6 arriva con P5);
-> - nel tuo `.env`, finché P5 non crea l'utente `cinquecento`, metti `DB_USER=root` e la tua password di root: all'avvio il programma controlla solo che MySQL 8.0 risponda;
-> - i test si lanciano con `python -m pytest tests` e il controllo del codice con `ruff check .`, dentro la `.venv`.
-
 ## Il gioco in breve
 
 Si gioca con 40 carte siciliane, con 5 carte in mano. All'inizio non c'è briscola: chi ha in mano **Re e Cavallo dello stesso seme** può **cantare 40**, e quel seme diventa briscola. I canti successivi valgono 20 (**cantare 20**). Non c'è obbligo di rispondere al seme. Vince chi, a fine mano, arriva ad almeno il punteggio scelto per la partita: **150, 300 o 500 punti**.
@@ -66,6 +61,7 @@ cinquecento/
 ├── SCALETTA.md                elenco dei punti da fare (tracker attivo)
 ├── DECISIONI.md               decisioni già prese, con data e motivo
 ├── DA-DECIDERE.md             domande ancora aperte
+├── christian.md  giuseppe.md  antonio.md   riepiloghi dei punti fatti, uno per persona
 ├── .gitattributes             fine riga dei file, gestiti da git
 ├── .gitignore                 file che git non deve tracciare
 ├── .env.example               modello della configurazione (senza segreti)
@@ -108,7 +104,8 @@ cinquecento/
 │   │   ├── actions.py         azioni possibili (gioca carta, canta)
 │   │   ├── game.py            applica un'azione allo stato; fine mano e fine partita
 │   │   ├── views.py           vista di un solo giocatore e mosse legali
-│   │   └── auto_move.py       mossa automatica a tempo scaduto
+│   │   ├── auto_move.py       mossa automatica a tempo scaduto
+│   │   └── cpu.py             mosse della CPU (partita contro la CPU, in lavorazione)
 │   │
 │   ├── realtime/              PARTITE E PRESENZA IN CORSO (in memoria)
 │   │   ├── events.py          nomi degli eventi socket
@@ -180,46 +177,64 @@ cinquecento/
 │       │   ├── utils/         funzioni di utilità per il DOM
 │       │   └── vendor/        librerie esterne a versione fissa (client Socket.IO)
 │       ├── dev/               dati di esempio e pagina di prova delle carte (solo sviluppo)
+│       ├── fonts/             font delle icone (solo le icone usate, elenco in icone.txt)
 │       └── img/
 │           ├── cards/         immagini delle 40 carte, con la loro licenza
 │           ├── cards-bg/      carte del prototipo: sfondo, logo, carte-pulsante (P40)
 │           ├── avatars/       set di avatar predefiniti
-│           └── logo.*         logo "Cinquecento"
+│           └── favicon.*      icona della scheda del browser
 │
 └── tests/
     ├── esegui_tutti.py        runner: lancia tutte le suite in sicurezza
     ├── conftest.py            impostazioni comuni dei test
+    ├── browser.py             aiuti per i test che aprono le pagine in Chrome o Edge
     ├── runner/                test del runner stesso
     ├── engine/                test del motore di gioco
     ├── db/                    test di migrazioni e backup
-    ├── api/                   test delle pagine e degli account (via HTTP)
+    ├── api/                   test delle pagine e degli account (via HTTP), più la grafica del tavolo
     ├── services/              test di salvataggio partite e rating
     ├── sockets/               test del tempo reale con client simulati
-    ├── frontend/              controlli sul codice delle pagine
-    └── e2e/                   partite complete dall'inizio alla fine
+    ├── frontend/              controlli sul codice delle pagine e prove nel browser (home, amici, chat)
+    ├── e2e/                   partite complete dall'inizio alla fine
+    └── table/                 il tavolo di gioco nel browser: momenti, animazioni, frasi
 ```
 
 La tabella "file → punto della scaletta" (chi crea e chi modifica ogni file) è in [SCALETTA.md](SCALETTA.md), nella sezione "Mappa dei file".
 
 ## Installazione (Windows)
 
-> Disponibile dopo i punti P4 (scheletro), P5 (database) e P6 (test) della scaletta.
+Questi passi servono per lavorare al progetto sul proprio PC. L'installazione della demo, con dati veri, ha una guida a parte: [docs/DEMO.md](docs/DEMO.md).
 
-1. **Installa Python 3.14.4** da [python.org](https://www.python.org/downloads/). Durante l'installazione spunta "Add python.exe to PATH". Controlla con `py -3.14 --version`.
-2. **Installa MySQL Server 8.0** da [dev.mysql.com](https://dev.mysql.com/downloads/installer/) e annota la password dell'utente `root`.
-3. **Scarica il progetto** e entra nella cartella:
+**Cosa serve prima**
+- **Python 3.14.4**, **MySQL Server 8.0** e **Git**, installati a mano (passi 1–3).
+- **Google Chrome** o **Microsoft Edge**: i test che aprono le pagine nel browser li usano senza finestra; se mancano, quei test si saltano.
+- Facoltativo: **Node.js**. Un test confronta i nomi delle carte delle pagine con quelli del motore eseguendo `Card.js`; senza Node quel controllo si salta.
+- **Internet** la prima volta che lanci i test: i font di Google si scaricano una volta sola, in una cartella temporanea.
+
+I comandi qui sotto sono per **PowerShell**, lanciati dalla cartella del progetto.
+
+1. **Installa Python 3.14.4** da [python.org](https://www.python.org/downloads/). Durante l'installazione spunta "Add python.exe to PATH". Controlla con `py -3.14 --version`, che deve rispondere `Python 3.14.4`.
+2. **Installa MySQL Server 8.0** da [dev.mysql.com](https://dev.mysql.com/downloads/installer/) e annota la password dell'utente `root`. Lascia la cartella proposta (`C:\Program Files\MySQL\MySQL Server 8.0`): il comando del passo 6 e i backup cercano lì i programmi di MySQL.
+3. **Scarica il progetto** ed entra nella cartella:
    ```
-   git clone https://github.com/zChrees/cinquecento.git
+   git clone -b dev https://github.com/zChrees/cinquecento.git
    cd cinquecento
    ```
+   `-b dev` scarica `dev`, il branch su cui lavora il gruppo. Senza, scaricheresti `main`, la versione di produzione, che si aggiorna solo per la demo e la presentazione.
 4. **Crea l'ambiente virtuale** (una cartella `.venv` con le librerie del progetto, separate dal resto del PC) e installa le librerie:
    ```
    py -3.14 -m venv .venv
    .venv\Scripts\activate
    pip install -r requirements.txt -r requirements-dev.txt
    ```
-5. **Configura**: copia `.env.example` in `.env` e compila i valori (chiave segreta; la password del database arriva al passo 6). Il file `.env` non va mai caricato su git.
-6. **Prepara il database** (una volta sola). In PowerShell, dalla cartella del progetto (chiede la password di `root`):
+   Se PowerShell rifiuta `activate` ("l'esecuzione di script è disabilitata"), lancia una volta `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` e riprova. Con l'ambiente attivo, all'inizio della riga compare `(.venv)`: da qui in poi tutti i comandi si lanciano così, anche dopo aver chiuso e riaperto il terminale (basta rifare `.venv\Scripts\activate`).
+5. **Configura**: copia il modello e genera la chiave segreta:
+   ```
+   copy .env.example .env
+   python -c "import secrets; print(secrets.token_hex(32))"
+   ```
+   Apri `.env` con un editor di testo e incolla dopo `SECRET_KEY=` la riga stampata dal secondo comando. Gli altri valori vanno bene così; la password del database arriva al passo 6. Il file `.env` contiene segreti: non va mai su git (è già in `.gitignore`), e conviene tenerne una copia fuori dal progetto.
+6. **Prepara il database** (una volta sola). Il comando chiede la password di `root`:
    ```
    & "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p --table -e "source scripts/setup_db.sql"
    ```
@@ -228,28 +243,37 @@ La tabella "file → punto della scaletta" (chi crea e chi modifica ogni file) �
    DB_USER=cinquecento
    DB_PASSWORD='la-password-mostrata'
    ```
-   Poi crea le tabelle (rilanciato, non fa niente):
+   Se l'hai persa, in cima a `scripts/setup_db.sql` c'è il comando per generarne una nuova. Poi crea le tabelle (rilanciato, non fa niente):
    ```
    python scripts/migrate.py
    ```
-7. **Avvia**: `python run.py`, poi apri `http://localhost:5000`.
+7. **Avvia**: `python run.py`, poi apri `http://localhost:5000` e registra un account. All'avvio il programma controlla di avere Python 3.14 e MySQL 8.0, e se qualcosa manca lo scrive e si ferma: per esempio "errore MySQL 1045" vuol dire che `DB_USER` o `DB_PASSWORD` nel `.env` non sono giusti. Per spegnerlo: Ctrl+C nel terminale.
+8. **Controlla con i test** che sia tutto a posto (sezione qui sotto): devono risultare tutti PASS.
 
 ## Test
 
 ```
 python tests/esegui_tutti.py            tutte le suite
 python tests/esegui_tutti.py engine     una sola suite (il nome è la cartella in tests/)
+ruff check .                            controllo del codice (deve dire "All checks passed!")
 ```
 
-I test usano **solo** il database `cinquecento_test` e la porta 5099. Si rifiutano di partire se nella cartella c'è il file `PRODUZIONE`, che segnala un'installazione con dati veri.
+Le suite sono le cartelle di `tests/`: `runner`, `engine`, `db`, `api`, `services`, `sockets`, `frontend`, `e2e` e `table`. Il giro completo dura circa 10–11 minuti; ogni suite ha al massimo 240 secondi. Alla fine il runner stampa una riga per suite (PASS o FAIL, con il numero di controlli) ed esce con 0 se è tutto PASS, 1 se c'è almeno un FAIL e 2 se si rifiuta di partire.
+
+Prima di lanciarli:
+- chiudi le schede del browser aperte sul sito: una scheda collegata può disturbare i test del tempo reale;
+- la porta **5099** deve essere libera: se il runner dice che è occupata, chiudi il programma che la usa (per esempio un server di test rimasto acceso);
+- la suite `db` usa `mysqldump` e `mysql`: li cerca nel PATH e poi nella cartella di MySQL del passo 2.
+
+I test usano **solo** il database `cinquecento_test` e la porta 5099. Si rifiutano di partire se nella cartella c'è il file `PRODUZIONE`, che segnala un'installazione con dati veri, o se il database dei test non finisce con `_test`.
 
 ## Come lavoriamo
 
-- Branch permanenti: `main` (non si tocca) e `dev` (lavoro del gruppo).
+- Branch permanenti: `main` (produzione: la versione per la demo e la presentazione, con i soli file del sito) e `dev` (lavoro del gruppo).
 - Per ogni punto della scaletta si crea un **branch nuovo da `dev` aggiornato**. Lì si modifica e si testa, e **solo dopo l'ok** si fa il commit e il merge in `dev`.
 - Si modificano **solo i file indicati nel punto**. La divisione dei punti tra Giuseppe, Antonio e Christian, e l'ordine in cui farli per non creare conflitti, sono nella sezione 9 di [SCALETTA.md](SCALETTA.md).
 - Prima di ogni punto: `git switch dev` e `git pull`. Commit, merge fast-forward in `dev` e push si fanno **ognuno solo dopo l'ok** di chi lavora (anche quando li fa Claude); dopo il push si avvisano gli altri. Se il fast-forward non riesce, `git rebase dev` e di nuovo tutti i test (regole complete in [CLAUDE.md](CLAUDE.md), "Regole git").
-- `SCALETTA.md`, `CLAUDE.md`, `DECISIONI.md` e `DA-DECIDERE.md` li aggiorna **solo Christian**: gli altri, finito un punto, gli mandano un riepilogo.
+- Finito un punto, ognuno scrive il riepilogo solo nel proprio file (`christian.md`, `giuseppe.md`, `antonio.md`) e legge quelli degli altri dopo il `git pull`. `SCALETTA.md`, `CLAUDE.md`, `DECISIONI.md` e `DA-DECIDERE.md` li aggiorna, a fine giornata, chi il gruppo sceglie.
 - Il regolamento, le decisioni prese e le domande aperte stanno nei documenti elencati sopra: prima di cambiare qualcosa, controlla lì.
 
 ## Documenti
