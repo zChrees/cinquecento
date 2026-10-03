@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P80 — Frasi del tavolo in un pannello a destra, da computer (03/10/2026)
+
+- **Branch**: feature/p80-frasi-di-lato
+- **File** (dall'elenco probabile di 9.2, tutti di Christian): modificati `app/static/css/components/table-phrases.css`, questo file; creato `tests/api/test_frasi_di_lato.py`. Non sono serviti `TablePhrases.js`, `Table.js` e `game.js`
+- **Cosa cambia**: da 1024 px in su l'elenco delle frasi è un **pannello sul bordo destro** (24 px dal bordo, come il tabellone), largo 300 px (meno a 1024 px), dal tabellone fino sopra la tua riga; le frasi che non ci stanno scorrono dentro il pannello; entra scorrendo da destra. Presa, mazzo, la tua mano, il compagno e l'avversario a sinistra restano visibili e cliccabili; nel **2v2**, mentre è aperto, copre l'**avversario di destra**. Si chiude come prima (una frase, Esc, clic fuori). Sul telefono e sul tablet non cambia niente
+- **Controlli**: solo i test toccati, tutti PASS: `test_frasi_di_lato.py` **7** nuovi (1v1 e 2v2 a 1024×768, 1280×720, 1440×900: pannello a destra, sotto il tabellone e sopra la tua riga, alto almeno mezzo schermo, tutte le 19 frasi, niente coperto tranne l'avversario di destra nel 2v2, presa, mazzo, mano e ventaglio in alto cliccabili; una frase chiude il pannello), più `test_grafica_tavolo.py`, `test_rating_tavolo.py`, `test_punti_mano.py`, `test_tavolo_telefono.py`, `test_pagina_tavolo.py`, `test_frasi_pagina.py`, `test_tocchi_tavolo.py`, `test_rifinitura.py`. `test_csp.py` passa per le pagine del tavolo; la sua prova sulla home è fallita solo perché, lanciando i file a mano con `pytest`, il database `cinquecento_test` non era preparato (manca `messaggi`: lo prepara il runner). Suite complete non lanciate (su richiesta di Christian)
+- **Decisioni prese** (Christian, 03/10/2026, sulla raccomandazione di Claude): **pannello a tutta altezza sul bordo destro**, che nel 2v2 copre l'avversario di destra mentre è aperto. Scartati: il tavolo che si restringe a sinistra a ogni apertura, e un pannello piccolo tra mazzo e avversario di destra (a 1024 px largo circa 140 px). Il motivo: nel 2v2 a destra, tra il mazzo e l'avversario, restano 146 px a 1024×768, e l'elenco è alto 566 px se largo 280
+- **Domande nuove**: nessuna
+- **Punti delicati**: l'altezza del pannello si calcola da `.table__mine` (`100%` = altezza della tua riga, più circa 20 px di margine sotto): se cambia il margine in fondo al tavolo o la posizione del tabellone (`--phrases-top`, 96 px), va rimisurato (lo segnala `test_frasi_di_lato`)
+- **Cosa devono fare gli altri**: niente. **Chi è di turno sui documenti**: spuntare P80, lista definitiva in 9.2, la scelta in `DECISIONI.md`
+
 ### P89 — Rating dei giocatori al tavolo, da computer (03/10/2026)
 
 - **Branch**: feature/p89-rating-tavolo
