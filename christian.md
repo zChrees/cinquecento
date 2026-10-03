@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: registrati P91 e l'annullamento di P9 (03/10/2026)
+
+- **Branch**: docs/p91-e-p9
+- **File**: modificati `SCALETTA.md` (P91 spuntato con la nota e la lista definitiva in 9.2; nota in P9; sezione 9 "Da dove si parte"), `DECISIONI.md` (Processo: suite nuova `table`), `CLAUDE.md` (riga "Stato", numero dei controlli e regola della suite `table` in "Testing", due punti delicati nuovi: ridisegni di fine animazione e suite `table`), questo file. `DA-DECIDERE.md` non cambia
+- **Controlli**: nessuno (soli documenti); ultimo giro completo **1647 PASS** in 9 suite (P91)
+- **Riepiloghi registrati**: `christian.md` P91; `giuseppe.md` e `antonio.md` niente di nuovo
+- **Decisioni registrate**: suite nuova `table` per i test lunghi del tavolo nel browser (P91)
+- **P9**: la prima parte (README verificato su un clone, 84e37ed) è stata annullata lo stesso giorno su richiesta di Christian (revert 95e9c44): si rifà da capo quando lo dice lui
+- **Domande**: nessuna nuova
+- **Cosa devono fare gli altri**: **Giuseppe**: le suite ora sono nove (`table` si lancia per ultima, `tests/esegui_tutti.py` non è cambiato); un test lungo nuovo del tavolo nel browser va in `table`; P82, poi D43 e D45 insieme a Christian
+
 ### P91 — Suite `frontend` sotto il limite di tempo: nuova suite `table` (03/10/2026)
 
 - **Branch**: fix/p91-suite-frontend (fatto da Claude mentre Christian era via, con il suo permesso per commit, merge e push)
