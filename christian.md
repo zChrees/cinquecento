@@ -22,18 +22,6 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
-### P9 — Guida di installazione verificata, prima parte (03/10/2026)
-
-- **Branch**: feature/p9-guida-installazione (fatto da Claude mentre Christian era via, con il suo permesso per commit, merge e push)
-- **File**: modificati `README.md` e questo file
-- **Verifica** su un clone nuovo da GitHub, in una cartella temporanea dello stesso PC, seguendo solo il README: (1) [T] il `git clone` del README scaricava **`main`, che su GitHub ha solo il primo commit** (nella cartella c'era solo `README.md`): ora è `git clone -b dev`, con il perché; (2) [T] `py -3.14 -m venv`, `activate` in PowerShell, `pip install -r requirements.txt -r requirements-dev.txt`, `copy .env.example .env` e la chiave segreta generata funzionano; `ruff check .` pulito; il runner del clone passa `runner` ed `engine` (686 PASS); (3) [T] senza la password del database `run.py` si ferma con "errore MySQL 1045" e il runner dice "MySQL non raggiungibile": scritto nel README come aiuto; (4) [N] **non verificati sul clone**: `setup_db.sql` (sul PC di Christian MySQL è già preparato e serve la password di `root`), `migrate.py`, l'avvio con il database e le suite che usano MySQL (la copia della password del database nel clone è stata negata dai permessi di Claude). Il codice è lo stesso del giro completo da 1647 PASS di P91
-- **Cosa cambia nel README**: tolto l'avviso "Stato del progetto (27/09/2026)", ormai falso; elenco di cosa serve prima (Chrome o Edge per i test nel browser, Node facoltativo, internet la prima volta per i font); passi in PowerShell più precisi (`-b dev`, `Set-ExecutionPolicy` se `activate` è bloccato, `copy` e comando per la chiave, password persa, errore 1045, passo 8 "controlla con i test"); sezione Test con le **nove suite**, la durata del giro (10–11 minuti), i codici di uscita e cosa fare prima (schede del browser chiuse, porta 5099 libera, `mysqldump`); struttura con `cpu.py`, `fonts/`, `favicon.*`, `tests/browser.py`, `tests/table/` e i file dei riepiloghi; "Come lavoriamo" aggiornato (`main` di produzione, riepiloghi e documenti a turno)
-- **Controlli**: nessun giro nuovo (solo il README); ultimo giro completo 1647 PASS (P91)
-- **Decisioni prese**: nessuna
-- **Domande nuove**: nessuna
-- **P9 non è ancora fatto**: il "Fatto quando" chiede che **un compagno, su un altro PC**, seguendo solo il README avvii il gioco e faccia passare i test. Resta da fare quella prova (anche con MySQL appena installato, per provare `setup_db.sql` da zero); gli errori che trova si correggono nel README
-- **Cosa devono fare gli altri**: **Giuseppe** (o chi ha un PC senza il progetto): la prova del "Fatto quando" di P9, seguendo solo il `README.md` di `dev`. **Chi è di turno sui documenti**: in P9 annotare la prima parte fatta (non spuntare)
-
 ### P91 — Suite `frontend` sotto il limite di tempo: nuova suite `table` (03/10/2026)
 
 - **Branch**: fix/p91-suite-frontend (fatto da Claude mentre Christian era via, con il suo permesso per commit, merge e push)
