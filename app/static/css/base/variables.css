@@ -77,6 +77,9 @@
    * i CSS le usano con color-mix (per esempio color-mix(in srgb, var(--ink) 35%,
    * transparent) = nero al 35%), così non servono colori scritti a mano.
    */
+  --glass: rgb(8 32 20 / 0.55);           /* (P87) vetro scuro di "Esci", tabellone e punti al tavolo */
+  --glass-hover: rgb(8 32 20 / 0.72);     /* (P87) lo stesso vetro al passaggio del mouse */
+  --glass-edge: rgb(255 248 236 / 0.22);  /* (P87) bordo sottile chiaro del vetro */
   --on-tile: #ffffff;                 /* (P22) scritte, cornice e luce delle carte-pulsante */
   --ink: #000000;                     /* (P22) ombre e tinte scure */
 

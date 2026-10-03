@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P87 — "Esci" e punti in vetro scuro (03/10/2026)
+
+- **Branch**: feature/p87-esci-e-punti
+- **File** (dall'elenco probabile di 9.2, tutti di Christian): modificati `app/static/css/base/variables.css` (tre colori nuovi: `--glass`, `--glass-hover`, `--glass-edge`), `app/static/css/components/table.css`, `scoreboard.css`, questo file; creato `tests/api/test_stile_tavolo.py`
+- **Cosa cambia**: "Esci", il tabellone (da computer) e i punti della mano sono di **vetro scuro**: fondo verde scurissimo semitrasparente, il panno dietro sfocato, bordo sottile chiaro, scritte crema senza rilievo. I tuoi punti della mano sono in **giallo**, come il tuo totale nel tabellone. Posti e misure non cambiano (sul telefono "Esci" resta il tondo da 44 px di P90)
+- **Controlli**: solo i test toccati, tutti PASS: `test_stile_tavolo.py` **4** nuovi (1v1 e 2v2 a 360×640 e 1280×720: colori del vetro, sfocatura, bordo, niente rilievo, contrasto almeno 4,5:1 calcolato sul punto più chiaro del panno, tuoi punti di un altro colore, etichette per i lettori di schermo), più `test_grafica_tavolo.py`, `test_tavolo_telefono.py`, `test_punti_mano.py`, `test_frasi_di_lato.py`, `test_rating_tavolo.py`, `test_pagina_tavolo.py`, `test_base.py` (colori solo in `variables.css`), `test_rifinitura.py`, `test_momenti_tavolo.py`. Suite complete non lanciate (su richiesta di Christian)
+- **Decisioni prese** (Christian, 03/10/2026, sulla raccomandazione di Claude): stile **vetro scuro** per "Esci", tabellone e punti della mano. Scartati: crema piatto (come oggi ma senza ombra, tabellone a due colonne) e solo testo (niente sfondi, "Esci" come icona in un cerchio)
+- **Domande nuove**: nessuna
+- **Punti delicati**: a 1024×768, nel 1v1, tra "Esci" e i punti dell'avversario in alto restano circa 1,5 px (lo spazio c'era già da P74 e P89): il bordo del vetro ha tolto 1 px di spazio interno a "Esci" per non cambiarne la misura. Un nome lungo dell'avversario (fino a 20 caratteri) con la pillola del rating potrebbe farli toccare: `test_tavolo_da_computer` usa i nomi degli esempi (Turi), non il più lungo
+- **Cosa devono fare gli altri**: niente. **Chi è di turno sui documenti**: spuntare P87, lista definitiva in 9.2, la scelta in `DECISIONI.md`
+
 ### P80 — Frasi del tavolo in un pannello a destra, da computer (03/10/2026)
 
 - **Branch**: feature/p80-frasi-di-lato

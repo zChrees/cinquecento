@@ -61,7 +61,14 @@
     z-index: 1;
     top: 14px;
     right: 24px;
+    padding: 6px 16px 8px;
+    border: 1px solid var(--glass-edge);
+    border-radius: var(--radius-m);
+    background: var(--glass);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
     text-align: right;
+    text-shadow: none;   /* P87: vetro scuro come "Esci" e i punti della mano */
   }
 
   .scoreboard__teams {

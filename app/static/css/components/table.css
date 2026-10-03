@@ -24,8 +24,23 @@
   gap: 8px;
 }
 
+/*
+ * P87: "Esci", tabellone (scoreboard.css) e punti della mano sono di vetro scuro: il
+ * panno si intravede sfocato, bordo sottile chiaro, scritte crema senza rilievo.
+ */
 .table__leave {
   justify-self: start;
+  padding-inline: 15px;   /* 16 px di .btn--small meno il bordo: la misura resta quella di P74 */
+  border: 1px solid var(--glass-edge);
+  background: var(--glass);
+  color: var(--on-navbar);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+.table__leave:hover:not(:disabled) {
+  background: var(--glass-hover);
+  filter: none;
 }
 
 /* P90: sotto 1024 px "Esci" è un tondo con la sola icona, così non arriva mai alle
@@ -355,10 +370,12 @@
   flex: none;
   min-width: 32px;
   padding: 2px 8px;
+  border: 1px solid var(--glass-edge);
   border-radius: var(--radius-pill);
-  background: var(--card-face);
-  box-shadow: var(--shadow-1);
-  color: var(--text);
+  background: var(--glass);
+  color: var(--on-navbar);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   font-family: var(--font-title);
   font-size: 0.95rem;
   font-weight: 800;
@@ -370,6 +387,11 @@
 
 .hand-points__word {
   display: none;
+}
+
+/* P87: i tuoi punti (della tua squadra nel 2v2) in giallo, come nel tabellone */
+.table__me-side .hand-points {
+  color: var(--yellow);
 }
 
 /* Dell'avversario in alto: a sinistra dell'avatar (a destra escono le sue frasi) */
