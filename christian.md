@@ -22,6 +22,16 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: registrati i lotti del 03/10 (P86, P76, P89, P80, P87, P78 e la correzione di P74) (03/10/2026)
+
+- **Branch**: docs/lotti-03-10
+- **File**: modificati `SCALETTA.md` (tracker: spuntati P76, P78, P80, P86, P87, P89, correzione annotata in P74, nota in P91; sezione 9 "Da dove si parte"; sezione 9.2 con le liste definitive del 03/10), `DECISIONI.md` (Interfaccia: sei decisioni del 03/10), `CLAUDE.md` (riga "Stato", numero dei controlli, punti delicati di P74 aggiornato e quattro nuovi: P76, P80, P87, P78), questo file. `DA-DECIDERE.md` non cambia
+- **Controlli**: giro completo prima dell'aggiornamento, **1643 PASS** in 8 suite (runner 13, engine 673, db 89, api 358, services 38, sockets 275, frontend 185 in 206 s, e2e 12), file protetti intatti
+- **Riepiloghi registrati**: `christian.md` P86, P76, correzione di P74, P89, P80, P87, P78; `giuseppe.md` e `antonio.md` niente di nuovo
+- **Decisioni registrate**: mazzo da 88 px (P86); presa a croce e carta che vince sollevata e bordata (P76); pillola del rating, tratteggiata se provvisorio (P89); pannello delle frasi sul bordo destro, che nel 2v2 copre l'avversario di destra (P80); vetro scuro (P87); pescata in fila da 0,5 s, dopo la carta che chiude la presa (P78)
+- **Domande**: nessuna nuova
+- **Cosa devono fare gli altri**: **Giuseppe**: P82, poi D43 e D45 insieme a Christian; i punti del tavolo di Christian non toccano i tuoi file
+
 ### P78 — Animazioni in fila: lanci e pescate una alla volta (03/10/2026)
 
 - **Branch**: feature/p78-animazioni-in-fila
