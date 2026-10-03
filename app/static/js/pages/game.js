@@ -152,6 +152,18 @@ function redraw() {
   if (view && !replaced) render(view);
 }
 
+/**
+ * P91: ridisegna tra `ms` millisecondi, quando un momento misurato con performance.now()
+ * (lanci, pescate, distribuzione, pausa delle frasi) è finito. setTimeout a volte scatta
+ * poco prima del tempo chiesto (fino a circa 1 ms in Chrome): senza il margine il momento
+ * risultava ancora in corso e restava sul tavolo fino alla vista successiva. 20 ms in più
+ * non si vedono.
+ */
+const TIMER_SLACK_MS = 20;
+function redrawAfter(ms) {
+  return setTimeout(redraw, ms + TIMER_SLACK_MS);
+}
+
 /** Toglie la presa chiusa; se era l'ultima della mano, apre il riepilogo che aspettava. */
 function hideLastTrick() {
   clearTimeout(lastTrickTimer);
@@ -224,7 +236,7 @@ function noticeThrows(previous, next) {
   if (at > Math.max(now, throwsEnd)) {
     throwsEnd = at;
     clearTimeout(throwTimer);
-    throwTimer = setTimeout(redraw, throwsEnd - now); // a lanci finiti le carte tornano ferme
+    throwTimer = redrawAfter(throwsEnd - now); // a lanci finiti le carte tornano ferme
   }
 }
 
@@ -265,7 +277,7 @@ function noticeDraws(previous, next) {
     }
   }
   clearTimeout(drawTimer);
-  drawTimer = setTimeout(redraw, start - now + Math.min(drawn, n) * DRAW_MS);
+  drawTimer = redrawAfter(start - now + Math.min(drawn, n) * DRAW_MS);
 }
 
 /**
@@ -293,7 +305,7 @@ function startDeal() {
   const cards = dealOrder(view).length;
   dealEnd = dealAt + SHUFFLE_MS + Math.max(cards - 1, 0) * DEAL_STEP_MS + DRAW_MS;
   clearTimeout(dealTimer);
-  dealTimer = setTimeout(redraw, dealEnd - dealAt);
+  dealTimer = redrawAfter(dealEnd - dealAt);
 }
 
 function dealing() {
@@ -412,7 +424,7 @@ function closePhrases() {
 function pausePhrases(ms) {
   clearTimeout(phrasePauseTimer);
   phrasePausedUntil = performance.now() + ms;
-  phrasePauseTimer = setTimeout(redraw, ms);
+  phrasePauseTimer = redrawAfter(ms);
 }
 
 function showBubble(seat, text) {
