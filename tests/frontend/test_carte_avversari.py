@@ -174,8 +174,10 @@ def test_pescata_prima_chi_ha_preso_poi_gli_altri(browser, server):
     state = _draw_state(browser)
     assert state["mine"] == "denari-2"            # la tua carta nuova vola nella mano
     assert state["fanDrawing"] and state["lastDrawn"] and state["roomMaking"]
-    # Ha preso Mario: pesca per primo, Turi subito dopo (ritardo positivo = tocca dopo)
-    assert state["mineDelay"] <= 0 < state["lastDelay"] <= 150
+    # Ha preso Mario: pesca per primo, Turi dopo (ritardo positivo = tocca dopo). P78: una
+    # pescata alla volta (0,5 s ciascuna), dopo che il 7 che ha chiuso la presa si è posato (0,4 s)
+    assert 300 <= state["mineDelay"] <= 400, state
+    assert 450 <= state["lastDelay"] - state["mineDelay"] <= 550, state
     browser.wait_js("document.querySelector('[data-drawn], [data-drawing]') === null", "pescate finite", 3)
     assert browser.js("document.querySelector('[data-edge-hand=\"top\"]').dataset.count") == "5"
 
@@ -183,11 +185,12 @@ def test_pescata_prima_chi_ha_preso_poi_gli_altri(browser, server):
 def test_un_ridisegno_a_meta_non_fa_ripartire_la_pescata(browser, server):
     _open(browser, server, "1v1", motion=True)
     _send_state(browser, _trick_closed_with_draws())
-    time.sleep(0.35)
+    time.sleep(1.15)
     browser.js("document.querySelector('[data-table]').dispatchEvent(new CustomEvent('demo:phrases', "
                "{ detail: { phrases: [{ code: 'ciao', text: 'Ciao!' }] } }))")
     state = _draw_state(browser)
-    # Turi ha cominciato a 0,15 s: dopo 0,35 s la sua pescata è avanti, non di nuovo all'inizio
+    # P78: Turi comincia a 0,9 s (lancio del 7, poi la pescata di Mario): dopo 1,15 s la
+    # sua pescata è avanti, non di nuovo all'inizio
     assert state["lastProgress"] is None or state["lastProgress"] >= 0.2, state
     assert state["lastDelay"] < 0, state
 

@@ -30,13 +30,16 @@
  *   - carte del canto (game:sang, D15): accanto a chi ha cantato per show_seconds.
  *   - P70, lancio: ogni carta che arriva sul tavolo (anche quella che chiude la
  *     presa o la mano) vola al suo posto in THROW_MS; finché vola, un tocco sulle
- *     proprie carte non gioca niente. I tempi di lanci e presa chiusa passano al
+ *     proprie carte non gioca niente. P78: i lanci vanno in fila: una carta arrivata
+ *     mentre un'altra vola parte quando quella si è posata (fino ad allora non si
+ *     vede). I tempi di lanci e presa chiusa passano al
  *     tavolo, così un ridisegno a metà non fa ripartire le animazioni. Prima di ogni
  *     ridisegno le immagini delle carte si riusano (reuseCardImages): un'immagine
  *     nuova per un attimo si vede bianca.
  *   - P70, pescata: quando il mazzo cala nella stessa mano, ognuno pesca a turno
- *     partendo da chi ha preso (DRAW_STEP_MS l'uno dall'altro, DRAW_MS ciascuno): la
- *     carta arriva nel ventaglio dell'avversario, o nella propria mano.
+ *     partendo da chi ha preso: la carta arriva nel ventaglio dell'avversario, o nella
+ *     propria mano. P78: una pescata alla volta (DRAW_MS ciascuna, la successiva
+ *     quando la precedente è finita), dopo che la carta che ha chiuso la presa si è posata.
  *   - P70, distribuzione: a ogni mano nuova (non alla prima vista) le carte restano
  *     nascoste finché si vedono l'ultima presa e il riepilogo; poi il mazzo si
  *     mescola (SHUFFLE_MS) e le carte partono una alla volta, a giro dal giocatore
@@ -80,7 +83,6 @@ const PHRASE_PAUSE_MS = 3000; // come TABLE_PHRASE_MIN_INTERVAL_SECONDS del serv
 const BUBBLE_MS = 4000;
 const THROW_MS = 400; // come la durata di card-throw in css/components/trick.css (P70)
 const DRAW_MS = 500; // come la durata di card-draw in css/components/hand.css (P70)
-const DRAW_STEP_MS = 150; // tra la pescata di un giocatore e quella del successivo
 const SHUFFLE_MS = 600; // come la durata di deck-riffle in css/components/trick.css (P70)
 const DEAL_STEP_MS = 80; // tra una carta distribuita e la successiva
 const HIDDEN = -1e6; // "parte tra molto": la carta resta nascosta finché la distribuzione non comincia
@@ -100,8 +102,9 @@ let summaryTimer = 0;
 let nextSummary = null; // riepilogo che aspetta la fine dell'ultima presa della mano
 const sang = {}; // posto → { event, timer }
 let lastTrickAt = 0; // quando si è vista la presa chiusa (performance.now), per le animazioni
-const throws = new Map(); // P70: throwKey(carta) → performance.now() del lancio
+const throws = new Map(); // P70: throwKey(carta) → performance.now() del lancio (P78: anche nel futuro)
 let throwTimer = 0;
+let throwsEnd = 0; // P78: performance.now() in cui si posa l'ultima carta in fila
 const drawsBySeat = new Map(); // P70: posto → performance.now() della sua pescata (anche nel futuro)
 const drawsOfMine = new Map(); // P70: throwKey(carta pescata da te) → performance.now() della pescata
 let drawTimer = 0;
@@ -182,7 +185,7 @@ function reducedMotion() {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
-/** P70: le carte in volo adesso, throwKey(carta) → millisecondi dal lancio. */
+/** P70: le carte in volo adesso, throwKey(carta) → millisecondi dal lancio (P78: negativi, in fila). */
 function flying() {
   const now = performance.now();
   const thrown = {};
@@ -196,6 +199,7 @@ function flying() {
 /**
  * P70: le carte arrivate sul tavolo con la vista nuova partono con il lancio: quelle
  * nuove nella presa, e quella che ha chiuso la presa o la mano (nella presa chiusa).
+ * P78: in fila, ognuna quando si è posata la precedente (anche di una vista di prima).
  */
 function noticeThrows(previous, next) {
   if (reducedMotion()) return;
@@ -209,17 +213,18 @@ function noticeThrows(previous, next) {
     arrived.push(...next.last_hand.last_trick.cards);
   }
   const now = performance.now();
-  let started = false;
+  let at = Math.max(now, throwsEnd);
   for (const { card } of arrived) {
     const key = throwKey(card);
     if (!before.has(key) && !throws.has(key)) {
-      throws.set(key, now);
-      started = true;
+      throws.set(key, at);
+      at += THROW_MS;
     }
   }
-  if (started) {
+  if (at > Math.max(now, throwsEnd)) {
+    throwsEnd = at;
     clearTimeout(throwTimer);
-    throwTimer = setTimeout(redraw, THROW_MS); // a lancio finito le carte tornano ferme
+    throwTimer = setTimeout(redraw, throwsEnd - now); // a lanci finiti le carte tornano ferme
   }
 }
 
@@ -239,7 +244,8 @@ function drawing() {
 
 /**
  * P70: il mazzo è calato nella stessa mano, quindi dopo la presa chi ha preso e poi
- * gli altri, in ordine, hanno pescato una carta ciascuno.
+ * gli altri, in ordine, hanno pescato una carta ciascuno. P78: una alla volta, a
+ * partire da quando si è posata la carta che ha chiuso la presa.
  */
 function noticeDraws(previous, next) {
   if (reducedMotion() || next.hand_number !== previous.hand_number || !next.last_trick) return;
@@ -247,10 +253,11 @@ function noticeDraws(previous, next) {
   if (drawn <= 0) return;
   const n = next.players.length;
   const now = performance.now();
+  const start = Math.max(now, throwsEnd);
   const mine = new Set(previous.hand.map(throwKey));
   for (let step = 0; step < Math.min(drawn, n); step += 1) {
     const seat = (next.last_trick.winner_seat + step) % n;
-    const at = now + step * DRAW_STEP_MS;
+    const at = start + step * DRAW_MS;
     if (seat === next.you.seat) {
       for (const card of next.hand) if (!mine.has(throwKey(card))) drawsOfMine.set(throwKey(card), at);
     } else {
@@ -258,7 +265,7 @@ function noticeDraws(previous, next) {
     }
   }
   clearTimeout(drawTimer);
-  drawTimer = setTimeout(redraw, (Math.min(drawn, n) - 1) * DRAW_STEP_MS + DRAW_MS);
+  drawTimer = setTimeout(redraw, start - now + Math.min(drawn, n) * DRAW_MS);
 }
 
 /**

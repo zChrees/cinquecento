@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P78 — Animazioni in fila: lanci e pescate una alla volta (03/10/2026)
+
+- **Branch**: feature/p78-animazioni-in-fila
+- **File** (dall'elenco probabile di 9.2, tutti di Christian): modificati `app/static/js/pages/game.js`, `app/static/css/components/trick.css`, `tests/frontend/test_carte_avversari.py` (i tempi nuovi della pescata), questo file; creato `tests/api/test_animazioni_in_fila.py`. Non sono serviti `Trick.js`, `Hand.js` e `hand.css`: accettavano già i ritardi positivi ("tocca dopo")
+- **Cosa cambia**: (1) **lanci in fila**: una carta arrivata mentre un'altra vola parte quando quella si è posata, e fino ad allora non si vede (il lancio ora parte da trasparente, prima da semitrasparente); finché ci sono carte in volo o in fila le tue carte non si giocano, come prima; (2) **pescata una alla volta**: prima chi ha preso, poi gli altri a turno, ognuno quando il precedente ha finito (0,5 s ciascuno, come prima), a partire da quando si è posata la carta che ha chiuso la presa (questo è il "ritocco in più" del punto). In tutto: 1v1 circa 1,4 s dalla carta che chiude la presa, 2v2 circa 2,4 s. Con "riduci movimento" niente animazioni, come prima. In `game.js` `throwsEnd` è l'ora in cui si posa l'ultima carta in fila; `DRAW_STEP_MS` non c'è più
+- **Controlli**: solo i test toccati, tutti PASS: `test_animazioni_in_fila.py` **2** nuovi (due lanci mandati insieme nel 2v2: il secondo aspetta 0,4 s ed è invisibile, poi vola; pescata 2v2 di 4 giocatori a 0,5 s l'uno dall'altro, dopo il lancio della carta che chiude la presa), che **falliscono senza P78** e passano 3 giri su 3; `test_carte_avversari.py` e `test_lancio_carta.py` 15 (aggiornati i due test della pescata 1v1); `test_momenti_tavolo.py`, `test_distribuzione.py`, `test_tocchi_tavolo.py`, `test_frasi_pagina.py`, `test_grafica_tavolo.py`, `test_presa_affiancata.py`, `test_pagina_tavolo.py`, `test_punti_mano.py`. `ruff check` pulito. Suite complete non lanciate (su richiesta di Christian)
+- **Decisioni prese** (Christian, 03/10/2026): pescata **0,5 s ciascuna, come oggi** (Claude consigliava 0,4 s; scartato anche 0,3 s); su raccomandazione di Claude, approvata con il punto: la pescata comincia quando si è posata la carta che ha chiuso la presa, e una carta in fila resta invisibile finché non vola
+- **Domande nuove**: nessuna
+- **Punti delicati**: in `game.js` lanci e pescate usano lo stesso `throwsEnd`: `noticeThrows` va chiamata **prima** di `noticeDraws` (in `noticeMoments` è così). `test_frasi_pagina.py::test_tocchi_rapidi_una_frase_per_pausa` è fallito una volta su cinque, senza legami con P78: legge il fumetto subito dopo un clic del mouse, senza aspettarlo (per P91)
+- **Cosa devono fare gli altri**: niente. **Chi è di turno sui documenti**: spuntare P78, lista definitiva in 9.2, la scelta della durata in `DECISIONI.md`
+
 ### P87 — "Esci" e punti in vetro scuro (03/10/2026)
 
 - **Branch**: feature/p87-esci-e-punti

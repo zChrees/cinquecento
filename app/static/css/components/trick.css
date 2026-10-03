@@ -81,9 +81,10 @@
   animation: card-throw 0.4s cubic-bezier(0.2, 0.75, 0.3, 1) both;
 }
 
+/* P78: parte da trasparente: una carta in fila (ritardo positivo) non si vede finché non tocca a lei */
 @keyframes card-throw {
   from {
-    opacity: 0.4;
+    opacity: 0;
     transform: translate(var(--throw-x), var(--throw-y)) rotate(var(--throw-turn)) scale(1.25);
   }
   70% {
