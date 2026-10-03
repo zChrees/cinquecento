@@ -183,7 +183,9 @@ def test_tocchi_rapidi_una_frase_per_pausa(browser, server):
       return { x: b.left + b.width / 2, y: b.top + b.height / 2 }; })()""")
     _real_click(browser, "[data-phrase-code='mizzica']")
     start = time.monotonic()
-    assert browser.js("document.querySelector('[data-seat=\"0\"] [data-phrase-bubble]').lastChild.textContent") == "Mizzica!"
+    # P91: il fumetto si aspetta, non si legge subito dopo il clic (una volta su cinque non c'era ancora)
+    browser.wait_js("document.querySelector('[data-seat=\"0\"] [data-phrase-bubble]')?.lastChild.textContent === 'Mizzica!'",
+                    "fumetto di Mario", 2)
 
     # Durante la pausa: tocchi a raffica sul pulsante spento e dove stava la frase
     while time.monotonic() - start < 2.0:

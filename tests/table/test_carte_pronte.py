@@ -25,7 +25,9 @@ from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_
 ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"
 PHONE = (360, 640)
-LATENCY_MS = 800
+# P91: 300 ms bastano (un'immagine non scaricata prima è bianca nell'istante in cui la
+# vista arriva, con qualunque ritardo); con 800 i due test lenti duravano 15 s l'uno
+LATENCY_MS = 300
 SUITS = ["denari", "coppe", "spade", "bastoni"]
 
 # Immagini del tavolo che non hanno ancora finito di caricarsi (bianche), contate

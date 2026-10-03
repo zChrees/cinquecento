@@ -10,8 +10,8 @@ punti della mano appena chiusa (last_hand), poi quelli della mano nuova; le
 etichette non coprono ventagli, giocatori, presa, mazzo o mano, e il tavolo non
 scorre alle misure di docs/prototipo/LEGGIMI.md.
 
-Sta nella suite `api`, come test_grafica_tavolo.py, per il tempo della suite
-`frontend`. Il tavolo si apre nella prova (/game/prova?demo=1v1 o 2v2) in Chrome o
+Sta nella suite `table` (P91: le suite `api` e `frontend` erano vicine al limite
+di tempo del runner). Il tavolo si apre nella prova (/game/prova?demo=1v1 o 2v2) in Chrome o
 Edge senza finestra (tests/browser.py); il test gli manda viste e frasi con gli
 eventi del browser "demo:state" e "demo:phrases". Non serve MySQL. Se né Chrome né
 Edge sono installati i controlli nel browser si saltano.
