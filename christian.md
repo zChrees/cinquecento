@@ -22,6 +22,19 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P105 — Coda: l'intervallo di rating cambia senza lampo (05/10/2026)
+
+- **Punto nuovo** (numero proposto; da `cose-da-sistemare.txt` di Christian): nel matchmaking, quando cambiano i punti dell'intervallo, lo schermo faceva un lampo; i numeri devono cambiare in modo fluido
+- **Branch**: fix/p105-coda-senza-lampo (fatto da Claude, con il permesso di Christian)
+- **File**: modificati `app/static/js/components/QueueOverlay.js` (`updateQueueOverlay`, numeri dell'intervallo in due `span` con `data-range-min` e `data-range-max`), `app/static/js/pages/home.js` (solo `renderQueue`: è un file toccato anche da Giuseppe in P28, P47, P59, P65, P83), `tests/api/test_pagina_home.py` (un test nuovo), questo file
+- **Causa** [L, T]: a ogni `queue:status` (ogni 10 s, quando l'intervallo si allarga) `renderQueue` chiudeva la schermata della coda e ne apriva una nuova: ripartivano la comparsa dello sfondo (`backdrop-in`) e le carte animate. Il test nuovo, senza la correzione, trova una schermata diversa da quella di prima
+- **Cosa cambia**: se il `queue:status` nuovo è della stessa coda (stessi modo, punteggio, compagno, avversari), la schermata **resta aperta** e cambiano solo i numeri dell'intervallo, che **scorrono** dal valore vecchio al nuovo in 0,5 s (con "riduci movimento" cambiano subito); il tempo d'attesa riparte da quello del server. Se la coda è un'altra, la schermata si ridisegna come prima
+- **Controlli**: `test_pagina_home.py::test_intervallo_allargato_senza_riaprire_la_schermata` (l'intervallo si allarga ogni secondo con `monkeypatch`: stessa schermata aperta, una sola, numeri che passano per valori intermedi senza salti, testo uguale a prima), 4 giri su 4 dopo la correzione; con `test_pagina_home.py`, `test_inviti_2v2.py`, `test_avatar.py`, `test_csp.py`: **70 PASS**. `ruff check .` pulito
+- **Decisioni prese**: nessuna (correzione); scelta di Claude: i numeri che scorrono in 0,5 s
+- **Domande nuove**: nessuna
+- **Punti delicati**: (1) nei test del browser, con "riduci movimento" spento la carta-modal si apre con un'animazione e un clic su "Gioca" subito dopo va a vuoto: il test attiva le animazioni solo a schermata della coda aperta; (2) con l'intervallo accorciato a 1 s la risposta a `queue:join` può arrivare dopo il primo `queue:status` e l'intervallo torna indietro per un momento [D]: con i 10 s veri non succede
+- **Cosa devono fare gli altri**: **Giuseppe**: in `home.js` è cambiata solo `renderQueue` (e il timer dei secondi legge `queueView.queue`), se ci lavori fai il pull prima. **Chi è di turno sui documenti**: registrare P105
+
 ### P104 — Zoom con il doppio tocco su iPhone, in JavaScript (05/10/2026)
 
 - **Punto nuovo** (numero proposto: chi è di turno sui documenti lo registra in `SCALETTA.md`): dalla prova di Christian del 05/10 **P98 non basta**: su iPhone con Safari il doppio tocco ingrandisce ancora il tavolo

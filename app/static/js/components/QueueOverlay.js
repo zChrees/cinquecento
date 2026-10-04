@@ -15,6 +15,10 @@
  *
  * "Annulla" (o Esc) chiama onCancel una volta sola: il pulsante resta disattivato
  * finché la pagina non chiude la schermata.
+ *
+ * P105: quando arriva un queue:status della stessa coda (l'intervallo si è allargato)
+ * la pagina non riapre la schermata, che faceva un lampo: updateQueueOverlay(overlay,
+ * queue) cambia solo l'intervallo, con i numeri che scorrono fino ai valori nuovi.
  */
 
 import { el, icon } from '../utils/dom.js';
@@ -46,9 +50,41 @@ function playersLine(players, text, data) {
   ]);
 }
 
-function rangeText(range) {
-  if (!range) return 'Va bene qualunque avversario';
-  return `Avversari con rating tra ${range.min} e ${range.max}`;
+const RANGE_MS = 500; // P105: i numeri dell'intervallo scorrono fino ai valori nuovi
+
+function rangeParts(range) {
+  if (!range) return ['Va bene qualunque avversario'];
+  return [
+    'Avversari con rating tra ',
+    el('span', { text: range.min, data: { rangeMin: range.min } }),
+    ' e ',
+    el('span', { text: range.max, data: { rangeMax: range.max } }),
+  ];
+}
+
+/** P105: la stessa coda (modo, punteggio, compagno, avversari): si aggiorna senza riaprire. */
+function queueKey(queue) {
+  return JSON.stringify([queue.mode, queue.target_score, queue.partner?.user_id ?? null,
+    (queue.opponents ?? []).map((p) => p.user_id), Boolean(queue.rating_range)]);
+}
+
+/** Porta il numero di `span` da quello che mostra a `to`, in RANGE_MS. */
+function slide(span, to) {
+  const from = Number(span.textContent);
+  span.dataset[span.dataset.rangeMin != null ? 'rangeMin' : 'rangeMax'] = to;
+  if (from === to || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    span.textContent = to;
+    return;
+  }
+  const start = performance.now();
+  const step = (now) => {
+    if (Number(span.dataset.rangeMin ?? span.dataset.rangeMax) !== to) return; // è arrivato un altro valore
+    const t = Math.min(1, (now - start) / RANGE_MS);
+    const eased = 1 - (1 - t) ** 3;
+    span.textContent = Math.round(from + (to - from) * eased);
+    if (t < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
 }
 
 /**
@@ -78,7 +114,7 @@ export function QueueOverlay(queue, { imgBase, onCancel }) {
   const overlay = el('dialog', {
     class: 'queue-overlay',
     attrs: { 'aria-labelledby': 'queue-title' },
-    data: { queueOverlay: '', mode: queue.mode, targetScore: queue.target_score },
+    data: { queueOverlay: '', mode: queue.mode, targetScore: queue.target_score, queueKey: queueKey(queue) },
   }, [
     el('div', { class: 'queue-overlay__body' }, [
       el('div', { class: 'queue-overlay__cards', attrs: { 'aria-hidden': 'true' } },
@@ -89,7 +125,7 @@ export function QueueOverlay(queue, { imgBase, onCancel }) {
         el('span', { class: 'visually-hidden', text: 'In attesa da ' }),
         el('span', { data: { queueSeconds: '' } }),
       ]),
-      el('p', { class: 'queue-overlay__range felt-text', text: rangeText(queue.rating_range), data: { queueRange: '' } }),
+      el('p', { class: 'queue-overlay__range felt-text', data: { queueRange: '' } }, rangeParts(queue.rating_range)),
       queue.rating_range ? el('p', { class: 'queue-overlay__hint felt-text', text: "L'intervallo si allarga mentre aspetti." }) : null,
       partner,
       opponents,
@@ -111,6 +147,22 @@ export function QueueOverlay(queue, { imgBase, onCancel }) {
 
   setQueueSeconds(overlay, queue.seconds_waiting);
   return overlay;
+}
+
+/**
+ * P105: aggiorna la schermata aperta con un queue:status nuovo della stessa coda, senza
+ * riaprirla: l'intervallo cambia con i numeri che scorrono, il tempo riparte da quello
+ * del server. Restituisce false se la coda è un'altra (la pagina allora la ridisegna).
+ */
+export function updateQueueOverlay(overlay, queue) {
+  if (overlay.dataset.queueKey !== queueKey(queue)) return false;
+  const range = queue.rating_range;
+  if (range) {
+    slide(overlay.querySelector('[data-range-min]'), range.min);
+    slide(overlay.querySelector('[data-range-max]'), range.max);
+  }
+  setQueueSeconds(overlay, queue.seconds_waiting);
+  return true;
 }
 
 /** Aggiorna il tempo trascorso (la pagina lo chiama ogni secondo). */

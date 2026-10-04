@@ -16,6 +16,7 @@ Se né Chrome né Edge sono installati i controlli nel browser si saltano.
 Non serve MySQL: l'utente con il login è finto (un cookie dei soli test).
 """
 
+import itertools
 import json
 import re
 from pathlib import Path
@@ -23,6 +24,7 @@ from pathlib import Path
 import pytest
 
 from app import create_app
+from app.realtime import matchmaking
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -340,6 +342,40 @@ def test_partita_veloce_apre_e_annulla_la_coda(logged_in, server):
     assert "Cerco un avversario" in overlay["text"] and "tra 1400 e 1600" in overlay["text"]
     assert re.fullmatch(r"\d+:\d\d", overlay["seconds"])
     # Esc vale come "Annulla"
+    logged_in.send("Input.dispatchKeyEvent", type="keyDown", key="Escape", code="Escape", windowsVirtualKeyCode=27)
+    logged_in.send("Input.dispatchKeyEvent", type="keyUp", key="Escape", code="Escape", windowsVirtualKeyCode=27)
+    logged_in.wait_js("!document.querySelector('[data-queue-overlay]')", "Esc sulla schermata di coda")
+
+
+def test_intervallo_allargato_senza_riaprire_la_schermata(logged_in, server, monkeypatch):
+    # P105: un queue:status nuovo della stessa coda non riapre la schermata (faceva un
+    # lampo): cambiano solo i numeri, che scorrono fino ai valori nuovi
+    monkeypatch.setattr(matchmaking, "RANGE_STEP_SECONDS", 1)
+    logged_in.open(f"{server}/", 1440, 900)
+    _open_modal(logged_in, "veloce", "1v1")
+    _click(logged_in, 'input[name="target"][value="150"]')
+    _click(logged_in, "[data-play]")
+    logged_in.wait_js("document.querySelector('[data-queue-overlay]')?.open", "schermata di coda")
+    # Con "riduci movimento" spento (solo adesso: la carta-modal si apre con un'animazione)
+    logged_in.send("Emulation.setEmulatedMedia", features=[{"name": "prefers-reduced-motion", "value": "no-preference"}])
+    logged_in.js("""(() => {
+      window.__overlay = document.querySelector('[data-queue-overlay]');
+      window.__mins = [];
+      const tick = () => { const m = document.querySelector('[data-range-min]'); if (m) window.__mins.push(Number(m.textContent));
+        if (window.__mins.length < 400) requestAnimationFrame(tick); };
+      requestAnimationFrame(tick);
+    })()""")
+    logged_in.wait_js("Number(document.querySelector('[data-range-min]')?.dataset.rangeMin) <= 1350", "intervallo allargato", 6)
+    logged_in.wait_js("document.querySelector('[data-range-min]').textContent === document.querySelector('[data-range-min]').dataset.rangeMin",
+                      "numeri arrivati", 3)
+    assert logged_in.js("document.querySelector('[data-queue-overlay]') === window.__overlay && window.__overlay.open") is True
+    assert logged_in.js("document.querySelectorAll('[data-queue-overlay]').length") == 1
+    mins = logged_in.js("window.__mins")
+    # Cambia un po' alla volta, senza salti (passando per valori intermedi)
+    assert all(abs(a - b) <= 30 for a, b in itertools.pairwise(mins)), mins
+    assert any(1350 < m < 1400 for m in mins), mins
+    text = logged_in.js("document.querySelector('[data-queue-range]').textContent")
+    assert re.fullmatch(r"Avversari con rating tra \d+ e \d+", text), text
     logged_in.send("Input.dispatchKeyEvent", type="keyDown", key="Escape", code="Escape", windowsVirtualKeyCode=27)
     logged_in.send("Input.dispatchKeyEvent", type="keyUp", key="Escape", code="Escape", windowsVirtualKeyCode=27)
     logged_in.wait_js("!document.querySelector('[data-queue-overlay]')", "Esc sulla schermata di coda")

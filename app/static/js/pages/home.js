@@ -46,7 +46,7 @@ import { openLoginPrompt } from '../components/LoginPrompt.js';
 import { initCardBackground } from '../components/CardBackground.js';
 import { openModeModal, setInviteStatus, setModeModalOnline } from '../components/ModeModal.js';
 import { openInviteDialog } from '../components/InviteDialog.js';
-import { QueueOverlay, enableQueueCancel, setQueueSeconds } from '../components/QueueOverlay.js';
+import { QueueOverlay, enableQueueCancel, setQueueSeconds, updateQueueOverlay } from '../components/QueueOverlay.js';
 import { ResumeBanner } from '../components/ResumeBanner.js';
 import { el, icon } from '../utils/dom.js';
 
@@ -75,6 +75,13 @@ const queueView = { overlay: null, queue: null, since: 0, timer: null };
 
 function renderQueue(queue) {
   if (queueView.queue === queue) return;
+  // P105: la stessa coda con l'intervallo allargato: la schermata resta aperta e cambiano
+  // solo i numeri (riaprirla faceva un lampo)
+  if (queueView.overlay && queue && updateQueueOverlay(queueView.overlay, queue)) {
+    queueView.queue = queue;
+    queueView.since = Date.now();
+    return;
+  }
   // Un queue:status nuovo (intervallo allargato) ridisegna la schermata: se "Annulla"
   // aspettava già la risposta del server, resta disattivato.
   const cancelling = Boolean(queueView.overlay?.querySelector('[data-queue-cancel]').disabled);
@@ -93,7 +100,7 @@ function renderQueue(queue) {
   queueView.overlay = overlay;
   queueView.since = Date.now();
   queueView.timer = setInterval(() => {
-    setQueueSeconds(overlay, queue.seconds_waiting + (Date.now() - queueView.since) / 1000);
+    setQueueSeconds(overlay, queueView.queue.seconds_waiting + (Date.now() - queueView.since) / 1000);
   }, 1000);
 }
 
