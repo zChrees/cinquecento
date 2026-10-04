@@ -3,11 +3,14 @@
 - Le password si salvano solo come hash (werkzeug.security, scrypt).
 - Username o email già usati: decide il vincolo unico di MySQL dentro la stessa
   transazione, così anche due registrazioni contemporanee non creano doppioni.
-- Login sbagliato: sempre lo stesso messaggio, che non dice se lo username esiste.
-- Tentativi: dopo LOGIN_MAX_ATTEMPTS errori sullo stesso username, per
-  LOGIN_LOCK_SECONDS ogni login di quello username si rifiuta, anche con la
-  password giusta. Il conteggio sta in memoria (un solo processo, DECISIONI.md):
-  si azzera con un login riuscito o al riavvio del server.
+- Login (P96): con lo username o con l'email, in un campo solo; con una @ è un'email.
+  Login sbagliato: sempre lo stesso messaggio, che non dice se l'account esiste.
+- Tentativi: dopo LOGIN_MAX_ATTEMPTS errori sullo stesso account, per
+  LOGIN_LOCK_SECONDS ogni login di quell'account si rifiuta, anche con la password
+  giusta. P96: il conto è per **account** (scrivendo una volta lo username e una volta
+  l'email il blocco non si aggira); per un account che non esiste, per il testo scritto.
+  Il conteggio sta in memoria (un solo processo, DECISIONI.md): si azzera con un login
+  riuscito o al riavvio del server.
 - Nei log non finiscono mai password né hash.
 
 Impostazioni (P17):
@@ -35,7 +38,7 @@ from app.services import avatars
 
 log = logging.getLogger(__name__)
 
-LOGIN_FAILED = "Username o password non corretti."
+LOGIN_FAILED = "Nome utente, email o password non corretti."
 LOGIN_LOCKED = "Troppi tentativi sbagliati: riprova tra qualche minuto."
 USERNAME_TAKEN = "Questo username è già usato: scegline un altro."
 EMAIL_TAKEN = "Questa email è già usata da un altro account."
@@ -130,23 +133,33 @@ def register(username, email, password):
     return user
 
 
-def authenticate(username, password):
-    """Restituisce l'utente se username e password sono giusti; altrimenti AuthError."""
+def authenticate(login, password):
+    """Restituisce l'utente se nome utente (o email) e password sono giusti; altrimenti AuthError."""
     config = current_app.config
-    if limiter.is_locked(username):
+    is_email = "@" in login
+    user = user_repo.get_by_email(login) if is_email else user_repo.get_by_username(login)
+    key = _attempts_key(user, login.casefold() if is_email else login)
+    if limiter.is_locked(key):
         raise AuthError(LOGIN_LOCKED)
 
-    user = user_repo.get_by_username(username)
     ok = check_password_hash(user.password_hash if user else _DUMMY_HASH, password)
     if user is None or not ok:
-        locked = limiter.record_failure(username, config["LOGIN_MAX_ATTEMPTS"], config["LOGIN_LOCK_SECONDS"])
+        locked = limiter.record_failure(key, config["LOGIN_MAX_ATTEMPTS"], config["LOGIN_LOCK_SECONDS"])
         if locked:
             log.warning("Login bloccato per troppi tentativi sbagliati")
             raise AuthError(LOGIN_LOCKED)
         raise AuthError(LOGIN_FAILED)
 
-    limiter.reset(username)
+    limiter.reset(key)
     return user
+
+
+def _attempts_key(user, written):
+    """P96: il conto dei tentativi è per account; per un account che non c'è, per il testo scritto.
+
+    Le due chiavi non si confondono: una comincia con "utente:", l'altra con "testo:".
+    """
+    return f"utente:{user.id}" if user is not None else f"testo:{written}"
 
 
 def set_avatar(user, code):
@@ -162,13 +175,14 @@ def set_avatar(user, code):
 def delete_account(user, password):
     """Cancella l'account dopo aver controllato la password; altrimenti AuthError."""
     config = current_app.config
-    username, user_id = user.username, user.id
+    user_id = user.id
+    key = _attempts_key(user, user.username)  # lo stesso conto del login (P17, P96)
     if not isinstance(password, str) or not password:
         raise AuthError(DELETE_NO_PASSWORD, "password")
-    if limiter.is_locked(username):
+    if limiter.is_locked(key):
         raise AuthError(LOGIN_LOCKED)
     if not check_password_hash(user.password_hash, password):
-        locked = limiter.record_failure(username, config["LOGIN_MAX_ATTEMPTS"], config["LOGIN_LOCK_SECONDS"])
+        locked = limiter.record_failure(key, config["LOGIN_MAX_ATTEMPTS"], config["LOGIN_LOCK_SECONDS"])
         if locked:
             log.warning("Cancellazione dell'account bloccata per troppi tentativi sbagliati")
             raise AuthError(LOGIN_LOCKED)
@@ -183,7 +197,7 @@ def delete_account(user, password):
     invites.cancel_all_of(user_id)
     user_repo.delete(user)
     db.session.commit()
-    limiter.reset(username)
+    limiter.reset(key)
     log.info("Account cancellato (id %s)", user_id)
 
 

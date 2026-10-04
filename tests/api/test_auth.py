@@ -366,6 +366,58 @@ def test_username_inventati_non_restano_in_memoria():
     assert list(limiter._entries) == ["Mario"]
 
 
+# --- Login con nome utente o email (P96) ---
+
+
+def test_si_entra_con_l_email(client):
+    register(client)
+    client.post("/auth/logout")
+    assert login(client, username="mario@esempio.it").status_code == 302
+    assert logged_in(client)
+
+
+def test_l_email_non_distingue_le_maiuscole(client):
+    # Come alla registrazione (D7): "Mario@Esempio.it" è la stessa email di "mario@esempio.it"
+    register(client)
+    client.post("/auth/logout")
+    assert login(client, username="Mario@Esempio.IT").status_code == 302
+
+
+def test_email_sbagliata_o_inesistente_stesso_messaggio(client):
+    register(client)
+    client.post("/auth/logout")
+    assert LOGIN_FAILED in page_text(login(client, username="mario@esempio.it", password="Sbagliata-123"))
+    assert LOGIN_FAILED in page_text(login(client, username="nessuno@esempio.it"))
+    assert not logged_in(client)
+
+
+def test_la_pagina_chiede_nome_utente_o_email(client):
+    text = page_text(client.get("/auth/login"))
+    assert "Nome utente o email" in text
+    assert "Scrivi il tuo nome utente o la tua email." in page_text(login(client, username=""))
+
+
+def test_il_blocco_vale_per_l_account_con_username_e_con_email(app, client, monkeypatch):
+    """Alternando username ed email non si hanno più tentativi: il conto è dell'account."""
+    now = [1000.0]
+    monkeypatch.setattr(auth_service, "limiter", LoginLimiter(clock=lambda: now[0]))
+    register(client)
+    client.post("/auth/logout")
+    attempts = app.config["LOGIN_MAX_ATTEMPTS"]
+    for attempt in range(attempts - 1):
+        name = "Mario" if attempt % 2 else "MARIO@esempio.it"
+        assert LOGIN_FAILED in page_text(login(client, username=name, password="Sbagliata-123"))
+    assert LOGIN_LOCKED in page_text(login(client, username="mario@esempio.it", password="Sbagliata-123"))
+    assert LOGIN_LOCKED in page_text(login(client))  # bloccato anche con lo username e la password giusta
+    assert LOGIN_LOCKED in page_text(login(client, username="mario@esempio.it"))
+    now[0] += app.config["LOGIN_LOCK_SECONDS"]
+    assert login(client, username="mario@esempio.it").status_code == 302
+
+
+def test_campo_troppo_lungo_rifiutato(client):
+    assert "Al massimo 254 caratteri." in page_text(login(client, username="a" * 250 + "@x.it"))
+
+
 # --- CSRF e log ---
 
 

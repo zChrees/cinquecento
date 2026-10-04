@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### P96 — Login con nome utente o email (04/10/2026)
+
+- **Branch**: feature/p96-login-email (fatto mentre Giuseppe era via, con il suo ok a commit, merge e push per questa sessione)
+- **File** (lista definitiva per 9.2): modificati `app/blueprints/auth/forms.py` (`LoginForm`), `app/services/auth_service.py`, `app/repositories/user_repo.py` (`get_by_email`), `tests/api/test_auth.py`, questo file. Non toccati `routes.py` né `templates/auth/login.html` (l'etichetta del campo viene dal modulo)
+- **Cosa cambia**: la pagina di accesso ha **un campo solo, "Nome utente o email"**: con una `@` è un'email (gli username non ne possono avere, D7), altrimenti uno username. L'email non distingue le maiuscole, come alla registrazione (la colonna è `utf8mb4_0900_ai_ci`) [T]. Messaggio d'errore sempre uguale, ora "**Nome utente, email o password non corretti.**" (prima diceva solo "Username"). Il **limite dei tentativi conta per account** (chiave `utente:<id>`), non per il testo scritto: alternando username ed email il blocco non si aggira; per un account che non esiste conta il testo (`testo:…`, l'email in minuscolo). Anche gli errori di password nella cancellazione dell'account (P17) usano lo stesso conto dell'account. Campo al massimo 254 caratteri (come la colonna email), con un messaggio
+- **Controlli**: suite `api` **347 PASS** (6 nuovi: si entra con l'email, anche con maiuscole diverse; email sbagliata o inesistente con lo stesso messaggio; etichetta e messaggio del campo; blocco dell'account alternando username ed email, che vale per tutte e due e finisce dopo l'attesa; campo troppo lungo). Giro completo: **1677 PASS** in 9 suite, tutto PASS. `ruff check .` pulito
+- **Decisioni prese**: nessuna oltre a quella del 04/10. Scelta di Claude: il testo del messaggio d'errore ("Nome utente, email o password non corretti."), da confermare con Christian se lo vuole diverso
+- **Domande nuove**: nessuna
+- **Punti delicati**: il conto dei tentativi (`auth_service._attempts_key`) è per **id dell'account**: chi aggiunge un altro modo di entrare o di controllare la password deve usare la stessa chiave, altrimenti il blocco si aggira
+- **Note per gli altri**: **Christian**: la pagina di accesso non cambia (stesso campo `username` nel modulo, cambia solo l'etichetta); se la grafica vuole un suggerimento sotto il campo, il testo è tuo. **Chi è di turno sui documenti**: spuntare P96, lista definitiva in 9.2; in `CLAUDE.md`, punto delicato "Accesso (P16)": si entra con username o email e i tentativi contano per account
+
 ### P94 — Turno da 15 secondi, che parte dopo le pause del tavolo (04/10/2026)
 
 - **Branch**: feature/p94-turno-15 (fatto mentre Giuseppe era via, con il suo ok a commit, merge e push per questa sessione)

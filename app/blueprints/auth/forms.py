@@ -34,7 +34,11 @@ def _needs(test, message):
 
 
 class LoginForm(FlaskForm):
-    username = StringField("Username", validators=[DataRequired("Scrivi il tuo username.")])
+    # P96: un campo solo, nome utente o email (con una @ è un'email: gli username non ne hanno, D7)
+    username = StringField("Nome utente o email", validators=[
+        DataRequired("Scrivi il tuo nome utente o la tua email."),
+        Length(max=EMAIL_MAX, message=f"Al massimo {EMAIL_MAX} caratteri."),
+    ])
     password = PasswordField("Password", validators=[DataRequired("Scrivi la password.")])
 
 

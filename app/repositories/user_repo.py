@@ -18,6 +18,11 @@ def get_by_username(username):
     return db.session.scalar(sa.select(User).where(User.username == username))
 
 
+def get_by_email(email):
+    """P96: la colonna non distingue le maiuscole, come alla registrazione ("Mario@x.it" = "mario@x.it")."""
+    return db.session.scalar(sa.select(User).where(User.email == email))
+
+
 def add(username, email, password_hash):
     """Prepara un utente nuovo; un username o un'email già usati li rifiuta MySQL al commit."""
     user = User(username=username, email=email, password_hash=password_hash)
