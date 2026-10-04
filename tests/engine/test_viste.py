@@ -15,7 +15,12 @@ from app.game.engine.actions import LayDownAction, PlayCardAction, SingAction
 from app.game.engine.cards import Card, Suit
 from app.game.engine.deck import full_deck
 from app.game.engine.errors import EngineError, InvalidMoveError
-from app.game.engine.game import apply_game, game_legal_actions, new_game
+from app.game.engine.game import (
+    apply_game,
+    game_legal_actions,
+    new_game,
+    partner_cards_visible,
+)
 from app.game.engine.singing import Sing
 from app.game.engine.state import TrickPlay
 from app.game.engine.views import (
@@ -27,6 +32,7 @@ from app.game.engine.views import (
 )
 
 EXAMPLES = Path(__file__).resolve().parents[2] / "app" / "static" / "dev"
+TWO_V_TWO_ONLY = {"partner_hand", "advice"}  # P92: chiavi che ci sono solo nella vista del 2v2
 MODES = (2, 4)
 
 
@@ -80,15 +86,27 @@ def test_la_vista_non_mostra_mai_carte_nascoste(players, seed):
         for seat in range(players):
             view = player_view(game, seat)
             own = as_keys(hand.hands[seat])
+            # D46 (P92): nel 2v2, con briscola e mazzo finito insieme, le carte del compagno e solo le sue
+            partner = (seat + 2) % players
+            visible = players == 4 and hand.trump is not None and not hand.deck and not hand.finished
+            assert partner_cards_visible(hand) is visible
+            if players == 2:
+                assert "partner_hand" not in view
+            elif visible:
+                assert as_keys(Card.from_code(f"{c['suit']}-{c['rank']}") for c in view["partner_hand"])                     == as_keys(hand.hands[partner])
+            else:
+                assert view["partner_hand"] is None
+            shown_partner = as_keys(hand.hands[partner]) if visible else set()
             # last_hand parla della mano prima, con il mazzo mescolato di nuovo: le sue carte
             # possono essere adesso in mano a un altro, quindi si controlla a parte (P58)
             current = {key: value for key, value in view.items() if key != "last_hand"}
-            assert set(cards_in(current)) <= own | public
+            assert set(cards_in(current)) <= own | public | shown_partner
             assert {(c["suit"], c["rank"]) for c in view["hand"]} == own
-            # Nessuna carta degli altri, del mazzo o delle prese chiuse (tranne l'ultima)
+            # Nessuna carta degli avversari, del mazzo o delle prese chiuse (tranne l'ultima)
             hidden = as_keys(
                 card for other in range(players) if other != seat for card in hand.hands[other]
             ) | as_keys(hand.deck)
+            hidden -= shown_partner
             assert not set(cards_in(current)) & (hidden - public)
             # In last_hand solo le carte della presa che ha chiuso la mano prima, già viste da tutti
             if game.last_hand is None:
@@ -177,14 +195,17 @@ def load_example(name):
 
 @pytest.mark.parametrize("players", MODES)
 def test_stessa_forma_degli_esempi(players):
-    examples = [load_example("vista_1v1.json"), load_example("vista_2v2.json")]
+    # Ogni vista ha la forma dell'esempio della sua modalità: i due esempi hanno le stesse
+    # chiavi, tranne quelle che ci sono solo nel 2v2 (P92: carte del compagno e consiglio)
+    examples = {2: load_example("vista_1v1.json"), 4: load_example("vista_2v2.json")}
+    assert set(examples[4]) - set(examples[2]) == TWO_V_TWO_ONLY
+    assert set(examples[2]) - set(examples[4]) == set()
     checked_full = False
     games = (game for seed in range(10) for game in all_states(players, 500, seed))
     for game in games:
         for seat in range(players):
             view = player_view(game, seat)
-            for example in examples:
-                check_shape(view, example)
+            check_shape(view, examples[players])
         hand = game.hand
         if game.hand_number >= 2 and hand.trump and hand.trick and hand.last_trick and hand.sings:
             checked_full = True  # c'è stata almeno una vista con tutti i campi pieni

@@ -120,6 +120,9 @@ def _worlds(view: dict, memory: CpuMemory, rng: random.Random) -> list[HandState
                 card = Card(done.suit, rank)
                 if card not in memory.seen and card not in known[done.seat]:
                     known[done.seat].append(card)
+    if view.get("partner_hand"):
+        # D46 (2v2, briscola e mazzo finito): le carte del compagno sono scoperte
+        known[(seat + 2) % players] = [_card(card) for card in view["partner_hand"]]
     placed = {card for cards in known.values() for card in cards}
     pool = [card for card in full_deck() if card not in memory.seen and card not in hand and card not in placed]
     if len(pool) != sum(sizes.values()) - len(placed) + view["deck_count"]:

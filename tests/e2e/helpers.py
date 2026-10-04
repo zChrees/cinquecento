@@ -190,6 +190,12 @@ def check_private(views):
     hands = [{card_key(card) for card in view["hand"]} for view in views]
     for seat, view in enumerate(views):
         others = set().union(*(hand for other, hand in enumerate(hands) if other != seat))
+        if view.get("partner_hand") is not None:
+            # P92 (D46): nel 2v2 a mazzo finito con la briscola si vedono le carte del compagno, solo le sue
+            partner = (seat + 2) % len(views)
+            assert {card_key(card) for card in view["partner_hand"]} == hands[partner], \
+                f"il posto {seat} vede male le carte del compagno"
+            others -= hands[partner]
         current = {key: value for key, value in view.items() if key != "last_hand"}
         assert not set(cards_in(current)) & others, f"il posto {seat} vede carte altrui"
         assert view["players"][seat]["cards_in_hand"] == len(view["hand"])

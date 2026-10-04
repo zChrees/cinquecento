@@ -145,12 +145,14 @@ I posti (`seat`) sono numerati da 0 **nell'ordine di gioco** (verso destra, D11)
 | `game:play_card` | pagina → server | `{"game_id", "version", "card"}` | `ok` o errore |
 | `game:sing` | pagina → server | `{"game_id", "version", "suit"}` | `ok` o errore |
 | `game:lay_down` | pagina → server | `{"game_id", "version"}` | `ok` o errore (P84: "Cala le carte") |
+| `game:advise` | pagina → server | `{"game_id", "card"}` (`card` `null` toglie il consiglio) | `ok` o errore (P92) |
 | `game:send_phrase` | pagina → server | `{"game_id", "code"}` | `ok` o errore (`too_fast` con `retry_after`) |
 | `game:leave` | pagina → server | `{"game_id"}` | `ok`: la partita è persa per abbandono, subito |
 | `game:state` | server → ogni giocatore | la **sua** vista (3.3) | — |
 | `game:sang` | server → tutti al tavolo | `{"seat", "suit", "points", "cards", "show_seconds"}` | — |
 | `game:phrases` | server → chi entra | `{"phrases": [{"code", "text"}]}` | — |
 | `game:phrase` | server → tutti al tavolo | `{"seat", "code"}` | — |
+| `game:advice` | server → **solo il compagno** | `{"seat", "card"}` (P92: chi consiglia e la carta, `null` se tolto) | — |
 | `game:replaced` | server → la scheda sostituita | `{"game_id"}` | — |
 | `game:start` | server → i giocatori della nuova partita | `{"game_id", "url"}` | — |
 
@@ -161,12 +163,13 @@ I posti (`seat`) sono numerati da 0 **nell'ordine di gioco** (verso destra, D11)
 - **Un seme alla volta**: `game:sing` porta un solo seme. Il primo canto della mano vale 40 e fissa la briscola, i successivi valgono 20; chi ha due coppie al primo canto sceglie quale cantare per prima. Per cantarne un'altra si manda un altro `game:sing`, con la `version` nuova.
 - **Canto** (D15): `game:sang` porta le due carte mostrate (`cards`: Re e Cavallo del seme); la pagina le mostra per `show_seconds` secondi (3). Nella vista resta l'elenco dei canti della mano (`sings`), per l'icona fissa accanto a chi ha cantato.
 - **Frasi del tavolo** (D24, P55–P56): l'elenco arriva con `game:phrases` a ogni ingresso nella stanza, e la pagina non ne tiene una copia sua. `game:phrase` porta solo il codice: il testo si prende dall'elenco. Le frasi non si salvano e chi rientra non vede quelle arrivate nel frattempo.
+- **Consiglio al compagno** (P92, D46; proposta di Giuseppe del 04/10/2026, **da approvare da Christian**): solo nel 2v2 e solo quando si vedono le carte del compagno (`partner_hand`, 3.3). `game:advise` indica una carta **della mano del compagno** (o `null` per togliere il consiglio); si può mandare in qualunque momento, anche fuori turno, e non porta la `version`, perché non cambia la partita. Il server lo manda **solo al compagno** con `game:advice` e lo ricorda nella sua vista (`advice`); un consiglio nuovo prende il posto di quello di prima. Sparisce quando il compagno gioca una carta (anche con la mossa automatica) e a fine mano; non si salva. Errori: `illegal_move` con "Il consiglio al compagno c'è solo nel 2v2.", "Le carte del compagno si vedono solo a mazzo finito, con la briscola." o "Il tuo compagno non ha questa carta."; `invalid_data` se manca `card` o non ha la forma di una carta. Vale il limite di frequenza di ogni evento (P32).
 - **`game:leave`**: il pulsante "esci" del tavolo, dopo la conferma nella pagina. Vale come abbandono (nel 2v2 perde tutta la squadra, D13).
 - **`game:lay_down`** (P84, D45; proposta di Giuseppe del 04/10/2026, **da approvare da Christian**): "Cala le carte". Si manda solo quando la vista ha `legal.lay_down` vero; porta la `version` come `game:play_card`, così il doppio clic cala una volta sola (il secondo riceve `stale_state`). Se il server la rifiuta risponde `illegal_move` ("Adesso non puoi calare le carte.") o `not_your_turn`. Accettata, la mano finisce subito: tutti ricevono la nuova vista, con le carte calate in `last_hand.laid_down` (3.3), e parte la mano dopo (o la partita finisce). Non c'è un evento a parte per i 20 del compagno: stanno in `last_hand.laid_down.sings`.
 
 ### 3.3 Vista di gioco (`game:state`)
 
-Esempi completi: `vista_1v1.json` e `vista_2v2.json`. La vista contiene **solo quello che quel giocatore può vedere**: mai le carte in mano agli altri, mai l'ordine o il contenuto del mazzo, mai le carte già prese nella mano in corso.
+Esempi completi: `vista_1v1.json` e `vista_2v2.json`. La vista contiene **solo quello che quel giocatore può vedere**: mai le carte in mano agli altri, mai l'ordine o il contenuto del mazzo, mai le carte già prese nella mano in corso. Unica eccezione (D46, P92): nel 2v2, a mazzo finito con la briscola, le carte del **compagno** (`partner_hand`), mai quelle degli avversari.
 
 | Campo | Significato |
 |---|---|
@@ -189,6 +192,8 @@ Esempi completi: `vista_1v1.json` e `vista_2v2.json`. La vista contiene **solo q
 | `last_hand` | riepilogo dell'ultima mano finita: `hand_number`, per ogni squadra `card_points`, `sing_points`, `hand_total`, e `last_trick`, la presa che ha chiuso la mano, con la stessa forma di `last_trick` (P58: la mano nuova parte con `last_trick` a `null`, quindi la carta che chiude la mano si vede solo qui); `null` nella prima mano. `laid_down` (P84, **da approvare da Christian**): `null` se la mano è finita giocando; se qualcuno ha calato le carte, `{"seat", "hands", "sings"}`, cioè chi ha calato, le carte che restavano **a ogni posto** (`hands`: `{"seat", "cards"}` per posto, anche quelle degli avversari, che da quel momento sono scoperte) e i canti da 20 aggiunti dal server per il compagno (`sings`, stessa forma di `sings`, già contati in `sing_points`). Con una calata `last_trick` è l'ultima presa chiusa prima di calare, già vista: la pagina mostra le carte calate al suo posto (P85) |
 | `turn` | `{"seat", "seconds_total", "seconds_left"}`: di chi è il turno e quanto tempo gli resta (30 secondi); `null` a partita finita |
 | `legal` | le tue mosse ammesse adesso: `play` (carte giocabili), `sing` (semi che puoi cantare) e `lay_down` (P84, **da approvare da Christian**: `true` se adesso puoi calare le carte, altrimenti `false`); **liste vuote e `lay_down` `false` quando non è il tuo turno** |
+| `partner_hand` | **solo nel 2v2** (P92, D46, **da approvare da Christian**; nel 1v1 il campo non c'è): le carte in mano al tuo compagno, nella stessa forma di `hand`, quando ci sono **insieme** la briscola fissata e il mazzo finito, fino a fine mano; altrimenti `null` |
+| `advice` | **solo nel 2v2** (P92, **da approvare da Christian**): il consiglio che ti ha dato il compagno, `{"seat", "card"}` (`card` è una carta della tua mano), oppure `null` |
 | `result` | `null` durante la partita; a partita finita: `reason` (`"score"` o `"abandon"`), `winner_team` (0, 1, oppure `null` per il pareggio), `abandoned_seats` (posti di chi ha abbandonato) e `scores` finali |
 
 La pagina **non calcola regole**: attiva solo le carte di `legal.play`, i pulsanti "Canta" dei semi in `legal.sing` e "Cala le carte" quando `legal.lay_down` è vero (il perché lo sa solo il server, che conosce le carte di tutti). Il punto "40 o 20" lo decide il server. I **punti dei canti si vedono subito** (il canto è pubblico: `sings`); dal 30/09/2026 (D44) si vedono subito anche i **punti delle carte prese** di tutte e due le squadre, in `hand_points`: restano nascoste solo le carte prese (tranne l'ultima presa, `last_trick`).

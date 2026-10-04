@@ -67,7 +67,8 @@ from app.game.engine.actions import LayDownAction, PlayCardAction, SingAction
 from app.game.engine.auto_move import auto_move
 from app.game.engine.cards import Card, Rank
 from app.game.engine.cpu import CpuMemory, cpu_move
-from app.game.engine.game import apply_game, new_game
+from app.game.engine.errors import InvalidMoveError
+from app.game.engine.game import apply_game, new_game, partner_cards_visible
 from app.game.engine.views import card_to_dict, player_view
 from app.realtime.events import room_channel
 from app.services import match_service
@@ -176,6 +177,10 @@ class Room:
         # Frasi del tavolo (P55): posto -> ora (time.monotonic) dell'ultima frase; mai il testo
         self.phrase_times = {}
 
+        # Consiglio al compagno (P92, D46): posto di chi lo riceve -> (posto di chi lo dà, carta).
+        # Come le frasi non si salva; sparisce quando chi lo riceve gioca e a fine mano
+        self._advice = {}
+
     # --- Lock e membri (P23) ---
 
     def run(self, action, *args, **kwargs):
@@ -218,6 +223,7 @@ class Room:
             self._started_at = utc_now()
             self._moves = []
             self._saved = False
+            self._advice = {}
             self._cpu_memory = {seat: CpuMemory() for seat in self.cpu_seats}
             self._cpu_rng = random.Random(self._rng.random())  # la CPU pensa fuori dal lock
             self._start_turn()
@@ -284,6 +290,27 @@ class Room:
         with self.lock:
             self._apply(LayDownAction(seat), "cala_carte", _laid_down_details)
 
+    def advise(self, seat, card):
+        """Consiglio al compagno (P92, D46): una carta della sua mano, oppure None per toglierlo.
+
+        Restituisce il posto del compagno e l'evento game:advice da mandargli. Si può dare in
+        qualunque momento, purché le carte del compagno si vedano; non cambia la partita.
+        """
+        with self.lock:
+            hand = self.game.hand
+            if hand.num_players != 4:
+                raise InvalidMoveError("Il consiglio al compagno c'è solo nel 2v2.")
+            if self.finished or not partner_cards_visible(hand):
+                raise InvalidMoveError("Le carte del compagno si vedono solo a mazzo finito, con la briscola.")
+            partner = (seat + 2) % 4
+            if card is None:
+                self._advice.pop(partner, None)
+            elif card not in hand.hands[partner]:
+                raise InvalidMoveError("Il tuo compagno non ha questa carta.")
+            else:
+                self._advice[partner] = (seat, card)  # un consiglio alla volta: il nuovo prende il posto
+            return partner, {"seat": seat, "card": None if card is None else card_to_dict(card)}
+
     def _apply(self, action, kind, details):
         """Applica la mossa del motore e la aggiunge all'elenco delle mosse (P26).
 
@@ -297,6 +324,10 @@ class Room:
         self._moves.append(MoveRecord(hand=before.hand_number, seat=action.seat, kind=kind,
                                       details=details, at=utc_now()))
         self.version += 1
+        if self.game.hand_number != before.hand_number or self.game.finished:
+            self._advice.clear()  # mano finita: le carte del compagno non si vedono più
+        elif isinstance(action, PlayCardAction):
+            self._advice.pop(action.seat, None)  # ha giocato: il consiglio che aveva non serve più
         self._cpu_see()
         if self.game.finished:
             self._stop_timers()
@@ -514,9 +545,14 @@ class Room:
         with self.lock:
             view = player_view(self.game, seat)
             view = {"game_id": self.id, "version": self.version, "rated": self.rated, **view}
+            if len(self.players) == 4:
+                given = self._advice.get(seat)
+                view["advice"] = None if given is None else {"seat": given[0], "card": card_to_dict(given[1])}
             if self.abandoned_seats and not self.game.finished:
                 view.update(status="finished", turn=None, legal={"play": [], "sing": [], "lay_down": False},
                             result=self._abandon_result(view["scores"]))
+                if "partner_hand" in view:
+                    view["partner_hand"] = None  # partita finita: le carte del compagno non si vedono più
             now = time.monotonic()
             for entry in view["players"]:
                 player = self.players[entry["seat"]]

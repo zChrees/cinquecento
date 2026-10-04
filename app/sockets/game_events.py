@@ -11,6 +11,9 @@
   finita (per punteggio o per abbandono) le mosse si rifiutano. Il timer del turno e
   il rientro entro RECONNECT_SECONDS stanno in room.py; lo scollegamento arriva da
   connection_events.py.
+- P92: game:advise, il consiglio al compagno nel 2v2 (D46): arriva solo a lui (game:advice),
+  non si salva, non cambia la partita (niente `version`) e ha il limite di frequenza di ogni
+  evento (P32).
 - P55: game:send_phrase manda una frase pronta (D24) a tutti al tavolo (game:phrase);
   l'elenco arriva a chi entra con game:phrases. Si possono mandare anche a partita
   finita ("Bella partita!"). Codice e testo non vanno mai nel log.
@@ -160,6 +163,28 @@ def on_lay_down(data=None):
 
 
 @handler
+def on_advise(data=None):
+    """Consiglio al compagno (P92): `card` è una carta della sua mano, oppure null per toglierlo."""
+    room, seat = _table(data)
+    if "card" not in data:
+        raise EventError("invalid_data", "Carta non valida.")
+    card = None if data["card"] is None else _card(data)
+    sid = request.sid
+
+    def advise():
+        if not room.is_table_connection(seat, sid):
+            raise EventError("not_allowed", "La partita è aperta in un'altra scheda.")
+        given = []
+        _engine_errors(lambda: given.append(room.advise(seat, card)))
+        partner, event = given[0]
+        partner_sid = room.sids.get(partner)
+        if partner_sid is not None:
+            socketio.emit("game:advice", event, to=partner_sid)
+
+    room.run(advise)
+
+
+@handler
 def on_leave(data=None):
     """ "Esci" dal tavolo, dopo la conferma nella pagina: la partita è persa per abbandono.
 
@@ -198,5 +223,6 @@ def register(socketio):
     socketio.on_event("game:play_card", on_play_card)
     socketio.on_event("game:sing", on_sing)
     socketio.on_event("game:lay_down", on_lay_down)
+    socketio.on_event("game:advise", on_advise)
     socketio.on_event("game:leave", on_leave)
     socketio.on_event("game:send_phrase", on_send_phrase)

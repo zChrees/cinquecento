@@ -2,6 +2,8 @@
 
 Mai le carte in mano agli altri, l'ordine o il contenuto del mazzo, le carte già
 prese nella mano in corso (docs/CONTRATTO-SOCKET.md, 3.3): di quelle si vedono solo i punti (P67).
+Unica eccezione (D46, P92): nel 2v2, con la briscola fissata e il mazzo finito, le carte del
+compagno (partner_hand), mai quelle degli avversari.
 
 Il motore non sa nulla della stanza: la vista che produce ha i campi di gioco del
 contratto, e la stanza (P24, P25) aggiunge i suoi. ROOM_FIELDS li elenca.
@@ -9,7 +11,7 @@ contratto, e la stanza (P24, P25) aggiunge i suoi. ROOM_FIELDS li elenca.
 
 from app.game.engine.cards import Card
 from app.game.engine.errors import EngineError
-from app.game.engine.game import game_legal_actions, hand_result
+from app.game.engine.game import game_legal_actions, hand_result, partner_cards_visible
 from app.game.engine.rules import MARIANNA, RuleSet
 from app.game.engine.state import (
     TEAMS,
@@ -24,8 +26,9 @@ from app.game.engine.trick import winning_position
 
 MODES = {2: "1v1", 4: "2v2"}
 
-# Campi che aggiunge la stanza: in cima alla vista, per ogni giocatore, nel turno
-ROOM_FIELDS = ("game_id", "version", "rated")
+# Campi che aggiunge la stanza: in cima alla vista, per ogni giocatore, nel turno.
+# "advice" (P92) c'è solo nel 2v2: il consiglio del compagno, che il motore non conosce
+ROOM_FIELDS = ("game_id", "version", "rated", "advice")
 ROOM_PLAYER_FIELDS = ("user_id", "username", "avatar", "rating", "cpu", "connected", "reconnect_seconds_left")
 ROOM_TURN_FIELDS = ("seconds_total", "seconds_left")
 
@@ -39,7 +42,7 @@ def player_view(game: GameState, seat: int, rules: RuleSet = MARIANNA) -> dict:
         raise EngineError("Posto non valido.")
     hand = game.hand
     legal = game_legal_actions(game, seat, rules)
-    return {
+    view = {
         "mode": MODES[game.num_players],
         "target_score": game.target_score,
         "status": "finished" if game.finished else "playing",
@@ -76,6 +79,11 @@ def player_view(game: GameState, seat: int, rules: RuleSet = MARIANNA) -> dict:
             }
         ),
     }
+    if game.num_players == 4:
+        # D46: le carte del compagno, e solo le sue, quando ci sono briscola e mazzo finito; nel 1v1 il campo non c'è
+        partner = hand.hands[(seat + 2) % 4]
+        view["partner_hand"] = [card_to_dict(card) for card in partner] if partner_cards_visible(hand) else None
+    return view
 
 
 def _plays(plays) -> list[dict]:

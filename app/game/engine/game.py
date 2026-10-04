@@ -73,6 +73,15 @@ class LegalActions:
     lay_down: bool = False  # "Cala le carte" (P84)
 
 
+def partner_cards_visible(state: HandState) -> bool:
+    """D46 (P92): nel 2v2, con la briscola fissata e il mazzo finito, ognuno vede le carte del compagno.
+
+    Vale da quando ci sono tutti e due, in qualunque ordine arrivino, fino a fine mano;
+    senza briscola mai. Nel 1v1 non c'è un compagno.
+    """
+    return state.num_players == 4 and not state.finished and state.trump is not None and not state.deck
+
+
 def _in_first_trick(state: HandState) -> bool:
     """Prima presa della mano: nessuna presa chiusa, e last_trick riparte da None a ogni mano (P58)."""
     return state.last_trick is None

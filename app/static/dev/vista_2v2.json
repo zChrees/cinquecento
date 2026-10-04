@@ -182,5 +182,7 @@
     "sing": [],
     "lay_down": false
   },
+  "partner_hand": null,
+  "advice": null,
   "result": null
 }
