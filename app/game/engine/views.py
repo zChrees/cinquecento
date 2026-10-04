@@ -26,7 +26,7 @@ MODES = {2: "1v1", 4: "2v2"}
 
 # Campi che aggiunge la stanza: in cima alla vista, per ogni giocatore, nel turno
 ROOM_FIELDS = ("game_id", "version", "rated")
-ROOM_PLAYER_FIELDS = ("user_id", "username", "avatar", "rating", "connected", "reconnect_seconds_left")
+ROOM_PLAYER_FIELDS = ("user_id", "username", "avatar", "rating", "cpu", "connected", "reconnect_seconds_left")
 ROOM_TURN_FIELDS = ("seconds_total", "seconds_left")
 
 

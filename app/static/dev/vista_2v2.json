@@ -22,6 +22,7 @@
         "value": 1540,
         "provisional": false
       },
+      "cpu": false,
       "cards_in_hand": 5,
       "connected": true,
       "reconnect_seconds_left": null
@@ -36,6 +37,7 @@
         "value": 1612,
         "provisional": false
       },
+      "cpu": false,
       "cards_in_hand": 4,
       "connected": true,
       "reconnect_seconds_left": null
@@ -50,6 +52,7 @@
         "value": 1500,
         "provisional": true
       },
+      "cpu": false,
       "cards_in_hand": 4,
       "connected": true,
       "reconnect_seconds_left": null
@@ -64,6 +67,7 @@
         "value": 1455,
         "provisional": false
       },
+      "cpu": false,
       "cards_in_hand": 5,
       "connected": false,
       "reconnect_seconds_left": 48.0

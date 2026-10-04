@@ -177,7 +177,7 @@ Esempi completi: `vista_1v1.json` e `vista_2v2.json`. La vista contiene **solo q
 | `hand_number` | numero della mano, da 1 |
 | `dealer_seat` | posto del mazziere (D11) |
 | `you` | `{"seat"}`: il tuo posto |
-| `players` | per ogni posto: `seat`, `team`, `user_id`, `username`, `avatar`, `rating` (P88: `{"value", "provisional"}` del giocatore nella modalità della partita, come `ratings` in 2.1, letto una volta sola quando la partita comincia e quindi fermo per tutta la partita; `null` per la CPU), `cards_in_hand` (solo il numero), `connected`, `reconnect_seconds_left` (secondi che restano per rientrare se è scollegato, altrimenti `null`) |
+| `players` | per ogni posto: `seat`, `team`, `user_id`, `username`, `avatar`, `rating` (P88: `{"value", "provisional"}` del giocatore nella modalità della partita, come `ratings` in 2.1, letto una volta sola quando la partita comincia e quindi fermo per tutta la partita; `null` per la CPU), `cpu` (P68, **da approvare da Christian**: `true` solo per la CPU, 4.1), `cards_in_hand` (solo il numero), `connected`, `reconnect_seconds_left` (secondi che restano per rientrare se è scollegato, altrimenti `null`) |
 | `hand` | le **tue** carte |
 | `trick` | la presa in corso: `leader_seat` (chi l'ha aperta), `cards`, un elenco di `{"seat", "card"}` nell'ordine in cui sono state giocate, e `winning_seat`, il posto della carta che vincerebbe la presa se finisse adesso (P75: lo decide il server con la stessa regola di chi prende; cambia quando una carta nuova la supera), `null` quando sul tavolo non c'è nessuna carta |
 | `last_trick` | l'ultima presa chiusa: `winner_seat` e `cards`; `null` a inizio mano. Serve a mostrare per un momento com'è finita |
@@ -207,6 +207,19 @@ La pagina **non calcola regole**: attiva solo le carte di `legal.play`, i pulsan
 Stato della coda (esempio `"queue:status"` in `home_esempio.json`): `mode`, `target_score`, `seconds_waiting` (da quanto è in coda), `rating_range` (`{"min", "max"}` dell'intervallo di rating accettato adesso, oppure `null` quando si accetta qualunque avversario), `partner` (`{"user_id", "username", "avatar"}` dell'amico compagno nel 2v2, altrimenti `null`) e `opponents` (P59: lista degli avversari già noti, con la stessa forma di `partner`; vuota tranne nel **gruppo di tre amici**, in cui la coppia vede il terzo e il terzo vede la coppia). Il server lo rimanda ogni volta che l'intervallo si allarga (ogni 10 secondi, D16); tra un invio e l'altro la pagina conta i secondi da sola. Le code sono separate per modalità e punteggio. Quando la partita è pronta arriva `game:start` (3.2).
 
 Il 2v2 con gli amici non passa da `queue:join`: la coppia o il gruppo di tre entrano in coda con `invite:start` (5.3).
+
+### 4.1 Partita contro la CPU (P68, D43; proposta di Giuseppe del 04/10/2026, **da approvare da Christian**)
+
+| Evento | Chi → chi | Dati | Risposta |
+|---|---|---|---|
+| `cpu:start` | pagina → server | `{"request_id", "target_score"}` | `ok` con `data` = `{"game_id"}`, o errore (`busy`, `invalid_data`) |
+
+- Crea **subito** una partita **1v1** contro la CPU (D43: solo 1v1), ai punti scelti (150, 300 o 500): tu al posto 0, la CPU al posto 1; chi comincia lo tira a sorte il server, come in ogni partita. Poi arriva `game:start` (3.2), come dalla coda, e il tavolo si apre come sempre.
+- `request_id` come in 1.3: lo stesso tentativo ripetuto riceve la stessa risposta e crea una partita sola (doppio clic, due schede).
+- `busy` se sei già in coda, in partita o hai un invito aperto (mandato o ricevuto), con il messaggio da mostrare.
+- La partita **non conta** per il rating (`rated` `false`) e **non si salva**: niente statistiche (D43).
+- Nella vista la CPU è il giocatore con **`cpu: true`** (3.3): nome `"CPU"`, `user_id` 0, `avatar` e `rating` `null`, sempre `connected`. La pagina mostra l'icona del robot al posto dell'avatar (P73).
+- La CPU gioca da sola dopo un'attesa di circa 1–2 secondi, un po' a caso (più lunga dopo una presa o a inizio mano, per le animazioni del tavolo); canta, cala le carte (P84) e riceve gli stessi eventi degli altri giocatori. Se esci, la partita è persa per abbandono come sempre (`game:leave`).
 
 ---
 

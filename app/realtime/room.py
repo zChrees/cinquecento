@@ -53,6 +53,7 @@ partita vanno solo ai giocatori veri.
 """
 
 import logging
+import random
 import secrets
 import threading
 import time
@@ -65,7 +66,7 @@ from app.extensions import socketio
 from app.game.engine.actions import LayDownAction, PlayCardAction, SingAction
 from app.game.engine.auto_move import auto_move
 from app.game.engine.cards import Card, Rank
-from app.game.engine.cpu import cpu_move
+from app.game.engine.cpu import CpuMemory, cpu_move
 from app.game.engine.game import apply_game, new_game
 from app.game.engine.views import card_to_dict, player_view
 from app.realtime.events import room_channel
@@ -82,9 +83,11 @@ SING_SHOW_SECONDS = 3  # D15: per quanto la pagina mostra Re e Cavallo cantati
 MODE_OF_PLAYERS = {n: mode for mode, n in MODES.items()}
 
 # P68: attese della CPU prima di giocare, sui tempi della pagina (js/pages/game.js)
-CPU_SECONDS = 1.5  # dopo la carta dell'avversario (lancio: 0,4 s)
+CPU_SECONDS = 1.2  # dopo la carta dell'avversario (lancio: 0,4 s), per un numero a caso di CPU_JITTER
+CPU_JITTER = (0.6, 1.4)  # D43: un po' a caso; poi la CPU pensa (0,1-0,3 s): in tutto tra 1 e 2 s circa
 CPU_AFTER_TRICK_SECONDS = 2.5  # presa appena chiusa: ultima presa 1,5 s più la pescata
 CPU_NEW_HAND_SECONDS = 9  # mano nuova: ultima presa, riepilogo (5 s), mescolata e distribuzione
+CPU_LAID_DOWN_SECONDS = 3  # in più se la mano prima è finita con una calata: carte scoperte (D45)
 
 # P44, P47: funzioni chiamate con (user_id dei giocatori, app) a inizio e fine partita,
 # in un thread a parte (fuori dal lock)
@@ -165,8 +168,10 @@ class Room:
         self._moves = []  # MoveRecord, nell'ordine della partita
         self._saved = False
 
-        # CPU (P68): timer della prossima mossa
+        # CPU (P68): timer della prossima mossa, memoria delle carte uscite (D43), rng suo
         self._cpu_timer = None
+        self._cpu_memory = {}  # posto della CPU -> CpuMemory, fatta solo dalle sue viste
+        self._cpu_rng = None
 
         # Frasi del tavolo (P55): posto -> ora (time.monotonic) dell'ultima frase; mai il testo
         self.phrase_times = {}
@@ -213,7 +218,10 @@ class Room:
             self._started_at = utc_now()
             self._moves = []
             self._saved = False
+            self._cpu_memory = {seat: CpuMemory() for seat in self.cpu_seats}
+            self._cpu_rng = random.Random(self._rng.random())  # la CPU pensa fuori dal lock
             self._start_turn()
+            self._cpu_see()  # dopo il turno (la vista ne ha il tempo); la CPU gioca solo con il lock
 
     @property
     def human_ids(self):
@@ -289,6 +297,7 @@ class Room:
         self._moves.append(MoveRecord(hand=before.hand_number, seat=action.seat, kind=kind,
                                       details=details, at=utc_now()))
         self.version += 1
+        self._cpu_see()
         if self.game.finished:
             self._stop_timers()
             self._save()
@@ -337,25 +346,47 @@ class Room:
         if self.finished or hand.turn_seat not in self.cpu_seats:
             return
         if hand.trick:
-            delay = CPU_SECONDS
+            delay = CPU_SECONDS * self._cpu_rng.uniform(*CPU_JITTER)
         elif hand.last_trick is not None:
             delay = CPU_AFTER_TRICK_SECONDS
         elif self.game.hand_number > 1:
             delay = CPU_NEW_HAND_SECONDS
+            if self.game.last_hand is not None and self.game.last_hand.laid_down is not None:
+                delay += CPU_LAID_DOWN_SECONDS
         else:
-            delay = CPU_SECONDS  # prima mano: la pagina non mostra la distribuzione
+            delay = CPU_SECONDS * self._cpu_rng.uniform(*CPU_JITTER)  # prima mano: niente distribuzione
         timer = threading.Timer(delay, self._cpu_turn, args=(self._turn_token,))
         timer.daemon = True
         self._cpu_timer = timer
         timer.start()
+
+    def _cpu_see(self):
+        """Ogni vista nuova passa dalla memoria della CPU, come la vedrebbe lei (sotto il lock)."""
+        for seat, memory in self._cpu_memory.items():
+            memory.see(self.view_for(seat))
 
     def _cpu_turn(self, token):
         with self.lock:
             if token != self._turn_token or self.finished:
                 return  # turno già passato (per esempio la mossa automatica), o partita finita
             seat = self.game.hand.turn_seat
+            view, version = self.view_for(seat), self.version
+            memory = CpuMemory(self._cpu_memory[seat].hand_number, set(self._cpu_memory[seat].seen))
+        # La CPU pensa fino a circa 0,3 s: fuori dal lock, così intanto la stanza risponde
+        try:
+            action = cpu_move(view, self._cpu_rng, memory)
+        except Exception:
+            log.exception("Mossa della CPU non riuscita nella stanza %s", self.id)
+            return
+        with self.lock:
+            if token != self._turn_token or self.finished:
+                return  # intanto il turno è passato (mossa automatica) o la partita è finita
+            if version != self.version:
+                # Stesso turno ma vista cambiata (per esempio l'avversario si è scollegato o è
+                # rientrato): la mossa pensata non vale più, la CPU ci ripensa
+                self._schedule_cpu()
+                return
             try:
-                action = cpu_move(self.view_for(seat), self._rng)
                 if isinstance(action, SingAction):
                     socketio.emit("game:sang", self.sing(seat, action.suit), to=self.channel)
                     self._schedule_cpu()  # il turno resta alla CPU: ora la carta, dopo un'altra attesa
@@ -495,6 +526,7 @@ class Room:
                     username=player.username,
                     avatar=player.avatar,
                     rating=self.ratings[entry["seat"]],
+                    cpu=entry["seat"] in self.cpu_seats,  # D43: la pagina riconosce la CPU da qui
                     connected=entry["seat"] in self.sids or entry["seat"] in self.cpu_seats,
                     reconnect_seconds_left=None if waiting is None else round(max(0.0, waiting[0] - now), 1),
                 )

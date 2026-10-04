@@ -8,10 +8,12 @@ costanti di app/realtime/room.py. Si aspettano gli eventi (le viste), non tempi 
 import random
 import threading
 import uuid
+from dataclasses import replace
 
 import pytest
 import sqlalchemy as sa
 
+from app.game.engine import cpu as cpu_module
 from app.realtime import room as room_module
 from app.realtime.events import ok
 from app.realtime.matchmaking import matchmaker
@@ -24,8 +26,11 @@ WAIT = 5
 
 @pytest.fixture(autouse=True)
 def fast_cpu(monkeypatch):
-    for name in ("CPU_SECONDS", "CPU_AFTER_TRICK_SECONDS", "CPU_NEW_HAND_SECONDS"):
+    for name in ("CPU_SECONDS", "CPU_AFTER_TRICK_SECONDS", "CPU_NEW_HAND_SECONDS", "CPU_LAID_DOWN_SECONDS"):
         monkeypatch.setattr(room_module, name, 0.01)
+    # D43: la CPU pensa meno (qui conta la stanza, la forza la prova tests/engine/test_cpu.py)
+    monkeypatch.setattr(cpu_module, "SIMULATED_PLAYS", 600)
+    monkeypatch.setattr(cpu_module, "MIN_WORLDS", 4)
 
 
 @pytest.fixture(autouse=True)
@@ -151,6 +156,7 @@ def test_cpu_start_crea_la_partita(connect, server, inbox):
     assert view["you"] == {"seat": 0}
     cpu = view["players"][1]
     assert (cpu["user_id"], cpu["username"], cpu["avatar"], cpu["connected"]) == (0, "CPU", None, True)
+    assert cpu["cpu"] is True and view["players"][0]["cpu"] is False  # D43: la pagina la riconosce da qui
 
 
 def test_stesso_request_id_una_partita_sola(connect, server):
@@ -262,3 +268,36 @@ def test_abbandono_contro_la_cpu(connect, saved_matches):
     room = rooms.get(game_id)
     assert room._cpu_timer is None and room._turn_timer is None  # la CPU non gioca più
     assert saved_matches() == before
+
+
+def test_se_la_vista_cambia_mentre_pensa_la_cpu_ci_ripensa(connect, users_for_cpu, monkeypatch):
+    """La CPU pensa fuori dal lock: se intanto la vista cambia (qui il giocatore rientra da
+    un'altra scheda) la mossa pensata non vale, ma la CPU non resta ferma: ci ripensa."""
+    thinking = threading.Event()
+    go_on = threading.Event()
+    calls = []
+    real_move = room_module.cpu_move
+
+    def slow_move(view, rng, memory):
+        calls.append(view["version"])
+        if len(calls) == 1:
+            thinking.set()
+            go_on.wait(WAIT)
+        return real_move(view, rng, memory)
+
+    monkeypatch.setattr(room_module, "CPU_SECONDS", 5)  # ferma finché la mano non è pronta
+    room = create_room([users_for_cpu["Primo"], CPU_PLAYER], "1v1", 150, rated=False,
+                       rng=random.Random(2), cpu_seats=(1,), announce=False)
+    monkeypatch.setattr(room_module, "cpu_move", slow_move)
+    monkeypatch.setattr(room_module, "CPU_SECONDS", 0.01)
+    with room.lock:
+        # Apre la CPU: la sua prima mossa parte subito, prima che il giocatore si sieda
+        room.game = replace(room.game, first_seat=1, hand=replace(room.game.hand, leader_seat=1, turn_seat=1))
+        room._start_turn()
+    assert thinking.wait(WAIT)
+    first = sit(connect, room.id)  # il giocatore si siede: la vista cambia mentre la CPU pensa
+    version = room.version
+    go_on.set()
+    view = first.wait_latest(lambda v: v["version"] > version and len(v["trick"]["cards"]) == 1)
+    assert view["trick"]["cards"][0]["seat"] == 1  # la CPU ha giocato, dopo averci ripensato
+    assert len(calls) >= 2 and calls[1] > calls[0]
