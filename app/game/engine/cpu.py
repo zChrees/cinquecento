@@ -11,14 +11,15 @@ Strategia (decisa da Giuseppe il 30/09/2026):
   finito basta che valga qualcosa); altrimenti scarta la carta che vale meno;
 - quando apre gioca la carta che vale meno e tiene Assi, Tre e briscole; a mazzo finito
   apre con la briscola più forte;
-- scartando o aprendo evita di rompere una coppia Re e Cavallo ancora da cantare.
+- scartando o aprendo evita di rompere una coppia Re e Cavallo ancora da cantare;
+- cala le carte appena può (P84, D45), dopo aver cantato.
 A parità sceglie a caso.
 """
 
 import random
 import secrets
 
-from app.game.engine.actions import Action, PlayCardAction, SingAction
+from app.game.engine.actions import Action, LayDownAction, PlayCardAction, SingAction
 from app.game.engine.cards import Card, Rank, Suit
 from app.game.engine.errors import EngineError
 
@@ -37,6 +38,8 @@ def cpu_move(view: dict, rng: random.Random | None = None) -> Action:
     if legal["sing"]:
         suits = [Suit(suit) for suit in legal["sing"]]
         return SingAction(seat, _best(suits, lambda suit: (-_count(hand, suit), -_strength(hand, suit)), rng))
+    if legal["lay_down"]:
+        return LayDownAction(seat)  # P84: prende tutte le prese rimaste, meglio di così non si fa
 
     playable = [_card(card) for card in legal["play"]]
     trump = None if view["trump"] is None else Suit(view["trump"])

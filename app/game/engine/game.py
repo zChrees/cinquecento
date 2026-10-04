@@ -14,10 +14,11 @@ import secrets
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
 
-from app.game.engine.actions import Action, PlayCardAction, SingAction
+from app.game.engine.actions import Action, LayDownAction, PlayCardAction, SingAction
 from app.game.engine.cards import Card, Suit
 from app.game.engine.deck import full_deck, shuffled_deck
 from app.game.engine.errors import EngineError, InvalidMoveError, NotYourTurnError
+from app.game.engine.lay_down import can_lay_down, partner_sings
 from app.game.engine.rules import MARIANNA, RuleSet
 from app.game.engine.singing import sing, singable_suits
 from app.game.engine.state import (
@@ -26,6 +27,7 @@ from app.game.engine.state import (
     GameState,
     HandResult,
     HandState,
+    LaidDown,
     LastTrick,
     TrickPlay,
     team_of,
@@ -68,6 +70,7 @@ def new_hand(
 class LegalActions:
     play: tuple[Card, ...]
     sing: tuple[Suit, ...]  # nell'ordine fisso di Suit
+    lay_down: bool = False  # "Cala le carte" (P84)
 
 
 def _in_first_trick(state: HandState) -> bool:
@@ -90,11 +93,11 @@ def legal_actions(state: HandState, seat: int, rules: RuleSet = MARIANNA) -> Leg
         rules=rules,
     )
     # Non c'è obbligo di rispondere al seme: si può giocare qualsiasi carta
-    return LegalActions(play=hand, sing=tuple(suits))
+    return LegalActions(play=hand, sing=tuple(suits), lay_down=can_lay_down(state, seat, rules))
 
 
 def apply(state: HandState, action: Action, rules: RuleSet = MARIANNA) -> HandState:
-    if not isinstance(action, PlayCardAction | SingAction):
+    if not isinstance(action, PlayCardAction | SingAction | LayDownAction):
         raise InvalidMoveError("Mossa non valida.")
     seat = action.seat
     if isinstance(seat, bool) or not isinstance(seat, int) or not 0 <= seat < state.num_players:
@@ -105,6 +108,8 @@ def apply(state: HandState, action: Action, rules: RuleSet = MARIANNA) -> HandSt
         raise NotYourTurnError("Non è il tuo turno.")
     if isinstance(action, SingAction):
         return _apply_sing(state, action, rules)
+    if isinstance(action, LayDownAction):
+        return _apply_lay_down(state, action, rules)
     return _apply_play(state, action)
 
 
@@ -122,6 +127,26 @@ def _apply_sing(state: HandState, action: SingAction, rules: RuleSet) -> HandSta
     )
     # Dopo il canto il turno resta a chi ha cantato: deve ancora giocare la carta
     return replace(state, sings=(*state.sings, done))
+
+
+def _apply_lay_down(state: HandState, action: LayDownAction, rules: RuleSet) -> HandState:
+    """Cala le carte (P84): la mano finisce e la squadra di chi cala prende tutte le carte rimaste."""
+    if not can_lay_down(state, action.seat, rules):
+        raise InvalidMoveError("Adesso non puoi calare le carte.")
+    added = partner_sings(state, action.seat, rules)
+    team = team_of(action.seat)
+    remaining = tuple(card for hand in state.hands for card in hand)
+    captured = tuple(
+        (*taken, *remaining) if index == team else taken for index, taken in enumerate(state.captured)
+    )
+    return replace(
+        state,
+        hands=((),) * state.num_players,
+        turn_seat=None,
+        sings=(*state.sings, *added),
+        captured=captured,
+        laid_down=LaidDown(action.seat, state.hands, added),
+    )
 
 
 def _apply_play(state: HandState, action: PlayCardAction) -> HandState:
@@ -172,14 +197,19 @@ def hand_result(state: HandState, rules: RuleSet = MARIANNA) -> HandResult:
     """Punti della mano per squadra: carte prese più canti. L'ultima presa non dà bonus."""
     if not state.finished:
         raise EngineError("La mano non è ancora finita.")
-    # Una mano finita ha sempre almeno una presa chiusa: le mani si vuotano solo giocando
+    # Una mano finita ha sempre almeno una presa chiusa: anche per calare il mazzo deve essere finito
     card_points = [sum(card.points for card in taken) for taken in state.captured]
-    card_points[team_of(state.last_trick.winner_seat)] += rules.last_trick_bonus
+    # Calando, l'ultima presa sarebbe della squadra di chi cala
+    last_winner = state.last_trick.winner_seat if state.laid_down is None else state.laid_down.seat
+    card_points[team_of(last_winner)] += rules.last_trick_bonus
     sing_points = [0] * TEAMS
     for done in state.sings:
         sing_points[team_of(done.seat)] += done.points
     return HandResult(
-        card_points=tuple(card_points), sing_points=tuple(sing_points), last_trick=state.last_trick
+        card_points=tuple(card_points),
+        sing_points=tuple(sing_points),
+        last_trick=state.last_trick,
+        laid_down=state.laid_down,
     )
 
 

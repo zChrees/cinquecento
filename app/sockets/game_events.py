@@ -1,4 +1,4 @@
-"""Eventi del tavolo (P24, contratto 3.2): game:join, game:play_card, game:sing.
+"""Eventi del tavolo (P24, contratto 3.2): game:join, game:play_card, game:sing, game:lay_down.
 
 - Tutto quello che arriva dalla pagina si controlla qui (tipi e valori ammessi):
   un dato non valido si rifiuta con `invalid_data`, senza correzioni.
@@ -146,6 +146,20 @@ def on_sing(data=None):
 
 
 @handler
+def on_lay_down(data=None):
+    """Cala le carte (P84): se il motore lo ammette la mano finisce e tutti vedono le carte calate."""
+    room, seat = _table(data)
+    version = _version(data)
+
+    def lay_down():
+        _check_move(room, seat, version)
+        _engine_errors(lambda: room.lay_down(seat))
+        room.broadcast_states()
+
+    room.run(lay_down)
+
+
+@handler
 def on_leave(data=None):
     """ "Esci" dal tavolo, dopo la conferma nella pagina: la partita è persa per abbandono.
 
@@ -183,5 +197,6 @@ def register(socketio):
     socketio.on_event("game:join", on_join)
     socketio.on_event("game:play_card", on_play_card)
     socketio.on_event("game:sing", on_sing)
+    socketio.on_event("game:lay_down", on_lay_down)
     socketio.on_event("game:leave", on_leave)
     socketio.on_event("game:send_phrase", on_send_phrase)

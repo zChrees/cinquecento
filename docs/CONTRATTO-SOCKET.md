@@ -144,6 +144,7 @@ I posti (`seat`) sono numerati da 0 **nell'ordine di gioco** (verso destra, D11)
 | `game:join` | pagina → server | `{"game_id"}` | `ok`, poi arrivano `game:phrases` e `game:state` |
 | `game:play_card` | pagina → server | `{"game_id", "version", "card"}` | `ok` o errore |
 | `game:sing` | pagina → server | `{"game_id", "version", "suit"}` | `ok` o errore |
+| `game:lay_down` | pagina → server | `{"game_id", "version"}` | `ok` o errore (P84: "Cala le carte") |
 | `game:send_phrase` | pagina → server | `{"game_id", "code"}` | `ok` o errore (`too_fast` con `retry_after`) |
 | `game:leave` | pagina → server | `{"game_id"}` | `ok`: la partita è persa per abbandono, subito |
 | `game:state` | server → ogni giocatore | la **sua** vista (3.3) | — |
@@ -161,6 +162,7 @@ I posti (`seat`) sono numerati da 0 **nell'ordine di gioco** (verso destra, D11)
 - **Canto** (D15): `game:sang` porta le due carte mostrate (`cards`: Re e Cavallo del seme); la pagina le mostra per `show_seconds` secondi (3). Nella vista resta l'elenco dei canti della mano (`sings`), per l'icona fissa accanto a chi ha cantato.
 - **Frasi del tavolo** (D24, P55–P56): l'elenco arriva con `game:phrases` a ogni ingresso nella stanza, e la pagina non ne tiene una copia sua. `game:phrase` porta solo il codice: il testo si prende dall'elenco. Le frasi non si salvano e chi rientra non vede quelle arrivate nel frattempo.
 - **`game:leave`**: il pulsante "esci" del tavolo, dopo la conferma nella pagina. Vale come abbandono (nel 2v2 perde tutta la squadra, D13).
+- **`game:lay_down`** (P84, D45; proposta di Giuseppe del 04/10/2026, **da approvare da Christian**): "Cala le carte". Si manda solo quando la vista ha `legal.lay_down` vero; porta la `version` come `game:play_card`, così il doppio clic cala una volta sola (il secondo riceve `stale_state`). Se il server la rifiuta risponde `illegal_move` ("Adesso non puoi calare le carte.") o `not_your_turn`. Accettata, la mano finisce subito: tutti ricevono la nuova vista, con le carte calate in `last_hand.laid_down` (3.3), e parte la mano dopo (o la partita finisce). Non c'è un evento a parte per i 20 del compagno: stanno in `last_hand.laid_down.sings`.
 
 ### 3.3 Vista di gioco (`game:state`)
 
@@ -184,12 +186,12 @@ Esempi completi: `vista_1v1.json` e `vista_2v2.json`. La vista contiene **solo q
 | `sings` | canti della mano in corso: `{"seat", "suit", "points"}` (40 o 20), in ordine |
 | `scores` | per ogni squadra: `{"team", "total"}`, i punti delle mani **già finite** |
 | `hand_points` | per ogni squadra: `{"team", "total"}`, i punti della **mano in corso** (carte prese più canti, P67, D44), uguali per tutti i giocatori; partono da 0 a ogni mano e salgono a ogni presa chiusa e a ogni canto (la presa in corso non conta finché non si chiude). A partita finita sono quelli dell'ultima mano, come in `last_hand` |
-| `last_hand` | riepilogo dell'ultima mano finita: `hand_number`, per ogni squadra `card_points`, `sing_points`, `hand_total`, e `last_trick`, la presa che ha chiuso la mano, con la stessa forma di `last_trick` (P58: la mano nuova parte con `last_trick` a `null`, quindi la carta che chiude la mano si vede solo qui); `null` nella prima mano |
+| `last_hand` | riepilogo dell'ultima mano finita: `hand_number`, per ogni squadra `card_points`, `sing_points`, `hand_total`, e `last_trick`, la presa che ha chiuso la mano, con la stessa forma di `last_trick` (P58: la mano nuova parte con `last_trick` a `null`, quindi la carta che chiude la mano si vede solo qui); `null` nella prima mano. `laid_down` (P84, **da approvare da Christian**): `null` se la mano è finita giocando; se qualcuno ha calato le carte, `{"seat", "hands", "sings"}`, cioè chi ha calato, le carte che restavano **a ogni posto** (`hands`: `{"seat", "cards"}` per posto, anche quelle degli avversari, che da quel momento sono scoperte) e i canti da 20 aggiunti dal server per il compagno (`sings`, stessa forma di `sings`, già contati in `sing_points`). Con una calata `last_trick` è l'ultima presa chiusa prima di calare, già vista: la pagina mostra le carte calate al suo posto (P85) |
 | `turn` | `{"seat", "seconds_total", "seconds_left"}`: di chi è il turno e quanto tempo gli resta (30 secondi); `null` a partita finita |
-| `legal` | le tue mosse ammesse adesso: `play` (carte giocabili) e `sing` (semi che puoi cantare); **liste vuote quando non è il tuo turno** |
+| `legal` | le tue mosse ammesse adesso: `play` (carte giocabili), `sing` (semi che puoi cantare) e `lay_down` (P84, **da approvare da Christian**: `true` se adesso puoi calare le carte, altrimenti `false`); **liste vuote e `lay_down` `false` quando non è il tuo turno** |
 | `result` | `null` durante la partita; a partita finita: `reason` (`"score"` o `"abandon"`), `winner_team` (0, 1, oppure `null` per il pareggio), `abandoned_seats` (posti di chi ha abbandonato) e `scores` finali |
 
-La pagina **non calcola regole**: attiva solo le carte di `legal.play` e i pulsanti "Canta" dei semi in `legal.sing`. Il punto "40 o 20" lo decide il server. I **punti dei canti si vedono subito** (il canto è pubblico: `sings`); dal 30/09/2026 (D44) si vedono subito anche i **punti delle carte prese** di tutte e due le squadre, in `hand_points`: restano nascoste solo le carte prese (tranne l'ultima presa, `last_trick`).
+La pagina **non calcola regole**: attiva solo le carte di `legal.play`, i pulsanti "Canta" dei semi in `legal.sing` e "Cala le carte" quando `legal.lay_down` è vero (il perché lo sa solo il server, che conosce le carte di tutti). Il punto "40 o 20" lo decide il server. I **punti dei canti si vedono subito** (il canto è pubblico: `sings`); dal 30/09/2026 (D44) si vedono subito anche i **punti delle carte prese** di tutte e due le squadre, in `hand_points`: restano nascoste solo le carte prese (tranne l'ultima presa, `last_trick`).
 
 ---
 

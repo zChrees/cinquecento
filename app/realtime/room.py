@@ -62,7 +62,7 @@ from datetime import UTC, datetime
 from flask import current_app, has_app_context
 
 from app.extensions import socketio
-from app.game.engine.actions import PlayCardAction, SingAction
+from app.game.engine.actions import LayDownAction, PlayCardAction, SingAction
 from app.game.engine.auto_move import auto_move
 from app.game.engine.cards import Card, Rank
 from app.game.engine.cpu import cpu_move
@@ -104,6 +104,16 @@ def utc_now():
 
 def card_details(card):
     return {"seme": card.suit.value, "valore": card.rank.value}
+
+
+def _laid_down_details(game):
+    """Mossa cala_carte (P84): le carte che restavano a ogni posto e i canti aggiunti per il compagno."""
+    laid = game.last_hand.laid_down
+    return {
+        "mani": [{"posto": seat, "carte": [card_details(card) for card in cards]}
+                 for seat, cards in enumerate(laid.hands)],
+        "canti": [{"posto": done.seat, "seme": done.suit.value, "punti": done.points} for done in laid.sings],
+    }
 
 
 @dataclass(frozen=True)
@@ -261,6 +271,11 @@ class Room:
                 "show_seconds": SING_SHOW_SECONDS,
             }
 
+    def lay_down(self, seat):
+        """Cala le carte (P84): la mano finisce subito e si salvano le carte che restavano a tutti."""
+        with self.lock:
+            self._apply(LayDownAction(seat), "cala_carte", _laid_down_details)
+
     def _apply(self, action, kind, details):
         """Applica la mossa del motore e la aggiunge all'elenco delle mosse (P26).
 
@@ -344,6 +359,8 @@ class Room:
                 if isinstance(action, SingAction):
                     socketio.emit("game:sang", self.sing(seat, action.suit), to=self.channel)
                     self._schedule_cpu()  # il turno resta alla CPU: ora la carta, dopo un'altra attesa
+                elif isinstance(action, LayDownAction):
+                    self.lay_down(seat)
                 else:
                     self._apply(action, "gioca_carta", card_details(action.card))
             except Exception:
@@ -467,7 +484,7 @@ class Room:
             view = player_view(self.game, seat)
             view = {"game_id": self.id, "version": self.version, "rated": self.rated, **view}
             if self.abandoned_seats and not self.game.finished:
-                view.update(status="finished", turn=None, legal={"play": [], "sing": []},
+                view.update(status="finished", turn=None, legal={"play": [], "sing": [], "lay_down": False},
                             result=self._abandon_result(view["scores"]))
             now = time.monotonic()
             for entry in view["players"]:

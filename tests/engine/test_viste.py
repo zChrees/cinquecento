@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from app.game.engine.actions import PlayCardAction, SingAction
+from app.game.engine.actions import LayDownAction, PlayCardAction, SingAction
 from app.game.engine.cards import Card, Suit
 from app.game.engine.deck import full_deck
 from app.game.engine.errors import EngineError, InvalidMoveError
@@ -135,8 +135,14 @@ def test_legal_coincide_con_le_mosse_accettate(players, seed):
                     pass
             assert sorted(legal["play"], key=json.dumps) == sorted(accepted_cards, key=json.dumps)
             assert sorted(legal["sing"]) == sorted(accepted_suits)
+            try:
+                apply_game(game, LayDownAction(seat), rng=random.Random(0))
+                accepted_lay_down = True
+            except InvalidMoveError:
+                accepted_lay_down = False
+            assert legal["lay_down"] is accepted_lay_down
             if game.finished or seat != game.hand.turn_seat:
-                assert legal == {"play": [], "sing": []}
+                assert legal == {"play": [], "sing": [], "lay_down": False}
 
 
 # --- Forma della vista (app/static/dev/vista_*.json) -------------------------------
@@ -200,7 +206,7 @@ def test_valori_come_nel_contratto():
     assert view["hand_points"] == [{"team": 0, "total": 0}, {"team": 1, "total": 0}]
     assert view["last_hand"] is None and view["result"] is None
     assert view["turn"] == {"seat": 0}
-    assert view["legal"] == {"play": [], "sing": []}  # non è il turno del posto 2
+    assert view["legal"] == {"play": [], "sing": [], "lay_down": False}  # non è il turno del posto 2
     assert player_view(game, 0)["legal"]["play"] == [card_to_dict(c) for c in game.hand.hands[0]]
     assert player_view(new_game(2, 150, rng=random.Random(2)), 0)["mode"] == "1v1"
 
@@ -221,6 +227,7 @@ def test_riepilogo_dell_ultima_mano():
             "winner_seat": done.last_trick.winner_seat,
             "cards": [{"seat": play.seat, "card": card_to_dict(play.card)} for play in done.last_trick.plays],
         },
+        "laid_down": None,
     }
     # La mano nuova parte senza last_trick: la carta che ha chiuso la mano si vede solo qui (P58)
     assert view["last_trick"] is None
@@ -362,7 +369,7 @@ def test_vista_a_partita_finita():
     view = player_view(final, 1)
     assert view["status"] == "finished"
     assert view["turn"] is None
-    assert view["legal"] == {"play": [], "sing": []}
+    assert view["legal"] == {"play": [], "sing": [], "lay_down": False}
     assert view["last_hand"]["hand_number"] == final.hand_number
     assert view["result"] == {
         "reason": "score",

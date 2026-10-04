@@ -26,7 +26,7 @@ from config import load_config
 
 WAIT = 5
 PASSWORD = "Password-di-prova-1"  # la stessa degli utenti di conftest.py
-NO_MOVES = {"play": [], "sing": []}
+NO_MOVES = {"play": [], "sing": [], "lay_down": False}
 
 
 @pytest.fixture(scope="module")

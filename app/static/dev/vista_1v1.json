@@ -158,7 +158,8 @@
           }
         }
       ]
-    }
+    },
+    "laid_down": null
   },
   "turn": {
     "seat": 0,
@@ -190,7 +191,8 @@
     ],
     "sing": [
       "spade"
-    ]
+    ],
+    "lay_down": false
   },
   "result": null
 }

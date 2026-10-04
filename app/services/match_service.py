@@ -12,6 +12,8 @@ Mosse salvate (mosse_partita.tipo, nomi in italiano come le altre colonne, D38):
 - canta             {"seme", "punti"}    40 o 20
 - mossa_automatica  {"seme", "valore"}   la carta giocata dal server a tempo scaduto (D12)
 - abbandono         {"motivo"}           "esci" (game:leave) o "tempo_scaduto" (non rientrato)
+- cala_carte        {"mani", "canti"}    P84: le carte che restavano a ogni posto ({"posto", "carte"})
+                                         e i 20 aggiunti per il compagno ({"posto", "seme", "punti"})
 Date e ore in UTC. Nei log solo numeri, mai nomi degli utenti.
 P27: nella stessa transazione si aggiorna il rating (rating_service.apply_match).
 """
@@ -26,7 +28,7 @@ from app.services import rating_service
 
 log = logging.getLogger(__name__)
 
-MOVE_KINDS = ("gioca_carta", "canta", "mossa_automatica", "abbandono")
+MOVE_KINDS = ("gioca_carta", "canta", "mossa_automatica", "abbandono", "cala_carte")
 TEAMS = (0, 1)
 
 

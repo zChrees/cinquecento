@@ -175,7 +175,8 @@
   },
   "legal": {
     "play": [],
-    "sing": []
+    "sing": [],
+    "lay_down": false
   },
   "result": null
 }

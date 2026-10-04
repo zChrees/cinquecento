@@ -30,6 +30,15 @@ class LastTrick:
 
 
 @dataclass(frozen=True)
+class LaidDown:
+    """Carte calate (P84): chi ha calato, le carte che restavano a ognuno e i 20 del compagno."""
+
+    seat: int
+    hands: tuple[tuple[Card, ...], ...]  # per posto, com'erano al momento di calare
+    sings: tuple[Sing, ...]  # canti aggiunti dal server per il compagno (D45)
+
+
+@dataclass(frozen=True)
 class HandState:
     num_players: int
     hands: tuple[tuple[Card, ...], ...]  # per posto
@@ -40,6 +49,7 @@ class HandState:
     sings: tuple[Sing, ...]
     captured: tuple[tuple[Card, ...], ...]  # carte prese, per squadra
     last_trick: LastTrick | None
+    laid_down: LaidDown | None = None  # la mano è finita perché qualcuno ha calato le carte
 
     @property
     def finished(self) -> bool:
@@ -61,6 +71,7 @@ class HandResult:
     card_points: tuple[int, ...]  # per squadra
     sing_points: tuple[int, ...]  # per squadra
     last_trick: LastTrick  # la presa che ha chiuso la mano (P58): la mano dopo parte con last_trick None
+    laid_down: LaidDown | None = None  # con una calata (P84) last_trick è l'ultima presa chiusa prima
 
     @property
     def totals(self) -> tuple[int, ...]:

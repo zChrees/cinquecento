@@ -16,6 +16,7 @@ class RuleSet:
     sing_20_points: int = 20  # canti successivi
     min_hand_to_sing_after_deck: int = 3  # a mazzo finito, con 2 carte non si canta
     last_trick_bonus: int = 0
+    lay_down_max_cards_without_trump: int = 2  # senza briscola si cala solo con 2 carte o meno (D45)
     target_scores: tuple[int, ...] = (150, 300, 500)
 
 

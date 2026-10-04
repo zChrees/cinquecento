@@ -212,7 +212,7 @@ def play_to_the_end(game_id, seats, version):
             return views
         turn = views[0]["turn"]["seat"]
         view = views[turn]
-        assert all(v["legal"] == {"play": [], "sing": []} for i, v in enumerate(views) if i != turn)
+        assert all(v["legal"] == {"play": [], "sing": [], "lay_down": False} for i, v in enumerate(views) if i != turn)
         if view["legal"]["sing"]:
             answer = seats[turn].call_patiently("game:sing", {"game_id": game_id, "version": version,
                                                              "suit": view["legal"]["sing"][0]})

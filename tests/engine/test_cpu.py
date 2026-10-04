@@ -9,7 +9,7 @@ from dataclasses import replace
 
 import pytest
 
-from app.game.engine.actions import PlayCardAction, SingAction
+from app.game.engine.actions import LayDownAction, PlayCardAction, SingAction
 from app.game.engine.auto_move import auto_move
 from app.game.engine.cards import Card, Rank, Suit
 from app.game.engine.cpu import TRUMP_WORTH, cpu_move
@@ -34,7 +34,7 @@ def view(hand, trick=(), trump=None, deck=10, sings=(), can_sing=(), seat=0):
         "trump": trump,
         "deck_count": deck,
         "sings": [{"seat": 1, "suit": suit, "points": 40} for suit in sings],
-        "legal": {"play": cards, "sing": list(can_sing)},
+        "legal": {"play": cards, "sing": list(can_sing), "lay_down": False},
     }
 
 
@@ -129,7 +129,7 @@ def test_non_rompe_una_coppia_da_cantare():
 
 def test_non_e_il_suo_turno():
     empty = view(["spade-1"])
-    empty["legal"] = {"play": [], "sing": []}
+    empty["legal"] = {"play": [], "sing": [], "lay_down": False}
     with pytest.raises(EngineError, match="Non è il turno della CPU."):
         cpu_move(empty)
 
@@ -159,6 +159,8 @@ def test_la_cpu_gioca_solo_mosse_legali_fino_alla_fine(players, seed):
         legal = game_legal_actions(game, seat)
         if isinstance(action, SingAction):
             assert action.suit in legal.sing
+        elif isinstance(action, LayDownAction):
+            assert legal.lay_down
         else:
             assert action.card in legal.play
         return action

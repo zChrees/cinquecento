@@ -16,6 +16,7 @@ from app.game.engine.state import (
     GameState,
     HandResult,
     HandState,
+    LaidDown,
     LastTrick,
     team_of,
 )
@@ -54,7 +55,7 @@ def player_view(game: GameState, seat: int, rules: RuleSet = MARIANNA) -> dict:
         "last_trick": None if hand.last_trick is None else _last_trick(hand.last_trick),
         "trump": None if hand.trump is None else hand.trump.value,
         "deck_count": len(hand.deck),
-        "sings": [{"seat": done.seat, "suit": done.suit.value, "points": done.points} for done in hand.sings],
+        "sings": _sings(hand.sings),
         "scores": _scores(game.scores),
         "hand_points": _hand_points(hand, rules),
         "last_hand": _last_hand(game),
@@ -62,6 +63,7 @@ def player_view(game: GameState, seat: int, rules: RuleSet = MARIANNA) -> dict:
         "legal": {
             "play": [card_to_dict(card) for card in legal.play],
             "sing": [suit.value for suit in legal.sing],
+            "lay_down": legal.lay_down,
         },
         "result": (
             None
@@ -78,6 +80,10 @@ def player_view(game: GameState, seat: int, rules: RuleSet = MARIANNA) -> dict:
 
 def _plays(plays) -> list[dict]:
     return [{"seat": play.seat, "card": card_to_dict(play.card)} for play in plays]
+
+
+def _sings(sings) -> list[dict]:
+    return [{"seat": done.seat, "suit": done.suit.value, "points": done.points} for done in sings]
 
 
 def _trick(hand: HandState) -> dict:
@@ -129,4 +135,16 @@ def _last_hand(game: GameState) -> dict | None:
         ],
         # Carte già giocate e viste da tutti: la pagina le mostra prima del riepilogo (P58)
         "last_trick": _last_trick(done.last_trick),
+        "laid_down": None if done.laid_down is None else _laid_down(done.laid_down),
+    }
+
+
+def _laid_down(laid: LaidDown) -> dict:
+    """Carte calate (P84): dopo la calata sono scoperte per tutti, comprese quelle degli avversari."""
+    return {
+        "seat": laid.seat,
+        "hands": [
+            {"seat": seat, "cards": [card_to_dict(card) for card in cards]} for seat, cards in enumerate(laid.hands)
+        ],
+        "sings": _sings(laid.sings),
     }
