@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: prova del tavolo del 04/10 (P94–P103) e registrazione di P84 (04/10/2026)
+
+- **Branch**: docs/cose-da-sistemare-04-10
+- **File**: modificati `SCALETTA.md` (P84 spuntato con la nota e la lista definitiva in 9.2; P94–P103 nel tracker, nelle schede, nella tabella di 9.1, nei controlli di parallelismo e in 9.2; "Da dove si parte"), `DECISIONI.md` (Interfaccia: prova del 04/10; Gioco: turno da 15 s, partita interrotta dal riavvio, login con nome utente o email; Processo: contratto di P84; rimandi nelle decisioni dei 30 s e di D12), `docs/REGOLE-GIOCO.md` (turno da 15 s che parte dopo le pause), `CLAUDE.md` (riga "Stato", numero dei controlli, punto delicato "Calata (P84)"), questo file. `DA-DECIDERE.md` non cambia
+- **Controlli**: nessuno (soli documenti); ultimo giro completo **1676 PASS** in 9 suite (P84, dal riepilogo di Giuseppe)
+- **Riepiloghi registrati**: `giuseppe.md` P84; `christian.md` e `antonio.md` niente di nuovo
+- **Prova del 04/10** (Christian, telefono e computer, appunti in `cose-da-sistemare.txt`, che non va nel repository): 13 annotazioni, diventate **P94** (Giuseppe: turno da 15 s che parte dopo le pause), **P95** (partita interrotta dal riavvio del server: avviso e ritorno alla home; causa probabile in `game.js` [L]), **P96** (Giuseppe: login con nome utente o email in un campo solo), **P97** (carte della mano che lampeggiano), **P98** (zoom con il doppio tocco su iPhone Safari), **P99** (lancio più realistico), **P100** (mazzo del 1v1), **P101** (frasi sul telefono sopra le tue carte), **P102** (indicatore della briscola; cambia P77 a mazzo finito), **P103** (suoni, interruttore nelle impostazioni, scelta salvata nel browser)
+- **Decisioni registrate**: quelle della prova (sopra, scelte da Christian dopo le domande di Claude) e il **contratto di P84** (`game:lay_down`, `legal.lay_down`, `last_hand.laid_down`), approvato da Christian
+- **Domande**: nessuna nuova
+- **Cosa devono fare gli altri**: **Giuseppe**: i tuoi punti nuovi sono **P94** (le durate delle pause devono essere quelle di `game.js`: chiedile a Christian, o leggile, e un test le confronta) e **P96**; il turno da 15 s è già nel regolamento. Sul FAIL di `table` del tuo giro di P84: non si può dire se è lo stesso fallimento raro di P91, che non era stato identificato; se ricapita, il runner stampa i dettagli
+
 ### Documenti: D43, D45 e D46 decise (04/10/2026)
 
 - **Branch**: docs/d43-d45-d46-decise

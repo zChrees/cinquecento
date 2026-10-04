@@ -36,7 +36,7 @@ Ogni mano vale 120 punti di carte, più i canti.
 
 ## Tempo per turno
 
-- Ogni giocatore ha **30 secondi** per il suo turno. Allo scadere il server gioca al suo posto la carta scelta così: 1) quella con **meno punti**; 2) a parità, una carta **non di briscola**, perché la briscola serve a vincere le prese; 3) a parità, la **più debole** nella presa (il 2 prima del 4, e così via); 4) se resta ancora una parità (per esempio il 4 di coppe e il 4 di spade, senza briscola tra i due), una delle due **a caso**. La mossa automatica **non canta mai**. Deciso il 28/09/2026 (D12).
+- Ogni giocatore ha **15 secondi** per il suo turno (erano 30 fino al 04/10/2026, P94). Il conto alla rovescia parte solo **dopo le pause del tavolo** (ultima presa e pescata dopo una presa; ultima presa, riepilogo, mescolata, distribuzione e carte calate a fine mano), così i 15 secondi sono tutti giocabili. Allo scadere il server gioca al suo posto la carta scelta così: 1) quella con **meno punti**; 2) a parità, una carta **non di briscola**, perché la briscola serve a vincere le prese; 3) a parità, la **più debole** nella presa (il 2 prima del 4, e così via); 4) se resta ancora una parità (per esempio il 4 di coppe e il 4 di spade, senza briscola tra i due), una delle due **a caso**. La mossa automatica **non canta mai**. Deciso il 28/09/2026 (D12).
 - Chi si disconnette ha **60 secondi** per rientrare; poi la partita è persa per abbandono.
 - Nel **2v2**, se un giocatore abbandona, **perde tutta la squadra**, ma il **rating scende solo a chi ha abbandonato**. Deciso il 28/09/2026 (D13).
 
@@ -77,7 +77,7 @@ Deciso il 01/10/2026, dettagli del 04/10/2026 (D45).
 - Chi apre e può cantare deve **prima cantare tutti i semi** che può (dopo un canto il turno resta a lui); solo dopo può calare.
 - Nel 2v2, calando, la squadra prende anche **20 punti per ogni seme** che il **compagno** potrebbe cantare in quel momento (Re e Cavallo in mano, nessuno dei due giocato, almeno 3 carte): li avrebbe cantati al suo turno.
 - Calando, le carte di tutti si scoprono e la squadra di chi cala prende **tutte le prese rimaste**, con i loro punti; poi la mano finisce.
-- La mossa automatica dello scadere dei 30 secondi **non cala mai**.
+- La mossa automatica dello scadere del tempo **non cala mai**.
 
 ## Carte del compagno a mazzo finito (2v2)
 
