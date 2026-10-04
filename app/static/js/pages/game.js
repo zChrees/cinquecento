@@ -37,7 +37,8 @@
  *     poi il riepilogo (o, se la calata chiude la partita, il riquadro finale).
  *     "Cala le carte" manda game:lay_down con la version, come una carta.
  *   - P70, lancio: ogni carta che arriva sul tavolo (anche quella che chiude la
- *     presa o la mano) vola al suo posto in THROW_MS; finché vola, un tocco sulle
+ *     presa o la mano) vola al suo posto in THROW_MS (P99: la tua in MY_THROW_MS,
+ *     dal suo posto nella mano, aimMyThrows); finché vola, un tocco sulle
  *     proprie carte non gioca niente. P78: i lanci vanno in fila: una carta arrivata
  *     mentre un'altra vola parte quando quella si è posata (fino ad allora non si
  *     vede). I tempi di lanci e presa chiusa passano al
@@ -93,6 +94,7 @@ const SUMMARY_MS = 5000;
 const PHRASE_PAUSE_MS = 3000; // come TABLE_PHRASE_MIN_INTERVAL_SECONDS del server (P55)
 const BUBBLE_MS = 4000;
 const THROW_MS = 400; // come la durata di card-throw in css/components/trick.css (P70)
+const MY_THROW_MS = 550; // P99: il lancio della tua carta, come card-throw-mine in trick.css
 const DRAW_MS = 500; // come la durata di card-draw in css/components/hand.css (P70)
 const SHUFFLE_MS = 600; // come la durata di deck-riffle in css/components/trick.css (P70)
 const DEAL_STEP_MS = 80; // tra una carta distribuita e la successiva
@@ -124,7 +126,9 @@ let adviceSending = false;
 let receivedAdvice = null; // { seat, card }: la carta che ti ha consigliato il compagno
 const sang = {}; // posto → { event, timer }
 let lastTrickAt = 0; // quando si è vista la presa chiusa (performance.now), per le animazioni
-const throws = new Map(); // P70: throwKey(carta) → performance.now() del lancio (P78: anche nel futuro)
+// P70: throwKey(carta) → { at: performance.now() del lancio (P78: anche nel futuro), ms: durata,
+// from: P99, per la tua carta, il suo rettangolo nella mano (o null) }
+const throws = new Map();
 let throwTimer = 0;
 let throwsEnd = 0; // P78: performance.now() in cui si posa l'ultima carta in fila
 const drawsBySeat = new Map(); // P70: posto → performance.now() della sua pescata (anche nel futuro)
@@ -241,11 +245,45 @@ function reducedMotion() {
 function flying() {
   const now = performance.now();
   const thrown = {};
-  for (const [key, at] of throws) {
-    if (now - at < THROW_MS) thrown[key] = now - at;
+  for (const [key, { at, ms }] of throws) {
+    if (now - at < ms) thrown[key] = now - at;
     else throws.delete(key);
   }
   return thrown;
+}
+
+/**
+ * P99: la tua carta parte dal suo posto nella mano. Dopo il ridisegno, per ogni tua
+ * carta in volo (sempre in basso nella presa), dice al CSS (card-throw-mine) da dove
+ * parte rispetto al suo posto sul tavolo: spostamento, misura e verso in cui gira.
+ * Senza il rettangolo di partenza (per esempio una vista di dopo un rientro) restano
+ * i valori di trick.css: arriva dal basso.
+ */
+function aimMyThrows() {
+  for (const face of root.querySelectorAll('.trick__card--bottom > [data-thrown]')) {
+    const from = throws.get(`${face.dataset.suit}-${face.dataset.rank}`)?.from;
+    if (!from || !face.offsetWidth) continue;
+    // Dove si posa: la carta senza l'animazione (il ritardo scritto da Trick.js resta)
+    face.style.animationName = 'none';
+    const to = face.getBoundingClientRect();
+    face.style.animationName = '';
+    // Lo spostamento dell'animazione è girato con la casella della presa (un po' ruotata)
+    // e ingrandito con la carta che vince (P76): si riporta nelle sue misure
+    const { a, b, c, d } = new DOMMatrix(getComputedStyle(face.parentElement).transform);
+    const scale = parseFloat(getComputedStyle(face).scale) || 1;
+    const det = (a * d - b * c) * scale;
+    const sx = from.left + from.width / 2 - (to.left + to.width / 2);
+    const sy = from.top + from.height / 2 - (to.top + to.height / 2);
+    const dx = (d * sx - c * sy) / det;
+    const dy = (a * sy - b * sx) / det;
+    face.style.setProperty('--from-x', `${dx.toFixed(1)}px`);
+    face.style.setProperty('--from-y', `${dy.toFixed(1)}px`);
+    face.style.setProperty('--from-scale', (from.width / (face.offsetWidth * scale)).toFixed(3));
+    // In mano è dritta: all'inizio si annulla la rotazione della casella
+    face.style.setProperty('--from-tilt', `${(-Math.atan2(b, a) * 180 / Math.PI).toFixed(1)}deg`);
+    // Gira verso il centro: da destra in senso antiorario, da sinistra in senso orario
+    face.style.setProperty('--from-turn', `${dx > 0 ? -14 : 14}deg`);
+  }
 }
 
 /**
@@ -256,7 +294,7 @@ function flying() {
 function noticeThrows(previous, next) {
   if (reducedMotion()) return;
   const before = new Set(previous.trick.cards.map(({ card }) => throwKey(card)));
-  const arrived = [...next.trick.cards];
+  const arrived = [...next.trick.cards]; // { seat, card }
   if (next.hand_number === previous.hand_number && next.last_trick
       && JSON.stringify(next.last_trick) !== JSON.stringify(previous.last_trick)) {
     arrived.push(...next.last_trick.cards);
@@ -267,11 +305,16 @@ function noticeThrows(previous, next) {
   }
   const now = performance.now();
   let at = Math.max(now, throwsEnd);
-  for (const { card } of arrived) {
+  for (const { seat, card } of arrived) {
     const key = throwKey(card);
     if (!before.has(key) && !throws.has(key)) {
-      throws.set(key, at);
-      at += THROW_MS;
+      // P99: la tua carta (anche giocata dalla mossa automatica) parte da dov'era nella
+      // mano, che è ancora quella disegnata prima di questa vista
+      const mine = seat === next.you.seat;
+      const button = mine && root.querySelector(`.table__mine .hand > .card[data-suit="${card.suit}"][data-rank="${card.rank}"]`);
+      const ms = mine ? MY_THROW_MS : THROW_MS;
+      throws.set(key, { at, ms, from: button ? button.getBoundingClientRect() : null });
+      at += ms;
     }
   }
   if (at > Math.max(now, throwsEnd)) {
@@ -485,6 +528,7 @@ function render(next) {
   reuseCardImages(root); // P70: niente immagini nuove (e lampi bianchi) a ogni ridisegno
   root.replaceChildren(Table(shown, { onPlay, onSing, onLeave, onLayDown, onAdvise }, status, moments, phrasesShown));
   if (hovered) keepHover(hovered);
+  aimMyThrows();
   if (typeof focusKey === 'string') {
     const selector = focusKey ? `[data-phrase-code="${CSS.escape(focusKey)}"]` : '[data-phrases-button]';
     root.querySelector(selector)?.focus();

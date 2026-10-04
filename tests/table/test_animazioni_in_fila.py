@@ -29,6 +29,7 @@ ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"
 GAME = (STATIC / "js" / "pages" / "game.js").read_text(encoding="utf-8")
 THROW_MS = int(re.search(r"const THROW_MS = (\d+);", GAME).group(1))
+MY_THROW_MS = int(re.search(r"const MY_THROW_MS = (\d+);", GAME).group(1))  # P99: il lancio della tua carta
 DRAW_MS = int(re.search(r"const DRAW_MS = (\d+);", GAME).group(1))
 SLACK = 120  # millisecondi tra l'evento mandato e la lettura nel browser
 
@@ -139,10 +140,10 @@ def test_nel_2v2_si_pesca_una_carta_alla_volta(browser, server):
     # Posti 1, 2, 3 sono a destra, in alto e a sinistra (vista di Mario, posto 0)
     order = [delays["mine"], delays["right"], delays["top"], delays["left"]]
     assert all(d is not None for d in order), delays
-    # La prima pescata aspetta che l'Asso che ha chiuso la presa si posi
-    assert THROW_MS - SLACK <= order[0] <= THROW_MS, delays
+    # La prima pescata aspetta che l'Asso che ha chiuso la presa si posi (è di Mario: P99)
+    assert MY_THROW_MS - SLACK <= order[0] <= MY_THROW_MS, delays
     # Le altre una dopo l'altra, senza accavallarsi
     for earlier, later in itertools.pairwise(order):
         assert DRAW_MS - 30 <= later - earlier <= DRAW_MS + 30, delays
     browser.wait_js("document.querySelector('[data-drawn], [data-drawing]') === null", "pescate finite",
-                    (THROW_MS + 4 * DRAW_MS) / 1000 + 2)
+                    (MY_THROW_MS + 4 * DRAW_MS) / 1000 + 2)
