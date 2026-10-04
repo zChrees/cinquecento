@@ -9,6 +9,7 @@
  *   Hand(cards)                     // sola lettura (es. pagina di prova)
  *   HiddenHand(3)                   // carte coperte (fila semplice)
  *   EdgeHand(3, 'top', drawn, dealt) // P70: carte coperte di un avversario, dal bordo
+ *   RevealedHand(cards, 'top', seat) // P85: le carte di un altro giocatore scoperte, dentro il tavolo
  *
  * Stile in css/components/hand.css.
  */
@@ -91,5 +92,32 @@ export function EdgeHand(count, side, drawn = null, dealt = null) {
   }, items);
   hand.style.setProperty('--n', count);
   hand.style.setProperty('--n-before', Math.max(count - 1, 1));
+  return hand;
+}
+
+/**
+ * Le carte di un altro giocatore scoperte (P85, carte calate): il suo ventaglio entra
+ * dal bordo nel tavolo finché le carte si vedono intere e dritte, anche quello in
+ * alto (non capovolto), un po' più aperto del ventaglio coperto. Copre per un momento
+ * nome e avatar di quel giocatore. Stile in css/components/table.css.
+ *
+ * @param {Array<{suit: string, rank: number}>} cards le sue carte
+ * @param {string} side 'top' | 'left' | 'right'
+ * @param {number} seat il suo posto (data-revealed-seat, per i test)
+ * @param {string} [label] etichetta per i lettori di schermo
+ * @returns {HTMLElement}
+ */
+export function RevealedHand(cards, side, seat, label = 'Carte scoperte') {
+  const items = cards.map((card, i) => {
+    const face = Card(card);
+    face.style.setProperty('--i', i);
+    return face;
+  });
+  const hand = el('div', {
+    class: `revealed-hand revealed-hand--${side}`,
+    data: { revealedHand: side, revealedSeat: seat, count: cards.length },
+    attrs: { role: 'group', 'aria-label': label },
+  }, items);
+  hand.style.setProperty('--n', cards.length);
   return hand;
 }

@@ -28,6 +28,11 @@
  *     spente (toccando in fretta si giocava una carta della mano nuova senza
  *     volerlo); "Ok" chiude il riepilogo e le riaccende;
  *   - carte del canto (game:sang, D15): accanto a chi ha cantato per show_seconds.
+ *   - P85, carte calate (last_hand.laid_down nuovo): per LAID_DOWN_MS, al posto
+ *     dell'ultima presa, i ventagli degli altri entrano scoperti nel tavolo, la tua
+ *     mano è quella del momento della calata e al centro c'è "Turi cala le carte";
+ *     poi il riepilogo (o, se la calata chiude la partita, il riquadro finale).
+ *     "Cala le carte" manda game:lay_down con la version, come una carta.
  *   - P70, lancio: ogni carta che arriva sul tavolo (anche quella che chiude la
  *     presa o la mano) vola al suo posto in THROW_MS; finché vola, un tocco sulle
  *     proprie carte non gioca niente. P78: i lanci vanno in fila: una carta arrivata
@@ -76,8 +81,9 @@ initLayout();
 const root = document.querySelector('[data-table]');
 const gameId = root.dataset.gameId;
 const demo = Boolean(root.dataset.demoUrl);
-const NO_MOVES = Object.freeze({ play: [], sing: [] });
+const NO_MOVES = Object.freeze({ play: [], sing: [], lay_down: false });
 const LAST_TRICK_MS = 1500;
+const LAID_DOWN_MS = 3000; // P85, D45: carte calate scoperte; come LAID_DOWN_SECONDS di app/realtime/room.py (P94)
 const SUMMARY_MS = 5000;
 const PHRASE_PAUSE_MS = 3000; // come TABLE_PHRASE_MIN_INTERVAL_SECONDS del server (P55)
 const BUBBLE_MS = 4000;
@@ -100,6 +106,9 @@ let lastTrickTimer = 0;
 let summary = null;
 let summaryTimer = 0;
 let nextSummary = null; // riepilogo che aspetta la fine dell'ultima presa della mano
+let laidDown = null; // P85: le carte calate (last_hand.laid_down) mentre si vedono
+let laidDownAt = 0;
+let laidDownTimer = 0;
 const sang = {}; // posto → { event, timer }
 let lastTrickAt = 0; // quando si è vista la presa chiusa (performance.now), per le animazioni
 const throws = new Map(); // P70: throwKey(carta) → performance.now() del lancio (P78: anche nel futuro)
@@ -175,6 +184,24 @@ function hideLastTrick() {
   }
 }
 
+/** P85: toglie le carte calate; se il riepilogo aspettava, lo apre (come hideLastTrick). */
+function hideLaidDown() {
+  clearTimeout(laidDownTimer);
+  laidDown = null;
+  if (nextSummary) {
+    const waitingSummary = nextSummary;
+    nextSummary = null;
+    openSummary(waitingSummary);
+  }
+}
+
+function showLaidDown(laid) {
+  hideLaidDown();
+  laidDown = laid;
+  laidDownAt = performance.now();
+  laidDownTimer = setTimeout(() => { hideLaidDown(); redraw(); }, LAID_DOWN_MS);
+}
+
 function showLastTrick(trick) {
   hideLastTrick();
   lastTrick = trick;
@@ -221,7 +248,8 @@ function noticeThrows(previous, next) {
       && JSON.stringify(next.last_trick) !== JSON.stringify(previous.last_trick)) {
     arrived.push(...next.last_trick.cards);
   }
-  if (next.hand_number > previous.hand_number && next.last_hand?.last_trick) {
+  // P85: con una calata last_hand.last_trick è una presa già vista, nessuna carta vola
+  if (next.hand_number > previous.hand_number && next.last_hand?.last_trick && !next.last_hand.laid_down) {
     arrived.push(...next.last_hand.last_trick.cards);
   }
   const now = performance.now();
@@ -341,6 +369,17 @@ function noticeMoments(previous, next) {
   noticeDraws(previous, next);
   noticeDeal(previous, next);
   if (next.hand_number !== previous.hand_number) hideLastTrick();
+  // P85: qualcuno ha calato (la mano finita è nuova e ha laid_down): le carte calate
+  // si vedono per LAID_DOWN_MS al posto dell'ultima presa, poi il riepilogo; se la
+  // calata chiude la partita (hand_number non sale) il riepilogo è nel riquadro finale
+  const laid = next.last_hand?.laid_down;
+  if (laid && next.last_hand.hand_number !== previous.last_hand?.hand_number) {
+    hideLastTrick();
+    closeSummary();
+    showLaidDown(laid);
+    if (next.hand_number > previous.hand_number) nextSummary = next.last_hand;
+    return;
+  }
   if (next.last_trick && next.hand_number === previous.hand_number
       && JSON.stringify(next.last_trick) !== JSON.stringify(previous.last_trick)) {
     showLastTrick(next.last_trick);
@@ -369,15 +408,16 @@ function render(next) {
     view = next;
     viewAt = performance.now();
   }
-  // La presa chiusa lascia il posto alla presa nuova appena qualcuno gioca
+  // La presa chiusa (o le carte calate, P85) lascia il posto alla presa nuova appena qualcuno gioca
   if (lastTrick && view.trick.cards.length) hideLastTrick();
-  // P70: finiti ultima presa e riepilogo, comincia la distribuzione della mano nuova
-  if (dealWaiting && !lastTrick && !nextSummary && !summary) startDeal();
+  if (laidDown && view.trick.cards.length) hideLaidDown();
+  // P70: finiti ultima presa (o carte calate) e riepilogo, comincia la distribuzione della mano nuova
+  if (dealWaiting && !lastTrick && !laidDown && !nextSummary && !summary) startDeal();
   // Mentre si aspetta la risposta a una mossa, senza connessione (P33) o a fine mano,
   // finché si vedono l'ultima presa della mano e il riepilogo (P69), nessuna carta e
   // nessun canto sono attivi
   const offline = !demo && !isConnected();
-  const handEnding = Boolean(nextSummary || summary);
+  const handEnding = Boolean(nextSummary || summary || laidDown);
   const shown = timed(waiting || leaving || offline || handEnding ? { ...view, legal: NO_MOVES } : view);
   const drawn = drawing();
   const moments = {
@@ -389,9 +429,11 @@ function render(next) {
     deal: dealMoments(view),
     summary,
     // P72: finché si vedono l'ultima presa e il riepilogo, i punti della mano appena chiusa
-    handPoints: handEnding ? handTotals(nextSummary || summary) : null,
+    handPoints: nextSummary || summary ? handTotals(nextSummary || summary) : null,
     onCloseSummary: () => { closeSummary(); redraw(); },
     sang: Object.fromEntries(Object.entries(sang).map(([seat, { event }]) => [seat, event])),
+    laidDown,
+    laidDownFor: laidDown ? performance.now() - laidDownAt : 0,
   };
   const phrasesShown = phrases && {
     list: phrases,
@@ -405,7 +447,7 @@ function render(next) {
   const focused = document.activeElement;
   const focusKey = root.contains(focused) && (focused.dataset.phraseCode ?? ('phrasesButton' in focused.dataset ? '' : null));
   reuseCardImages(root); // P70: niente immagini nuove (e lampi bianchi) a ogni ridisegno
-  root.replaceChildren(Table(shown, { onPlay, onSing, onLeave }, status, moments, phrasesShown));
+  root.replaceChildren(Table(shown, { onPlay, onSing, onLeave, onLayDown }, status, moments, phrasesShown));
   if (typeof focusKey === 'string') {
     const selector = focusKey ? `[data-phrase-code="${CSS.escape(focusKey)}"]` : '[data-phrases-button]';
     root.querySelector(selector)?.focus();
@@ -528,6 +570,15 @@ function onSing(suit) {
     return;
   }
   sendMove(EVENTS.GAME_SING, { suit });
+}
+
+/** P85: "Cala le carte" (solo con legal.lay_down; il doppio clic lo ferma waiting, e la version). */
+function onLayDown() {
+  if (demo) {
+    setStatus('Prova: vuoi calare le carte. In partita la richiesta va al server.');
+    return;
+  }
+  sendMove(EVENTS.GAME_LAY_DOWN, {});
 }
 
 async function onLeave() {

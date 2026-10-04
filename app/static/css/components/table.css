@@ -318,6 +318,102 @@
   rotate: -90deg;
 }
 
+/*
+ * Carte di un altro giocatore scoperte (P85, carte calate): il ventaglio entra dal
+ * bordo nel tavolo finché le carte si vedono intere e dritte (anche quello in alto),
+ * un po' più aperto di quello coperto, sopra nome e avatar di quel giocatore e sopra
+ * la barra in alto. Le carte ruotano attorno a un perno sotto di loro (--i su --n).
+ * Il ritardo dell'entrata lo scrive Table.js, così un ridisegno non la fa ripartire.
+ */
+.revealed-hand {
+  --edge-card: 44px;
+  /* 12 gradi tra due carte, al massimo 40 in tutto: due ventagli di 5 carte stanno ai lati di un telefono */
+  --revealed-spread: min(12deg, 40deg / max(var(--n) - 1, 1));
+  position: fixed;
+  z-index: 3;
+  width: var(--edge-card);
+  aspect-ratio: var(--card-ratio);
+  pointer-events: none;
+  animation: revealed-in 0.3s ease-out both;
+}
+
+.revealed-hand > .card {
+  --card-w: var(--edge-card);
+  position: absolute;
+  inset: 0;
+  box-shadow: var(--shadow-2);
+  transform-origin: 50% 260%;
+  rotate: calc((var(--i) - (var(--n) - 1) / 2) * var(--revealed-spread));
+}
+
+.revealed-hand--top {
+  --from-x: 0px;
+  --from-y: -40px;
+  top: 12px;
+  left: 50%;
+  translate: -50% 0;
+}
+
+.revealed-hand--left,
+.revealed-hand--right {
+  top: 50%;
+  translate: 0 -50%;
+}
+
+/* Ai lati il ventaglio aperto sporge di quasi una carta e mezza dal suo centro: tanto spazio dal bordo */
+.revealed-hand--left {
+  --from-x: -40px;
+  --from-y: 0px;
+  left: calc(var(--edge-card) * 1.4 + 6px);
+}
+
+.revealed-hand--right {
+  --from-x: 40px;
+  --from-y: 0px;
+  right: calc(var(--edge-card) * 1.4 + 6px);
+}
+
+/* Sotto i 1024 px (2v2) i ventagli ai lati scendono un po': la scritta al centro resta libera */
+@media (max-width: 1023px) {
+  .revealed-hand--left,
+  .revealed-hand--right {
+    top: 60%;
+  }
+}
+
+@keyframes revealed-in {
+  from {
+    opacity: 0;
+    transform: translate(var(--from-x), var(--from-y));
+  }
+}
+
+/* La scritta al centro mentre si vedono le carte calate (P85), come "Prende …" (P57) */
+.laid-down {
+  position: relative;
+  z-index: 4; /* sopra i ventagli scoperti */
+  display: grid;
+  place-items: center;
+  min-width: 0;
+}
+
+.laid-down__text {
+  max-width: 70vw;
+  overflow: hidden;
+  padding: 4px 14px;
+  border-radius: var(--radius-pill);
+  background: var(--yellow);
+  color: var(--text);
+  font-family: var(--font-title);
+  font-size: 1rem;
+  font-weight: 800;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-shadow: none;
+  box-shadow: var(--shadow-2);
+  animation: sang-in 0.3s ease-out;
+}
+
 /* I giocatori ai lati si spostano un po' verso il centro, lontano dal ventaglio */
 .seat--left { padding-left: 14px; }
 .seat--right { padding-right: 14px; }
@@ -465,8 +561,9 @@
     font-size: 1.5rem;
   }
 
-  /* P74: carte degli avversari più grandi (prima 56 px) */
-  .edge-hand {
+  /* P74: carte degli avversari più grandi (prima 56 px); P85: anche scoperte */
+  .edge-hand,
+  .revealed-hand {
     --edge-card: 72px;
   }
 

@@ -22,6 +22,19 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P85 — "Cala le carte": pulsante e carte calate al tavolo (04/10/2026)
+
+- **Branch**: feature/p85-cala-le-carte (fatto da Claude, con il permesso di Christian per commit, merge e push dei punti P85–P103)
+- **File** (lista definitiva per 9.2): modificati `app/static/js/core/events.js` (`GAME_LAY_DOWN`), `components/SingButtons.js` (pulsante "Cala le carte"), `components/Hand.js` (`RevealedHand`), `components/Table.js`, `pages/game.js`, `app/static/css/components/table.css`, questo file; creato `tests/table/test_calata.py`
+- **Cosa cambia**: (1) accanto ai pulsanti "Canta" c'è **"Cala le carte"** (icona `playing_cards`, già nel font) solo quando `legal.lay_down` è vero; manda `game:lay_down` con la `version` come una carta (doppio clic: la seconda volta il pulsante è già spento); (2) quando arriva una mano finita **nuova** con `last_hand.laid_down`, per **3 s** (`LAID_DOWN_MS`, uguale a `LAID_DOWN_SECONDS` del server) i ventagli degli altri **entrano scoperti nel tavolo**, interi e dritti (anche quello in alto), con l'entrata da 0,3 s; la tua mano è quella del momento della calata (non si gioca); al centro, al posto della presa, la scritta gialla "Turi cala le carte" ("Hai calato le carte" se sei tu), con tutte le carte per i lettori di schermo; poi il riepilogo come sempre; se la calata **chiude la partita** dopo i 3 s arriva il riquadro finale; (3) con una calata `last_hand.last_trick` non si rilancia (è una presa già vista)
+- **Scelte di Christian** (04/10, chieste prima di cominciare): ventagli scoperti invece delle carte in righe al centro; quando i ventagli, che stanno per metà fuori dallo schermo, si sono rivelati illeggibili, ha scelto che **entrino nel tavolo** coprendo per un momento nome e avatar di quel giocatore
+- **Scelte di Claude**: ventaglio scoperto aperto al massimo 12° tra due carte e 40° in tutto (due ventagli di 5 carte stanno ai lati di un telefono); sotto i 1024 px i ventagli ai lati scendono al 60% dell'altezza per lasciare libera la scritta; testo "Hai calato le carte" per chi cala. Guardato con gli screenshot a 360×640, 768×1024, 1024×768 e 1280×720, nel 1v1 e nel 2v2 con 3 e 5 carte a testa
+- **Controlli**: `tests/table/test_calata.py` **10 PASS** (durata uguale alla pausa del server, nome dell'evento, pulsante solo con `lay_down`, carte calate e poi riepilogo nel 1v1 e nel 2v2 a 360×640 e 1280×720 con le carte giuste di ogni posto e dentro lo schermo, "Hai calato", calata che chiude la partita, nessuna carta rilanciata); rilanciati anche `test_momenti_tavolo.py`, `test_pagina_tavolo.py`, `test_grafica_tavolo.py`, `test_tavolo_telefono.py`, `test_icone.py`: in tutto 82 PASS. Il giro completo si fa alla fine di P85–P103. `ruff check .` pulito
+- **Decisioni prese**: quelle sopra (ventagli che entrano nel tavolo)
+- **Domande nuove**: nessuna
+- **Punti delicati**: `RevealedHand` (Hand.js) servirà anche a P93 per il ventaglio del compagno; la calata si riconosce da `last_hand.hand_number` cambiato con `laid_down` non nullo (non da `hand_number`, che a partita finita non sale); se cambia `LAID_DOWN_MS` va cambiato anche `LAID_DOWN_SECONDS` in `room.py` (lo controlla `test_durata_uguale_alla_pausa_del_server`)
+- **Cosa devono fare gli altri**: **Giuseppe**: niente; nel contratto (3.2, 3.3) c'è ancora "da approvare da Christian" accanto a `game:lay_down`, `legal.lay_down` e `last_hand.laid_down`: sono approvati dal 04/10 (`DECISIONI.md`), puoi togliere la nota quando tocchi il contratto. **Chi è di turno sui documenti**: spuntare P85, lista definitiva in 9.2
+
 ### Documenti: prova del tavolo del 04/10 (P94–P103) e registrazione di P84 (04/10/2026)
 
 - **Branch**: docs/cose-da-sistemare-04-10

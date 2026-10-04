@@ -25,13 +25,16 @@
  * DeckAndTrump di Trick.js).
  * I punti della mano in corso (P72, D44): i tuoi sopra la mano a sinistra; quelli degli
  * avversari a sinistra dell'avversario in alto (1v1) o sopra quello a sinistra (2v2).
+ * P85: "Cala le carte" accanto ai canti (legal.lay_down); quando qualcuno cala, per un
+ * momento (moments.laidDown) i ventagli degli altri entrano scoperti nel tavolo
+ * (RevealedHand), la tua mano è quella della calata e al centro c'è chi ha calato.
  * Stile in css/components/table.css, trick.css, hand-summary.css e css/pages/game.css.
  */
 
 import { el, icon } from '../utils/dom.js';
 import { Avatar } from './Avatar.js';
-import { Card } from './Card.js';
-import { EdgeHand, Hand } from './Hand.js';
+import { Card, cardName } from './Card.js';
+import { EdgeHand, Hand, RevealedHand } from './Hand.js';
 import { HandSummary } from './HandSummary.js';
 import { Scoreboard } from './Scoreboard.js';
 import { SingButtons } from './SingButtons.js';
@@ -188,6 +191,28 @@ function winnerText(view, seat) {
   return `Prende ${view.players[seat]?.username ?? 'un giocatore'}`;
 }
 
+/** P85: "Hai calato le carte", "Turi cala le carte". */
+function layDownText(view, seat) {
+  if (seat === view.you.seat) return 'Hai calato le carte';
+  return `${view.players[seat]?.username ?? 'Un giocatore'} cala le carte`;
+}
+
+/**
+ * P85: la scritta al centro mentre si vedono le carte calate (al posto della presa,
+ * che a inizio presa è vuota). Per i lettori di schermo dice anche le carte di tutti.
+ */
+function LaidDownNotice(view, laid, positionOf) {
+  const text = layDownText(view, laid.seat);
+  const cards = laid.hands
+    .filter(({ cards: list }) => list.length)
+    .map(({ seat, cards: list }) => `${seat === view.you.seat ? 'tu' : view.players[seat]?.username}: ${list.map(cardName).join(', ')}`);
+  return el('div', {
+    class: `laid-down laid-down--from-${positionOf(laid.seat)}`,
+    data: { laidDown: '', laidDownSeat: laid.seat },
+    attrs: { role: 'status', 'aria-label': `${text}. ${cards.join('; ')}` },
+  }, [el('span', { class: 'laid-down__text', text, attrs: { 'aria-hidden': 'true' } })]);
+}
+
 /**
  * @param {object} view la vista di gioco
  * @param {object} handlers
@@ -208,6 +233,9 @@ function winnerText(view, seat) {
  *   hand_points (a fine mano, quelli della mano appena chiusa)
  * @param {function} [moments.onCloseSummary] pulsante "Ok" del riepilogo
  * @param {object} [moments.sang] posto → evento game:sang da mostrare
+ * @param {object|null} [moments.laidDown] P85: le carte calate (last_hand.laid_down) da mostrare adesso
+ * @param {number} [moments.laidDownFor] P85: millisecondi da quando si vedono
+ * @param {function} [handlers.onLayDown] P85: pulsante "Cala le carte"
  * @param {object|null} [phrases] frasi del tavolo (P56); null finché l'elenco non arriva
  * @param {Array} phrases.list l'elenco di game:phrases ({code, text})
  * @param {boolean} phrases.open l'elenco è aperto
@@ -217,11 +245,14 @@ function winnerText(view, seat) {
  * @param {object} phrases.bubbles posto → testo del fumetto da mostrare
  * @returns {HTMLElement}
  */
-export function Table(view, { onPlay, onSing, onLeave }, status = '', moments = {}, phrases = null) {
+export function Table(view, { onPlay, onSing, onLeave, onLayDown = null }, status = '', moments = {}, phrases = null) {
   const {
     lastTrick = null, lastTrickFor = 0, thrown = {}, drawnSeats = {}, drawnCards = {},
     deal = null, summary = null, onCloseSummary = null, sang = {},
+    laidDown = null, laidDownFor = 0,
   } = moments;
+  // P85: mentre si vedono le carte calate, posto → le sue carte
+  const laidHands = laidDown ? Object.fromEntries(laidDown.hands.map(({ seat, cards }) => [seat, cards])) : null;
   const bubbles = phrases ? phrases.bubbles : {};
   const positionOf = positionFn(view);
   const me = view.players.find((player) => player.seat === view.you.seat);
@@ -257,9 +288,11 @@ export function Table(view, { onPlay, onSing, onLeave }, status = '', moments = 
     ...others.map((player) =>
       Seat(view, player, positionOf(player.seat), sang[player.seat], bubbles[player.seat], points[player.seat])),
     el('div', { class: 'table__center' }, [
-      lastTrick
+      laidDown ? LaidDownNotice(view, laidDown, positionOf) : null,
+      lastTrick && !laidDown
         ? LastTrick(lastTrick, positionOf, winnerText(view, lastTrick.winner_seat), { shownFor: lastTrickFor, thrown })
-        : Trick(view.trick, positionOf, thrown),
+        : null,
+      !lastTrick && !laidDown ? Trick(view.trick, positionOf, thrown) : null,
       DeckAndTrump(view.deck_count, view.trump, deal ? deal.shuffled : null),
     ]),
     summary ? HandSummary(view, summary, { onClose: onCloseSummary }) : null,
@@ -274,20 +307,33 @@ export function Table(view, { onPlay, onSing, onLeave }, status = '', moments = 
   ]);
   const mine = el('div', { class: 'table__mine' }, [
     meRow,
-    SingButtons(view.legal.sing, view.sings, onSing),
-    Hand(view.hand, { playable: view.legal.play, onPlay, drawn: drawnCards, dealt: deal ? deal.mine : {} }),
+    SingButtons(view.legal.sing, view.sings, onSing, { can: Boolean(view.legal.lay_down), onLayDown }),
+    // P85: mentre si vedono le carte calate, la tua mano è quella del momento in cui si è calato
+    laidHands
+      ? Hand(laidHands[me.seat] ?? [])
+      : Hand(view.hand, { playable: view.legal.play, onPlay, drawn: drawnCards, dealt: deal ? deal.mine : {} }),
     el('p', { class: 'table__status', text: status, data: { tableStatus: '' }, attrs: { role: 'status', 'aria-live': 'polite' } }),
   ]);
 
-  // P70: le carte coperte degli altri, a ventaglio dal bordo dello schermo dal loro lato
-  const edgeHands = others.map((player) =>
-    EdgeHand(player.cards_in_hand, positionOf(player.seat), drawnSeats[player.seat] ?? null,
-      deal ? deal.seats[player.seat] ?? null : null));
+  // P70: le carte coperte degli altri, a ventaglio dal bordo dello schermo dal loro lato;
+  // P85: mentre si vedono le carte calate, scoperte e dentro il tavolo
+  const edgeHands = others.map((player) => {
+    const side = positionOf(player.seat);
+    if (laidHands) {
+      const cards = laidHands[player.seat] ?? [];
+      if (!cards.length) return null;
+      const revealed = RevealedHand(cards, side, player.seat, `Carte di ${player.username}`);
+      revealed.style.animationDelay = `${-Math.round(laidDownFor)}ms`;
+      return revealed;
+    }
+    return EdgeHand(player.cards_in_hand, side, drawnSeats[player.seat] ?? null,
+      deal ? deal.seats[player.seat] ?? null : null);
+  });
 
-  // A fine partita il riquadro arriva dopo che si è vista l'ultima presa
-  const result = view.result && !lastTrick ? Result(view) : null;
+  // A fine partita il riquadro arriva dopo che si è vista l'ultima presa (o le carte calate, P85)
+  const result = view.result && !lastTrick && !laidDown ? Result(view) : null;
   return el('div', {
     class: 'table__inner',
     data: { mode: view.mode, version: view.version, status: view.status },
-  }, [...edgeHands, topbar, board, mine, result]);
+  }, [...edgeHands.filter(Boolean), topbar, board, mine, result]);
 }

@@ -8,6 +8,7 @@ export const EVENTS = Object.freeze({
   GAME_JOIN: 'game:join',
   GAME_PLAY_CARD: 'game:play_card',
   GAME_SING: 'game:sing',
+  GAME_LAY_DOWN: 'game:lay_down',
   GAME_SEND_PHRASE: 'game:send_phrase',
   GAME_LEAVE: 'game:leave',
   GAME_STATE: 'game:state',
