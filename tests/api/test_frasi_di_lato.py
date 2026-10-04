@@ -93,14 +93,18 @@ def test_da_computer_le_frasi_in_un_pannello_a_destra(browser, server, mode, siz
     assert box["overflow"] == "auto"
 
     # Niente di quello che serve per giocare sta sotto il pannello
-    covered_ok = {"seat-right", "fan-right"} if mode == "2v2" else set()
+    # P100: nel 1v1 il mazzo sta sotto "Frasi" e il pannello aperto lo copre (scelta di
+    # Christian del 05/10/2026: la briscola resta nel tondo in alto, P102)
+    covered_ok = {"seat-right", "fan-right"} if mode == "2v2" else {"deck", "deckCount"}
     for name, rects in parts.items():
         if name in covered_ok:
             continue
         for rect in rects:
             assert not _overlap(menu, rect), (mode, size, f"il pannello copre {name}")
-    for selector in ("[data-trick] .card", "[data-deck-count] .card", ".table__mine .hand > .card",
-                     '[data-edge-hand="top"] > .card'):
+    visible = ["[data-trick] .card", ".table__mine .hand > .card", '[data-edge-hand="top"] > .card']
+    if mode == "2v2":
+        visible.append("[data-deck-count] .card")  # nel 1v1 il pannello copre il mazzo (P100)
+    for selector in visible:
         assert browser.js(f"{HIT}({json.dumps(selector)})"), (mode, size, f"{selector} non si può cliccare")
 
 

@@ -1,10 +1,12 @@
 """P71: grafica del tavolo dopo la prova sul telefono.
 
 Controlla il "Fatto quando" di SCALETTA.md (P71): il seme della briscola sta al
-centro sopra il mazzo, senza nome; P77: è l'unico posto dove si vede (niente tondo
-sopra la mano) e a mazzo finito il seme resta dov'era il mazzo, con la sua misura,
-fino a fine mano; niente "Carte franche" né "mazziere";
-sul telefono, nel 1v1, il mazzo sta sul bordo destro; mazzo e carte della presa sono
+centro sopra il mazzo, senza nome; P102 (cambia P77): la briscola si vede anche in un
+tondo in alto a destra (sul telefono simmetrico a "Esci", da computer a sinistra del
+tabellone) e a mazzo finito resta solo il tondo, con uno spazio vuoto della misura del
+mazzo al suo posto; niente "Carte franche" né "mazziere";
+sul telefono, nel 1v1, il mazzo sta sul bordo destro (P100: 64 px); da computer, nel
+1v1, sotto la pillola "Frasi" e la presa al centro; mazzo e carte della presa sono
 più grandi; il pulsante delle frasi sta sopra la mano a destra e l'elenco si apre
 verso l'alto senza coprire la mano; il tavolo non scorre alle misure di
 docs/prototipo/LEGGIMI.md.
@@ -83,11 +85,25 @@ def _boxes(browser):
     })()""")
 
 
+def _badge(browser):
+    """P102: il tondo della briscola, con "Esci", il ventaglio e il posto in alto."""
+    return browser.js("""(() => {
+      const rect = (e) => { if (!e) return null; const b = e.getBoundingClientRect();
+        return { l: b.left, t: b.top, r: b.right, b: b.bottom, w: b.width }; };
+      const e = document.querySelector('[data-trump-badge]'); if (!e) return null;
+      return { ...rect(e), suit: e.dataset.trumpBadge, label: e.getAttribute('aria-label'),
+               leave: rect(document.querySelector('[data-leave]')),
+               fan: rect(document.querySelector('[data-edge-hand="top"]')),
+               seat: rect(document.querySelector('.table__board [data-position="top"]')),
+               scoreboard: rect(document.querySelector('[data-scoreboard]')) };
+    })()""")
+
+
 def _overlap(a, b):
     return a["l"] < b["r"] and a["r"] > b["l"] and a["t"] < b["b"] and a["b"] > b["t"]
 
 
-def test_briscola_solo_sul_mazzo_al_telefono(browser, server):
+def test_briscola_sul_mazzo_e_nel_tondo_al_telefono(browser, server):
     base = _view("1v1")
     _open(browser, server, "1v1")
     # Una carta nella presa, per misurarla
@@ -109,13 +125,19 @@ def test_briscola_solo_sul_mazzo_al_telefono(browser, server):
     assert not _overlap(box["deck"], box["trick"])
 
     # Mazzo e carte della presa più grandi di prima (40 e 48 px); P86 ingrandisce il
-    # mazzo solo da computer: sul telefono resta da 56 px
-    assert abs(box["deckCard"]["w"] - 56) <= 1
+    # mazzo da computer; P100: sul telefono, nel 1v1, 64 px (prima 56)
+    assert abs(box["deckCard"]["w"] - 64) <= 1
     assert box["trickCard"]["w"] >= 60 - 1
 
-    # P77: la briscola si vede una volta sola, sul mazzo; niente tondo vicino alla mano
+    # P102: sul mazzo e nel tondo in alto a destra, simmetrico a "Esci" e un po' più grande
     assert browser.js("document.querySelectorAll('[data-trump]').length") == 1
-    assert browser.js("document.querySelector('[data-trump-badge], .trump-badge')") is None
+    badge = _badge(browser)
+    assert badge["suit"] == base["trump"] and badge["label"] == f"Briscola: {base['trump']}"
+    assert badge["w"] == pytest.approx(52, abs=1) and badge["w"] > badge["leave"]["w"]
+    assert badge["r"] == pytest.approx(box["w"] - badge["leave"]["l"], abs=1)
+    assert (badge["t"] + badge["b"]) / 2 == pytest.approx((badge["leave"]["t"] + badge["leave"]["b"]) / 2, abs=1)
+    for part in ("fan", "seat"):
+        assert not _overlap(badge, badge[part]), part
 
     # Sopra la mano: i tuoi punti a sinistra, tu al centro, frasi a destra; niente copre la mano
     points, me, button, hand = box["points"], box["me"], box["button"], box["hand"]
@@ -127,25 +149,32 @@ def test_briscola_solo_sul_mazzo_al_telefono(browser, server):
 
 @pytest.mark.parametrize("mode", ["1v1", "2v2"])
 @pytest.mark.parametrize("size", [(360, 640), (1280, 720)], ids=lambda s: f"{s[0]}x{s[1]}")
-def test_mazzo_finito_resta_il_seme_dov_era_il_mazzo(browser, server, mode, size):
+def test_mazzo_finito_resta_lo_spazio_e_il_tondo(browser, server, mode, size):
+    # P102 (cambia P77): a mazzo finito il seme sul mazzo sparisce, resta il tondo
     base = _view(mode)
     _open(browser, server, mode, size)
     trumped = _state(base, trump="denari", sings=[{"seat": 0, "suit": "denari", "points": 40}])
     _dispatch(browser, "demo:state", trumped)
-    deck = _boxes(browser)["deck"]
+    before = _boxes(browser)
+    badge = _badge(browser)
     _dispatch(browser, "demo:state", _state(trumped, deck_count=0))
     empty = browser.js("""(() => { const e = document.querySelector('[data-deck-empty]');
-      const t = e.querySelector('[data-trump]'); const b = e.getBoundingClientRect(); const r = t.getBoundingClientRect();
-      return { l: b.left, t: b.top, r: b.right, b: b.bottom, trump: t.dataset.trump, label: e.getAttribute('aria-label'),
-               trumpShown: r.width > 0 && getComputedStyle(t).visibility === 'visible',
+      const b = e.getBoundingClientRect();
+      return { l: b.left, t: b.top, r: b.right, b: b.bottom, hidden: e.getAttribute('aria-hidden'),
                slotShown: getComputedStyle(e.querySelector('.card')).visibility !== 'hidden' }; })()""")
     assert browser.js("document.querySelector('[data-deck-count]')") is None
-    # Stesso posto e stessa misura del mazzo; si vede solo il seme
+    # Uno spazio vuoto dov'era il mazzo, della stessa misura; niente seme
     for side in ("l", "t", "r", "b"):
-        assert abs(empty[side] - deck[side]) <= 1, side
-    assert empty["trump"] == "denari" and empty["trumpShown"] is True and empty["slotShown"] is False
-    assert empty["label"] == "Mazzo finito. Briscola: denari"
-    assert browser.js("document.querySelectorAll('[data-trump]').length") == 1
+        assert abs(empty[side] - before["deck"][side]) <= 1, side
+    assert empty["slotShown"] is False and empty["hidden"] == "true"
+    assert browser.js("document.querySelector('[data-trump]')") is None
+    # Il tondo resta uguale e la presa non si sposta
+    after = _badge(browser)
+    trick = _boxes(browser)["trick"]
+    assert after["suit"] == "denari"
+    for side in ("l", "t", "r", "b"):
+        assert abs(after[side] - badge[side]) <= 1, side
+        assert abs(trick[side] - before["trick"][side]) <= 1, side
     assert "Mazzo finito" not in browser.js("document.querySelector('[data-table]').innerText")
 
 
@@ -266,7 +295,7 @@ def test_mazzo_finito_senza_briscola_niente(browser, server):
     base = _view("2v2")
     _open(browser, server, "2v2")
     _dispatch(browser, "demo:state", _state(base, deck_count=0))
-    assert browser.js("document.querySelector('[data-deck-count], [data-deck-empty], [data-trump]')") is None
+    assert browser.js("document.querySelector('[data-deck-count], [data-deck-empty], [data-trump], [data-trump-badge]')") is None
 
 
 def test_prima_del_40_niente_briscola_ne_scritte(browser, server):
@@ -316,3 +345,43 @@ def test_il_tavolo_non_scorre(browser, server, mode):
             assert not _overlap(box["trick"], seat), (mode, size, "la presa copre un giocatore", seat)
             assert not _overlap(box["deck"], seat), (mode, size, "il mazzo copre un giocatore", seat)
         assert not _overlap(box["deck"], box["me"]), (mode, size, "il mazzo copre la tua riga")
+
+
+@pytest.mark.parametrize("size", [(1024, 768), (1280, 720), (1440, 900), (1920, 1080)], ids=lambda s: f"{s[0]}x{s[1]}")
+def test_da_computer_mazzo_del_1v1_sotto_frasi(browser, server, size):
+    # P100: il centro del mazzo sulla verticale della pillola "Frasi"; la presa al centro
+    _open(browser, server, "1v1", size)
+    box = _boxes(browser)
+    deck, button = box["deck"], box["button"]
+    assert abs((deck["l"] + deck["r"]) / 2 - (button["l"] + button["r"]) / 2) <= 6
+    trick = box["trick"]
+    assert abs((trick["l"] + trick["r"]) / 2 - box["w"] / 2) <= 2
+    badge = _badge(browser)
+    for name, part in (("presa", trick), ("ventaglio", badge["fan"]), ("avversario", badge["seat"]),
+                       ("tabellone", badge["scoreboard"]), ("briscola", badge)):
+        assert not _overlap(deck, part), name
+    assert box["scrollH"] <= box["h"] and box["scrollW"] <= box["w"]
+
+
+@pytest.mark.parametrize("mode", ["1v1", "2v2"])
+@pytest.mark.parametrize("size", [(1024, 768), (1280, 720), (1440, 900)], ids=lambda s: f"{s[0]}x{s[1]}")
+def test_da_computer_briscola_a_sinistra_del_tabellone(browser, server, mode, size):
+    # P102: tondo un po' più alto di "Esci", a sinistra del tabellone, senza toccare niente
+    base = _view(mode)
+    _open(browser, server, mode, size)
+    _dispatch(browser, "demo:state", _state(base, trump="denari", sings=[{"seat": 1, "suit": "denari", "points": 40}]))
+    badge = _badge(browser)
+    board = badge["scoreboard"]
+    assert badge["w"] == pytest.approx(52, abs=1) and badge["b"] - badge["t"] > badge["leave"]["b"] - badge["leave"]["t"]
+    assert badge["r"] <= board["l"] and board["l"] - badge["r"] <= 16
+    assert abs((badge["t"] + badge["b"]) / 2 - (board["t"] + board["b"]) / 2) <= 1
+    for part in ("leave", "fan", "seat", "scoreboard"):
+        assert not _overlap(badge, badge[part]), part
+    # Il tabellone resta nell'angolo in alto a destra (P74)
+    assert board["r"] == pytest.approx(size[0] - 24, abs=1) and board["t"] == pytest.approx(14, abs=1)
+
+
+def test_nel_2v2_il_mazzo_non_cambia(browser, server):
+    # P100: solo il 1v1; nel 2v2 sul telefono il mazzo resta da 56 px
+    _open(browser, server, "2v2")
+    assert abs(_boxes(browser)["deck"]["w"] - 56) <= 1

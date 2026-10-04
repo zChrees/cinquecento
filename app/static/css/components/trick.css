@@ -277,6 +277,11 @@
     translate: 0 -50%;
   }
 
+  /* P100: nel 1v1 il mazzo è un po' più grande (prima 56 px) */
+  .table__board--1v1 .deck .card {
+    --card-w: 64px;
+  }
+
   .table__board--2v2 .deck {
     position: absolute;
     top: 0;

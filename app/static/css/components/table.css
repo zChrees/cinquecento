@@ -43,6 +43,44 @@
   filter: none;
 }
 
+/*
+ * P102: angolo destro in alto, con il tondo della briscola (solo quando c'è) e, da
+ * computer, il tabellone. Il tondo è di vetro scuro come "Esci", un po' più grande
+ * (52 px), con il seme su un disco chiaro come sopra il mazzo. Sul telefono sta nella
+ * riga di "Esci", simmetrico; i margini negativi non fanno crescere la riga (44 px),
+ * così il tavolo non scende quando compare la briscola.
+ */
+.table__corner {
+  grid-column: 3;
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.trump-badge {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 52px;
+  height: 52px;
+  margin-block: -4px;
+  border: 1px solid var(--glass-edge);
+  border-radius: 50%;
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+.trump-badge__suit {
+  width: 38px;
+  aspect-ratio: 1;
+  padding: 3px;
+  border-radius: 50%;
+  background: var(--surface);
+  object-fit: contain;
+}
+
 /* P90: sotto 1024 px "Esci" è un tondo con la sola icona, così non arriva mai alle
    carte dell'avversario in alto, nemmeno con il carattere grande; la scritta resta
    per i lettori di schermo */
@@ -604,8 +642,13 @@
 
 /* Su tablet e computer la mano si rimpicciolisce sugli schermi bassi, così il tavolo non scorre */
 @media (min-width: 640px) {
+  /* P100: la stessa misura serve anche per mettere il mazzo del 1v1 sotto "Frasi" */
+  .table__inner {
+    --mine-card-max: clamp(60px, 13vh, 104px);
+  }
+
   .table__mine .hand {
-    --hand-card-max: clamp(60px, 13vh, 104px);
+    --hand-card-max: var(--mine-card-max);
   }
 }
 
@@ -679,6 +722,36 @@
     position: fixed;
     top: 16px;
     left: 16px;
+  }
+
+  /* P102: tabellone (P74) e, alla sua sinistra, il tondo della briscola */
+  .table__corner {
+    position: fixed;
+    z-index: 1;
+    top: 14px;
+    right: 24px;
+  }
+
+  .trump-badge {
+    margin-block: 0;
+  }
+
+  /*
+   * P100: nel 1v1 il mazzo esce dalla fila della presa (che resta al centro) e va a
+   * destra, con il centro sulla verticale della pillola "Frasi": metà della mano
+   * (5 carte, rules.hand_size, e 4 spazi da 10 px), lo spazio tra le colonne di
+   * .table__mine (20 px) e metà della pillola (circa 47 px)
+   */
+  .table__board--1v1 .table__center {
+    position: relative;
+    justify-self: stretch;
+  }
+
+  .table__board--1v1 .deck {
+    position: absolute;
+    top: 50%;
+    left: calc(50% + 2.5 * var(--mine-card-max) + 20px + 20px + 47px);
+    translate: -50% -50%;
   }
 
   /* In alto (avversario nel 1v1, compagno nel 2v2): punti, avatar e nome a sinistra del ventaglio */

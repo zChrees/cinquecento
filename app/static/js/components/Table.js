@@ -21,8 +21,8 @@
  * riepilogo di fine mano e le carte del canto (D15). Qui si disegnano soltanto.
  * Allo stesso modo le frasi del tavolo (P56) arrivano in `phrases`: pulsante sopra
  * la mano a destra (P71), elenco che si apre verso l'alto e fumetti accanto a chi
- * ha parlato. La briscola si vede solo sul mazzo, e a mazzo finito al suo posto (P77,
- * DeckAndTrump di Trick.js).
+ * ha parlato. La briscola si vede sul mazzo (DeckAndTrump di Trick.js) e, da P102, in
+ * un tondo nell'angolo in alto a destra (TrumpBadge); a mazzo finito solo nel tondo.
  * I punti della mano in corso (P72, D44): i tuoi sopra la mano a sinistra; quelli degli
  * avversari a sinistra dell'avversario in alto (1v1) o sopra quello a sinistra (2v2).
  * P85: "Cala le carte" accanto ai canti (legal.lay_down); quando qualcuno cala, per un
@@ -40,7 +40,7 @@ import { Scoreboard } from './Scoreboard.js';
 import { SingButtons } from './SingButtons.js';
 import { PhraseBubble, PhrasesButton, PhrasesMenu } from './TablePhrases.js';
 import { Timer } from './Timer.js';
-import { DeckAndTrump, LastTrick, Trick } from './Trick.js';
+import { DeckAndTrump, LastTrick, Trick, TrumpBadge } from './Trick.js';
 
 const IMG_BASE = new URL('../../img/cards-bg/', import.meta.url).href;
 const POSITIONS = {
@@ -290,7 +290,8 @@ export function Table(view, { onPlay, onSing, onLeave, onLayDown = null, onAdvis
       attrs: { type: 'button' },
       on: { click: onLeave },
     }, [icon('logout'), el('span', { class: 'table__leave-text', text: 'Esci' })]), // P90: sotto 1024 px solo l'icona
-    Scoreboard(view),
+    // P102: il tondo della briscola (solo quando c'è) accanto al tabellone, nell'angolo destro
+    el('div', { class: 'table__corner' }, [view.trump ? TrumpBadge(view.trump) : null, Scoreboard(view)]),
   ]);
 
   const board = el('div', { class: `table__board table__board--${view.mode}` }, [
