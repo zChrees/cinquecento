@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P95 — Partita interrotta dal riavvio del server (04/10/2026)
+
+- **Branch**: fix/p95-partita-interrotta (fatto da Claude, con il permesso di Christian per commit, merge e push dei punti P85–P103)
+- **File** (lista definitiva per 9.2): modificati `app/static/js/pages/game.js` (`join`, `showGone`), `app/static/css/components/table.css` (`.table__gone`), questo file; creato `tests/table/test_partita_interrotta.py`. Il server non è cambiato: rispondeva già `not_found`
+- **Causa** [T]: dopo il riavvio la pagina si ricollega e manda `game:join`; il server risponde `not_found` ("Questa partita non esiste o è già finita."), ma `join` con il tavolo già disegnato scriveva il messaggio solo nella riga di stato e lasciava il tavolo com'era. Il test nuovo, prima della correzione, falliva su "Tempo scaduto: riquadro della partita interrotta"
+- **Cosa cambia**: con `not_found` al rientro, al posto del tavolo c'è il riquadro **"La partita è stata interrotta"**, "Il server si è riavviato o la partita non esiste più." e **"Torna alla home"**; dopo **5 s** si torna alla home da soli (scelta di Christian); la pagina si ferma come per `game:replaced`. Se la pagina si apre su una partita che non c'è (nessuna vista ancora), resta il messaggio di prima
+- **Controlli**: `tests/table/test_partita_interrotta.py` **1 PASS**, 3 giri su 3 (partita vera contro la CPU, stanza tolta come dopo un riavvio, collegamento chiuso dal server come in P33: riquadro, niente tavolo, ritorno alla home tra 4 e 9 s); rilanciati `test_pagina_tavolo.py`, `test_calata.py`, `test_csp.py`: 27 PASS. `ruff check .` pulito
+- **Decisioni prese**: nessuna oltre a quella del 04/10 (riquadro e home in 5 s)
+- **Domande nuove**: nessuna
+- **Punti delicati**: nel test la home vera **non si apre** (il browser risponde da sé all'indirizzo `/`): al primo giro, con la home vera, il test si è bloccato una volta a fine test (collegamento della home lasciato a metà, come nel punto delicato di P58); la suite `table` non prepara MySQL, quindi il test sostituisce `_ratings_of` e `friends_events.notify_presence`
+- **Cosa devono fare gli altri**: **Chi è di turno sui documenti**: spuntare P95, lista definitiva in 9.2
+
 ### P93 — Carte del compagno scoperte e consiglio al tavolo (04/10/2026)
 
 - **Branch**: feature/p93-carte-compagno (fatto da Claude, con il permesso di Christian per commit, merge e push dei punti P85–P103)

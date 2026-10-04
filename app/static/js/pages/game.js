@@ -9,6 +9,9 @@
  *   game:play_card e game:sing, con la version della vista su cui si è deciso;
  *   finché non arriva la risposta carte e pulsanti restano disattivati.
  * - Se la partita si apre in un'altra scheda (game:replaced, D14) questa si ferma.
+ * - P95: se al rientro (game:join) la partita non esiste più (not_found, per esempio
+ *   dopo un riavvio del server), al posto del tavolo c'è il riquadro "La partita è
+ *   stata interrotta" e dopo 5 secondi si torna alla home.
  * - P33: senza connessione carte, canti e frasi sono spenti; l'avviso in cima alla
  *   pagina lo mostra core/socket.js; al ritorno game:join rimanda la vista attuale.
  * - P25: "Esci", dopo la conferma, manda game:leave (la partita è persa per abbandono)
@@ -69,6 +72,7 @@
  */
 
 import { initLayout } from '../core/layout.js';
+import { el } from '../utils/dom.js';
 import { connect, isConnected, on, onStatus, send } from '../core/socket.js';
 import { EVENTS, NOT_LOGGED_IN } from '../core/events.js';
 import { confirmModal } from '../components/Modal.js';
@@ -687,9 +691,29 @@ async function loadDemo(url) {
 async function join() {
   const answer = await send(EVENTS.GAME_JOIN, { game_id: gameId });
   if (!answer.ok) {
-    if (view) setStatus(answer.error.message);
+    if (view && answer.error.code === 'not_found') showGone();
+    else if (view) setStatus(answer.error.message);
     else showMessage(answer.error.message);
   }
+}
+
+const GONE_HOME_MS = 5000;
+
+/**
+ * P95: la partita che si stava giocando non esiste più (per esempio il server si è
+ * riavviato: le partite stanno solo in memoria). Al posto del tavolo un riquadro con
+ * "Torna alla home", e dopo GONE_HOME_MS si torna alla home da soli. La pagina si
+ * ferma come per game:replaced: niente più ridisegni né mosse.
+ */
+function showGone() {
+  replaced = true;
+  const panel = el('div', { class: 'table__gone panel', data: { gameGone: '' }, attrs: { role: 'alert' } }, [
+    el('h2', { text: 'La partita è stata interrotta' }),
+    el('p', { text: 'Il server si è riavviato o la partita non esiste più.' }),
+    el('a', { class: 'btn btn--primary', text: 'Torna alla home', attrs: { href: '/' } }),
+  ]);
+  root.replaceChildren(panel);
+  setTimeout(() => window.location.assign('/'), GONE_HOME_MS);
 }
 
 function onState(next) {

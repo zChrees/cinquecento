@@ -618,6 +618,15 @@
   text-shadow: var(--relief-text);
 }
 
+/* P95: partita interrotta (il server non la conosce più): riquadro al posto del tavolo */
+.table__gone {
+  display: grid;
+  gap: 12px;
+  width: min(100%, 360px);
+  margin: auto;
+  text-align: center;
+}
+
 /* Fine partita: riquadro al centro, sopra il tavolo */
 .table__result {
   position: absolute;
