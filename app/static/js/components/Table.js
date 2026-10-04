@@ -322,10 +322,12 @@ export function Table(view, { onPlay, onSing, onLeave, onLayDown = null, onAdvis
     el('div', { class: 'table__me-side' }, [points[me.seat] ?? null]),
     Seat(view, me, 'bottom', sang[me.seat], bubbles[me.seat]),
     phrases ? PhrasesButton(phrases) : null,
-    phrases && phrases.open ? PhrasesMenu(phrases.list, phrases) : null,
   ]);
   const mine = el('div', { class: 'table__mine' }, [
     meRow,
+    // P101: l'elenco delle frasi sta in .table__mine: sul telefono copre solo la zona
+    // sotto la tua riga (canti, mano), da computer è il pannello di lato (P80)
+    phrases && phrases.open ? PhrasesMenu(phrases.list, phrases) : null,
     SingButtons(view.legal.sing, view.sings, onSing, { can: Boolean(view.legal.lay_down), onLayDown }),
     // P85: mentre si vedono le carte calate, la tua mano è quella del momento in cui si è calato
     laidHands

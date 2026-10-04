@@ -19,7 +19,8 @@
 
 /*
  * L'elenco: sopra il pulsante, verso l'alto, sopra tutto il resto del tavolo ma mai
- * sopra la mano; se lo schermo è basso l'elenco scorre al suo interno.
+ * sopra la mano; se lo schermo è basso l'elenco scorre al suo interno. Sta in
+ * .table__mine (P101), la cui prima riga è la tua: "sopra" vuol dire sopra la tua riga.
  */
 .phrases-menu {
   position: absolute;
@@ -149,6 +150,27 @@
 @media (min-width: 640px) {
   .phrases-button__text {
     display: inline;
+  }
+
+  /* P101: al bordo destro della tua riga (.table__me, larga al massimo 560 px e centrata), come prima */
+  .phrases-menu {
+    right: calc((100% - min(100%, 560px)) / 2);
+  }
+}
+
+/*
+ * P101: sul telefono l'elenco copre solo la zona delle tue carte, sotto la tua riga
+ * (canti, mano e riga di stato: dalla seconda riga della griglia di .table__mine in
+ * giù), così presa, mazzo e avversari restano visibili; la tua riga resta, con il
+ * pulsante per richiuderlo. Le frasi che non ci stanno scorrono.
+ */
+@media (max-width: 639px) {
+  .phrases-menu {
+    grid-row: 2;   /* fine "auto": per un elemento assoluto è il fondo della griglia */
+    inset: 0;
+    align-content: flex-start;
+    width: auto;
+    max-height: none;
   }
 }
 

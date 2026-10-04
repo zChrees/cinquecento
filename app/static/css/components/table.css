@@ -534,6 +534,7 @@
 
 /* Tu, in basso: avatar e nome in riga, poi i pulsanti Canta e la mano */
 .table__mine {
+  position: relative;   /* P101: l'elenco delle frasi si apre qui dentro */
   display: grid;
   justify-items: center;
   gap: 6px;

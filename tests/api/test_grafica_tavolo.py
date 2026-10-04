@@ -306,16 +306,42 @@ def test_prima_del_40_niente_briscola_ne_scritte(browser, server):
     assert browser.js("document.querySelector('[data-deck-count]') !== null") is True
 
 
-def test_elenco_delle_frasi_verso_l_alto(browser, server):
-    _open(browser, server, "1v1")
+MENU_PARTS = """(() => {
+  const rect = (s) => { const e = document.querySelector(s); if (!e) return null; const b = e.getBoundingClientRect();
+    return { l: b.left, t: b.top, r: b.right, b: b.bottom }; };
+  return { menu: rect('[data-phrases-menu]'), button: rect('[data-phrases-button]'), me: rect('.table__me'),
+           mine: rect('.table__mine'), hand: rect('.table__mine .hand'), trick: rect('[data-trick]'),
+           deck: rect('.deck'), fan: rect('[data-edge-hand="top"]'), top: rect('.table__board [data-position="top"]'),
+           left: rect('.table__board [data-position="left"]'), right: rect('.table__board [data-position="right"]'),
+           w: innerWidth, h: innerHeight, scroll: document.scrollingElement.scrollHeight,
+           scrolls: getComputedStyle(document.querySelector('[data-phrases-menu]')).overflowY };
+})()"""
+
+
+@pytest.mark.parametrize("mode", ["1v1", "2v2"])
+@pytest.mark.parametrize("size", [(360, 640), (390, 844)], ids=lambda s: f"{s[0]}x{s[1]}")
+def test_sul_telefono_le_frasi_sopra_le_tue_carte(browser, server, mode, size):
+    # P101: l'elenco aperto copre solo la zona delle tue carte, sotto la tua riga
+    _open(browser, server, mode, size)
     browser.click("[data-phrases-button]")
-    box = browser.js("""(() => {
-      const rect = (s) => { const b = document.querySelector(s).getBoundingClientRect();
-        return { l: b.left, t: b.top, r: b.right, b: b.bottom }; };
-      return { menu: rect('[data-phrases-menu]'), button: rect('[data-phrases-button]'),
-               hand: rect('.table__mine .hand'), w: innerWidth };
-    })()""")
+    box = browser.js(MENU_PARTS)
+    menu, mine = box["menu"], box["mine"]
+    assert abs(menu["t"] - box["me"]["b"]) <= 8 and abs(menu["b"] - mine["b"]) <= 1, box
+    assert menu["l"] >= 0 and menu["r"] <= box["w"] and box["scroll"] <= box["h"]
+    assert box["scrolls"] == "auto"
+    assert not _overlap(menu, box["button"]) and not _overlap(menu, box["me"])
+    for part in ("trick", "deck", "fan", "top", "left", "right"):
+        if box[part]:
+            assert not _overlap(menu, box[part]), part
+
+
+def test_sul_tablet_elenco_delle_frasi_verso_l_alto(browser, server):
+    # Sul tablet (da 640 px) l'elenco si apre ancora sopra la tua riga, senza coprire la mano
+    _open(browser, server, "1v1", (768, 1024))
+    browser.click("[data-phrases-button]")
+    box = browser.js(MENU_PARTS)
     assert box["menu"]["b"] <= box["button"]["t"]
+    assert abs(box["menu"]["r"] - box["me"]["r"]) <= 1
     assert box["menu"]["t"] >= 0 and box["menu"]["l"] >= 0 and box["menu"]["r"] <= box["w"]
     assert not _overlap(box["menu"], box["hand"])
 

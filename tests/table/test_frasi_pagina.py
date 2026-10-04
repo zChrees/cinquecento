@@ -101,8 +101,9 @@ def _view(mode):
     return json.loads((STATIC / "dev" / f"vista_{mode}.json").read_text(encoding="utf-8"))
 
 
-def _check_fits(browser, selector):
-    """`selector` sta nello schermo, non copre le carte in mano, e la pagina non scorre."""
+def _check_fits(browser, selector, hand_ok=False):
+    """`selector` sta nello schermo, non copre le carte in mano (P101: salvo l'elenco
+    delle frasi sul telefono, `hand_ok`), e la pagina non scorre."""
     box = browser.js(f"""(() => {{
       const rect = (e) => {{ const b = e.getBoundingClientRect(); return {{ l: b.left, t: b.top, r: b.right, b: b.bottom }}; }};
       return {{
@@ -119,7 +120,7 @@ def _check_fits(browser, selector):
         assert item["l"] >= -1 and item["t"] >= -1 and item["r"] <= box["w"] + 1 and item["b"] <= box["h"] + 1, \
             (selector, item, "fuori dallo schermo")
         overlap = item["l"] < hand["r"] and item["r"] > hand["l"] and item["t"] < hand["b"] and item["b"] > hand["t"]
-        assert not overlap, (selector, item, hand, "copre la mano")
+        assert hand_ok or not overlap, (selector, item, hand, "copre la mano")
 
 
 def test_senza_elenco_niente_pulsante(browser, server):
@@ -137,7 +138,8 @@ def test_elenco_a_360_px(browser, server):
     texts = browser.js("[...document.querySelectorAll('[data-phrases-menu] [data-phrase-code]')].map((p) => p.textContent)")
     assert texts == [phrase["text"] for phrase in PHRASES["phrases"]]
     assert browser.js("document.querySelector('[data-phrases-button]').getAttribute('aria-expanded')") == "true"
-    _check_fits(browser, "[data-phrases-menu]")
+    # P101: sul telefono l'elenco copre la zona delle tue carte (le frasi scorrono)
+    _check_fits(browser, "[data-phrases-menu]", hand_ok=True)
 
 
 def test_frase_mandata_fumetto_e_pausa(browser, server):
@@ -179,6 +181,8 @@ def test_tocchi_rapidi_una_frase_per_pausa(browser, server):
     # resterebbe spento più dei 3 secondi dalla prima
     _open(browser, server, "2v2")
     _real_click(browser, "[data-phrases-button]")
+    # P101: l'elenco scorre nella zona delle tue carte: la frase si porta in vista
+    browser.js("document.querySelector(\"[data-phrase-code='mizzica']\").scrollIntoView({ block: 'nearest' })")
     menu = browser.js("""(() => { const b = document.querySelector("[data-phrase-code='mizzica']").getBoundingClientRect();
       return { x: b.left + b.width / 2, y: b.top + b.height / 2 }; })()""")
     _real_click(browser, "[data-phrase-code='mizzica']")

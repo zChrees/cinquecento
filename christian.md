@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P101 — Frasi del tavolo sul telefono aperte sopra le proprie carte (05/10/2026)
+
+- **Branch**: feature/p101-frasi-telefono (fatto da Claude, con il permesso di Christian per commit, merge e push dei punti P85–P103)
+- **File** (lista definitiva per 9.2): modificati `app/static/js/components/Table.js` (l'elenco è figlio di `.table__mine`, non più della tua riga), `app/static/css/components/table.css` (`.table__mine` con `position: relative` a ogni misura), `table-phrases.css`, `tests/table/test_frasi_pagina.py`, `tests/api/test_grafica_tavolo.py`, questo file
+- **Cosa cambia**: **sul telefono** (sotto 640 px) l'elenco delle frasi aperto copre **solo la zona delle tue carte**: dalla fine della tua riga (avatar, punti, pulsante "Frasi", che restano visibili per richiuderlo) fino in fondo, cioè pulsanti "Canta" e mano; presa, mazzo, avversari e compagno restano visibili. Le frasi che non ci stanno **scorrono** dentro l'elenco (a 360×640 circa 4 righe nel 1v1, 3 nel 2v2 quando non ci sono pulsanti "Canta"). **Sul tablet** l'elenco si apre come prima, sopra la tua riga (posizione misurata uguale a prima); **da computer** resta il pannello di lato (P80), uguale
+- **Scelte di Claude**: la zona coperta comincia sotto la tua riga (così il pulsante per richiudere resta visibile); "telefono" = sotto 640 px, come gli altri stili del telefono
+- **Controlli**: `test_grafica_tavolo.py` nuovi `test_sul_telefono_le_frasi_sopra_le_tue_carte` (1v1 e 2v2 a 360×640 e 390×844: l'elenco va dalla tua riga al fondo, non copre presa, mazzo, ventaglio e giocatori, scorre, la pagina non scorre) e `test_sul_tablet_elenco_delle_frasi_verso_l_alto`; `test_frasi_pagina.py` aggiornato (l'elenco al telefono può coprire la mano; nei tocchi rapidi la frase si porta in vista prima del clic); con `test_frasi_di_lato.py`, `test_tavolo_telefono.py`, `test_calata.py`, `test_carte_compagno.py`: **89 PASS**. `ruff check .` pulito. Guardato con gli screenshot a 360×640 (1v1 e 2v2), 390×844, 768×1024
+- **Decisioni prese**: nessuna oltre a quella del 04/10
+- **Domande nuove**: nessuna
+- **Punti delicati**: sul telefono l'elenco usa la griglia di `.table__mine` (`grid-row: 2`, fine "auto" = fondo della griglia): la tua riga deve restare la **prima** riga di `.table__mine`; sul tablet il bordo destro si allinea alla tua riga, larga al massimo 560 px (`max-width` di `.table__me`): se cambia, va cambiato anche in `table-phrases.css`
+- **Cosa devono fare gli altri**: **Chi è di turno sui documenti**: spuntare P101, lista definitiva in 9.2
+
 ### P100 e P102 — Mazzo del 1v1 e indicatore della briscola (05/10/2026)
 
 - **Branch**: feature/p100-p102-mazzo-briscola (fatto da Claude, con il permesso di Christian per commit, merge e push dei punti P85–P103)
