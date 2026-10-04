@@ -46,6 +46,17 @@
     </div>
   </form>
 
+  {# P103: i suoni al tavolo; la scelta si ricorda nel browser (js/core/sounds.js), all'inizio accesi #}
+  <section class="settings__group" data-sounds>
+    <h2 class="settings__subtitle">Suoni</h2>
+    <label class="switch">
+      <span class="switch__text">Suoni al tavolo</span>
+      <input class="switch__input" type="checkbox" role="switch" checked data-sounds-toggle>
+      <span class="switch__track" aria-hidden="true"></span>
+    </label>
+    <p class="settings__text">Mescolata, carte, canti, il tuo turno e la fine della partita. La scelta vale per questo browser.</p>
+  </section>
+
   <section class="settings__group settings__danger" data-delete>
     <h2 class="settings__subtitle">Cancella l'account</h2>
     <p class="settings__text">Rating, amici e messaggi spariscono per sempre. Le partite giocate restano, con "utente eliminato" al posto del tuo nome.</p>

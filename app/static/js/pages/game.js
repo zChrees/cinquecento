@@ -80,6 +80,7 @@ import { confirmModal } from '../components/Modal.js';
 import { Table } from '../components/Table.js';
 import { cardName, preloadCardImages, reuseCardImages, sameCard } from '../components/Card.js';
 import { throwKey } from '../components/Trick.js';
+import { playSound } from '../core/sounds.js';
 
 initLayout();
 
@@ -99,6 +100,8 @@ const DRAW_MS = 500; // come la durata di card-draw in css/components/hand.css (
 const SHUFFLE_MS = 600; // come la durata di deck-riffle in css/components/trick.css (P70)
 const DEAL_STEP_MS = 80; // tra una carta distribuita e la successiva
 const HIDDEN = -1e6; // "parte tra molto": la carta resta nascosta finché la distribuzione non comincia
+const TRICK_AWAY_MS = 1100; // P103: le carte della presa chiusa scivolano via (AWAY_DELAY_MS di Trick.js)
+const TICK_SECONDS = 5; // P103: il ticchettio negli ultimi secondi del tuo turno
 
 let view = null;
 let viewAt = 0; // quando è arrivata la vista (performance.now), per far scendere i secondi
@@ -138,6 +141,13 @@ let dealWaiting = false; // P70: mano nuova, la distribuzione aspetta la fine di
 let dealAt = 0; // P70: performance.now() dell'inizio della mescolata
 let dealEnd = 0; // P70: performance.now() dell'ultima carta arrivata
 let dealTimer = 0;
+
+// P103, suoni: il tuo turno annunciato o che aspetta la fine delle pause, il ticchettio,
+// il riquadro di fine partita che aspetta di comparire
+let turnKey = null;
+let turnPending = null;
+let tickTimers = [];
+let resultPending = false;
 
 // Frasi del tavolo (P56)
 let phrases = null; // elenco di game:phrases: [{code, text}]
@@ -216,6 +226,7 @@ function showLaidDown(laid) {
   hideLaidDown();
   laidDown = laid;
   laidDownAt = performance.now();
+  playSound('lay_down'); // P103
   laidDownTimer = setTimeout(() => { hideLaidDown(); redraw(); }, LAID_DOWN_MS);
 }
 
@@ -223,12 +234,14 @@ function showLastTrick(trick) {
   hideLastTrick();
   lastTrick = trick;
   lastTrickAt = performance.now();
+  playSound('trick', TRICK_AWAY_MS); // P103: quando le carte scivolano verso chi ha preso
   lastTrickTimer = setTimeout(() => { hideLastTrick(); redraw(); }, LAST_TRICK_MS);
 }
 
 function openSummary(lastHand) {
   closeSummary();
   summary = lastHand;
+  playSound('hand_end'); // P103
   summaryTimer = setTimeout(() => { summary = null; redraw(); }, SUMMARY_MS);
 }
 
@@ -292,7 +305,6 @@ function aimMyThrows() {
  * P78: in fila, ognuna quando si è posata la precedente (anche di una vista di prima).
  */
 function noticeThrows(previous, next) {
-  if (reducedMotion()) return;
   const before = new Set(previous.trick.cards.map(({ card }) => throwKey(card)));
   const arrived = [...next.trick.cards]; // { seat, card }
   if (next.hand_number === previous.hand_number && next.last_trick
@@ -304,6 +316,11 @@ function noticeThrows(previous, next) {
     arrived.push(...next.last_hand.last_trick.cards);
   }
   const now = performance.now();
+  if (reducedMotion()) {
+    // P103: niente volo, ma il suono della carta giocata sì
+    if (arrived.some(({ card }) => !before.has(throwKey(card)))) playSound('throw', 0, { land: 0 });
+    return;
+  }
   let at = Math.max(now, throwsEnd);
   for (const { seat, card } of arrived) {
     const key = throwKey(card);
@@ -314,6 +331,7 @@ function noticeThrows(previous, next) {
       const button = mine && root.querySelector(`.table__mine .hand > .card[data-suit="${card.suit}"][data-rank="${card.rank}"]`);
       const ms = mine ? MY_THROW_MS : THROW_MS;
       throws.set(key, { at, ms, from: button ? button.getBoundingClientRect() : null });
+      playSound('throw', at - now, { land: ms }); // P103: fruscio e, a fine volo, la carta che si posa
       at += ms;
     }
   }
@@ -344,9 +362,13 @@ function drawing() {
  * partire da quando si è posata la carta che ha chiuso la presa.
  */
 function noticeDraws(previous, next) {
-  if (reducedMotion() || next.hand_number !== previous.hand_number || !next.last_trick) return;
+  if (next.hand_number !== previous.hand_number || !next.last_trick) return;
   const drawn = previous.deck_count - next.deck_count;
   if (drawn <= 0) return;
+  if (reducedMotion()) {
+    playSound('draw'); // P103: niente animazione, il suono sì
+    return;
+  }
   const n = next.players.length;
   const now = performance.now();
   const start = Math.max(now, throwsEnd);
@@ -354,6 +376,7 @@ function noticeDraws(previous, next) {
   for (let step = 0; step < Math.min(drawn, n); step += 1) {
     const seat = (next.last_trick.winner_seat + step) % n;
     const at = start + step * DRAW_MS;
+    playSound('draw', at - now); // P103
     if (seat === next.you.seat) {
       for (const card of next.hand) if (!mine.has(throwKey(card))) drawsOfMine.set(throwKey(card), at);
     } else {
@@ -388,6 +411,8 @@ function startDeal() {
   dealAt = performance.now();
   const cards = dealOrder(view).length;
   dealEnd = dealAt + SHUFFLE_MS + Math.max(cards - 1, 0) * DEAL_STEP_MS + DRAW_MS;
+  playSound('shuffle'); // P103
+  for (let k = 0; k < cards; k += 1) playSound('deal', SHUFFLE_MS + k * DEAL_STEP_MS);
   clearTimeout(dealTimer);
   dealTimer = redrawAfter(dealEnd - dealAt);
 }
@@ -421,6 +446,7 @@ function noticeDeal(previous, next) {
 /** Momenti che cominciano con la vista nuova (P57, P58): presa appena chiusa, fine mano. */
 function noticeMoments(previous, next) {
   if (!previous) return; // prima vista: niente da mostrare "per un momento"
+  if (next.result && !previous.result) resultPending = true; // P103: suona quando compare il riquadro
   // P93: le carte del compagno si scoprono adesso (non alla prima vista): entrano e c'è la scritta
   if (next.partner_hand && !previous.partner_hand) {
     partnerSince = performance.now();
@@ -529,10 +555,61 @@ function render(next) {
   root.replaceChildren(Table(shown, { onPlay, onSing, onLeave, onLayDown, onAdvise }, status, moments, phrasesShown));
   if (hovered) keepHover(hovered);
   aimMyThrows();
+  turnSounds();
+  resultSound();
   if (typeof focusKey === 'string') {
     const selector = focusKey ? `[data-phrase-code="${CSS.escape(focusKey)}"]` : '[data-phrases-button]';
     root.querySelector(selector)?.focus();
   }
+}
+
+/**
+ * P103: "tocca a te" e il ticchettio degli ultimi TICK_SECONDS secondi. Il turno
+ * comincia quando il tavolo ha finito le pause (lanci, pescate, ultima presa, carte
+ * calate, riepilogo, distribuzione), come il conto alla rovescia del server (P94):
+ * fino ad allora il turno aspetta (turnPending). Un turno è nuovo quando cambiano la
+ * mano o la presa (un canto lascia il turno a te: non si ripete).
+ */
+function turnSounds() {
+  const mine = !replaced && view.status === 'playing' && view.turn && view.turn.seat === view.you.seat;
+  if (!mine) {
+    turnKey = null;
+    turnPending = null;
+    clearTicks();
+    return;
+  }
+  const key = JSON.stringify([view.hand_number, view.hand, view.trick.cards.length]);
+  if (key !== turnKey && key !== turnPending) {
+    turnPending = key;
+    clearTicks();
+  }
+  const draws = drawing();
+  const busy = Object.keys(flying()).length || Object.keys(draws.seats).length || Object.keys(draws.cards).length
+    || dealing() || lastTrick || laidDown || summary || nextSummary;
+  if (!turnPending || busy) return;
+  turnKey = turnPending;
+  turnPending = null;
+  playSound('turn');
+  // Durante le pause la vista dice il turno pieno: il conto parte adesso
+  const left = view.turn.seconds_left * 1000;
+  for (let s = TICK_SECONDS; s >= 1; s -= 1) {
+    const wait = left - s * 1000;
+    if (wait >= 0) tickTimers.push(setTimeout(() => playSound(s === 1 ? 'last_tick' : 'tick'), wait));
+  }
+}
+
+function clearTicks() {
+  tickTimers.forEach(clearTimeout);
+  tickTimers = [];
+}
+
+/** P103: vittoria, sconfitta o pareggio, quando compare il riquadro di fine partita. */
+function resultSound() {
+  if (!resultPending || !view.result || lastTrick || laidDown) return;
+  resultPending = false;
+  const winner = view.result.winner_team;
+  const myTeam = view.players.find((player) => player.seat === view.you.seat).team;
+  playSound(winner === null ? 'tie' : winner === myTeam ? 'win' : 'lose');
 }
 
 /**
@@ -771,6 +848,7 @@ const GONE_HOME_MS = 5000;
  */
 function showGone() {
   replaced = true;
+  clearTicks(); // P103
   const panel = el('div', { class: 'table__gone panel', data: { gameGone: '' }, attrs: { role: 'alert' } }, [
     el('h2', { text: 'La partita è stata interrotta' }),
     el('p', { text: 'Il server si è riavviato o la partita non esiste più.' }),
@@ -800,6 +878,7 @@ function onSang(event) {
     redraw();
   }, seconds);
   sang[event.seat] = { event, timer };
+  playSound('sing'); // P103
 
   const who = view && view.players[event.seat] ? view.players[event.seat].username : 'Un giocatore';
   const text = `${who} ha cantato ${event.points} a ${event.suit}.`;
@@ -817,6 +896,7 @@ function startGame() {
   on(EVENTS.GAME_ADVICE, onAdvice);
   on(EVENTS.GAME_REPLACED, () => {
     replaced = true;
+    clearTicks(); // P103
     showMessage('Questa partita è aperta in un\'altra scheda o su un altro dispositivo.');
   });
   onStatus((now) => {

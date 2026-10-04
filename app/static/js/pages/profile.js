@@ -7,11 +7,14 @@
  *   password; il modulo parte solo con "Cancella l'account". Il controllo della
  *   password lo fa il server.
  * - Senza connessione nessun modulo parte: compare una finestra che lo dice.
+ * - P103: l'interruttore dei suoni al tavolo salva subito la scelta nel browser
+ *   (core/sounds.js); non passa dal server.
  */
 
 import { initLayout } from '../core/layout.js';
 import { openModal } from '../components/Modal.js';
 import { el } from '../utils/dom.js';
+import { setSoundsEnabled, soundsEnabled } from '../core/sounds.js';
 
 initLayout();
 
@@ -20,6 +23,10 @@ const avatarSubmit = document.querySelector('[data-avatar-submit]');
 const deleteForm = document.querySelector('[data-delete-form]');
 const deletePassword = document.querySelector('[data-delete-password]');
 const deleteOpen = document.querySelector('[data-delete-open]');
+const soundsToggle = document.querySelector('[data-sounds-toggle]');
+
+soundsToggle.checked = soundsEnabled();
+soundsToggle.addEventListener('change', () => setSoundsEnabled(soundsToggle.checked));
 
 function showOffline() {
   return openModal({
@@ -81,4 +88,5 @@ window.addEventListener('pageshow', () => {
   avatarSubmit.disabled = false;
   deleteOpen.disabled = false;
   deletePassword.value = '';
+  soundsToggle.checked = soundsEnabled();
 });
