@@ -12,6 +12,7 @@ Il tavolo si apre nella prova (/game/prova?demo=1v1) in Chrome o Edge senza fine
 nel browser si saltano.
 """
 
+import time
 from pathlib import Path
 
 import pytest
@@ -92,3 +93,39 @@ def test_regola_su_ogni_elemento_solo_al_tavolo(browser, server):
     browser.open(f"{server}/game/prova?demo=1v1", *PHONE, "document.querySelector('[data-mode]') !== null")
     browser.js("document.querySelector('main').classList.remove('page--game')")
     assert browser.js("getComputedStyle(document.querySelector('.card')).touchAction") == "auto"
+
+
+# --- P104: il doppio tocco su iPhone, bloccato da game.js ---------------------------
+
+def _tap(browser, selector):
+    point = browser.js(f"""(() => {{ const b = document.querySelector({selector!r}).getBoundingClientRect();
+      return {{ x: b.left + b.width / 2, y: b.top + b.height / 2 }}; }})()""")
+    browser.send("Input.dispatchTouchEvent", type="touchStart", touchPoints=[point])
+    browser.send("Input.dispatchTouchEvent", type="touchEnd", touchPoints=[])
+
+
+def _open_touch(browser, server):
+    browser.send("Emulation.setTouchEmulationEnabled", enabled=True, maxTouchPoints=5)
+    browser.open(f"{server}/game/prova?demo=1v1", *PHONE, "document.querySelector('[data-mode]') !== null")
+    browser.js("""(() => { const phrases = { phrases: [{ code: 'ciao', text: 'Ciao!' }] };
+      document.querySelector('[data-table]').dispatchEvent(new CustomEvent('demo:phrases', { detail: phrases }));
+      window.__blocked = [];
+      window.addEventListener('touchend', (e) => window.__blocked.push(e.defaultPrevented)); })()""")
+
+
+def test_secondo_tocco_veloce_senza_zoom_ma_con_il_clic(browser, server):
+    _open_touch(browser, server)
+    _tap(browser, "[data-phrases-button]")
+    _tap(browser, "[data-phrases-button]")  # subito dopo: sarebbe un doppio tocco
+    # Il primo tocco apre l'elenco, il secondo lo richiude: nessun tocco perso
+    assert browser.js("document.querySelector('[data-phrases-menu]') === null") is True
+    assert browser.js("window.__blocked") == [False, True]
+
+
+def test_tocchi_lenti_come_sempre(browser, server):
+    _open_touch(browser, server)
+    _tap(browser, "[data-phrases-button]")
+    time.sleep(0.45)
+    _tap(browser, "[data-phrases-button]")
+    assert browser.js("document.querySelector('[data-phrases-menu]') === null") is True
+    assert browser.js("window.__blocked") == [False, False]

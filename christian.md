@@ -22,6 +22,19 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P104 — Zoom con il doppio tocco su iPhone, in JavaScript (05/10/2026)
+
+- **Punto nuovo** (numero proposto: chi è di turno sui documenti lo registra in `SCALETTA.md`): dalla prova di Christian del 05/10 **P98 non basta**: su iPhone con Safari il doppio tocco ingrandisce ancora il tavolo
+- **Branch**: fix/p104-zoom-iphone-js (fatto da Claude, con il permesso di Christian per commit, merge e push di questi punti)
+- **File**: modificati `app/static/js/pages/game.js` (ascoltatore `touchend`, `DOUBLE_TAP_MS`), `tests/table/test_tocchi_tavolo.py` (due test nuovi), questo file
+- **Cosa cambia** (scelta di Christian: "sì, senza perdere tocchi"): al tavolo, quando un tocco con un dito arriva entro **0,3 s** dal precedente, la pagina blocca lo zoom (`preventDefault` sul `touchend`); siccome così il browser non manda nemmeno il clic, la pagina lo manda da sé al pulsante o alla carta toccata: due tocchi veloci (per esempio su due carte o due frasi) non si perdono. Lo zoom con due dita resta. Le regole CSS di P69 e P98 restano
+- **Controlli**: `test_tocchi_tavolo.py` **7 PASS** (nuovi: con il tocco emulato due tocchi rapidi su "Frasi" aprono e richiudono l'elenco e solo il secondo è bloccato; due tocchi lenti non sono bloccati); senza la correzione il primo test nuovo fallisce. Rilanciati `test_lancio_carta.py`, `test_frasi_pagina.py`, `test_carte_compagno.py`, `test_calata.py`, `test_mano_ferma.py`: 41 PASS. `ruff check .` pulito
+- **Da provare a mano**: su un iPhone vero il doppio tocco su carte, panno, nomi e pulsanti non ingrandisce; due tocchi veloci su due carte diverse (quando si può giocare) o su "Frasi" funzionano tutti e due [N: Safari non si prova con Chrome dei test]
+- **Decisioni prese**: la soluzione in JavaScript (sopra)
+- **Domande nuove**: nessuna
+- **Punti delicati**: il clic mandato dalla pagina va solo a `button`, `a[href]`, `[role="button"]`, `summary` e `label`: un elemento nuovo del tavolo che si tocca deve essere uno di questi, altrimenti un secondo tocco veloce su di lui si perde
+- **Cosa devono fare gli altri**: **Chi è di turno sui documenti**: registrare P104 (e P105–P109, sotto) nella scaletta; in `CLAUDE.md`, punto delicato "Tocchi al tavolo (P69)": il doppio tocco lo blocca anche `game.js` (P104)
+
 ### P103 — Suoni al tavolo (05/10/2026)
 
 - **Branch**: feature/p103-suoni (fatto da Claude, con il permesso di Christian per commit, merge e push dei punti P85–P103)
