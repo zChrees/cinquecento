@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: proposta D46 (carte del compagno e consiglio), punti P92 e P93 (04/10/2026)
+
+- **Branch**: docs/d46-carte-compagno
+- **File**: modificati `DA-DECIDERE.md` (D46 nuova), `SCALETTA.md` (P92 e P93 nel tracker, nelle schede della sezione 4, nella tabella di 9.1, nei controlli di parallelismo e in 9.2; "Da dove si parte"), `CLAUDE.md` (riga "Stato"), questo file. `DECISIONI.md` e `docs/REGOLE-GIOCO.md` non cambiano finché Giuseppe non dà l'ok
+- **Controlli**: nessuno (soli documenti); ultimo giro completo **1647 PASS** in 9 suite (P91)
+- **Riepiloghi registrati**: nessuno nuovo (`giuseppe.md` fermo a P88, `antonio.md` a P27)
+- **Proposta D46** (Christian, sulle raccomandazioni di Claude; testo completo in `DA-DECIDERE.md`): nel **2v2**, da quando ci sono insieme la **briscola fissata** e il **mazzo finito** (in qualunque ordine), ognuno vede le carte del **proprio compagno**, scoperte **fino a fine mano**; senza briscola mai. Il ventaglio del compagno si gira da solo, un po' più grande, con una scritta di 2–3 s. Cliccando una carta del compagno gli si **consiglia** quale lanciare: in qualunque momento, uno alla volta, solo al compagno, senza salvataggio, solo la carta. La mossa automatica ignora il consiglio; la CPU nel 2v2 seguirà la stessa regola. Scartato da Christian: un pulsante "Guarda le carte"
+- **Punti nuovi**: **P92** (Giuseppe: regola, carte del compagno nella vista solo quando permesso, evento del consiglio, contratto e regolamento) e **P93** (Christian: il tavolo, dopo P92)
+- **Domande nuove**: **D46** (aspetta l'ok di Giuseppe)
+- **Cosa devono fare gli altri**: **Giuseppe**: leggi D46 in `DA-DECIDERE.md` e scrivi nel tuo riepilogo ok o obiezioni, insieme a quelli su D43 e D45; P92 è meglio dopo P84 (stessi file del motore e della vista); nome e forma del campo e dell'evento da fissare con Christian. **Chi è di turno dopo l'ok**: spostare D46 in `DECISIONI.md` e la regola in `docs/REGOLE-GIOCO.md`
+
 ### Documenti: proposte di Christian su D43 e D45 (04/10/2026)
 
 - **Branch**: docs/d43-d45-proposte
