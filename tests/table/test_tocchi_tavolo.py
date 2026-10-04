@@ -71,3 +71,24 @@ def test_regole_solo_al_tavolo(browser, server):
     browser.open(f"{server}/game/prova?demo=1v1", *PHONE, "document.querySelector('[data-mode]') !== null")
     browser.js("document.querySelector('main').classList.remove('page--game')")
     assert browser.js("getComputedStyle(document.documentElement).touchAction") == "auto"
+
+
+def test_ogni_elemento_del_tavolo_ha_la_regola(browser, server):
+    # P98: touch-action non si eredita e Safari su iPhone guarda l'elemento toccato:
+    # la regola deve stare su ogni elemento, anche fuori da <main>
+    browser.open(f"{server}/game/prova?demo=1v1", *PHONE, "document.querySelector('[data-mode]') !== null")
+    result = browser.js("""(() => {
+      const extra = document.body.appendChild(document.createElement('div'));
+      const all = [...document.body.querySelectorAll('*')];
+      const wrong = all.filter((e) => getComputedStyle(e).touchAction !== 'manipulation');
+      extra.remove();
+      return { count: all.length, wrong: wrong.map((e) => e.tagName + '.' + e.className).slice(0, 5) };
+    })()""")
+    assert result["count"] > 50
+    assert result["wrong"] == []
+
+
+def test_regola_su_ogni_elemento_solo_al_tavolo(browser, server):
+    browser.open(f"{server}/game/prova?demo=1v1", *PHONE, "document.querySelector('[data-mode]') !== null")
+    browser.js("document.querySelector('main').classList.remove('page--game')")
+    assert browser.js("getComputedStyle(document.querySelector('.card')).touchAction") == "auto"

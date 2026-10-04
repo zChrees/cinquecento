@@ -20,6 +20,15 @@
   user-select: none;
 }
 
+/*
+ * P98: touch-action non si eredita. Chrome unisce i valori di tutti gli antenati
+ * (basterebbe la regola qui sopra), Safari su iPhone guarda l'elemento toccato: per
+ * questo il doppio tocco ingrandiva ancora. Ogni elemento della pagina ha la regola.
+ */
+:root:has(.page--game) * {
+  touch-action: manipulation;
+}
+
 /* Le immagini sono solo decorative: il tocco va al pulsante o alla carta che le contiene */
 .page--game img {
   pointer-events: none;

@@ -22,6 +22,19 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P98 — Zoom con il doppio tocco al tavolo su iPhone (05/10/2026)
+
+- **Branch**: fix/p98-zoom-iphone (fatto da Claude, con il permesso di Christian per commit, merge e push dei punti P85–P103)
+- **File** (lista definitiva per 9.2): modificati `app/static/css/pages/game.css`, `tests/table/test_tocchi_tavolo.py` (due test nuovi), questo file
+- **Causa** [L]: `touch-action` **non si eredita**. La regola di P69 stava solo su `<html>` (`:root:has(.page--game)`): Chrome unisce i valori di tutti gli antenati dell'elemento toccato, quindi su Android funzionava; Safari su iPhone guarda l'elemento toccato, che aveva `auto`, e lasciava lo zoom con il doppio tocco [D: Safari non si può provare con Chrome dei test]
+- **Cosa cambia**: `touch-action: manipulation` su **ogni elemento** della pagina del tavolo (`:root:has(.page--game) *`), comprese le finestre fuori da `<main>`; lo zoom con due dita resta. Su Android e da computer il comportamento è lo stesso di prima
+- **Controlli**: `tests/table/test_tocchi_tavolo.py` **5 PASS** (2 nuovi: ogni elemento della pagina, anche uno aggiunto fuori da `<main>`, ha `manipulation`; senza la classe del tavolo una carta torna `auto`); senza la correzione il primo test nuovo fallisce. Rilanciato `test_csp.py`: in tutto 9 PASS. `ruff check .` pulito
+- **Da provare a mano**: su un iPhone vero, con Safari, il doppio tocco su carte, panno, nomi e pulsanti non deve ingrandire il tavolo (il "Fatto quando" del punto); se ingrandisce ancora, la strada successiva è un controllo in JavaScript sul secondo tocco ravvicinato, che però rischia di perdere un tocco veloce su una carta: da decidere con Christian
+- **Decisioni prese**: nessuna (correzione)
+- **Domande nuove**: nessuna
+- **Punti delicati**: un elemento nuovo del tavolo con un suo `touch-action` (per esempio `pan-y` per una lista che scorre) va scritto dopo questa regola o con un selettore più forte
+- **Cosa devono fare gli altri**: **Chi è di turno sui documenti**: spuntare P98 dopo la prova sull'iPhone, lista definitiva in 9.2; in `CLAUDE.md`, punto delicato "Tocchi al tavolo (P69)": la regola sta su ogni elemento perché Safari non la eredita
+
 ### P97 — Le carte della propria mano "lampeggiano" (05/10/2026)
 
 - **Branch**: fix/p97-carte-lampeggiano (fatto da Claude, con il permesso di Christian per commit, merge e push dei punti P85–P103)
