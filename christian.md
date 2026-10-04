@@ -22,6 +22,15 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: D43, D45 e D46 decise (04/10/2026)
+
+- **Branch**: docs/d43-d45-d46-decise
+- **File**: modificati `DECISIONI.md` (Gioco: tre decisioni nuove; rimandi nelle decisioni del 29/09 sulla CPU e del 01/10 su "Cala le carte"), `DA-DECIDERE.md` (tolte D43, D45 e D46), `docs/REGOLE-GIOCO.md` (sezioni nuove "Calare le carte" e "Carte del compagno a mazzo finito (2v2)", punto 6 dello svolgimento della mano), `SCALETTA.md` (P68, P73, P84, P92, P93 non aspettano più una domanda: tracker, schede, tabella 9.1, 9.2, "Da dove si parte"), `CLAUDE.md` (riga "Stato"), questo file
+- **Controlli**: nessuno (soli documenti); ultimo giro completo **1647 PASS** in 9 suite (P91). `tests/api/test_pagina_home.py` legge tre frasi del regolamento: sono rimaste uguali
+- **Decisioni registrate**: **D43**, **D45** e **D46**, proposte da Christian e approvate da Giuseppe a voce il 04/10/2026 (erano insieme), con il testo delle proposte di oggi
+- **Domande**: nessuna nuova; restano D1, D21, D31
+- **Cosa devono fare gli altri**: **Giuseppe**: il regolamento di "Cala le carte" e delle carte del compagno è **già scritto** in `docs/REGOLE-GIOCO.md` (in P84 e P92 restano contratto ed esempi della vista); ordine: P68 (strategia nuova e `cpu: true`), P84, poi P92; il contratto di `cpu:start` e i nomi dei campi e degli eventi nuovi si approvano con Christian
+
 ### Documenti: proposta D46 (carte del compagno e consiglio), punti P92 e P93 (04/10/2026)
 
 - **Branch**: docs/d46-carte-compagno

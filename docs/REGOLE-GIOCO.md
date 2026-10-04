@@ -47,7 +47,7 @@ Ogni mano vale 120 punti di carte, più i canti.
 3. Al suo turno il giocatore può **cantare** (dalla seconda presa in poi), e poi deve giocare una carta.
 4. **Non c'è obbligo di rispondere al seme**: si può giocare qualsiasi carta.
 5. Chi vince la presa pesca per primo dal mazzo, poi gli altri in ordine di turno. Chi vince la presa gioca per primo nella presa successiva.
-6. **Quando il mazzo finisce non cambia niente**: si continua a giocare le carte in mano con le stesse regole, finché le carte non finiscono.
+6. **Quando il mazzo finisce** si continua a giocare le carte in mano con le stesse regole, finché le carte non finiscono. In più si può **calare le carte** e, nel 2v2 con la briscola fissata, si vedono le **carte del compagno** (sezioni qui sotto). Deciso il 04/10/2026 (D45, D46).
 
 ## Chi vince la presa
 
@@ -66,6 +66,27 @@ Ogni mano vale 120 punti di carte, più i canti.
 - Se il Re o il Cavallo di un seme viene giocato, quel seme **non si può più cantare**.
 - **A mazzo finito** si può cantare solo finché si hanno **almeno 3 carte in mano**. Con 2 carte il canto non è più possibile, anche se sono proprio Re e Cavallo dello stesso seme.
 
+## Calare le carte
+
+Deciso il 01/10/2026, dettagli del 04/10/2026 (D45).
+
+- Si può calare solo **a mazzo finito**, e solo se c'è **una briscola fissata**, oppure, senza briscola, quando a tutti restano **2 carte o meno** (nessuno può più cantare).
+- Si cala solo **a inizio presa**: lo può fare chi deve aprire, quando sul tavolo non c'è nessuna carta.
+- Si può calare quando esiste **un modo di giocare** che fa vincere al giocatore (nel 2v2 alla sua **squadra**, contando anche le carte del compagno) **tutte le prese rimaste**, qualunque carta giochino gli avversari. Il controllo lo fa il server, che conosce le carte di tutti.
+- **Non si può calare se un avversario può ancora cantare.**
+- Chi apre e può cantare deve **prima cantare tutti i semi** che può (dopo un canto il turno resta a lui); solo dopo può calare.
+- Nel 2v2, calando, la squadra prende anche **20 punti per ogni seme** che il **compagno** potrebbe cantare in quel momento (Re e Cavallo in mano, nessuno dei due giocato, almeno 3 carte): li avrebbe cantati al suo turno.
+- Calando, le carte di tutti si scoprono e la squadra di chi cala prende **tutte le prese rimaste**, con i loro punti; poi la mano finisce.
+- La mossa automatica dello scadere dei 30 secondi **non cala mai**.
+
+## Carte del compagno a mazzo finito (2v2)
+
+Deciso il 04/10/2026 (D46).
+
+- Da quando ci sono **insieme** la **briscola fissata** e il **mazzo finito**, in qualunque ordine arrivino (anche con un 40 cantato a mazzo finito, da quel momento), ogni giocatore **vede le carte in mano al proprio compagno**, fino a fine mano. Le carte degli avversari restano coperte.
+- **Senza briscola le carte del compagno non si vedono mai**, nemmeno con 2 carte o meno.
+- Mentre le vede, un giocatore può **consigliare al compagno una carta** da giocare: un consiglio alla volta, che vede solo il compagno. È solo un suggerimento: il compagno gioca la carta che vuole. La mossa automatica non ne tiene conto.
+
 ## Punteggio e fine partita
 
 - A fine mano si sommano i punti delle carte prese e i punti dei canti. **L'ultima presa non dà bonus.**
@@ -77,4 +98,4 @@ Ogni mano vale 120 punti di carte, più i canti.
 
 ## Punti ancora aperti
 
-Vedi `DA-DECIDERE.md`, sezione "Gioco" (per esempio come si formano le squadre nella coda 2v2: D17).
+Vedi `DA-DECIDERE.md`.
