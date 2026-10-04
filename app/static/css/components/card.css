@@ -39,7 +39,21 @@ button.card {
   transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
 }
 
-button.card:not(:disabled):hover,
+/*
+ * P97: il sollevamento al passaggio solo dove c'è un puntatore vero. Sul telefono
+ * il browser lascia ":hover" sulla carta appena toccata, e il tavolo, che si
+ * ridisegna a ogni vista, la faceva abbassare e rialzare ("lampeggiare").
+ * Da computer la carta sotto il mouse, ridisegnata, nasce già sollevata
+ * (card--hover-kept, la mette pages/game.js) e non riparte dal basso.
+ */
+@media (hover: hover) {
+  button.card:not(:disabled):hover,
+  button.card:not(:disabled).card--hover-kept {
+    transform: translateY(-8%);
+    box-shadow: var(--shadow-2);
+  }
+}
+
 button.card:not(:disabled):focus-visible {
   transform: translateY(-8%);
   box-shadow: var(--shadow-2);

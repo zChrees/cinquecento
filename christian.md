@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P97 — Le carte della propria mano "lampeggiano" (05/10/2026)
+
+- **Branch**: fix/p97-carte-lampeggiano (fatto da Claude, con il permesso di Christian per commit, merge e push dei punti P85–P103)
+- **File** (lista definitiva per 9.2): modificati `app/static/css/components/card.css` (fuori dai file "probabili": l'aveva indicato Christian nell'ipotesi), `app/static/js/pages/game.js` (`keepHover`, `dropKeptHover`), questo file; creato `tests/table/test_mano_ferma.py`
+- **Causa** [T]: il tavolo si ridisegna tutto a ogni vista e il pulsante della carta che era sotto il puntatore nasceva abbassato; appena il browser si accorgeva del puntatore sopra, si rialzava con la transizione di `card.css` (0,15 s). Riprodotto da computer con il mouse fermo su una carta: a ogni vista la carta scendeva a 0 e risaliva a −8%. Sul telefono il browser lascia `:hover` sulla carta appena toccata (il "mouse" resta dove hai toccato) [D: Chrome dei test, con il tocco emulato, non lo lascia], quindi succedeva lì a ogni vista
+- **Cosa cambia**: (1) il sollevamento al passaggio vale solo con un puntatore vero (`@media (hover: hover)`): sul telefono la carta non si alza più al tocco (resta il piccolo sollevamento di `:active` mentre il dito preme e quello del fuoco da tastiera); (2) da computer la carta sotto il mouse, ridisegnata, **nasce già sollevata** (classe `card--hover-kept`, tolta al primo movimento del mouse, quando decide di nuovo `:hover`); vale anche per le carte del compagno (P93)
+- **Controlli**: `tests/table/test_mano_ferma.py` **4 PASS** (regola dentro `@media (hover: hover)`; con il mouse fermo, in 3 viste per 40 fotogrammi l'una la carta resta sollevata ferma e le altre non si muovono; uscito il mouse torna giù; con il tocco emulato nessuna carta si muove); prima della correzione la riproduzione mostrava la carta che ripartiva da 0 a ogni vista. Rilanciati `test_lancio_carta.py`, `test_carte_compagno.py`, `test_tocchi_tavolo.py`, `test_carte.py`: in tutto 38 PASS. `ruff check .` pulito
+- **Decisioni prese**: nessuna (correzione)
+- **Domande nuove**: nessuna
+- **Punti delicati**: la carta sotto il mouse si riconosce da `data-suit`, `data-rank` e `data-advise-card` (mano tua o del compagno): se cambiano quegli attributi di `Card`/`RevealedHand`, va cambiato `keepHover`
+- **Cosa devono fare gli altri**: **Chi è di turno sui documenti**: spuntare P97, lista definitiva in 9.2; in `CLAUDE.md`, punto delicato nuovo: sul telefono niente `:hover` sulle carte (P97)
+
 ### P95 — Partita interrotta dal riavvio del server (04/10/2026)
 
 - **Branch**: fix/p95-partita-interrotta (fatto da Claude, con il permesso di Christian per commit, merge e push dei punti P85–P103)

@@ -481,12 +481,32 @@ function render(next) {
   // Il tavolo si ridisegna tutto: chi stava usando le frasi con la tastiera resta dov'era
   const focused = document.activeElement;
   const focusKey = root.contains(focused) && (focused.dataset.phraseCode ?? ('phrasesButton' in focused.dataset ? '' : null));
+  const hovered = root.querySelector('button.card:hover');
   reuseCardImages(root); // P70: niente immagini nuove (e lampi bianchi) a ogni ridisegno
   root.replaceChildren(Table(shown, { onPlay, onSing, onLeave, onLayDown, onAdvise }, status, moments, phrasesShown));
+  if (hovered) keepHover(hovered);
   if (typeof focusKey === 'string') {
     const selector = focusKey ? `[data-phrase-code="${CSS.escape(focusKey)}"]` : '[data-phrases-button]';
     root.querySelector(selector)?.focus();
   }
+}
+
+/**
+ * P97: la carta che era sotto il mouse, ridisegnata, nasce già sollevata
+ * (card--hover-kept, css/components/card.css); altrimenti il pulsante nuovo parte
+ * abbassato e si rialza con la transizione a ogni vista. Al primo movimento vero del
+ * mouse decide di nuovo ":hover".
+ */
+function keepHover(old) {
+  const same = [...root.querySelectorAll('button.card')].find((card) => card.dataset.suit === old.dataset.suit
+    && card.dataset.rank === old.dataset.rank && ('adviseCard' in card.dataset) === ('adviseCard' in old.dataset));
+  if (!same) return;
+  same.classList.add('card--hover-kept');
+  document.addEventListener('pointermove', dropKeptHover, { once: true });
+}
+
+function dropKeptHover() {
+  root.querySelectorAll('.card--hover-kept').forEach((card) => card.classList.remove('card--hover-kept'));
 }
 
 // --- Frasi del tavolo (P56) ---
