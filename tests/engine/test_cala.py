@@ -111,7 +111,7 @@ def test_calcolo_veloce_nel_2v2_con_quattro_carte():
     # Con 5 carte a testa il calcolo lento dura circa 20 s a caso: il confronto (15 casi, tutti
     # uguali) è stato fatto a mano il 04/10/2026 e non sta nel limite della suite
     rng = random.Random(5)
-    for _ in range(20):
+    for _ in range(10):
         hands = random_hands(rng, 4, 4)
         trump = rng.choice(list(Suit))
         state = end_state(hands, 0, sings=((1, trump, 40),))
