@@ -10,12 +10,13 @@
  *   HiddenHand(3)                   // carte coperte (fila semplice)
  *   EdgeHand(3, 'top', drawn, dealt) // P70: carte coperte di un avversario, dal bordo
  *   RevealedHand(cards, 'top', seat) // P85: le carte di un altro giocatore scoperte, dentro il tavolo
+ *   Hand(view.hand, { ..., advice: { card, name } }) // P93: la carta consigliata dal compagno, segnata
  *
  * Stile in css/components/hand.css.
  */
 
 import { el } from '../utils/dom.js';
-import { Card, CardBack, sameCard } from './Card.js';
+import { Card, CardBack, cardName, sameCard } from './Card.js';
 
 /**
  * @param {Array<{suit: string, rank: number}>} cards carte in mano, nell'ordine del server
@@ -24,11 +25,19 @@ import { Card, CardBack, sameCard } from './Card.js';
  * @param {function} [options.onPlay] chiamata con la carta toccata
  * @param {object} [options.drawn] P70: carta ("coppe-10") → millisecondi da quando è stata pescata
  * @param {object} [options.dealt] P70: carta ("coppe-10") → millisecondi da quando è partita nella distribuzione
+ * @param {object|null} [options.advice] P93: { card, name }, la carta che ti ha consigliato il compagno
  * @returns {HTMLElement}
  */
-export function Hand(cards, { playable = [], onPlay = null, drawn = {}, dealt = {} } = {}) {
+export function Hand(cards, { playable = [], onPlay = null, drawn = {}, dealt = {}, advice = null } = {}) {
   const items = cards.map((card) => {
     const item = Card(card, onPlay ? { onPlay, playable: playable.some((legal) => sameCard(legal, card)) } : {});
+    // P93: la carta consigliata dal compagno ha il bordo e l'etichetta "consiglio di …"
+    if (advice && sameCard(advice.card, card)) {
+      item.classList.add('card--advice');
+      item.dataset.advice = '';
+      item.setAttribute('aria-label', `${item.getAttribute('aria-label')}, consigliata da ${advice.name}`);
+      item.append(el('span', { class: 'card__advice', text: `consiglio di ${advice.name}`, attrs: { 'aria-hidden': 'true' } }));
+    }
     // P70: la carta appena pescata, o distribuita a inizio mano, vola dal mazzo nella
     // mano (millisecondi da quando parte; negativo = parte tra poco, e fino ad allora
     // non si vede)
@@ -101,20 +110,38 @@ export function EdgeHand(count, side, drawn = null, dealt = null) {
  * alto (non capovolto), un po' più aperto del ventaglio coperto. Copre per un momento
  * nome e avatar di quel giocatore. Stile in css/components/table.css.
  *
+ * P93: le carte del compagno (partner_hand) usano lo stesso ventaglio, un po' più
+ * grande e con le carte che si toccano per consigliargli quale giocare (`advise`).
+ *
  * @param {Array<{suit: string, rank: number}>} cards le sue carte
  * @param {string} side 'top' | 'left' | 'right'
  * @param {number} seat il suo posto (data-revealed-seat, per i test)
  * @param {string} [label] etichetta per i lettori di schermo
+ * @param {object|null} [advise] P93, solo per il compagno
+ * @param {function} advise.onPick chiamata con la carta toccata
+ * @param {object|null} advise.picked la carta che hai consigliato, segnata
+ * @param {boolean} advise.disabled carte spente (per esempio senza connessione)
+ * @param {string} advise.name il nome del compagno, per le etichette
  * @returns {HTMLElement}
  */
-export function RevealedHand(cards, side, seat, label = 'Carte scoperte') {
+export function RevealedHand(cards, side, seat, label = 'Carte scoperte', advise = null) {
   const items = cards.map((card, i) => {
-    const face = Card(card);
+    const face = advise ? Card(card, { onPlay: advise.onPick, playable: !advise.disabled }) : Card(card);
+    if (advise) {
+      const picked = advise.picked && sameCard(advise.picked, card);
+      face.setAttribute('aria-label', `Consiglia a ${advise.name}: ${cardName(card)}`);
+      face.setAttribute('aria-pressed', picked ? 'true' : 'false');
+      face.dataset.adviseCard = '';
+      if (picked) {
+        face.classList.add('card--advised');
+        face.dataset.advised = '';
+      }
+    }
     face.style.setProperty('--i', i);
     return face;
   });
   const hand = el('div', {
-    class: `revealed-hand revealed-hand--${side}`,
+    class: `revealed-hand revealed-hand--${side}${advise ? ' revealed-hand--partner' : ''}`,
     data: { revealedHand: side, revealedSeat: seat, count: cards.length },
     attrs: { role: 'group', 'aria-label': label },
   }, items);

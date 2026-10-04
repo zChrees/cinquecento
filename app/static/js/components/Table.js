@@ -236,6 +236,11 @@ function LaidDownNotice(view, laid, positionOf) {
  * @param {object|null} [moments.laidDown] P85: le carte calate (last_hand.laid_down) da mostrare adesso
  * @param {number} [moments.laidDownFor] P85: millisecondi da quando si vedono
  * @param {function} [handlers.onLayDown] P85: pulsante "Cala le carte"
+ * @param {function} [handlers.onAdvise] P93: carta del compagno toccata (consiglio)
+ * @param {object|null} [moments.partner] P93, carte del compagno scoperte (partner_hand):
+ *   { picked: carta che gli hai consigliato o null, disabled, shownFor: ms da quando si
+ *   vedono, notice: true finché c'è la scritta "Mazzo finito: …" }
+ * @param {object|null} [moments.advice] P93: la carta che ti ha consigliato il compagno (advice.card)
  * @param {object|null} [phrases] frasi del tavolo (P56); null finché l'elenco non arriva
  * @param {Array} phrases.list l'elenco di game:phrases ({code, text})
  * @param {boolean} phrases.open l'elenco è aperto
@@ -245,11 +250,11 @@ function LaidDownNotice(view, laid, positionOf) {
  * @param {object} phrases.bubbles posto → testo del fumetto da mostrare
  * @returns {HTMLElement}
  */
-export function Table(view, { onPlay, onSing, onLeave, onLayDown = null }, status = '', moments = {}, phrases = null) {
+export function Table(view, { onPlay, onSing, onLeave, onLayDown = null, onAdvise = null }, status = '', moments = {}, phrases = null) {
   const {
     lastTrick = null, lastTrickFor = 0, thrown = {}, drawnSeats = {}, drawnCards = {},
     deal = null, summary = null, onCloseSummary = null, sang = {},
-    laidDown = null, laidDownFor = 0,
+    laidDown = null, laidDownFor = 0, partner = null, advice = null,
   } = moments;
   // P85: mentre si vedono le carte calate, posto → le sue carte
   const laidHands = laidDown ? Object.fromEntries(laidDown.hands.map(({ seat, cards }) => [seat, cards])) : null;
@@ -257,6 +262,10 @@ export function Table(view, { onPlay, onSing, onLeave, onLayDown = null }, statu
   const positionOf = positionFn(view);
   const me = view.players.find((player) => player.seat === view.you.seat);
   const others = view.players.filter((player) => player.seat !== view.you.seat);
+  // P93: nel 2v2, a mazzo finito con la briscola, le carte del compagno (partner_hand) si vedono
+  const mate = view.mode === '2v2' ? others.find((player) => player.team === me.team) : null;
+  const mateCards = !laidDown && mate && view.partner_hand && view.partner_hand.length ? view.partner_hand : null;
+  const adviceFrom = advice ? view.players.find((player) => player.seat === advice.seat) : null;
 
   // P72 (D44): i punti della mano in corso, i tuoi sopra la tua mano; quelli degli
   // avversari una volta sola, sotto il ventaglio in alto (1v1) o accanto a quello a sinistra (2v2)
@@ -296,6 +305,15 @@ export function Table(view, { onPlay, onSing, onLeave, onLayDown = null }, statu
       DeckAndTrump(view.deck_count, view.trump, deal ? deal.shuffled : null),
     ]),
     summary ? HandSummary(view, summary, { onClose: onCloseSummary }) : null,
+    // P93: per un momento, quando le carte del compagno si scoprono
+    mateCards && partner?.notice
+      ? el('p', {
+        class: 'partner-notice',
+        data: { partnerNotice: '' },
+        attrs: { role: 'status' },
+        text: `Mazzo finito: ora vedi le carte di ${mate.username}`,
+      })
+      : null,
   ]);
 
   // Sopra la mano: i tuoi punti a sinistra, tu al centro, le frasi a destra (P71, P72, P77)
@@ -311,7 +329,10 @@ export function Table(view, { onPlay, onSing, onLeave, onLayDown = null }, statu
     // P85: mentre si vedono le carte calate, la tua mano è quella del momento in cui si è calato
     laidHands
       ? Hand(laidHands[me.seat] ?? [])
-      : Hand(view.hand, { playable: view.legal.play, onPlay, drawn: drawnCards, dealt: deal ? deal.mine : {} }),
+      : Hand(view.hand, {
+        playable: view.legal.play, onPlay, drawn: drawnCards, dealt: deal ? deal.mine : {},
+        advice: adviceFrom ? { card: advice.card, name: adviceFrom.username } : null,
+      }),
     el('p', { class: 'table__status', text: status, data: { tableStatus: '' }, attrs: { role: 'status', 'aria-live': 'polite' } }),
   ]);
 
@@ -326,6 +347,13 @@ export function Table(view, { onPlay, onSing, onLeave, onLayDown = null }, statu
       revealed.style.animationDelay = `${-Math.round(laidDownFor)}ms`;
       return revealed;
     }
+    if (mateCards && player.seat === mate.seat) {
+      const revealed = RevealedHand(mateCards, side, player.seat, `Carte di ${player.username}`, {
+        onPick: onAdvise, picked: partner?.picked ?? null, disabled: !onAdvise || Boolean(partner?.disabled), name: player.username,
+      });
+      revealed.style.animationDelay = `${-Math.round(partner?.shownFor ?? 0)}ms`;
+      return revealed;
+    }
     return EdgeHand(player.cards_in_hand, side, drawnSeats[player.seat] ?? null,
       deal ? deal.seats[player.seat] ?? null : null);
   });
@@ -333,7 +361,8 @@ export function Table(view, { onPlay, onSing, onLeave, onLayDown = null }, statu
   // A fine partita il riquadro arriva dopo che si è vista l'ultima presa (o le carte calate, P85)
   const result = view.result && !lastTrick && !laidDown ? Result(view) : null;
   return el('div', {
-    class: 'table__inner',
+    // P93: con le carte del compagno scoperte il compagno si sposta per non stare sotto il ventaglio
+    class: `table__inner${mateCards ? ' table__inner--mate-cards' : ''}`,
     data: { mode: view.mode, version: view.version, status: view.status },
   }, [...edgeHands.filter(Boolean), topbar, board, mine, result]);
 }

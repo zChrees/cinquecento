@@ -22,6 +22,19 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P93 — Carte del compagno scoperte e consiglio al tavolo (04/10/2026)
+
+- **Branch**: feature/p93-carte-compagno (fatto da Claude, con il permesso di Christian per commit, merge e push dei punti P85–P103)
+- **File** (lista definitiva per 9.2): modificati `app/static/js/core/events.js` (`GAME_ADVISE`, `GAME_ADVICE`), `components/Hand.js` (`RevealedHand` con le carte da toccare, carta consigliata nella `Hand`), `components/Table.js`, `pages/game.js`, `app/static/css/components/table.css`, questo file; creato `tests/table/test_carte_compagno.py`
+- **Cosa cambia**: (1) quando la vista ha `partner_hand` (2v2, briscola e mazzo finito), il ventaglio del compagno in alto **entra scoperto** nel tavolo (lo stesso di P85), un po' più grande di quello coperto (52 px sul telefono, 80 da computer), fino a fine mano; per **2,5 s** la scritta "Mazzo finito: ora vedi le carte di Salvo" (non alla prima vista, per esempio rientrando); (2) il compagno **si sposta**: sotto il ventaglio sul telefono e sul tablet, più a sinistra da computer, dove anche presa e mazzo scendono di un po'; niente resta coperto e l'anello del suo tempo si vede; (3) toccando una sua carta parte `game:advise` con quella carta: la carta resta **sollevata e bordata** di giallo ("premuta" per i lettori di schermo, etichetta "Consiglia a Salvo: …"); un'altra carta la sostituisce, la stessa carta toglie il consiglio (`card: null`); finché non arriva la risposta le sue carte sono spente, e anche senza connessione o a fine mano; il segno sparisce quando la carta non è più in mano al compagno; (4) il consiglio ricevuto (`game:advice`, o `advice` nella vista) segna la carta nella tua mano con il bordo giallo e la scritta "consiglio di Salvo" dentro la carta ("consigliata da Salvo" per i lettori di schermo)
+- **Scelte di Christian** (04/10): il compagno si sposta invece di farsi coprire dal ventaglio; chi consiglia vede il segno sulla carta consigliata. **Approvati** da Christian i nomi del contratto di P92 (`game:advise`, `game:advice`, `partner_hand`, `advice`) e di P68 (`cpu:start` in 4.1, `cpu` per giocatore)
+- **Scelte di Claude**: misure (52/80 px), scritta in fondo al centro del tavolo per 2,5 s, scritta del consiglio dentro la carta; guardato con gli screenshot a 360×640, 768×1024, 1024×768 e 1280×720
+- **Controlli**: `tests/table/test_carte_compagno.py` **7 PASS** (nomi degli eventi; ventaglio solo con `partner_hand` e con le carte giuste, avversari ancora coperti; scritta che sparisce in 1,5–4 s con le carte che restano; a 6 misure il ventaglio non copre avatar e nome del compagno, la presa e "Esci", e il tavolo non scorre; consiglio dato segnato, sostituito, tolto e sparito con la carta; consiglio ricevuto nella tua mano; nel 1v1 niente); rilanciati `test_calata.py`, `test_momenti_tavolo.py`, `test_pagina_tavolo.py`, `test_grafica_tavolo.py`, `test_icone.py`: 67 PASS. `ruff check .` pulito
+- **Decisioni prese**: quelle sopra
+- **Domande nuove**: nessuna
+- **Punti delicati**: il compagno si sposta con la classe `table__inner--mate-cards` (Table.js): se cambiano la misura del ventaglio scoperto o la posizione del posto in alto da computer (`--top-fan-half`, P74), va rimisurato (lo segnala `test_non_copre_ne_compagno_ne_presa`)
+- **Cosa devono fare gli altri**: **Giuseppe**: nel contratto puoi togliere "da approvare da Christian" accanto ai nomi di P92 e P68 (approvati il 04/10). **Chi è di turno sui documenti**: spuntare P93, lista definitiva in 9.2; registrare in `DECISIONI.md` (Processo) i contratti di P92 e P68 approvati
+
 ### P85 — "Cala le carte": pulsante e carte calate al tavolo (04/10/2026)
 
 - **Branch**: feature/p85-cala-le-carte (fatto da Claude, con il permesso di Christian per commit, merge e push dei punti P85–P103)

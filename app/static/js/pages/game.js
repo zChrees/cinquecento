@@ -73,7 +73,7 @@ import { connect, isConnected, on, onStatus, send } from '../core/socket.js';
 import { EVENTS, NOT_LOGGED_IN } from '../core/events.js';
 import { confirmModal } from '../components/Modal.js';
 import { Table } from '../components/Table.js';
-import { cardName, preloadCardImages, reuseCardImages } from '../components/Card.js';
+import { cardName, preloadCardImages, reuseCardImages, sameCard } from '../components/Card.js';
 import { throwKey } from '../components/Trick.js';
 
 initLayout();
@@ -84,6 +84,7 @@ const demo = Boolean(root.dataset.demoUrl);
 const NO_MOVES = Object.freeze({ play: [], sing: [], lay_down: false });
 const LAST_TRICK_MS = 1500;
 const LAID_DOWN_MS = 3000; // P85, D45: carte calate scoperte; come LAID_DOWN_SECONDS di app/realtime/room.py (P94)
+const PARTNER_NOTICE_MS = 2500; // P93, D46: la scritta "Mazzo finito: ora vedi le carte di …"
 const SUMMARY_MS = 5000;
 const PHRASE_PAUSE_MS = 3000; // come TABLE_PHRASE_MIN_INTERVAL_SECONDS del server (P55)
 const BUBBLE_MS = 4000;
@@ -109,6 +110,14 @@ let nextSummary = null; // riepilogo che aspetta la fine dell'ultima presa della
 let laidDown = null; // P85: le carte calate (last_hand.laid_down) mentre si vedono
 let laidDownAt = 0;
 let laidDownTimer = 0;
+
+// P93, carte del compagno e consiglio (D46)
+let partnerSince = 0; // performance.now() di quando le carte del compagno si sono scoperte
+let partnerNotice = false;
+let partnerNoticeTimer = 0;
+let myAdvice = null; // la carta del compagno che gli hai consigliato
+let adviceSending = false;
+let receivedAdvice = null; // { seat, card }: la carta che ti ha consigliato il compagno
 const sang = {}; // posto → { event, timer }
 let lastTrickAt = 0; // quando si è vista la presa chiusa (performance.now), per le animazioni
 const throws = new Map(); // P70: throwKey(carta) → performance.now() del lancio (P78: anche nel futuro)
@@ -365,6 +374,13 @@ function noticeDeal(previous, next) {
 /** Momenti che cominciano con la vista nuova (P57, P58): presa appena chiusa, fine mano. */
 function noticeMoments(previous, next) {
   if (!previous) return; // prima vista: niente da mostrare "per un momento"
+  // P93: le carte del compagno si scoprono adesso (non alla prima vista): entrano e c'è la scritta
+  if (next.partner_hand && !previous.partner_hand) {
+    partnerSince = performance.now();
+    partnerNotice = true;
+    clearTimeout(partnerNoticeTimer);
+    partnerNoticeTimer = setTimeout(() => { partnerNotice = false; redraw(); }, PARTNER_NOTICE_MS);
+  }
   noticeThrows(previous, next);
   noticeDraws(previous, next);
   noticeDeal(previous, next);
@@ -407,6 +423,14 @@ function render(next) {
     noticeMoments(view, next);
     view = next;
     viewAt = performance.now();
+    // P93: il consiglio ricevuto lo ripete la vista (advice, solo nel 2v2); quello dato
+    // vale finché la carta è ancora in mano al compagno
+    if ('advice' in next) receivedAdvice = next.advice;
+    if (myAdvice && !(next.partner_hand ?? []).some((card) => sameCard(card, myAdvice))) myAdvice = null;
+    if (!next.partner_hand) {
+      partnerNotice = false;
+      clearTimeout(partnerNoticeTimer);
+    }
   }
   // La presa chiusa (o le carte calate, P85) lascia il posto alla presa nuova appena qualcuno gioca
   if (lastTrick && view.trick.cards.length) hideLastTrick();
@@ -434,6 +458,13 @@ function render(next) {
     sang: Object.fromEntries(Object.entries(sang).map(([seat, { event }]) => [seat, event])),
     laidDown,
     laidDownFor: laidDown ? performance.now() - laidDownAt : 0,
+    partner: view.partner_hand ? {
+      picked: myAdvice,
+      disabled: offline || adviceSending || handEnding,
+      shownFor: performance.now() - partnerSince,
+      notice: partnerNotice,
+    } : null,
+    advice: receivedAdvice && !handEnding ? receivedAdvice : null,
   };
   const phrasesShown = phrases && {
     list: phrases,
@@ -447,7 +478,7 @@ function render(next) {
   const focused = document.activeElement;
   const focusKey = root.contains(focused) && (focused.dataset.phraseCode ?? ('phrasesButton' in focused.dataset ? '' : null));
   reuseCardImages(root); // P70: niente immagini nuove (e lampi bianchi) a ogni ridisegno
-  root.replaceChildren(Table(shown, { onPlay, onSing, onLeave, onLayDown }, status, moments, phrasesShown));
+  root.replaceChildren(Table(shown, { onPlay, onSing, onLeave, onLayDown, onAdvise }, status, moments, phrasesShown));
   if (typeof focusKey === 'string') {
     const selector = focusKey ? `[data-phrase-code="${CSS.escape(focusKey)}"]` : '[data-phrases-button]';
     root.querySelector(selector)?.focus();
@@ -572,6 +603,34 @@ function onSing(suit) {
   sendMove(EVENTS.GAME_SING, { suit });
 }
 
+/**
+ * P93: consiglio al compagno (D46). Toccando una sua carta gliela consigli; toccando
+ * quella già consigliata il consiglio si toglie (card null). Uno alla volta: finché
+ * non arriva la risposta le sue carte sono spente.
+ */
+async function onAdvise(card) {
+  if (adviceSending || !view || replaced) return;
+  const next = myAdvice && sameCard(myAdvice, card) ? null : card;
+  if (demo) {
+    myAdvice = next;
+    setStatus(next ? `Prova: consigli ${cardName(next)}. In partita il consiglio va al compagno.` : 'Prova: consiglio tolto.');
+    return;
+  }
+  adviceSending = true;
+  redraw();
+  const answer = await send(EVENTS.GAME_ADVISE, { game_id: gameId, card: next });
+  adviceSending = false;
+  if (answer.ok) myAdvice = next;
+  setStatus(answer.ok ? '' : answer.error.message);
+}
+
+/** game:advice: il compagno ti consiglia una carta (o toglie il consiglio, card null). */
+function onAdvice(data) {
+  if (replaced || !data) return;
+  receivedAdvice = data.card ? { seat: data.seat, card: data.card } : null;
+  redraw();
+}
+
 /** P85: "Cala le carte" (solo con legal.lay_down; il doppio clic lo ferma waiting, e la version). */
 function onLayDown() {
   if (demo) {
@@ -667,6 +726,7 @@ function startGame() {
   on(EVENTS.GAME_SANG, onSang);
   on(EVENTS.GAME_PHRASES, onPhrases);
   on(EVENTS.GAME_PHRASE, onPhrase);
+  on(EVENTS.GAME_ADVICE, onAdvice);
   on(EVENTS.GAME_REPLACED, () => {
     replaced = true;
     showMessage('Questa partita è aperta in un\'altra scheda o su un altro dispositivo.');

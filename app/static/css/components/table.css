@@ -373,6 +373,82 @@
   right: calc(var(--edge-card) * 1.4 + 6px);
 }
 
+/*
+ * P93, carte del compagno (D46): lo stesso ventaglio, un po' più grande di quello
+ * coperto, con le carte che si toccano per consigliargliene una. Quella consigliata
+ * è sollevata e bordata di giallo (non solo un colore). Finché le carte sono scoperte
+ * il compagno si sposta (sotto il ventaglio sul telefono, più a sinistra da computer),
+ * così l'anello del suo tempo resta visibile.
+ */
+.revealed-hand--partner {
+  --edge-card: 52px;
+}
+
+.revealed-hand--partner > .card {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.revealed-hand--partner > .card:disabled {
+  cursor: default;
+}
+
+.revealed-hand > .card--advised {
+  box-shadow: 0 0 0 3px var(--yellow), var(--shadow-2);
+  translate: 0 8px;
+}
+
+.revealed-hand > .card:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: 2px;
+}
+
+.table__inner--mate-cards .seat--top {
+  margin-top: 56px;
+}
+
+/* La carta che ti ha consigliato il compagno: bordo giallo ed etichetta dentro la carta */
+.hand > .card--advice {
+  box-shadow: 0 0 0 3px var(--yellow), var(--shadow-2);
+}
+
+.card__advice {
+  position: absolute;
+  right: 3px;
+  bottom: 4px;
+  left: 3px;
+  padding: 1px 2px;
+  border-radius: 6px;
+  background: var(--yellow);
+  color: var(--text);
+  font-size: 0.6rem;
+  font-weight: 800;
+  line-height: 1.15;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+/* La scritta quando si scoprono le carte del compagno, in fondo al centro del tavolo */
+.partner-notice {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  z-index: 4;
+  max-width: 90%;
+  margin: 0;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--yellow);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-align: center;
+  text-shadow: none;
+  box-shadow: var(--shadow-2);
+  translate: -50% 0;
+  animation: sang-in 0.3s ease-out;
+}
+
 /* Sotto i 1024 px (2v2) i ventagli ai lati scendono un po': la scritta al centro resta libera */
 @media (max-width: 1023px) {
   .revealed-hand--left,
@@ -565,6 +641,21 @@
   .edge-hand,
   .revealed-hand {
     --edge-card: 72px;
+  }
+
+  .revealed-hand--partner {
+    --edge-card: 80px;
+  }
+
+  /* P93: da computer il compagno sta a sinistra del ventaglio scoperto, più largo */
+  .table__inner--mate-cards .seat--top {
+    margin-top: 0;
+    right: calc(50% + 176px);
+  }
+
+  /* …e presa e mazzo scendono, così la carta del compagno nella presa non sta sotto il ventaglio */
+  .table__inner--mate-cards .table__board {
+    padding-top: 100px;
   }
 
   .hand-points__word {
