@@ -26,8 +26,7 @@ WAIT = 5
 
 @pytest.fixture(autouse=True)
 def fast_cpu(monkeypatch):
-    for name in ("CPU_SECONDS", "CPU_AFTER_TRICK_SECONDS", "CPU_NEW_HAND_SECONDS", "CPU_LAID_DOWN_SECONDS"):
-        monkeypatch.setattr(room_module, name, 0.01)
+    monkeypatch.setattr(room_module, "CPU_SECONDS", 0.01)  # le pause del tavolo le toglie conftest.py (P94)
     # D43: la CPU pensa meno (qui conta la stanza, la forza la prova tests/engine/test_cpu.py)
     monkeypatch.setattr(cpu_module, "SIMULATED_PLAYS", 600)
     monkeypatch.setattr(cpu_module, "MIN_WORLDS", 4)

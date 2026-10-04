@@ -25,6 +25,7 @@ from werkzeug.serving import make_server
 
 from app import create_app
 from app.extensions import db, socketio
+from app.realtime import room as room_module
 from app.realtime.events import EventError, handler, user_channel
 from app.realtime.room_manager import rooms
 from app.services import auth_service
@@ -149,6 +150,13 @@ def _register_test_events(probe):
     for name, fn in (("test:join", test_join), ("test:shout", test_shout), ("test:ping_user", test_ping_user),
                      ("test:increment", test_increment), ("test:fail", test_fail)):
         socketio.on_event(name, fn)
+
+
+@pytest.fixture(autouse=True)
+def no_table_pauses(monkeypatch):
+    """P94: il turno parte dopo le pause del tavolo (fino a 9 s a fine mano). I test che contano
+    sui timer non le aspettano; quelli di P94 (test_turno.py) le rimettono a 1."""
+    monkeypatch.setattr(room_module, "PAUSE_SCALE", 0)
 
 
 @pytest.fixture(scope="session")

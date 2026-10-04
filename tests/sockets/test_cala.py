@@ -200,8 +200,7 @@ def test_la_cpu_cala_quando_puo(connect, players, monkeypatch):
     # aver preparato la mano, così non gioca prima sulla mano di partenza
     room = prepared_room([CPU_PLAYER, players[1]], cpu_seats=(0,))
     seats = sit(connect, room, ["Secondo"])
-    for name in ("CPU_SECONDS", "CPU_AFTER_TRICK_SECONDS", "CPU_NEW_HAND_SECONDS"):
-        monkeypatch.setattr(room_module, name, 0.01)
+    monkeypatch.setattr(room_module, "CPU_SECONDS", 0.01)  # le pause del tavolo le toglie conftest.py (P94)
     with room.lock:
         room._start_turn()  # nuovo turno: il timer di prima della CPU non vale più
     view = seats[0].wait_for(lambda view: view["hand_number"] == 2, "la mano 2")

@@ -83,12 +83,20 @@ RECONNECT_SECONDS = BaseConfig.RECONNECT_SECONDS
 SING_SHOW_SECONDS = 3  # D15: per quanto la pagina mostra Re e Cavallo cantati
 MODE_OF_PLAYERS = {n: mode for mode, n in MODES.items()}
 
-# P68: attese della CPU prima di giocare, sui tempi della pagina (js/pages/game.js)
-CPU_SECONDS = 1.2  # dopo la carta dell'avversario (lancio: 0,4 s), per un numero a caso di CPU_JITTER
-CPU_JITTER = (0.6, 1.4)  # D43: un po' a caso; poi la CPU pensa (0,1-0,3 s): in tutto tra 1 e 2 s circa
-CPU_AFTER_TRICK_SECONDS = 2.5  # presa appena chiusa: ultima presa 1,5 s più la pescata
-CPU_NEW_HAND_SECONDS = 9  # mano nuova: ultima presa, riepilogo (5 s), mescolata e distribuzione
-CPU_LAID_DOWN_SECONDS = 3  # in più se la mano prima è finita con una calata: carte scoperte (D45)
+# P94: pause del tavolo, le stesse di js/pages/game.js (le confronta tests/sockets/test_turno.py).
+# Il conto alla rovescia del turno parte dopo la pausa, così i TURN_SECONDS sono tutti giocabili
+LAST_TRICK_SECONDS = 1.5  # LAST_TRICK_MS: presa appena chiusa al centro del tavolo
+SUMMARY_SECONDS = 5  # SUMMARY_MS: riepilogo di fine mano (si chiude anche prima, con "Ok")
+THROW_SECONDS = 0.4  # THROW_MS: volo della carta che chiude la presa
+DRAW_SECONDS = 0.5  # DRAW_MS: una pescata (una alla volta, P78)
+SHUFFLE_SECONDS = 0.6  # SHUFFLE_MS: mescolata a inizio mano
+DEAL_STEP_SECONDS = 0.08  # DEAL_STEP_MS: tra una carta distribuita e la successiva
+LAID_DOWN_SECONDS = 3  # carte calate scoperte (D45, P85), al posto dell'ultima presa
+PAUSE_SCALE = 1  # i test dei timer la mettono a 0, per non aspettare le pause
+
+# P68: attesa della CPU prima di giocare, dopo la pausa del tavolo
+CPU_SECONDS = 1.2  # per un numero a caso di CPU_JITTER (D43); poi la CPU pensa (0,1-0,3 s): circa 1-2 s
+CPU_JITTER = (0.6, 1.4)
 
 # P44, P47: funzioni chiamate con (user_id dei giocatori, app) a inizio e fine partita,
 # in un thread a parte (fuori dal lock)
@@ -104,6 +112,29 @@ def notify(listeners, user_ids, app):
 
 def utc_now():
     return datetime.now(UTC).replace(tzinfo=None)
+
+
+def table_pause(before, after):
+    """P94: secondi di pausa del tavolo che cominciano con la mossa da `before` a `after`.
+
+    - mano nuova: l'ultima presa della mano (o le carte calate, P85), il riepilogo, la
+      mescolata e la distribuzione;
+    - presa chiusa a metà mano: l'ultima presa al centro, e intanto la carta che chiude la
+      presa si posa e si pesca una carta a testa, una alla volta (P78), finché c'è il mazzo;
+    - altrimenti nessuna (una carta giocata dentro la presa, la prima mano della partita).
+    """
+    players = after.num_players
+    if after.hand_number != before.hand_number:
+        laid = after.last_hand is not None and after.last_hand.laid_down is not None
+        cards = players * 5  # rules.hand_size: le carte distribuite a inizio mano
+        deal = SHUFFLE_SECONDS + (cards - 1) * DEAL_STEP_SECONDS + DRAW_SECONDS
+        pause = (LAID_DOWN_SECONDS if laid else LAST_TRICK_SECONDS) + SUMMARY_SECONDS + deal
+    elif before.hand.trick and not after.hand.trick:
+        drawing = THROW_SECONDS + players * DRAW_SECONDS if before.hand.deck else 0
+        pause = max(LAST_TRICK_SECONDS, drawing)
+    else:
+        pause = 0.0
+    return pause * PAUSE_SCALE
 
 
 def card_details(card):
@@ -336,22 +367,26 @@ class Room:
             # Dopo ogni carta è un turno nuovo, anche quando tocca di nuovo allo stesso posto
             # (chi chiude la presa e la vince apre la successiva): prima di P66 il timer
             # ripartiva solo se cambiava il posto di turno, e in quel caso non ripartiva più
-            self._start_turn()
+            self._start_turn(table_pause(before, self.game))
         # Dopo un canto il turno resta a chi ha cantato: il suo tempo continua a scorrere
 
     # --- Timer del turno (P25, D12) ---
 
-    def _start_turn(self):
-        """Nuovo turno: riparte il tempo e il timer della mossa automatica (sotto il lock)."""
+    def _start_turn(self, pause=0.0):
+        """Nuovo turno: riparte il tempo e il timer della mossa automatica (sotto il lock).
+
+        P94: il conto alla rovescia parte dopo `pause`, la pausa del tavolo che comincia con
+        la mossa appena fatta (table_pause); fino ad allora nella vista il turno resta pieno.
+        """
         if self._turn_timer is not None:
             self._turn_timer.cancel()
         self._turn_token += 1
-        self._turn_started = time.monotonic()
-        timer = threading.Timer(self.turn_seconds, self._turn_expired, args=(self._turn_token,))
+        self._turn_started = time.monotonic() + pause
+        timer = threading.Timer(pause + self.turn_seconds, self._turn_expired, args=(self._turn_token,))
         timer.daemon = True
         self._turn_timer = timer
         timer.start()
-        self._schedule_cpu()
+        self._schedule_cpu(pause)
 
     def _turn_expired(self, token):
         with self.lock:
@@ -368,24 +403,15 @@ class Room:
 
     # --- CPU (P68, D43) ---
 
-    def _schedule_cpu(self):
-        """Se tocca alla CPU, la sua mossa parte dopo l'attesa giusta (sotto il lock)."""
+    def _schedule_cpu(self, pause=0.0):
+        """Se tocca alla CPU, la sua mossa parte dopo la pausa del tavolo e la sua attesa (sotto il lock)."""
         if self._cpu_timer is not None:
             self._cpu_timer.cancel()
             self._cpu_timer = None
         hand = self.game.hand
         if self.finished or hand.turn_seat not in self.cpu_seats:
             return
-        if hand.trick:
-            delay = CPU_SECONDS * self._cpu_rng.uniform(*CPU_JITTER)
-        elif hand.last_trick is not None:
-            delay = CPU_AFTER_TRICK_SECONDS
-        elif self.game.hand_number > 1:
-            delay = CPU_NEW_HAND_SECONDS
-            if self.game.last_hand is not None and self.game.last_hand.laid_down is not None:
-                delay += CPU_LAID_DOWN_SECONDS
-        else:
-            delay = CPU_SECONDS * self._cpu_rng.uniform(*CPU_JITTER)  # prima mano: niente distribuzione
+        delay = pause + CPU_SECONDS * self._cpu_rng.uniform(*CPU_JITTER)
         timer = threading.Timer(delay, self._cpu_turn, args=(self._turn_token,))
         timer.daemon = True
         self._cpu_timer = timer
@@ -567,7 +593,8 @@ class Room:
                     reconnect_seconds_left=None if waiting is None else round(max(0.0, waiting[0] - now), 1),
                 )
             if view["turn"] is not None:
-                elapsed = now - self._turn_started
+                # P94: durante la pausa del tavolo il turno resta pieno (elapsed negativo)
+                elapsed = max(0.0, now - self._turn_started)
                 view["turn"].update(seconds_total=self.turn_seconds,
                                     seconds_left=round(max(0.0, self.turn_seconds - elapsed), 1))
             return view

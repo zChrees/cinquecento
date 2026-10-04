@@ -50,7 +50,7 @@ class BaseConfig:
 
     # Partita
     TARGET_SCORES = (150, 300, 500)
-    TURN_SECONDS = 30
+    TURN_SECONDS = 15  # P94: dal 04/10/2026, e il conto parte dopo le pause del tavolo (room.py)
     RECONNECT_SECONDS = 60
     TABLE_PHRASE_MIN_INTERVAL_SECONDS = 3  # frasi del tavolo: una ogni 3 secondi per giocatore (D24, P55)
 

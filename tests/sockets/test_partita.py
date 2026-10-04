@@ -256,7 +256,7 @@ def test_vista_con_i_campi_del_contratto(connect, new_room):
     assert set(view["players"][0]) == set(EXAMPLE["players"][0])
     assert set(view["turn"]) == set(EXAMPLE["turn"])
     assert view["game_id"] == room.id
-    assert view["turn"]["seconds_total"] == 30
+    assert view["turn"]["seconds_total"] == 15  # P94
     assert 0 < view["turn"]["seconds_left"] <= 30
     assert all(p["connected"] and p["reconnect_seconds_left"] is None for p in view["players"])
 

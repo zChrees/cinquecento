@@ -165,8 +165,8 @@
   },
   "turn": {
     "seat": 0,
-    "seconds_total": 30,
-    "seconds_left": 24.0
+    "seconds_total": 15,
+    "seconds_left": 12.0
   },
   "legal": {
     "play": [

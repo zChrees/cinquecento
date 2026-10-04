@@ -174,7 +174,7 @@
   "last_hand": null,
   "turn": {
     "seat": 3,
-    "seconds_total": 30,
+    "seconds_total": 15,
     "seconds_left": 12.5
   },
   "legal": {
