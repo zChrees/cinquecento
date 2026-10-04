@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: proposte di Christian su D43 e D45 (04/10/2026)
+
+- **Branch**: docs/d43-d45-proposte
+- **File**: modificati `DA-DECIDERE.md` (D43 e D45: proposte del 04/10), `SCALETTA.md` (sezione 9, "Da dove si parte"), `CLAUDE.md` (riga "Stato"), questo file. `DECISIONI.md` non cambia: le proposte diventano decisioni solo dopo l'ok di Giuseppe
+- **Controlli**: nessuno (soli documenti); ultimo giro completo **1647 PASS** in 9 suite (P91)
+- **Riepiloghi registrati**: nessuno nuovo (`giuseppe.md` fermo a P88, `antonio.md` a P27)
+- **Proposte** (Christian, sulle raccomandazioni di Claude; il testo completo è in `DA-DECIDERE.md`):
+  - **D43 (CPU)**: strategia "simulazione", cioè 100–200 distribuzioni possibili delle carte nascoste per ogni mossa e calcolo esatto a mazzo finito, con la memoria delle carte uscite solo per la CPU; solo 1v1; non si salva e non conta; scelta nella carta-modal; nome "CPU", icona robot, `cpu: true` nella vista, attesa tra 1 e 2 s
+  - **D45 ("Cala le carte")**: lettura "giocando bene"; pulsante solo a inizio presa, a chi apre; si cala solo con la briscola fissata, o senza briscola con 2 carte o meno a testa; prima si cantano tutti i propri semi; nel 2v2 il server aggiunge 20 punti per ogni seme che il compagno potrebbe cantare; carte scoperte per circa 3 s, poi il riepilogo; la CPU può calare, la mossa automatica no
+- **Domande nuove**: nessuna ("2 carte o meno", cioè anche con l'ultima carta, confermato da Christian)
+- **Cosa devono fare gli altri**: **Giuseppe**: leggi D43 e D45 in `DA-DECIDERE.md` e scrivi nel tuo riepilogo ok o obiezioni; poi P68 (strategia nuova e `cpu: true`) e P84. **Chi è di turno dopo l'ok**: spostare D43 e D45 in `DECISIONI.md` e la regola di D45 in `docs/REGOLE-GIOCO.md`
+
 ### Documenti: registrati P91 e l'annullamento di P9 (03/10/2026)
 
 - **Branch**: docs/p91-e-p9
