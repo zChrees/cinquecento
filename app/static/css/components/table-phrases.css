@@ -160,18 +160,26 @@
 
 /*
  * P101: sul telefono l'elenco copre solo la zona delle tue carte, sotto la tua riga
- * (canti, mano e riga di stato: dalla seconda riga della griglia di .table__mine in
- * giù), così presa, mazzo e avversari restano visibili; la tua riga resta, con il
- * pulsante per richiuderlo. Le frasi che non ci stanno scorrono.
+ * (canti, mano e riga di stato), così presa, mazzo e avversari restano visibili; la
+ * tua riga resta, con il pulsante per richiuderlo. Le frasi che non ci stanno scorrono.
+ * P112: su iPhone l'elenco compariva più in alto (sopra la tua riga) e poi scendeva.
+ * Ora non si appoggia più alla griglia di .table__mine: l'altezza da cui parte,
+ * --phrases-phone-top (fine della tua riga più lo spazio tra le righe), la misura
+ * pages/game.js prima che la pagina si disegni; e l'entrata è solo una dissolvenza,
+ * senza movimento.
  */
 @media (max-width: 639px) {
   .phrases-menu {
-    grid-row: 2;   /* fine "auto": per un elemento assoluto è il fondo della griglia */
-    inset: 0;
+    inset: var(--phrases-phone-top, 0) 0 0;
     align-content: flex-start;
     width: auto;
     max-height: none;
+    animation-name: phrases-fade;
   }
+}
+
+@keyframes phrases-fade {
+  from { opacity: 0; }
 }
 
 /*

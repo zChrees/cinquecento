@@ -599,7 +599,25 @@ function render(next) {
   }
   // P110: l'elenco delle frasi ricreato resta allo scorrimento di prima (sul telefono scorre)
   const menu = root.querySelector('[data-phrases-menu]');
-  if (menu) menu.scrollTop = phrasesScroll;
+  if (menu) {
+    placePhrasesMenu(menu);
+    menu.scrollTop = phrasesScroll;
+  }
+}
+
+/**
+ * P112: sul telefono l'elenco delle frasi comincia subito sotto la tua riga
+ * (.table__me, la prima di .table__mine) e non si sposta più: la misura si prende
+ * qui, prima che la pagina si disegni (css/components/table-phrases.css).
+ */
+function placePhrasesMenu(menu) {
+  if (!window.matchMedia('(max-width: 639px)').matches) return;
+  const mine = menu.parentElement;
+  const me = mine.querySelector('.table__me');
+  if (!me) return;
+  const gap = parseFloat(getComputedStyle(mine).rowGap) || 0;
+  const top = me.getBoundingClientRect().bottom - mine.getBoundingClientRect().top + gap;
+  menu.style.setProperty('--phrases-phone-top', `${Math.round(top)}px`);
 }
 
 /**

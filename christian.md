@@ -22,6 +22,20 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P112 — Elenco delle frasi fermo sul telefono (05/10/2026)
+
+- **Punto nuovo** (numero proposto; dalla prova di Christian su iPhone con Safari): aprendo l'elenco delle frasi, all'inizio compariva più in alto, copriva il tuo nome e il pulsante "Frasi", poi scendeva subito; deve aprirsi già al suo posto e non spostarsi mai (si può solo chiudere)
+- **Branch**: fix/p112-frasi-ferme (fatto da Claude, con il permesso di Christian per commit, merge e push)
+- **File**: modificati `app/static/css/components/table-phrases.css` (regola del telefono, `phrases-fade`), `app/static/js/pages/game.js` (`placePhrasesMenu`), `tests/table/test_frasi_senza_lampeggio.py` (un test nuovo), questo file
+- **Causa**: **non riprodotta** [N]: in Chrome che emula un telefono (390×844, tocco vero) e in WebKit per Windows (il motore di Safari, con Playwright in una cartella temporanea) l'elenco compariva già sotto la tua riga, con solo lo scivolamento di 6 px dell'entrata. Ipotesi [D]: Safari su iPhone calcola in due tempi la posizione di un elemento assoluto messo su una riga della griglia (`grid-row: 2` di P101)
+- **Cosa cambia** (correzione "difensiva", scelta di Christian): sotto 640 px l'elenco **non si appoggia più alla griglia**: `game.js` misura dove finisce la tua riga (più lo spazio tra le righe) e la scrive come `--phrases-phone-top` prima che la pagina si disegni; l'entrata è **solo una dissolvenza**, senza movimento. Posizione uguale a prima (6 px sotto la tua riga, fino in fondo). Tablet e computer non cambiano
+- **Controlli**: `test_frasi_senza_lampeggio.py` **5 PASS** (nuovo: nel 1v1 e nel 2v2 a 390×844, a ogni fotogramma dall'apertura l'elenco sta alla stessa altezza, subito sotto la tua riga, senza spostamenti); senza la correzione il test nuovo fallisce (scivolamento di 6 px). Con `test_grafica_tavolo.py`, `test_frasi_di_lato.py`, `test_frasi_pagina.py`, `test_tocchi_tavolo.py`, `test_tavolo_telefono.py`: 86 PASS e **1 FAIL raro** in `test_grafica_tavolo.py::test_meno_carte_in_mano_niente_si_sposta` (P106: il posto in alto largo 43 px invece di 42, un arrotondamento; l'elenco delle frasi lì non è aperto), poi 3 giri tutti PASS. Provato in WebKit: elenco 6 px sotto la tua riga, fermo. `ruff check .` pulito
+- **Da provare a mano**: su iPhone con Safari, aprire le frasi più volte (all'inizio della partita, durante un lancio, con i pulsanti "Canta"): l'elenco deve comparire subito al suo posto
+- **Decisioni prese**: quella sopra
+- **Domande nuove**: nessuna
+- **Punti delicati**: (1) sul telefono la posizione dell'elenco la decide `placePhrasesMenu` in `render`: la tua riga (`.table__me`) deve restare la prima di `.table__mine`; se la sua altezza cambia senza un ridisegno, l'elenco non la segue; (2) `test_meno_carte_in_mano_niente_si_sposta` (P106) a volte trova 1 px di differenza nel posto in alto: se ricapita, si può dare 1 px di tolleranza
+- **Cosa devono fare gli altri**: **Chi è di turno sui documenti**: registrare P112; in `CLAUDE.md`, punto delicato "Frasi del tavolo sul telefono (P101)": la posizione dal telefono la misura `game.js` (`--phrases-phone-top`), non più `grid-row: 2`
+
 ### P111 — Matchmaking più veloce (05/10/2026)
 
 - **Punto nuovo** (numero proposto; da `cose-da-sistemare.txt` di Christian): la Partita Veloce ci metteva circa 20 secondi a trovare un avversario

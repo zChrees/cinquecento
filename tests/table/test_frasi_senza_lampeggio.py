@@ -125,3 +125,37 @@ def test_elenco_fatto_scorrere_resta_dov_era(browser, server):
     wait(lambda: browser.js("document.querySelector('.card--thrown') !== null"), 3, "carta lanciata")
     time.sleep(1.2)
     assert browser.js("document.querySelector('[data-phrases-menu]').scrollTop") == 60
+
+
+FRAMES = """(() => {
+  window.__frames = [];
+  const start = performance.now();
+  const tick = () => {
+    const menu = document.querySelector('[data-phrases-menu]');
+    if (menu) {
+      const r = menu.getBoundingClientRect();
+      window.__frames.push({ top: Math.round(r.top), bottom: Math.round(r.bottom),
+                             transform: getComputedStyle(menu).transform });
+    }
+    if (performance.now() - start < 800) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+})()"""
+
+
+@pytest.mark.parametrize("mode", ["1v1", "2v2"])
+def test_sul_telefono_l_elenco_si_apre_al_suo_posto_e_non_si_muove(browser, server, mode):
+    # P112: su iPhone l'elenco compariva più in alto, sopra la tua riga, e poi scendeva
+    browser.open(f"{server}/game/prova?demo={mode}", 390, 844, "document.querySelector('[data-mode]') !== null")
+    browser.send("Emulation.setEmulatedMedia", features=[{"name": "prefers-reduced-motion", "value": "no-preference"}])
+    _dispatch(browser, "demo:phrases", PHRASES)
+    row = browser.js("document.querySelector('.table__me').getBoundingClientRect().bottom")
+    browser.js(FRAMES)
+    browser.click("[data-phrases-button]")
+    time.sleep(1)
+    frames = browser.js("window.__frames")
+    assert frames, "elenco non aperto"
+    assert {f["top"] for f in frames} == {frames[0]["top"]}, frames  # mai uno spostamento
+    assert {f["transform"] for f in frames} == {"none"}, frames  # entrata senza movimento
+    assert row < frames[0]["top"] <= row + 10, (row, frames[0])  # subito sotto la tua riga
+    assert frames[0]["bottom"] <= 844
