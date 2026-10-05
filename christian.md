@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P113 (seconda parte) — Suoni scelti al tavolo e mescolata più lunga (05/10/2026)
+
+- **Branch**: feature/p113-suoni-scelti
+- **Scelta di Christian con la pagina di P113** (D47, in parte; da registrare in `DECISIONI.md`): carta che si posa **solo `card-place-2`**; mescolata a inizio mano **`card-fan-2`**; distribuzione **`card-place-4` per ogni carta**, quando arriva (10 nel 1v1, 20 nel 2v2); presa raccolta, pescata e ticchettio come prima; "Cala le carte" **`card-shove-1`**; frase **`drop_002`**; sconfitta **`jingles_PIZZI07`**. "Tocca a te" e fine della mano **restano senza suono**. **Canto, vittoria e pareggio restano quelli di oggi**: Christian vuole più alternative nella pagina (prossimo lotto, sul branch di P113). Provata una pescata con `card-shuffle` intero (un suono per giro, carte più distanziate): a Christian non è piaciuta ed è tornata com'era (un `card-slide` 1–4 per carta, una ogni 0,5 s)
+- **Tempi** (scelta di Christian): la **mescolata** dura **1,3 s** (prima 0,6), quanto `card-fan-2`: a inizio mano il turno parte 0,7 s più tardi. Le pescate non cambiano
+- **File**: modificati `app/static/js/pages/game.js` (`SHUFFLE_MS`, `startDeal`), `app/static/js/core/sounds.js` (`SOUNDS`), `app/static/css/components/trick.css` (`deck-riffle` 1,3 s), `app/static/sounds/` (nuovi `card-place.mp3`, `deck-riffle.mp3`, `card-deal.mp3`; cambiati `cards-laid-down.mp3`, `phrase.mp3`, `lose.mp3`; tolti `card-place-1/-3`, `card-shuffle`, `card-fan`; circa 110 kB), `LICENZA.md`, `app/static/dev/suoni.json` (solo le righe "Oggi", altrimenti il test della pagina falliva); test `tests/table/test_suoni.py`, `test_distribuzione.py`. **File di Giuseppe**, con il suo ok (detto da Christian): `app/realtime/room.py` (solo `SHUFFLE_SECONDS` 1,3) e `tests/sockets/test_turno.py` (pausa attesa a inizio mano)
+- **Controlli** (dopo aver riportato la pescata com'era): `sockets` **306 PASS**, file del tavolo toccati (`test_suoni.py`, `test_distribuzione.py`, più `test_animazioni_in_fila.py`, `test_timer_in_anticipo.py`, `test_carte_avversari.py`) **33 PASS**, `test_pagina_suoni.py` **7 PASS**; prima del ritorno della pescata anche `frontend` 139, `e2e` 12 e `table` 131 PASS. Una volta su sei `test_turno.py::test_il_turno_parte_dopo_la_pausa_della_presa` (non toccato, gioca una presa con un turno da 0,4 s) è fallito, poi 5 giri e la suite intera PASS: probabile instabilità di tempi; nessun test nuovo, aggiornati i tempi attesi (in `test_suoni.py` ora si contano i suoni della distribuzione, uno per carta, e la distanza tra l'uno e l'altro). Giro completo non lanciato. `ruff check .` pulito
+- **Decisioni prese**: quelle sopra (D47 in parte)
+- **Domande nuove**: nessuna (D47 resta aperta per canto, vittoria e pareggio)
+- **Punti delicati**: i suoni della distribuzione partono con `setTimeout` all'inizio della distribuzione (uno per carta, a fine volo: `SHUFFLE_MS + k × DEAL_STEP_MS + DRAW_MS`)
+- **Note per gli altri**: **Giuseppe**: in `room.py` è cambiato solo `SHUFFLE_SECONDS` (1,3), in `test_turno.py` la pausa attesa a inizio mano. **Chi è di turno sui documenti**: in `CLAUDE.md`, punti delicati "Animazioni del tavolo (P70)" (mescolata 1,3 s) e "Suoni" (un suono per carta distribuita)
+
 ### P113 — Pagina per ascoltare e confrontare i suoni (05/10/2026)
 
 - **Branch**: feature/p113-pagina-suoni

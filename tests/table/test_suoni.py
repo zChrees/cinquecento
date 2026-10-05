@@ -6,7 +6,8 @@ dell'utente (P109: crearlo durante un ridisegno bloccava la pagina). Ogni suono 
 manda sul documento l'evento "cinquecento:sound" con il suo nome, anche quando il
 browser non lo fa sentire: i test ascoltano quello.
 Controlla che ogni momento abbia il suo suono, nello stesso momento della sua
-animazione (carta che si posa e pescate in fila, presa raccolta quando le carte
+animazione (carta che si posa e pescate in fila, un suono per ogni carta distribuita,
+quando arriva: D47; presa raccolta quando le carte
 scivolano via, il ticchettio degli ultimi 5 secondi contato dalla fine delle pause, la
 frase al tavolo; nessun suono quando comincia il tuo turno, P109); che con l'interruttore spento (pagina delle impostazioni, scelta nel
 browser) non suoni niente, anche dopo aver ricaricato la pagina; che il tavolo funzioni
@@ -192,11 +193,18 @@ def test_fine_mano_mescolata_e_distribuzione(browser, server):
     _dispatch(browser, "demo:state", new_hand)
     browser.wait_js("document.querySelector('[data-hand-summary-close]') !== null", "riepilogo", 4)
     browser.click("[data-hand-summary-close]")  # "Ok" chiude il riepilogo: parte la distribuzione
-    _wait_sound(browser, "deal", 3)
-    time.sleep(1)
-    # P109: un solo suono per la distribuzione (prima uno per carta) e niente per il riepilogo
-    names = [name for name, _ in _sounds(browser)]
-    assert names == ["card", "card", "trick", "shuffle", "deal"], names  # le due carte dell'ultima presa
+    # D47: un suono per ogni carta distribuita, quando arriva: la prima a fine mescolata
+    # (1,3 s) più il suo volo (0,5 s), poi una ogni 80 ms; niente per il riepilogo
+    cards = len(new_hand["hand"]) + sum(p["cards_in_hand"] for p in new_hand["players"] if p["seat"] != 0)
+    browser.wait_js(f"window.__sounds.filter(([name]) => name === 'deal').length === {cards}", "carte distribuite", 5)
+    time.sleep(0.5)
+    sounds = _sounds(browser)
+    names = [name for name, _ in sounds]
+    assert names == ["card", "card", "trick", "shuffle"] + ["deal"] * cards, names  # le due carte dell'ultima presa
+    shuffle = next(ms for name, ms in sounds if name == "shuffle")
+    deals = [ms for name, ms in sounds if name == "deal"]
+    assert 1700 <= deals[0] - shuffle <= 1950, sounds
+    assert all(50 <= b - a <= 130 for a, b in itertools.pairwise(deals)), sounds
 
 
 def test_calata(browser, server):

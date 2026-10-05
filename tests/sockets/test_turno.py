@@ -101,7 +101,7 @@ def test_pausa_dopo_una_presa_a_mazzo_finito():
     assert table_pause(after, play_first(after)) == pytest.approx(1.5)  # niente pescata: solo l'ultima presa
 
 
-@pytest.mark.parametrize(("players", "deal"), [(2, 0.6 + 9 * 0.08 + 0.5), (4, 0.6 + 19 * 0.08 + 0.5)])
+@pytest.mark.parametrize(("players", "deal"), [(2, 1.3 + 9 * 0.08 + 0.5), (4, 1.3 + 19 * 0.08 + 0.5)])
 def test_pausa_a_inizio_mano(players, deal):
     game = replace(new_game(players, 500, rng=random.Random(1)), hand=end_hand(players))
     after = game

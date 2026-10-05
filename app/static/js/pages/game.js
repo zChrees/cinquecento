@@ -97,7 +97,7 @@ const BUBBLE_MS = 4000;
 const THROW_MS = 400; // come la durata di card-throw in css/components/trick.css (P70)
 const MY_THROW_MS = 550; // P99: il lancio della tua carta, come animation-duration di .trick__card--bottom > .card--thrown in trick.css
 const DRAW_MS = 500; // come la durata di card-draw in css/components/hand.css (P70)
-const SHUFFLE_MS = 600; // come la durata di deck-riffle in css/components/trick.css (P70)
+const SHUFFLE_MS = 1300; // come la durata di deck-riffle in css/components/trick.css (P70); D47: quanto il suono deck-riffle
 const DEAL_STEP_MS = 80; // tra una carta distribuita e la successiva
 const HIDDEN = -1e6; // "parte tra molto": la carta resta nascosta finché la distribuzione non comincia
 const TRICK_AWAY_MS = 1100; // P103: le carte della presa chiusa scivolano via (AWAY_DELAY_MS di Trick.js)
@@ -441,8 +441,9 @@ function startDeal() {
   dealAt = performance.now();
   const cards = dealOrder(view).length;
   dealEnd = dealAt + SHUFFLE_MS + Math.max(cards - 1, 0) * DEAL_STEP_MS + DRAW_MS;
-  playSound('shuffle'); // P103, P109: la mescolata, poi la distribuzione (un suono solo)
-  playSound('deal', SHUFFLE_MS);
+  playSound('shuffle'); // P103: la mescolata
+  // D47: un suono per ogni carta distribuita, quando arriva (a fine volo, DRAW_MS)
+  for (let k = 0; k < cards; k += 1) playSound('deal', SHUFFLE_MS + k * DEAL_STEP_MS + DRAW_MS);
   clearTimeout(dealTimer);
   dealTimer = redrawAfter(dealEnd - dealAt);
 }

@@ -6,7 +6,7 @@
       "title": "Carta che si posa",
       "when": "A fine lancio, quando una carta arriva sul tavolo (la tua o quella di un altro).",
       "options": [
-        {"id": "oggi", "files": ["../sounds/card-place-1.mp3", "../sounds/card-place-2.mp3", "../sounds/card-place-3.mp3"], "gap_ms": 700, "source": "Casino Audio: card-place 1, 2, 4 (uno a caso)"},
+        {"id": "oggi", "files": ["../sounds/card-place.mp3"], "source": "Casino Audio: card-place-2"},
         {"id": "A", "files": ["suoni/card-place-x3.mp3"], "source": "Casino Audio: card-place-3"},
         {"id": "B", "files": ["suoni/card-slide-5.mp3"], "source": "Casino Audio: card-slide-5"},
         {"id": "C", "files": ["suoni/impact-light-1.mp3"], "source": "Impact Sounds: impactGeneric_light_001"},
@@ -29,7 +29,7 @@
       "title": "Mescolata",
       "when": "A inizio mano, prima della distribuzione (dura 0,6 s).",
       "options": [
-        {"id": "oggi", "files": ["../sounds/card-shuffle.mp3"], "source": "Casino Audio: card-shuffle (primi 1,1 s)"},
+        {"id": "oggi", "files": ["../sounds/deck-riffle.mp3"], "source": "Casino Audio: card-fan-2"},
         {"id": "A", "files": ["suoni/card-shuffle-full.mp3"], "source": "Casino Audio: card-shuffle intero (3 s, andrebbe accorciato)"},
         {"id": "B", "files": ["suoni/pack-open-1.mp3"], "source": "Casino Audio: cards-pack-open-1"},
         {"id": "C", "files": ["suoni/pack-open-2.mp3"], "source": "Casino Audio: cards-pack-open-2"},
@@ -41,7 +41,7 @@
       "title": "Distribuzione",
       "when": "Mentre le carte della mano nuova arrivano ai giocatori.",
       "options": [
-        {"id": "oggi", "files": ["../sounds/card-fan.mp3"], "source": "Casino Audio: card-fan-1"},
+        {"id": "oggi", "files": ["../sounds/card-deal.mp3", "../sounds/card-deal.mp3", "../sounds/card-deal.mp3"], "gap_ms": 80, "source": "Casino Audio: card-place-4, uno per carta"},
         {"id": "A", "files": ["suoni/card-fan-2.mp3"], "source": "Casino Audio: card-fan-2"},
         {"id": "B", "files": ["suoni/pack-take-out-2.mp3"], "source": "Casino Audio: cards-pack-take-out-2"},
         {"id": "C", "files": ["suoni/card-place-4.mp3", "suoni/card-place-4.mp3", "suoni/card-place-4.mp3"], "gap_ms": 160, "source": "Casino Audio: card-place-4 ripetuto, una carta alla volta"}
@@ -63,7 +63,7 @@
       "title": "\"Cala le carte\"",
       "when": "Quando un giocatore cala le carte e le mostra a tutti.",
       "options": [
-        {"id": "oggi", "files": ["../sounds/cards-laid-down.mp3"], "source": "Casino Audio: card-fan-2"},
+        {"id": "oggi", "files": ["../sounds/cards-laid-down.mp3"], "source": "Casino Audio: card-shove-1"},
         {"id": "A", "files": ["suoni/card-fan-1.mp3"], "source": "Casino Audio: card-fan-1"},
         {"id": "B", "files": ["suoni/card-shove-1.mp3"], "source": "Casino Audio: card-shove-1"},
         {"id": "C", "files": ["suoni/book-place-2.mp3"], "source": "RPG Audio: bookPlace2"}
@@ -86,7 +86,7 @@
       "title": "Frase al tavolo",
       "when": "Quando compare il fumetto di una frase.",
       "options": [
-        {"id": "oggi", "files": ["../sounds/phrase.mp3"], "source": "Interface Sounds: pluck_002"},
+        {"id": "oggi", "files": ["../sounds/phrase.mp3"], "source": "Interface Sounds: drop_002"},
         {"id": "A", "files": ["suoni/pluck-1.mp3"], "source": "Interface Sounds: pluck_001"},
         {"id": "B", "files": ["suoni/drop-2.mp3"], "source": "Interface Sounds: drop_002"},
         {"id": "C", "files": ["suoni/bong-1.mp3"], "source": "Interface Sounds: bong_001"},
@@ -145,7 +145,7 @@
       "title": "Sconfitta",
       "when": "A fine partita, se hai perso.",
       "options": [
-        {"id": "oggi", "files": ["../sounds/lose.mp3"], "source": "Interface Sounds: minimize_005"},
+        {"id": "oggi", "files": ["../sounds/lose.mp3"], "source": "Music Jingles: PIZZI07"},
         {"id": "A", "files": ["suoni/minimize-8.mp3"], "source": "Interface Sounds: minimize_008"},
         {"id": "B", "files": ["suoni/back-2.mp3"], "source": "Interface Sounds: back_002"},
         {"id": "C", "files": ["suoni/jingle-pizzi-03.mp3"], "source": "Music Jingles: PIZZI03"},

@@ -158,8 +158,8 @@ def test_un_ridisegno_a_meta_non_fa_ripartire_la_mescolata(browser, server):
       const half = document.querySelector('.deck__half');
       const a = half && half.getAnimations().find((x) => x.animationName === 'deck-riffle');
       return a ? a.effect.getComputedTiming().progress : null; })()""")
-    # Dopo 0,3 s su 0,6 la mescolata è almeno a un terzo, non di nuovo all'inizio
-    assert progress is None or progress >= 0.3, progress
+    # Dopo 0,3 s su 1,3 (D47) la mescolata è almeno a un settimo, non di nuovo all'inizio
+    assert progress is None or progress >= 0.15, progress
 
 
 def test_alla_prima_vista_niente_distribuzione(browser, server):

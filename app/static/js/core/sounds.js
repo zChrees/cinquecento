@@ -28,10 +28,10 @@ const VOLUME = 0.8;
 
 // Nome del suono → file (più di uno: se ne sceglie uno a caso, così non sembra un disco)
 export const SOUNDS = {
-  card: ['card-place-1', 'card-place-2', 'card-place-3'], // una carta si posa sul tavolo
+  card: ['card-place'], // una carta si posa sul tavolo
   draw: ['card-slide-1', 'card-slide-2', 'card-slide-3', 'card-slide-4'], // pescata
-  shuffle: ['card-shuffle'], // mescolata a inizio mano
-  deal: ['card-fan'], // distribuzione
+  shuffle: ['deck-riffle'], // mescolata a inizio mano
+  deal: ['card-deal'], // ogni carta distribuita, quando arriva (D47)
   trick: ['card-gather'], // presa raccolta
   lay_down: ['cards-laid-down'], // calata
   sing: ['chips-stack'], // canto
