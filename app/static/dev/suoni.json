@@ -1,0 +1,167 @@
+{
+  "note": "P113: suoni da confrontare (D47). Ogni momento ha il suono di oggi (id 'oggi', file in app/static/sounds/) e le alternative (file in app/static/dev/suoni/, fonte in suoni/LICENZA.md). 'files' sono percorsi relativi a app/static/dev/; con piu' file si sentono in fila, a 'gap_ms' l'uno dall'altro.",
+  "moments": [
+    {
+      "id": "card",
+      "title": "Carta che si posa",
+      "when": "A fine lancio, quando una carta arriva sul tavolo (la tua o quella di un altro).",
+      "options": [
+        {"id": "oggi", "files": ["../sounds/card-place-1.mp3", "../sounds/card-place-2.mp3", "../sounds/card-place-3.mp3"], "gap_ms": 700, "source": "Casino Audio: card-place 1, 2, 4 (uno a caso)"},
+        {"id": "A", "files": ["suoni/card-place-x3.mp3"], "source": "Casino Audio: card-place-3"},
+        {"id": "B", "files": ["suoni/card-slide-5.mp3"], "source": "Casino Audio: card-slide-5"},
+        {"id": "C", "files": ["suoni/impact-light-1.mp3"], "source": "Impact Sounds: impactGeneric_light_001"},
+        {"id": "D", "files": ["suoni/book-place-1.mp3"], "source": "RPG Audio: bookPlace1"}
+      ]
+    },
+    {
+      "id": "draw",
+      "title": "Pescata",
+      "when": "Ogni carta pescata dal mazzo dopo una presa, una alla volta.",
+      "options": [
+        {"id": "oggi", "files": ["../sounds/card-slide-1.mp3", "../sounds/card-slide-2.mp3", "../sounds/card-slide-3.mp3", "../sounds/card-slide-4.mp3"], "gap_ms": 500, "source": "Casino Audio: card-slide 1–4 (uno a caso)"},
+        {"id": "A", "files": ["suoni/card-slide-6.mp3", "suoni/card-slide-7.mp3", "suoni/card-slide-8.mp3"], "gap_ms": 500, "source": "Casino Audio: card-slide 6–8 (uno a caso)"},
+        {"id": "B", "files": ["suoni/pack-take-out-1.mp3"], "source": "Casino Audio: cards-pack-take-out-1"},
+        {"id": "C", "files": ["suoni/book-flip-1.mp3"], "source": "RPG Audio: bookFlip1"}
+      ]
+    },
+    {
+      "id": "shuffle",
+      "title": "Mescolata",
+      "when": "A inizio mano, prima della distribuzione (dura 0,6 s).",
+      "options": [
+        {"id": "oggi", "files": ["../sounds/card-shuffle.mp3"], "source": "Casino Audio: card-shuffle (primi 1,1 s)"},
+        {"id": "A", "files": ["suoni/card-shuffle-full.mp3"], "source": "Casino Audio: card-shuffle intero (3 s, andrebbe accorciato)"},
+        {"id": "B", "files": ["suoni/pack-open-1.mp3"], "source": "Casino Audio: cards-pack-open-1"},
+        {"id": "C", "files": ["suoni/pack-open-2.mp3"], "source": "Casino Audio: cards-pack-open-2"},
+        {"id": "D", "files": ["suoni/book-flip-2.mp3"], "source": "RPG Audio: bookFlip2"}
+      ]
+    },
+    {
+      "id": "deal",
+      "title": "Distribuzione",
+      "when": "Mentre le carte della mano nuova arrivano ai giocatori.",
+      "options": [
+        {"id": "oggi", "files": ["../sounds/card-fan.mp3"], "source": "Casino Audio: card-fan-1"},
+        {"id": "A", "files": ["suoni/card-fan-2.mp3"], "source": "Casino Audio: card-fan-2"},
+        {"id": "B", "files": ["suoni/pack-take-out-2.mp3"], "source": "Casino Audio: cards-pack-take-out-2"},
+        {"id": "C", "files": ["suoni/card-place-4.mp3", "suoni/card-place-4.mp3", "suoni/card-place-4.mp3"], "gap_ms": 160, "source": "Casino Audio: card-place-4 ripetuto, una carta alla volta"}
+      ]
+    },
+    {
+      "id": "trick",
+      "title": "Presa raccolta",
+      "when": "Quando le carte di una presa chiusa scivolano via verso chi l'ha vinta.",
+      "options": [
+        {"id": "oggi", "files": ["../sounds/card-gather.mp3"], "source": "Casino Audio: card-slide 1 e 3 sovrapposti"},
+        {"id": "A", "files": ["suoni/card-shove-3.mp3"], "source": "Casino Audio: card-shove-3"},
+        {"id": "B", "files": ["suoni/card-shove-4.mp3"], "source": "Casino Audio: card-shove-4"},
+        {"id": "C", "files": ["suoni/cloth-1.mp3"], "source": "RPG Audio: cloth1"}
+      ]
+    },
+    {
+      "id": "lay_down",
+      "title": "\"Cala le carte\"",
+      "when": "Quando un giocatore cala le carte e le mostra a tutti.",
+      "options": [
+        {"id": "oggi", "files": ["../sounds/cards-laid-down.mp3"], "source": "Casino Audio: card-fan-2"},
+        {"id": "A", "files": ["suoni/card-fan-1.mp3"], "source": "Casino Audio: card-fan-1"},
+        {"id": "B", "files": ["suoni/card-shove-1.mp3"], "source": "Casino Audio: card-shove-1"},
+        {"id": "C", "files": ["suoni/book-place-2.mp3"], "source": "RPG Audio: bookPlace2"}
+      ]
+    },
+    {
+      "id": "sing",
+      "title": "Canto (40 o 20)",
+      "when": "Quando un giocatore canta.",
+      "options": [
+        {"id": "oggi", "files": ["../sounds/chips-stack.mp3"], "source": "Casino Audio: chips-stack-3"},
+        {"id": "A", "files": ["suoni/chips-stack-1.mp3"], "source": "Casino Audio: chips-stack-1"},
+        {"id": "B", "files": ["suoni/chips-stack-5.mp3"], "source": "Casino Audio: chips-stack-5"},
+        {"id": "C", "files": ["suoni/chips-collide-2.mp3"], "source": "Casino Audio: chips-collide-2"},
+        {"id": "D", "files": ["suoni/coins.mp3"], "source": "RPG Audio: handleCoins"}
+      ]
+    },
+    {
+      "id": "phrase",
+      "title": "Frase al tavolo",
+      "when": "Quando compare il fumetto di una frase.",
+      "options": [
+        {"id": "oggi", "files": ["../sounds/phrase.mp3"], "source": "Interface Sounds: pluck_002"},
+        {"id": "A", "files": ["suoni/pluck-1.mp3"], "source": "Interface Sounds: pluck_001"},
+        {"id": "B", "files": ["suoni/drop-2.mp3"], "source": "Interface Sounds: drop_002"},
+        {"id": "C", "files": ["suoni/bong-1.mp3"], "source": "Interface Sounds: bong_001"},
+        {"id": "D", "files": ["suoni/question-1.mp3"], "source": "Interface Sounds: question_001"}
+      ]
+    },
+    {
+      "id": "tick",
+      "title": "Ticchettio",
+      "when": "Negli ultimi 5 secondi del tuo turno, uno al secondo; l'ultimo è diverso. Qui ne senti 3 più l'ultimo.",
+      "options": [
+        {"id": "oggi", "files": ["../sounds/tick.mp3", "../sounds/tick.mp3", "../sounds/tick.mp3", "../sounds/tick-last.mp3"], "gap_ms": 1000, "source": "Interface Sounds: tick_001, ultimo tick_002"},
+        {"id": "A", "files": ["suoni/tick-4.mp3", "suoni/tick-4.mp3", "suoni/tick-4.mp3", "../sounds/tick-last.mp3"], "gap_ms": 1000, "source": "Interface Sounds: tick_004, ultimo tick_002"},
+        {"id": "B", "files": ["suoni/click-3.mp3", "suoni/click-3.mp3", "suoni/click-3.mp3", "suoni/click-1.mp3"], "gap_ms": 1000, "source": "Interface Sounds: click_003, ultimo click_001"},
+        {"id": "C", "files": ["suoni/ui-click-2.mp3", "suoni/ui-click-2.mp3", "suoni/ui-click-2.mp3", "suoni/ui-click-1.mp3"], "gap_ms": 1000, "source": "UI Audio: click2, ultimo click1"},
+        {"id": "D", "files": ["suoni/metal-click.mp3", "suoni/metal-click.mp3", "suoni/metal-click.mp3", "../sounds/tick-last.mp3"], "gap_ms": 1000, "source": "RPG Audio: metalClick, ultimo tick_002"}
+      ]
+    },
+    {
+      "id": "turn",
+      "title": "Tocca a te",
+      "when": "Quando comincia il tuo turno. Oggi non c'è nessun suono (tolto il 05/10): si può rimettere.",
+      "options": [
+        {"id": "oggi", "files": [], "source": "Nessun suono"},
+        {"id": "A", "files": ["suoni/glass-1.mp3"], "source": "Interface Sounds: glass_001 (il \"ding\" tolto il 05/10)"},
+        {"id": "B", "files": ["suoni/select-3.mp3"], "source": "Interface Sounds: select_003"},
+        {"id": "C", "files": ["suoni/drop-1.mp3"], "source": "Interface Sounds: drop_001"},
+        {"id": "D", "files": ["suoni/pluck-1.mp3"], "source": "Interface Sounds: pluck_001"}
+      ]
+    },
+    {
+      "id": "hand_end",
+      "title": "Fine della mano",
+      "when": "Quando compare il riepilogo della mano. Oggi non c'è nessun suono: si può aggiungere.",
+      "options": [
+        {"id": "oggi", "files": [], "source": "Nessun suono"},
+        {"id": "A", "files": ["suoni/confirmation-1.mp3"], "source": "Interface Sounds: confirmation_001"},
+        {"id": "B", "files": ["suoni/maximize-3.mp3"], "source": "Interface Sounds: maximize_003"},
+        {"id": "C", "files": ["suoni/chips-handle-2.mp3"], "source": "Casino Audio: chips-handle-2"}
+      ]
+    },
+    {
+      "id": "win",
+      "title": "Vittoria",
+      "when": "A fine partita, se hai vinto.",
+      "options": [
+        {"id": "oggi", "files": ["../sounds/win.mp3"], "source": "Interface Sounds: confirmation_002"},
+        {"id": "A", "files": ["suoni/confirmation-4.mp3"], "source": "Interface Sounds: confirmation_004"},
+        {"id": "B", "files": ["suoni/jingle-pizzi-00.mp3"], "source": "Music Jingles: PIZZI00"},
+        {"id": "C", "files": ["suoni/jingle-steel-00.mp3"], "source": "Music Jingles: STEEL00"},
+        {"id": "D", "files": ["suoni/jingle-sax-00.mp3"], "source": "Music Jingles: SAX00"}
+      ]
+    },
+    {
+      "id": "lose",
+      "title": "Sconfitta",
+      "when": "A fine partita, se hai perso.",
+      "options": [
+        {"id": "oggi", "files": ["../sounds/lose.mp3"], "source": "Interface Sounds: minimize_005"},
+        {"id": "A", "files": ["suoni/minimize-8.mp3"], "source": "Interface Sounds: minimize_008"},
+        {"id": "B", "files": ["suoni/back-2.mp3"], "source": "Interface Sounds: back_002"},
+        {"id": "C", "files": ["suoni/jingle-pizzi-03.mp3"], "source": "Music Jingles: PIZZI03"},
+        {"id": "D", "files": ["suoni/jingle-steel-03.mp3"], "source": "Music Jingles: STEEL03"}
+      ]
+    },
+    {
+      "id": "tie",
+      "title": "Pareggio",
+      "when": "A fine partita, in caso di pareggio.",
+      "options": [
+        {"id": "oggi", "files": ["../sounds/tie.mp3"], "source": "Interface Sounds: switch_003"},
+        {"id": "A", "files": ["suoni/switch-5.mp3"], "source": "Interface Sounds: switch_005"},
+        {"id": "B", "files": ["suoni/toggle-2.mp3"], "source": "Interface Sounds: toggle_002"},
+        {"id": "C", "files": ["suoni/jingle-pizzi-07.mp3"], "source": "Music Jingles: PIZZI07"}
+      ]
+    }
+  ]
+}

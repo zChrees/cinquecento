@@ -1,0 +1,47 @@
+<!doctype html>
+<!--
+  Pagina per ascoltare e confrontare i suoni del tavolo (P113, D47): solo per
+  sviluppo, non fa parte del sito e non va in main.
+  Si apre con il server acceso: http://localhost:5000/static/dev/suoni.html
+  (dal telefono, in rete locale: http://<indirizzo del PC>:5000/static/dev/suoni.html).
+  Per ogni momento del tavolo: il suono di oggi e le alternative (suoni.json),
+  la scelta del gruppo e, in fondo, il riepilogo da copiare.
+-->
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Suoni · prova</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap">
+
+  <link rel="stylesheet" href="../css/base/reset.css">
+  <link rel="stylesheet" href="../css/base/variables.css">
+  <link rel="stylesheet" href="suoni.css">
+  <script type="module" src="suoni.js"></script>
+</head>
+<body>
+  <main class="dev-sounds">
+    <header class="dev-sounds__head">
+      <h1>Suoni del tavolo: quale preferite?</h1>
+      <p class="dev-sounds__note">
+        Per ogni momento ascoltate il suono di oggi e le alternative, poi segnate quello
+        che vi piace di più. In fondo c'è il riepilogo da copiare e mandare a Claude.
+        Il volume è quello del tavolo; tutti i suoni sono gratuiti (CC0).
+      </p>
+    </header>
+    <div class="dev-sounds__list" data-moments></div>
+    <section class="dev-sounds__summary" aria-labelledby="summary-title">
+      <h2 id="summary-title">Riepilogo delle scelte</h2>
+      <pre class="dev-sounds__summary-text" data-summary></pre>
+      <div class="dev-sounds__summary-actions">
+        <button type="button" class="dev-sounds__button" data-copy>Copia il riepilogo</button>
+        <button type="button" class="dev-sounds__button dev-sounds__button--ghost" data-reset>Ricomincia</button>
+        <span class="dev-sounds__status" data-status role="status"></span>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

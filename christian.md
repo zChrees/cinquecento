@@ -22,6 +22,19 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P113 — Pagina per ascoltare e confrontare i suoni (05/10/2026)
+
+- **Branch**: feature/p113-pagina-suoni
+- **File** (lista definitiva per 9.2): creati `app/static/dev/suoni.html`, `suoni.css`, `suoni.js`, `suoni.json` (elenco di momenti e scelte, letto dalla pagina e dal test), `app/static/dev/suoni/` (53 MP3 candidati, 319 kB, e `LICENZA.md`), `tests/frontend/test_pagina_suoni.py`, questo file. Nessun file del sito toccato: niente rotte nuove, `sounds.js` e `app/static/sounds/` restano come sono finché i tre non scelgono
+- **Dove sta** (scelta di Christian, "nel sito, solo sviluppo"): come la prova delle carte (P20), è un file statico, `http://localhost:5000/static/dev/suoni.html` (dal telefono in rete locale: `http://<indirizzo del PC>:5000/static/dev/suoni.html`). **Non va in `main`**, quindi nella demo non c'è
+- **Cosa fa**: 14 momenti (carta che si posa, pescata, mescolata, distribuzione, presa raccolta, calata, canto, frase, ticchettio, **tocca a te** e **fine della mano**, che oggi non hanno suono, vittoria, sconfitta, pareggio); per ognuno il suono di oggi e da 3 a 4 alternative, ognuna con "Ascolta" (un suono alla volta) e "Mi piace", più "Ascolta tutte in fila". In fondo il **riepilogo delle scelte**, con "Copia" (dal telefono in http il browser non copia: il testo si seleziona e si copia a mano). Le scelte si ricordano nel browser
+- **Candidati**: dai pacchetti Kenney (CC0) Casino Audio, Interface Sounds, UI Audio, Impact Sounds, RPG Audio e Music Jingles, convertiti come in P109 (MP3 mono 80 kbit/s, volume pareggiato a circa −27 dB). Li ha scelti Claude **dai nomi e dalle misure, senza poterli ascoltare**: qualcuno può non adattarsi (per esempio un jingle "allegro" tra quelli della sconfitta)
+- **Controlli**: `test_pagina_suoni.py` **7 PASS** (elenco coerente, file esistenti, "oggi" = tutti i file di `app/static/sounds/`, ogni candidato usato e con la sua riga di licenza, pagina servita con risorse esterne solo da Google Fonts; nel browser: momenti disegnati, un suono alla volta, "Mi piace" nel riepilogo, **ogni file si decodifica** davvero). Suite `frontend` **139 PASS**. `ruff check .` pulito
+- **Decisioni prese**: dove sta la pagina (sopra)
+- **Domande nuove**: nessuna (la scelta dei suoni è D47)
+- **Punti delicati**: dopo la scelta, i file scelti vanno in `app/static/sounds/` (con `SOUNDS` di `sounds.js` e una riga in `LICENZA.md`), e **`app/static/dev/suoni*` si cancella** (pagina, elenco e candidati); per "tocca a te" e "fine della mano" serve anche il punto del tavolo che li fa suonare (`game.js`)
+- **Note per gli altri**: **Giuseppe** (e Antonio): dopo il pull aprite la pagina con `python run.py` acceso; domani scegliamo insieme e mandiamo il riepilogo a Claude. **Chi è di turno sui documenti**: spuntare P113 solo quando D47 è chiusa (il "Fatto quando" chiede anche i file scelti al loro posto); lista definitiva in 9.2
+
 ### Documenti: registrati i punti del 04–05/10, aggiunti P113, P114 e D47 (05/10/2026)
 
 - **Branch**: docs/aggiornamento-05-10
