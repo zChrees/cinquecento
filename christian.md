@@ -22,6 +22,16 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: registrati i punti del 04–05/10, aggiunti P113, P114 e D47 (05/10/2026)
+
+- **Branch**: docs/aggiornamento-05-10
+- **File**: modificati `SCALETTA.md` (spuntati P68, P85, P92–P103 con le note; P104–P112 aggiunti e spuntati, con le schede in "Correzioni e richieste del 05/10/2026"; aggiunti **P113** e **P114**; tabella di 9.1, controlli di parallelismo, liste definitive in 9.2, "Da dove si parte"), `DECISIONI.md` (Interfaccia: calata al tavolo, carte del compagno al tavolo, partita interrotta, prova del 05/10 con lanci, mazzo, briscola con Cavallo e Re, frasi, doppio tocco, mano, coda e suoni registrati; Gioco: **matchmaking più veloce**, che aggiorna D16; Processo: contratti di P92 e P68 approvati, file di Giuseppe toccati in P111), `DA-DECIDERE.md` (**D47**, suoni del tavolo), `CLAUDE.md` (riga "Stato", numero dei controlli, frase sulla CPU in "Progetto", punti delicati: accesso, timer, tocchi, animazioni, tavolo da computer, briscola, frasi, CPU, calata, suite `table`; nuovi: carte del compagno, suoni), questo file
+- **Controlli**: giro completo su `dev` dopo P112: **1758 PASS** in 9 suite, nessun test fallito; ma il runner ha **fermato `table` a 240 s** (le altre otto: 1627 PASS), e lanciata da sola fa **131 PASS in 294 s**: la suite è cresciuta con i test del 04–05/10, nessun test bloccato (P114)
+- **Riepiloghi registrati**: `christian.md` fino a P112 (P85, P93, P95, P97–P112); `giuseppe.md` fino a P96 (P68, P92, P94, P96); `antonio.md` niente di nuovo
+- **Decisioni registrate**: quelle dei riepiloghi (sopra); **P111** con l'ok di Giuseppe; per P114 Christian ha scelto di **annotarlo soltanto** (proposta di Claude: dividere la suite come in P91)
+- **Domande nuove**: **D47** — il 06/10 Christian, Giuseppe e Antonio (se c'è) vogliono ascoltare **suoni diversi** da quelli di P109 e scegliere quelli che piacciono di più, momento per momento, possibilmente con una **pagina a parte** (P113: dove metterla si decide all'inizio del punto)
+- **Cosa devono fare gli altri**: **Giuseppe**: in P111 sono cambiati, con il tuo ok, i numeri della coda in `config.py` e i test della coda: fai il pull prima di toccarli; il 06/10 la scelta dei suoni (D47). Nel giro completo, finché non c'è P114, la suite `table` risulta "fermata": lanciala da sola (`python tests/esegui_tutti.py table` dà lo stesso limite, quindi meglio `python -m pytest tests/table -q`)
+
 ### P112 — Elenco delle frasi fermo sul telefono (05/10/2026)
 
 - **Punto nuovo** (numero proposto; dalla prova di Christian su iPhone con Safari): aprendo l'elenco delle frasi, all'inizio compariva più in alto, copriva il tuo nome e il pulsante "Frasi", poi scendeva subito; deve aprirsi già al suo posto e non spostarsi mai (si può solo chiudere)
