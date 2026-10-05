@@ -8,7 +8,7 @@ Il 29/09/2026 sono state chiuse D5, D8, D10, D20, D29, D40, D41 e D42; il 30/09/
 
 - [ ] **D1 — Data esatta di consegna**. Cosa si consegna è deciso il 29/09/2026 (repository, dimostrazione dal vivo e relazione scritta, da scrivere alla fine: `DECISIONI.md`, Progetto e tempi); manca solo il giorno esatto. **01/10/2026**: la consegna intorno al 03/10 è stata **spostata**; la nuova data non è ancora fissata.
 
-- [ ] **D47 — Suoni del tavolo** (P109, P113): i suoni registrati di P109 (Kenney, CC0) li ha scelti Claude, uno per momento, e Christian li ha provati il 05/10 (tolto il "ding" di "tocca a te", cambiata la presa). Il **06/10/2026** Christian, Giuseppe e Antonio (se c'è) vogliono **ascoltare suoni diversi** e scegliere quelli che piacciono di più, momento per momento, con la pagina di P113. Da decidere anche se rimettere un suono per "tocca a te" e per la fine della mano.
+- [ ] **D47 — Suoni del tavolo** (P109, P113): i suoni registrati di P109 (Kenney, CC0) li ha scelti Claude, uno per momento, e Christian li ha provati il 05/10 (tolto il "ding" di "tocca a te", cambiata la presa). **05/10/2026 sera**: con la pagina di P113 Christian ha scelto quasi tutto (`DECISIONI.md`, Interfaccia, 05/10), anche che "tocca a te" e la fine della mano restano senza suono. **Restano canto, vittoria e pareggio**: nella pagina arrivano più alternative, poi la scelta.
 
 ## Tempi
 

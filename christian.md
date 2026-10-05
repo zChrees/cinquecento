@@ -22,6 +22,16 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: registrati P82 e P113, aggiunti P115–P119 (05/10/2026, sera)
+
+- **Branch**: docs/aggiornamento-05-10-sera
+- **File**: modificati `SCALETTA.md` (spuntato **P82**; nota di **P113**, a metà; aggiunti **P115–P119** nel tracker e nella sezione nuova "Richieste del 05/10/2026 (sera)"; elenco di Christian, tabella di 9.1, controlli di parallelismo, liste definitive di P82 e P113 e voci nuove in 9.2, "Da dove si parte"), `DECISIONI.md` (Interfaccia: pagina dei suoni, suoni scelti, CPU nella home, niente rotazione, presa da computer nel 1v1; Processo: rotta pubblica `GET /online` di P82, file di Giuseppe toccati in P113), `DA-DECIDERE.md` (D47: restano canto, vittoria e pareggio), `CLAUDE.md` (riga "Stato", numero dei controlli, punti delicati "Suoni" e nuovo "Online senza login (P82)"), questo file
+- **Controlli**: nessun test lanciato (solo documenti); ultimo giro completo di Giuseppe dopo P82: **1761 PASS** e 1 FAIL raro già noto (P106), con `table` lanciata da sola
+- **Riepiloghi registrati**: `christian.md` fino a "P113 (seconda parte)"; `giuseppe.md` fino a P82; `antonio.md` niente di nuovo
+- **Decisioni registrate**: quelle di P113 (pagina e suoni scelti), di P82 (dal riepilogo di Giuseppe), la scelta per P73 ("Avversario: Giocatore · CPU" in Partita Veloce 1v1), P116 (avviso "Gira il telefono", tutte le pagine), P117 (presa simmetrica rispetto al mazzo)
+- **Domande nuove**: nessuna; D47 aggiornata
+- **Cosa devono fare gli altri**: **Giuseppe**: `SHUFFLE_SECONDS` di `room.py` ora è 1,3 (P113, con il tuo ok); **P118** cambierà `table_pause` alla prima mano: avvisa prima di toccare `room.py`. Il fallimento raro di P106 (`test_meno_carte_in_mano_niente_si_sposta`) resta da sistemare (tolleranza di 1 px)
+
 ### P113 (seconda parte) — Suoni scelti al tavolo e mescolata più lunga (05/10/2026)
 
 - **Branch**: feature/p113-suoni-scelti
