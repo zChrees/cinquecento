@@ -129,7 +129,7 @@ def test_con_due_coppie_e_due_singoli_nessuna_coppia_divisa(queue, clock):
 
 def test_la_coppia_vale_la_media_e_vede_il_compagno(queue):
     statuses = queue.join_entry((_p(1), _p(2)), (1400, 1700), "2v2", 150)
-    assert statuses[1]["rating_range"] == {"min": 1450, "max": 1650}
+    assert statuses[1]["rating_range"] == {"min": 1400, "max": 1700}
     assert statuses[1]["partner"] == {"user_id": 2, "username": "U2", "avatar": None}
     assert statuses[2]["partner"]["user_id"] == 1
     assert queue.status(2)["partner"]["user_id"] == 1
@@ -144,18 +144,18 @@ def test_singolo_2v2_senza_compagno(queue):
 def test_rating_lontani_solo_dopo_l_allargamento(queue, clock):
     queue.join_entry((_p(1), _p(2)), (1500, 1500), "2v2", 150)
     queue.join_entry((_p(3), _p(4)), (1800, 1800), "2v2", 150)
-    clock.now += 39.9  # ±250
+    clock.now += 9.9  # ±250
     assert queue.take_matches() == []
-    clock.now += 10.1  # ±350 dopo 50 secondi
+    clock.now += 0.1  # ±350 dopo 10 secondi
     assert len(queue.take_matches()) == 1
 
 
 def test_tutte_le_voci_si_devono_accettare(queue, clock):
-    # 1 e 4 sono lontani 300: con ±100 tutti i quattro insieme non si accettano
+    # 1 e 4 sono lontani 300: con ±150 tutti i quattro insieme non si accettano
     for n, rating in ((1, 1500), (2, 1600), (3, 1700), (4, 1800)):
         queue.join(_p(n), "2v2", 150, rating)
     assert queue.take_matches() == []
-    clock.now += 50  # ±350
+    clock.now += 10  # ±350
     assert len(queue.take_matches()) == 1
 
 

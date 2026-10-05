@@ -22,6 +22,19 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P111 — Matchmaking più veloce (05/10/2026)
+
+- **Punto nuovo** (numero proposto; da `cose-da-sistemare.txt` di Christian): la Partita Veloce ci metteva circa 20 secondi a trovare un avversario
+- **Branch**: fix/p111-coda-piu-veloce (fatto da Claude, con il permesso di Christian per commit, merge e push)
+- **File**: modificati `config.py` (valori `MATCH_RANGE_*`, `MATCH_ANY_AFTER_SECONDS`), `tests/sockets/test_matchmaking_1v1.py`, `tests/sockets/test_matchmaking_2v2.py`, `tests/api/test_pagina_home.py` (solo i numeri attesi), questo file. **File di Giuseppe** (`config.py` e i test della coda): toccati con il suo ok. `app/realtime/matchmaking.py` **non cambia**
+- **Causa** [T, misurata con la coda vera e un orologio finto]: due giocatori si abbinano solo se la differenza di rating sta nell'intervallo di **tutti e due** (P28), che partiva da ±100 e cresceva di 50 ogni 10 s, contati da quando ognuno è entrato; con una differenza tra 151 e 200 si aspettavano 20 s, con 400 un minuto, oltre 400 due minuti, anche quando in coda c'erano solo quei due
+- **Cosa cambia** (opzione A, decisa da Christian e Giuseppe, cambia i numeri di D16): si parte da **±150**, l'intervallo cresce di **100 ogni 5 s** fino a **±400**, e dopo **30 s** va bene qualunque avversario. Attese: fino a 150 di differenza subito, fino a 250 5 s, fino a 350 10 s, fino a 400 15 s, oltre 30 s. Resta la regola dell'accettarsi a vicenda
+- **Controlli**: `test_matchmaking_1v1.py`, `test_matchmaking_2v2.py`, `test_inviti.py` **110 PASS**, 2 giri su 2 (aggiornati i numeri attesi; il test con il server vero ora usa 300 di differenza, così la partita arriva dopo il primo allargamento, come prima); `test_pagina_home.py` **37 PASS**. `ruff check .` pulito
+- **Decisioni prese**: quella sopra (cambia D16)
+- **Domande nuove**: nessuna
+- **Punti delicati**: nessuno nuovo
+- **Cosa devono fare gli altri**: **Giuseppe**: se hai modifiche aperte ai test della coda, fai il pull prima. **Chi è di turno sui documenti**: registrare P111; in `DECISIONI.md`, D16 con i numeri nuovi (05/10/2026, ok di Christian e Giuseppe)
+
 ### P110 — Elenco delle frasi che non lampeggia durante i lanci (05/10/2026)
 
 - **Punto nuovo** (numero proposto; da `cose-da-sistemare.txt` di Christian): sia da computer sia dal telefono, con l'elenco delle frasi aperto, quando un avversario lancia una carta l'elenco "lampeggia" più volte

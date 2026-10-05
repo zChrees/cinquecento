@@ -54,12 +54,14 @@ class BaseConfig:
     RECONNECT_SECONDS = 60
     TABLE_PHRASE_MIN_INTERVAL_SECONDS = 3  # frasi del tavolo: una ogni 3 secondi per giocatore (D24, P55)
 
-    # Matchmaking (deciso, D16): intervallo di rating che si allarga col tempo
-    MATCH_RANGE_START = 100
-    MATCH_RANGE_STEP = 50
-    MATCH_RANGE_STEP_SECONDS = 10
+    # Matchmaking (deciso, D16): intervallo di rating che si allarga col tempo.
+    # P111 (05/10/2026, ok di Christian e Giuseppe): più veloce, prima era ±100, +50 ogni
+    # 10 s, chiunque dopo 120 s (con 200 punti di differenza si aspettavano 20 s)
+    MATCH_RANGE_START = 150
+    MATCH_RANGE_STEP = 100
+    MATCH_RANGE_STEP_SECONDS = 5
     MATCH_RANGE_MAX = 400
-    MATCH_ANY_AFTER_SECONDS = 120
+    MATCH_ANY_AFTER_SECONDS = 30
 
     # Rating Glicko-2: valore iniziale e partite "provvisorie" per modalità decisi (D9)
     RATING_INITIAL = 1500

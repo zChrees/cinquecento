@@ -51,7 +51,8 @@ def queue(clock):
 
 
 @pytest.mark.parametrize("waited, half", [
-    (0, 100), (9.9, 100), (10, 150), (25, 200), (59.9, 350), (60, 400), (119.9, 400), (120, None), (500, None),
+    # P111: ±150, +100 ogni 5 s fino a ±400, qualunque avversario dopo 30 s
+    (0, 150), (4.9, 150), (5, 250), (12, 350), (14.9, 350), (15, 400), (29.9, 400), (30, None), (500, None),
 ])
 def test_intervallo_si_allarga_come_d16(waited, half):
     assert half_width(stage_of(waited)) == half
@@ -60,7 +61,7 @@ def test_intervallo_si_allarga_come_d16(waited, half):
 def test_valori_di_d16_da_config():
     config = load_config("testing")
     assert (matchmaking.RANGE_START, matchmaking.RANGE_STEP, matchmaking.RANGE_STEP_SECONDS,
-            matchmaking.RANGE_MAX, matchmaking.ANY_AFTER_SECONDS) == (100, 50, 10, 400, 120)
+            matchmaking.RANGE_MAX, matchmaking.ANY_AFTER_SECONDS) == (150, 100, 5, 400, 30)  # P111
     assert matchmaking.RANGE_START == config.MATCH_RANGE_START
     assert matchmaking.ANY_AFTER_SECONDS == config.MATCH_ANY_AFTER_SECONDS
 
@@ -68,18 +69,18 @@ def test_valori_di_d16_da_config():
 def test_stato_della_coda_nella_forma_del_contratto(queue, clock):
     status = queue.join(_player(1), "1v1", 300, 1540.4)
     assert status == {"mode": "1v1", "target_score": 300, "seconds_waiting": 0,
-                      "rating_range": {"min": 1440, "max": 1640}, "partner": None,
+                      "rating_range": {"min": 1390, "max": 1690}, "partner": None,
                       "opponents": []}
-    clock.now += 23.7
-    assert queue.status(1)["seconds_waiting"] == 23
-    assert queue.status(1)["rating_range"] == {"min": 1340, "max": 1740}
+    clock.now += 13.7
+    assert queue.status(1)["seconds_waiting"] == 13
+    assert queue.status(1)["rating_range"] == {"min": 1190, "max": 1890}
     clock.now += 120
     assert queue.status(1)["rating_range"] is None
     assert queue.status(2) is None
 
 
 def test_intervallo_non_scende_sotto_zero(queue):
-    assert queue.join(_player(1), "1v1", 150, 30)["rating_range"] == {"min": 0, "max": 130}
+    assert queue.join(_player(1), "1v1", 150, 30)["rating_range"] == {"min": 0, "max": 180}
 
 
 def test_due_volte_in_coda_busy(queue):
@@ -110,27 +111,27 @@ def test_punteggi_diversi_non_si_abbinano(queue, clock):
 def test_rating_lontani_solo_dopo_l_allargamento(queue, clock):
     queue.join(_player(1), "1v1", 150, 1500)
     queue.join(_player(2), "1v1", 150, 1700)
-    clock.now += 19.9  # ±150: non basta per 200 di differenza
+    clock.now += 4.9  # ±150: non basta per 200 di differenza
     assert queue.take_matches() == []
-    clock.now += 0.1  # ±200
+    clock.now += 0.1  # ±250
     assert len(queue.take_matches()) == 1
 
 
 def test_si_devono_accettare_a_vicenda(queue, clock):
     queue.join(_player(1), "1v1", 150, 1500)
-    clock.now += 60  # il primo accetta già ±400
-    queue.join(_player(2), "1v1", 150, 1750)  # il secondo, appena entrato, solo ±100
+    clock.now += 20  # il primo accetta già ±400
+    queue.join(_player(2), "1v1", 150, 1800)  # il secondo, appena entrato, solo ±150
     assert queue.take_matches() == []
-    clock.now += 29.9  # secondo a ±200: 250 di differenza sono ancora troppi per lui
+    clock.now += 9.9  # secondo a ±250: 300 di differenza sono ancora troppi per lui
     assert queue.take_matches() == []
-    clock.now += 0.1  # secondo a ±250 dopo 30 secondi
+    clock.now += 0.1  # secondo a ±350 dopo 10 secondi
     assert len(queue.take_matches()) == 1
 
 
-def test_qualunque_avversario_dopo_due_minuti(queue, clock):
+def test_qualunque_avversario_dopo_30_secondi(queue, clock):
     queue.join(_player(1), "1v1", 500, 800)
     queue.join(_player(2), "1v1", 500, 2400)
-    clock.now += 119.9
+    clock.now += 29.9
     assert queue.take_matches() == []
     clock.now += 0.1
     assert len(queue.take_matches()) == 1
@@ -150,9 +151,9 @@ def test_prima_chi_aspetta_da_piu_tempo_con_il_rating_piu_vicino(queue, clock):
 def test_aggiornamenti_solo_quando_l_intervallo_cambia(queue, clock):
     queue.join(_player(1), "1v1", 150, 1500)
     assert queue.take_updates() == []
-    clock.now += 10
+    clock.now += 5
     [(user_id, status)] = queue.take_updates()
-    assert user_id == 1 and status["rating_range"] == {"min": 1350, "max": 1650}
+    assert user_id == 1 and status["rating_range"] == {"min": 1250, "max": 1750}
     assert queue.take_updates() == []  # stesso intervallo: niente di nuovo
     clock.now += 300
     [(_, status)] = queue.take_updates()
@@ -261,7 +262,7 @@ def test_due_giocatori_vicini_si_abbinano_subito(connect, ids):
 
     answer = _join(primo, 300)
     assert answer == ok({"mode": "1v1", "target_score": 300, "seconds_waiting": 0,
-                         "rating_range": {"min": 1400, "max": 1600}, "partner": None,
+                         "rating_range": {"min": 1350, "max": 1650}, "partner": None,
                          "opponents": []})
     assert _join(secondo, 300)["ok"] is True
 
@@ -285,18 +286,18 @@ def test_punteggi_diversi_code_separate(connect, ids):
 
 
 def test_rating_lontani_abbinati_dopo_l_allargamento(connect, ids, rating_rows, monkeypatch):
-    monkeypatch.setattr(matchmaking, "RANGE_STEP_SECONDS", 1.0)  # ±200 dopo 2 secondi invece di 20
-    rating_rows({ids["Secondo"]: 1700.0})
+    monkeypatch.setattr(matchmaking, "RANGE_STEP_SECONDS", 1.0)  # ±250 dopo 1 secondo invece di 5
+    rating_rows({ids["Secondo"]: 1800.0})  # 300 di differenza: servono ±350, dopo 2 secondi
     primo, secondo = connect("Primo"), connect("Secondo")
     statuses, start = Events(primo, "queue:status"), Events(primo, "game:start")
 
-    assert _join(primo)["data"]["rating_range"] == {"min": 1400, "max": 1600}
-    assert _join(secondo)["data"]["rating_range"] == {"min": 1600, "max": 1800}
+    assert _join(primo)["data"]["rating_range"] == {"min": 1350, "max": 1650}
+    assert _join(secondo)["data"]["rating_range"] == {"min": 1650, "max": 1950}
     matchmaker.check()
-    assert not start.items, "abbinati subito con 200 punti di differenza"
+    assert not start.items, "abbinati subito con 300 punti di differenza"
 
     assert start.wait(timeout=WAIT), "non abbinati dopo l'allargamento"
-    assert statuses.items[0]["rating_range"] == {"min": 1350, "max": 1650}  # queue:status dopo 1 secondo
+    assert statuses.items[0]["rating_range"] == {"min": 1250, "max": 1750}  # queue:status dopo 1 secondo
 
 
 def test_annulla_da_un_altra_scheda(connect, ids):

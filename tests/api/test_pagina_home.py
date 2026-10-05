@@ -338,8 +338,8 @@ def test_partita_veloce_apre_e_annulla_la_coda(logged_in, server):
               seconds: o.querySelector('[data-queue-seconds]').textContent}; })()""")
     assert overlay["mode"] == "1v1" and overlay["target"] == "150"
     # Da P28 la Partita Veloce 1v1 usa la coda vera: l'utente di prova non ha rating
-    # (1500), quindi l'intervallo è 1500 ± 100 (D16), non quello dei dati finti
-    assert "Cerco un avversario" in overlay["text"] and "tra 1400 e 1600" in overlay["text"]
+    # (1500), quindi l'intervallo è 1500 ± 150 (D16, P111), non quello dei dati finti
+    assert "Cerco un avversario" in overlay["text"] and "tra 1350 e 1650" in overlay["text"]
     assert re.fullmatch(r"\d+:\d\d", overlay["seconds"])
     # Esc vale come "Annulla"
     logged_in.send("Input.dispatchKeyEvent", type="keyDown", key="Escape", code="Escape", windowsVirtualKeyCode=27)
@@ -365,7 +365,7 @@ def test_intervallo_allargato_senza_riaprire_la_schermata(logged_in, server, mon
         if (window.__mins.length < 400) requestAnimationFrame(tick); };
       requestAnimationFrame(tick);
     })()""")
-    logged_in.wait_js("Number(document.querySelector('[data-range-min]')?.dataset.rangeMin) <= 1350", "intervallo allargato", 6)
+    logged_in.wait_js("Number(document.querySelector('[data-range-min]')?.dataset.rangeMin) <= 1250", "intervallo allargato", 6)
     logged_in.wait_js("document.querySelector('[data-range-min]').textContent === document.querySelector('[data-range-min]').dataset.rangeMin",
                       "numeri arrivati", 3)
     assert logged_in.js("document.querySelector('[data-queue-overlay]') === window.__overlay && window.__overlay.open") is True
@@ -373,7 +373,7 @@ def test_intervallo_allargato_senza_riaprire_la_schermata(logged_in, server, mon
     mins = logged_in.js("window.__mins")
     # Cambia un po' alla volta, senza salti (passando per valori intermedi)
     assert all(abs(a - b) <= 30 for a, b in itertools.pairwise(mins)), mins
-    assert any(1350 < m < 1400 for m in mins), mins
+    assert any(1250 < m < 1350 for m in mins), mins
     text = logged_in.js("document.querySelector('[data-queue-range]').textContent")
     assert re.fullmatch(r"Avversari con rating tra \d+ e \d+", text), text
     logged_in.send("Input.dispatchKeyEvent", type="keyDown", key="Escape", code="Escape", windowsVirtualKeyCode=27)
