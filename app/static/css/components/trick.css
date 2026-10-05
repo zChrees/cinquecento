@@ -66,55 +66,47 @@
 }
 
 /*
- * Lancio (P70): la carta appena giocata arriva dal lato di chi l'ha giocata, più
- * grande e ruotata, e si posa al suo posto girando leggermente su sé stessa. La
- * durata (0,4 s) è THROW_MS di pages/game.js, che fino ad allora spegne le carte
- * in mano; il ritardo lo scrive Trick.js. Con "riduci movimento" niente lancio
+ * Lancio (P70; P99 la tua carta, P107 quella degli altri): la carta parte da dove
+ * stava (la tua dal suo posto nella mano, quella di un avversario dal suo ventaglio,
+ * o dalle sue carte scoperte), si stacca verso il centro (ombra più grande), vola ad
+ * arco girando un po' e si posa con un piccolo assestamento. Da dove parte lo scrive
+ * pages/game.js (aimThrows: --from-x, --from-y, --from-scale, --from-tilt, --from-turn,
+ * --lift-x, --lift-y); senza, arriva dal suo lato (--throw-x, --throw-y). L'arco: in
+ * orizzontale la carta si sposta prima che in verticale. Durate: 0,4 s (THROW_MS di
+ * pages/game.js, uguale a THROW_SECONDS del server, P94) e 0,55 s per la tua
+ * (MY_THROW_MS). Il ritardo lo scrive Trick.js. Con "riduci movimento" niente lancio
  * (reset.css).
  */
-.trick__card--bottom { --throw-x: 0; --throw-y: 150px; --throw-turn: -28deg; }
-.trick__card--top { --throw-x: 0; --throw-y: -150px; --throw-turn: 24deg; }
-.trick__card--left { --throw-x: -150px; --throw-y: 0; --throw-turn: -32deg; }
-.trick__card--right { --throw-x: 150px; --throw-y: 0; --throw-turn: 30deg; }
+.trick__card--bottom { --throw-x: 0px; --throw-y: 150px; --throw-turn: -14deg; }
+.trick__card--top { --throw-x: 0px; --throw-y: -150px; --throw-turn: 14deg; }
+.trick__card--left { --throw-x: -150px; --throw-y: 0px; --throw-turn: 14deg; }
+.trick__card--right { --throw-x: 150px; --throw-y: 0px; --throw-turn: -14deg; }
 
-.card--thrown {
-  animation: card-throw 0.4s cubic-bezier(0.2, 0.75, 0.3, 1) both;
+/* Mentre vola passa sopra il resto del tavolo (la tua carta sopra la mano, da cui parte) */
+.trick__card:has(> .card--thrown) {
+  z-index: 30;
+}
+
+.trick__card > .card--thrown {
+  --from-x: var(--throw-x);
+  --from-y: var(--throw-y);
+  --from-scale: 1.25;
+  --from-turn: var(--throw-turn);
+  --from-tilt: 0deg;
+  --lift-x: 0px;
+  --lift-y: 0px;
+  --arc-y: 0px;
+  animation: card-throw 0.4s linear both;
+}
+
+.trick__card--bottom > .card--thrown {
+  --lift-y: -16px;
+  --arc-y: -28px;
+  animation-duration: 0.55s;
 }
 
 /* P78: parte da trasparente: una carta in fila (ritardo positivo) non si vede finché non tocca a lei */
 @keyframes card-throw {
-  from {
-    opacity: 0;
-    transform: translate(var(--throw-x), var(--throw-y)) rotate(var(--throw-turn)) scale(1.25);
-  }
-  70% {
-    opacity: 1;
-  }
-}
-
-/*
- * P99: il lancio della TUA carta (in basso nella presa), più realistico: parte dal
- * suo posto nella mano, si solleva (ombra più grande), vola ad arco verso il centro
- * girando un po' e si posa con un piccolo assestamento. Durata 0,55 s, come
- * MY_THROW_MS di pages/game.js, che scrive anche da dove parte (--from-x, --from-y,
- * --from-scale, --from-turn); senza, arriva dal basso come prima. L'arco: in orizzontale
- * la carta si sposta prima che in verticale. Le carte degli altri restano come sopra.
- */
-/* Mentre vola passa sopra la mano, da cui parte */
-.trick__card--bottom:has(> .card--thrown) {
-  z-index: 30;
-}
-
-.trick__card--bottom > .card--thrown {
-  --from-x: 0px;
-  --from-y: 150px;
-  --from-scale: 1.25;
-  --from-turn: -14deg;
-  --from-tilt: 0deg;
-  animation: card-throw-mine 0.55s linear both;
-}
-
-@keyframes card-throw-mine {
   0% {
     opacity: 0;
     transform: translate(var(--from-x), var(--from-y)) scale(var(--from-scale)) rotate(var(--from-tilt));
@@ -125,12 +117,12 @@
     opacity: 1;
   }
   18% {
-    transform: translate(var(--from-x), calc(var(--from-y) - 16px)) scale(calc(var(--from-scale) * 1.06)) rotate(calc(var(--from-turn) * 0.15));
+    transform: translate(calc(var(--from-x) + var(--lift-x)), calc(var(--from-y) + var(--lift-y))) scale(calc(var(--from-scale) * 1.06)) rotate(calc(var(--from-tilt) * 0.8 + var(--from-turn) * 0.15));
     box-shadow: var(--shadow-2), var(--shadow-2);
     animation-timing-function: cubic-bezier(0.35, 0.1, 0.6, 1);
   }
   55% {
-    transform: translate(calc(var(--from-x) * 0.3), calc(var(--from-y) * 0.5 - 28px)) scale(calc((var(--from-scale) + 1) / 2 * 1.06)) rotate(var(--from-turn));
+    transform: translate(calc(var(--from-x) * 0.3), calc(var(--from-y) * 0.5 + var(--arc-y))) scale(calc((var(--from-scale) + 1) / 2 * 1.06)) rotate(calc(var(--from-tilt) * 0.2 + var(--from-turn)));
     box-shadow: var(--shadow-2), var(--shadow-2);
     animation-timing-function: cubic-bezier(0.3, 0.6, 0.55, 1);
   }

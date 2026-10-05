@@ -37,8 +37,8 @@
  *     poi il riepilogo (o, se la calata chiude la partita, il riquadro finale).
  *     "Cala le carte" manda game:lay_down con la version, come una carta.
  *   - P70, lancio: ogni carta che arriva sul tavolo (anche quella che chiude la
- *     presa o la mano) vola al suo posto in THROW_MS (P99: la tua in MY_THROW_MS,
- *     dal suo posto nella mano, aimMyThrows); finché vola, un tocco sulle
+ *     presa o la mano) vola al suo posto in THROW_MS (P99: la tua in MY_THROW_MS;
+ *     P107: ognuna da dove stava, aimThrows); finché vola, un tocco sulle
  *     proprie carte non gioca niente. P78: i lanci vanno in fila: una carta arrivata
  *     mentre un'altra vola parte quando quella si è posata (fino ad allora non si
  *     vede). I tempi di lanci e presa chiusa passano al
@@ -95,7 +95,7 @@ const SUMMARY_MS = 5000;
 const PHRASE_PAUSE_MS = 3000; // come TABLE_PHRASE_MIN_INTERVAL_SECONDS del server (P55)
 const BUBBLE_MS = 4000;
 const THROW_MS = 400; // come la durata di card-throw in css/components/trick.css (P70)
-const MY_THROW_MS = 550; // P99: il lancio della tua carta, come card-throw-mine in trick.css
+const MY_THROW_MS = 550; // P99: il lancio della tua carta, come animation-duration di .trick__card--bottom > .card--thrown in trick.css
 const DRAW_MS = 500; // come la durata di card-draw in css/components/hand.css (P70)
 const SHUFFLE_MS = 600; // come la durata di deck-riffle in css/components/trick.css (P70)
 const DEAL_STEP_MS = 80; // tra una carta distribuita e la successiva
@@ -130,7 +130,7 @@ let receivedAdvice = null; // { seat, card }: la carta che ti ha consigliato il 
 const sang = {}; // posto → { event, timer }
 let lastTrickAt = 0; // quando si è vista la presa chiusa (performance.now), per le animazioni
 // P70: throwKey(carta) → { at: performance.now() del lancio (P78: anche nel futuro), ms: durata,
-// from: P99, per la tua carta, il suo rettangolo nella mano (o null) }
+// from: P99, P107, da dove parte: { cx, cy, w, tilt } (centro, larghezza, rotazione), o null }
 const throws = new Map();
 let throwTimer = 0;
 let throwsEnd = 0; // P78: performance.now() in cui si posa l'ultima carta in fila
@@ -265,15 +265,41 @@ function flying() {
   return thrown;
 }
 
+// P107: come sono girate le carte coperte nel ventaglio di ogni lato (table.css, .edge-hand--…);
+// ai lati un po' meno, così la carta si raddrizza in volo senza fare un giro intero
+const FAN_TILT = { top: 0, left: 70, right: -70 };
+
 /**
- * P99: la tua carta parte dal suo posto nella mano. Dopo il ridisegno, per ogni tua
- * carta in volo (sempre in basso nella presa), dice al CSS (card-throw-mine) da dove
- * parte rispetto al suo posto sul tavolo: spostamento, misura e verso in cui gira.
- * Senza il rettangolo di partenza (per esempio una vista di dopo un rientro) restano
- * i valori di trick.css: arriva dal basso.
+ * P99, P107: da dove parte la carta di `seat` che arriva sul tavolo, misurata sul
+ * tavolo disegnato prima di questa vista: la tua dal suo posto nella mano; quella di
+ * un altro dalle sue carte scoperte (P85, P93), se c'è, altrimenti dal suo ventaglio
+ * coperto. null se non si trova (per esempio la prima vista dopo un rientro).
  */
-function aimMyThrows() {
-  for (const face of root.querySelectorAll('.trick__card--bottom > [data-thrown]')) {
+function throwStart(seat, card, mine) {
+  const box = (e, w, tilt) => {
+    const r = e.getBoundingClientRect();
+    return { cx: r.left + r.width / 2, cy: r.top + r.height / 2, w, tilt };
+  };
+  const same = `[data-suit="${card.suit}"][data-rank="${card.rank}"]`;
+  if (mine) {
+    const button = root.querySelector(`.table__mine .hand > .card${same}`);
+    return button ? box(button, button.getBoundingClientRect().width, 0) : null;
+  }
+  const shown = root.querySelector(`[data-revealed-seat="${seat}"] ${same}`);
+  if (shown) return box(shown, shown.offsetWidth, 0);
+  const side = root.querySelector(`.seat[data-seat="${seat}"]`)?.dataset.position;
+  const fan = side && root.querySelector(`[data-edge-hand="${side}"]`);
+  return fan ? box(fan, fan.offsetWidth, FAN_TILT[side] ?? 0) : null;
+}
+
+/**
+ * P99, P107: dopo il ridisegno, per ogni carta in volo dice al CSS (card-throw) da dove
+ * parte rispetto al suo posto sul tavolo: spostamento, misura, rotazione iniziale, verso
+ * in cui gira e direzione in cui si stacca (verso il centro). Senza il punto di
+ * partenza restano i valori di trick.css: arriva dal suo lato.
+ */
+function aimThrows() {
+  for (const face of root.querySelectorAll('.trick__card > [data-thrown]')) {
     const from = throws.get(`${face.dataset.suit}-${face.dataset.rank}`)?.from;
     if (!from || !face.offsetWidth) continue;
     // Dove si posa: la carta senza l'animazione (il ritardo scritto da Trick.js resta)
@@ -285,17 +311,22 @@ function aimMyThrows() {
     const { a, b, c, d } = new DOMMatrix(getComputedStyle(face.parentElement).transform);
     const scale = parseFloat(getComputedStyle(face).scale) || 1;
     const det = (a * d - b * c) * scale;
-    const sx = from.left + from.width / 2 - (to.left + to.width / 2);
-    const sy = from.top + from.height / 2 - (to.top + to.height / 2);
+    const sx = from.cx - (to.left + to.width / 2);
+    const sy = from.cy - (to.top + to.height / 2);
     const dx = (d * sx - c * sy) / det;
     const dy = (a * sy - b * sx) / det;
     face.style.setProperty('--from-x', `${dx.toFixed(1)}px`);
     face.style.setProperty('--from-y', `${dy.toFixed(1)}px`);
-    face.style.setProperty('--from-scale', (from.width / (face.offsetWidth * scale)).toFixed(3));
-    // In mano è dritta: all'inizio si annulla la rotazione della casella
-    face.style.setProperty('--from-tilt', `${(-Math.atan2(b, a) * 180 / Math.PI).toFixed(1)}deg`);
+    face.style.setProperty('--from-scale', (from.w / (face.offsetWidth * scale)).toFixed(3));
+    // All'inizio com'era dov'è partita (dritta in mano, girata nel ventaglio), meno la
+    // rotazione della casella
+    face.style.setProperty('--from-tilt', `${(from.tilt - Math.atan2(b, a) * 180 / Math.PI).toFixed(1)}deg`);
     // Gira verso il centro: da destra in senso antiorario, da sinistra in senso orario
     face.style.setProperty('--from-turn', `${dx > 0 ? -14 : 14}deg`);
+    // Si stacca di 16 px verso il suo posto, prima di volare
+    const far = Math.hypot(dx, dy) || 1;
+    face.style.setProperty('--lift-x', `${(-dx / far * 16).toFixed(1)}px`);
+    face.style.setProperty('--lift-y', `${(-dy / far * 16).toFixed(1)}px`);
   }
 }
 
@@ -325,12 +356,11 @@ function noticeThrows(previous, next) {
   for (const { seat, card } of arrived) {
     const key = throwKey(card);
     if (!before.has(key) && !throws.has(key)) {
-      // P99: la tua carta (anche giocata dalla mossa automatica) parte da dov'era nella
-      // mano, che è ancora quella disegnata prima di questa vista
+      // P99, P107: la carta parte da dov'era (la tua anche se giocata dalla mossa
+      // automatica), sul tavolo ancora disegnato prima di questa vista
       const mine = seat === next.you.seat;
-      const button = mine && root.querySelector(`.table__mine .hand > .card[data-suit="${card.suit}"][data-rank="${card.rank}"]`);
       const ms = mine ? MY_THROW_MS : THROW_MS;
-      throws.set(key, { at, ms, from: button ? button.getBoundingClientRect() : null });
+      throws.set(key, { at, ms, from: throwStart(seat, card, mine) });
       playSound('throw', at - now, { land: ms }); // P103: fruscio e, a fine volo, la carta che si posa
       at += ms;
     }
@@ -554,7 +584,7 @@ function render(next) {
   reuseCardImages(root); // P70: niente immagini nuove (e lampi bianchi) a ogni ridisegno
   root.replaceChildren(Table(shown, { onPlay, onSing, onLeave, onLayDown, onAdvise }, status, moments, phrasesShown));
   if (hovered) keepHover(hovered);
-  aimMyThrows();
+  aimThrows();
   turnSounds();
   resultSound();
   if (typeof focusKey === 'string') {

@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P107 — Lancio della carta degli avversari più realistico (05/10/2026)
+
+- **Punto nuovo** (numero proposto; da `cose-da-sistemare.txt` di Christian): il lancio della carta dell'avversario, più realistico e quasi come il proprio (P99)
+- **Branch**: feature/p107-lancio-avversario (fatto da Claude, con il permesso di Christian)
+- **File**: modificati `app/static/js/pages/game.js` (`throwStart`, `FAN_TILT`, `aimThrows` al posto di `aimMyThrows`), `app/static/css/components/trick.css` (un solo lancio `card-throw` per tutte le carte, al posto di `card-throw` e `card-throw-mine`), `tests/table/test_lancio_mio.py`, questo file
+- **Cosa cambia** (scelta di Christian: 0,4 s, server invariato): la carta di un avversario (o del compagno) **parte dal suo ventaglio coperto**, grande come le sue carte e girata come il ventaglio (in alto dritta, ai lati di ±70°); se le sue carte sono scoperte (compagno a mazzo finito, P93) parte dalla carta stessa. Poi fa lo stesso movimento della tua: **si stacca** di 16 px verso il suo posto (ombra più grande), **vola ad arco** raddrizzandosi e girando di circa 14°, **si posa con l'assestamento**. Dura **0,4 s** (`THROW_MS`, uguale a `THROW_SECONDS` del server, che non cambia); la tua resta 0,55 s (`animation-duration` di `.trick__card--bottom > .card--thrown`). Se non si sa da dove parte (prima vista dopo un rientro) arriva dal suo lato, come prima. Mentre vola ogni carta passa sopra il resto del tavolo
+- **Controlli**: `tests/table/test_lancio_mio.py` **13 PASS**, 2 giri su 2 (nuovi: nel 1v1 dall'alto e nel 2v2 da destra e da sinistra, a 360×640 e 1280×720, la carta parte dal centro del ventaglio con la misura delle sue carte, si stacca verso il centro e finisce al suo posto; animazione `card-throw` da 0,4 s; aggiornati i controlli della tua carta). Con `test_lancio_carta.py`, `test_carte_avversari.py`, `test_momenti_tavolo.py`, `test_timer_in_anticipo.py`, `test_suoni.py`, `test_calata.py`, `test_carte_compagno.py`, `test_distribuzione.py`, `test_presa_affiancata.py`: 88 PASS e **1 FAIL** in `test_animazioni_in_fila.py::test_due_lanci_vicini_vanno_in_fila`, che **fallisce già in `dev` da P103** [T]: il primo suono crea il contesto audio di Chrome durante il ridisegno e blocca la pagina per circa 150–200 ms (senza il contesto audio passa 3 giri su 3). Si corregge in **P109** (fatto subito dopo). Guardato con i fotogrammi del volo a 360×640 (1v1 e 2v2) e 1280×720 (2v2). `ruff check .` pulito
+- **Decisioni prese**: quella sopra
+- **Domande nuove**: nessuna
+- **Punti delicati**: (1) da dove parte la carta lo trova `throwStart` sul tavolo disegnato **prima** della vista nuova (`.seat[data-seat][data-position]`, `[data-edge-hand]`, `[data-revealed-seat]`): se cambiano questi attributi va cambiata anche lei; (2) `FAN_TILT` deve seguire le rotazioni di `.edge-hand--…` in `table.css`; (3) nei test, per mettere un'animazione a un tempo preciso, `currentTime` va spostato del ritardo (`a.effect.getTiming().delay`): nel 2v2 di prova il conto alla rovescia di chi è scollegato ridisegna il tavolo ogni secondo
+- **Cosa devono fare gli altri**: **Chi è di turno sui documenti**: registrare P107; in `CLAUDE.md`, punto delicato "Animazioni del tavolo (P70)": il lancio è uno solo (`card-throw`), con il punto di partenza scritto da `aimThrows`
+
 ### P106 — Mano che non cambia misura quando restano meno carte (05/10/2026)
 
 - **Punto nuovo** (numero proposto; da `cose-da-sistemare.txt` di Christian): dal telefono, quando si lancia una carta e da 5 si passa a 4, cambiavano misure e posizioni di tutto il tavolo; devono restare fermi

@@ -1,10 +1,12 @@
-"""P99: il lancio della propria carta, più realistico.
+"""P99: il lancio della propria carta, più realistico; P107: anche quello degli avversari.
 
 La tua carta parte dal suo posto nella mano, si solleva, vola ad arco verso il centro
 girando un po' e si posa con un piccolo assestamento, in 0,55 s (MY_THROW_MS di
 game.js, card-throw-mine di trick.css); le carte degli avversari restano come prima
 (card-throw, 0,4 s). Il server (P94) continua a usare 0,4 s per la sua pausa: scelta di
 Christian del 05/10/2026 (al massimo 0,15 s di differenza quando chiudi tu la presa).
+P107: la carta di un avversario fa lo stesso movimento in 0,4 s, partendo dal suo
+ventaglio coperto (grande come le sue carte e girata come il ventaglio).
 
 Il tavolo si apre nella prova (/game/prova?demo=1v1) in Chrome o Edge senza finestra,
 con "riduci movimento" spento; le viste arrivano con l'evento del browser
@@ -34,7 +36,8 @@ MY_CARD = ".trick__card--bottom > [data-thrown]"
 
 
 def test_durata_del_tuo_lancio_uguale_nel_css_e_nella_pagina():
-    seconds = float(re.search(r"animation: card-throw-mine ([\d.]+)s", TRICK_CSS).group(1))
+    rule = TRICK_CSS[TRICK_CSS.index(".trick__card--bottom > .card--thrown {"):]
+    seconds = float(re.search(r"animation-duration: ([\d.]+)s", rule[:rule.index("}")]).group(1))
     assert MY_THROW_MS == round(seconds * 1000)
     # Più lento di quello degli avversari, ma non tanto da rallentare il turno da 15 s
     assert THROW_MS < MY_THROW_MS <= 600
@@ -87,7 +90,7 @@ def _rect(browser, selector):
 
 def _at(browser, ms):
     """Rettangolo della tua carta in volo a `ms` dall'inizio del lancio."""
-    browser.js(f"document.querySelector('{MY_CARD}').getAnimations().forEach((a) => {{ a.pause(); a.currentTime = {ms}; }})")
+    browser.js(f"document.querySelector('{MY_CARD}').getAnimations().forEach((a) => {{ a.pause(); a.currentTime = {ms} + a.effect.getTiming().delay; }})")
     return _rect(browser, MY_CARD)
 
 
@@ -100,7 +103,8 @@ def test_la_tua_carta_parte_dalla_mano_e_si_posa_al_suo_posto(browser, server, s
     start = _rect(browser, f".table__mine .hand > .card[data-suit='{card['suit']}'][data-rank='{card['rank']}']")
     browser.js("window.setTimeout = () => 0")  # niente ridisegno a fine lancio
     _send(browser, played)
-    assert browser.js(f"getComputedStyle(document.querySelector('{MY_CARD}')).animationName") == "card-throw-mine"
+    style = browser.js(f"(() => {{ const s = getComputedStyle(document.querySelector('{MY_CARD}')); return [s.animationName, s.animationDuration]; }})()")
+    assert style == ["card-throw", f"{MY_THROW_MS / 1000:g}s"]
     # All'inizio è dove stava nella mano, grande uguale
     first = _at(browser, 0)
     assert abs(first["x"] - start["x"]) <= 4 and abs(first["y"] - start["y"]) <= 4, (first, start)
@@ -150,3 +154,58 @@ def test_lancio_senza_la_carta_nella_mano_arriva_dal_basso(browser, server):
     first = _at(browser, 17)
     slot = _rect(browser, ".trick__card--bottom")
     assert first["y"] - slot["y"] > 100
+
+
+# --- P107: il lancio degli avversari -------------------------------------------------
+
+def _opponent_views(mode, seat):
+    """La presa vuota e quella in cui `seat` apre con l'Asso di spade."""
+    base = json.loads((STATIC / "dev" / f"vista_{mode}.json").read_text(encoding="utf-8"))
+    base["version"] += 1
+    base["trick"] = {"leader_seat": seat, "cards": [], "winning_seat": None}
+    played = copy.deepcopy(base)
+    played["version"] += 1
+    played["trick"] = {"leader_seat": seat, "cards": [{"seat": seat, "card": {"suit": "spade", "rank": 1}}], "winning_seat": seat}
+    for player in played["players"]:
+        if player["seat"] == seat:
+            player["cards_in_hand"] -= 1
+    return base, played
+
+
+@pytest.mark.parametrize("size", SIZES)
+@pytest.mark.parametrize(("mode", "seat", "side"), [("1v1", 1, "top"), ("2v2", 1, "right"), ("2v2", 3, "left")])
+def test_la_carta_dell_avversario_parte_dal_suo_ventaglio(browser, server, size, mode, seat, side):
+    browser.open(f"{server}/game/prova?demo={mode}", *size, "document.querySelector('[data-mode]') !== null")
+    browser.send("Emulation.setEmulatedMedia", features=[{"name": "prefers-reduced-motion", "value": "no-preference"}])
+    base, played = _opponent_views(mode, seat)
+    _send(browser, base)
+    fan = browser.js(f"""(() => {{ const f = document.querySelector('[data-edge-hand="{side}"]'); const b = f.getBoundingClientRect();
+      return {{ x: b.left + b.width / 2, y: b.top + b.height / 2, w: f.offsetWidth }}; }})()""")
+    browser.js("window.setTimeout = () => 0")  # niente ridisegno a fine lancio
+    _send(browser, played)
+    card = f".trick__card--{side} > [data-thrown]"
+    style = browser.js(f"(() => {{ const s = getComputedStyle(document.querySelector('{card}')); return [s.animationName, s.animationDuration]; }})()")
+    assert style == ["card-throw", f"{THROW_MS / 1000:g}s"]
+
+    def at(ms):
+        browser.js(f"document.querySelector('{card}').getAnimations().forEach((a) => {{ a.pause(); a.currentTime = {ms} + a.effect.getTiming().delay; }})")
+        return browser.js(f"""(() => {{ const e = document.querySelector('{card}'); const b = e.getBoundingClientRect();
+          return {{ x: b.left + b.width / 2, y: b.top + b.height / 2 }}; }})()""")
+
+    # All'inizio è dove sta il ventaglio, grande come le sue carte
+    first = at(0)
+    assert abs(first["x"] - fan["x"]) <= 4 and abs(first["y"] - fan["y"]) <= 4, (first, fan)
+    scale = browser.js(f"parseFloat(getComputedStyle(document.querySelector('{card}')).getPropertyValue('--from-scale'))")
+    slot = browser.js(f"document.querySelector('{card}').offsetWidth")
+    assert scale * slot * browser.js(f"parseFloat(getComputedStyle(document.querySelector('{card}')).scale) || 1") == pytest.approx(fan["w"], rel=0.05)
+    # Poi si stacca verso il centro e alla fine è al suo posto
+    lifted = at(0.18 * THROW_MS)
+    toward = (lambda a, b: abs(a["x"] - browser.js("innerWidth") / 2) + abs(a["y"] - browser.js("innerHeight") / 2)
+              < abs(b["x"] - browser.js("innerWidth") / 2) + abs(b["y"] - browser.js("innerHeight") / 2))
+    assert toward(lifted, first), (lifted, first)
+    end = at(THROW_MS - 1)
+    browser.js(f"document.querySelector('{card}').getAnimations().forEach((a) => a.finish())")
+    rest = browser.js(f"""(() => {{ const b = document.querySelector('{card}').getBoundingClientRect();
+      return {{ x: b.left + b.width / 2, y: b.top + b.height / 2 }}; }})()""")
+    assert abs(end["x"] - rest["x"]) <= 4 and abs(end["y"] - rest["y"]) <= 4, (end, rest)
+
