@@ -43,7 +43,7 @@ let preloaded = null;
 
 /**
  * Scarica subito tutte le immagini che il tavolo può mostrare: le 40 facce, il
- * dorso e i quattro assi "figura" (P79). Senza, l'immagine di una carta si
+ * dorso, i quattro assi "figura" (P79) e Cavallo e Re di ogni seme (P108). Senza, l'immagine di una carta si
  * scaricava la prima volta che la carta compariva e, con una rete lenta, la carta
  * restava bianca per qualche secondo. Le immagini restano in memoria (`preloaded`),
  * così il browser non le butta via. Chiamata più volte, scarica una volta sola.
@@ -54,6 +54,8 @@ export function preloadCardImages() {
   const urls = [BACK_URL];
   for (const suit of SUITS) {
     urls.push(`${FIGURE_BASE}asso-${suit}-figura.webp`);
+    // P108: Cavallo e Re della briscola, nell'angolo del tavolo (TrumpBadge di Trick.js)
+    urls.push(`${FIGURE_BASE}cavallo-${suit}.webp`, `${FIGURE_BASE}re-${suit}.webp`);
     for (let rank = 1; rank <= 10; rank += 1) urls.push(`${FACE_BASE}${suit}-${rank}.webp`);
   }
   const images = urls.map((src) => {

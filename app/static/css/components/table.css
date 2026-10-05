@@ -44,11 +44,10 @@
 }
 
 /*
- * P102: angolo destro in alto, con il tondo della briscola (solo quando c'è) e, da
- * computer, il tabellone. Il tondo è di vetro scuro come "Esci", un po' più grande
- * (52 px), con il seme su un disco chiaro come sopra il mazzo. Sul telefono sta nella
- * riga di "Esci", simmetrico; i margini negativi non fanno crescere la riga (44 px),
- * così il tavolo non scende quando compare la briscola.
+ * P102, P108: angolo destro in alto, con la briscola (solo quando c'è) e, da computer,
+ * il tabellone. La briscola sono Cavallo e Re del seme a ventaglio, come nel logo
+ * della navbar ma fermi, alti come "Esci" (44 px; da computer 56). Sul telefono stanno
+ * nella riga di "Esci", simmetrici, senza farla crescere.
  */
 .table__corner {
   grid-column: 3;
@@ -59,26 +58,32 @@
 }
 
 .trump-badge {
-  display: grid;
-  place-items: center;
+  --badge-h: 44px;
+  position: relative;
   flex: none;
-  width: 52px;
-  height: 52px;
-  margin-block: -4px;
-  border: 1px solid var(--glass-edge);
-  border-radius: 50%;
-  background: var(--glass);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
+  width: calc(var(--badge-h) * 0.95);
+  height: var(--badge-h);
 }
 
-.trump-badge__suit {
-  width: 38px;
-  aspect-ratio: 1;
-  padding: 3px;
-  border-radius: 50%;
-  background: var(--surface);
-  object-fit: contain;
+.trump-badge__card {
+  position: absolute;
+  bottom: 0;
+  width: calc(var(--badge-h) * var(--card-ratio));
+  height: var(--badge-h);
+  border-radius: 3px;
+  object-fit: cover;
+  box-shadow: var(--logo-card-shadow);
+  transform-origin: 50% 100%;
+}
+
+.trump-badge__card:first-child {
+  left: 0;
+  rotate: -10deg;
+}
+
+.trump-badge__card:last-child {
+  right: 0;
+  rotate: 10deg;
 }
 
 /* P90: sotto 1024 px "Esci" è un tondo con la sola icona, così non arriva mai alle
@@ -744,7 +749,7 @@
   }
 
   .trump-badge {
-    margin-block: 0;
+    --badge-h: 56px;
   }
 
   /*

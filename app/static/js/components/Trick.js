@@ -1,8 +1,8 @@
 /**
  * Presa in corso al centro del tavolo (P21): ogni carta sta dal lato di chi l'ha
  * giocata (in basso la tua, poi destra, in alto e sinistra, come i posti).
- * Accanto, il mazzo coperto con le carte rimaste e sopra il seme della briscola
- * (P71). Stile in css/components/trick.css.
+ * Accanto, il mazzo coperto con le carte rimaste (P108: la briscola non sta più sul
+ * mazzo ma nell'angolo, TrumpBadge). Stile in css/components/trick.css.
  * P57: LastTrick, la presa appena chiusa, per un momento.
  * P70: la carta appena giocata vola al suo posto (lancio); i tempi li decide
  * pages/game.js e qui diventano ritardi delle animazioni, così un ridisegno a metà
@@ -113,10 +113,10 @@ function EmptyDeck() {
 }
 
 /**
- * P102: la briscola in un tondo di vetro scuro, nell'angolo in alto a destra (sul
- * telefono) o a sinistra del tabellone (da computer), solo quando c'è. Il seme è
- * l'immagine del mazzo; il nome lo leggono i lettori di schermo.
- * Stile in css/components/table.css.
+ * P102, P108: la briscola nell'angolo in alto a destra (sul telefono) o a sinistra
+ * del tabellone (da computer), solo quando c'è: Cavallo e Re del seme cantato, a
+ * ventaglio come nel logo della navbar, fermi. È l'unico posto dove si vede la
+ * briscola; il nome lo leggono i lettori di schermo. Stile in css/components/table.css.
  * @param {string} trump seme di briscola
  * @returns {HTMLElement}
  */
@@ -125,23 +125,26 @@ export function TrumpBadge(trump) {
     class: 'trump-badge',
     data: { trumpBadge: trump },
     attrs: { role: 'img', 'aria-label': `Briscola: ${trump}` },
-  }, [el('img', { class: 'trump-badge__suit', attrs: { src: `${IMG_BASE}asso-${trump}-figura.webp`, alt: '' } })]);
+  }, ['cavallo', 're'].map((figure) => el('img', {
+    class: 'trump-badge__card',
+    attrs: { src: `${IMG_BASE}${figure}-${trump}.webp`, alt: '' },
+  })));
 }
 
 /**
- * Mazzo coperto con le carte rimaste e, al centro sopra il mazzo, il seme della
- * briscola (P71): niente nome del seme (lo leggono solo i lettori di schermo) e
- * niente scritta prima del canto del 40. P102: la briscola si vede anche nel tondo
- * (TrumpBadge); a mazzo finito al posto del mazzo resta uno spazio vuoto (EmptyDeck).
+ * Mazzo coperto con le carte rimaste. P108: il seme della briscola non sta più sopra
+ * il mazzo (P71), ma solo nell'angolo (TrumpBadge); a mazzo finito, con la briscola, al
+ * posto del mazzo resta uno spazio vuoto (EmptyDeck, P102).
  * @param {number} deckCount carte rimaste nel mazzo
- * @param {string|null} trump seme di briscola, null finché nessuno ha cantato 40
+ * @param {string|null} trump seme di briscola, null finché nessuno ha cantato 40 (serve
+ *   solo a sapere se a mazzo finito resta lo spazio vuoto)
  * @param {number|null} [shuffled] P70: millisecondi dall'inizio della mescolata a inizio
  *   mano, o null: due mezzi mazzi si aprono ai lati e si richiudono
  * @returns {HTMLElement|null}
  */
 export function DeckAndTrump(deckCount, trump, shuffled = null) {
   if (deckCount <= 0) return trump ? EmptyDeck() : null;
-  const label = trump ? `Mazzo: ${deckCount} carte. Briscola: ${trump}` : `Mazzo: ${deckCount} carte`;
+  const label = `Mazzo: ${deckCount} carte`;
   const riffle = shuffled == null ? [] : ['left', 'right'].map((side) => {
     const half = CardBack();
     half.classList.add('deck__half', `deck__half--${side}`);
@@ -155,9 +158,6 @@ export function DeckAndTrump(deckCount, trump, shuffled = null) {
   }, [
     CardBack(),
     ...riffle,
-    trump
-      ? el('img', { class: 'deck__trump', data: { trump }, attrs: { src: `${IMG_BASE}asso-${trump}-figura.webp`, alt: '' } })
-      : null,
     el('span', { class: 'deck__count', text: deckCount, attrs: { 'aria-hidden': 'true' } }),
   ]);
 }

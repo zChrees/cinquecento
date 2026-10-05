@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P108 — Briscola solo nell'angolo, con Cavallo e Re (05/10/2026)
+
+- **Punto nuovo** (numero proposto; idea di Christian in `cose-da-sistemare.txt`, cambia P102): il seme della briscola non sta più sopra il mazzo, solo in alto a destra (telefono) e accanto al tabellone (computer); al posto dell'asso, il **Cavallo e il Re** della briscola appena cantata, come nel logo ma senza animazioni
+- **Branch**: feature/p108-briscola-cavallo-re (fatto da Claude, con il permesso di Christian)
+- **File**: modificati `app/static/js/components/Trick.js` (`TrumpBadge` con le due carte, `DeckAndTrump` senza seme), `components/Card.js` (precarica anche Cavallo e Re di ogni seme, P79), `app/static/css/components/table.css` (`.trump-badge`), `trick.css` (via `.deck__trump`), `tests/api/test_grafica_tavolo.py`, `test_pagina_tavolo.py`, `tests/table/test_carte_pronte.py`, questo file
+- **Cosa cambia** (scelte di Christian: "solo le due carte", "alte come Esci"): appena c'è la briscola, in alto a destra (sul telefono simmetriche a "Esci", da computer a sinistra del tabellone) compaiono **Cavallo e Re del seme** (`img/cards-bg/cavallo-<seme>.webp`, `re-<seme>.webp`), **a ventaglio di ±10° come il logo**, ferme, con la stessa ombra (`--logo-card-shadow`), **senza tondo**; alte **44 px** sul telefono (come "Esci") e **56 px** da computer. Sul **mazzo** non c'è più il seme (nemmeno prima del mazzo finito) e la sua etichetta dice solo "Mazzo: N carte"; a mazzo finito resta lo spazio vuoto (P102). Per i lettori di schermo resta "Briscola: coppe"
+- **Controlli**: `test_grafica_tavolo.py` e `test_pagina_tavolo.py` **58 PASS** (aggiornati: niente seme né "Briscola" sul mazzo; Cavallo e Re del seme giusto, alti come "Esci" e simmetrici al telefono, 56 px a sinistra del tabellone a 3 misure da computer nel 1v1 e nel 2v2); `test_carte_pronte.py` 3 PASS (con la rete lenta Cavallo e Re non restano mai bianchi: prima del precaricamento sì); con `test_tavolo_telefono.py`, `test_stile_tavolo.py`, `test_frasi_di_lato.py`, `test_rating_tavolo.py`, `test_punti_mano.py`, `test_calata.py`, `test_carte_compagno.py`, `test_distribuzione.py`, `test_csp.py`, `test_carte.py`, `test_lancio_carta.py`: PASS. `ruff check .` pulito. Guardato con gli screenshot a 360×640 (1v1, 2v2, mazzo finito), 1024×768 e 1280×720
+- **Decisioni prese**: quelle sopra (cambiano P102 e "Briscola solo sul mazzo" di P77)
+- **Domande nuove**: nessuna
+- **Punti delicati**: il marcatore resta `data-trump-badge` (valore: il seme); `[data-trump]` non c'è più da nessuna parte
+- **Cosa devono fare gli altri**: **Chi è di turno sui documenti**: registrare P108; in `DECISIONI.md` la briscola con Cavallo e Re solo nell'angolo; in `CLAUDE.md`, punto delicato "Briscola (P77)" da riscrivere (niente seme sul mazzo, `data-trump-badge` con Cavallo e Re)
+
 ### P109 — Suoni veri al tavolo, e un suono per le frasi (05/10/2026)
 
 - **Punto nuovo** (numero proposto; dalla prova di Christian del 05/10 e da `cose-da-sistemare.txt`): i suoni di P103, sintetizzati, erano poco realistici e troppi; servono suoni come quelli dei giochi di carte, e anche le frasi del tavolo devono avere un suono

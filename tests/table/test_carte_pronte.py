@@ -105,8 +105,9 @@ def test_briscola_e_canto_mai_bianchi_con_la_rete_lenta(browser, server):
         view["trump"] = suit
         view["sings"] = [{"seat": 0, "suit": suit, "points": 40}]
         result = _send(browser, view)
-        assert any(f"asso-{suit}-figura" in src for src in browser.js(
-            "[...document.querySelectorAll('[data-table] img')].map((img) => img.src)"))
+        # P108: la briscola sono Cavallo e Re del seme, nell'angolo
+        srcs = browser.js("[...document.querySelectorAll('[data-table] img')].map((img) => img.src)")
+        assert any(f"cavallo-{suit}.webp" in src for src in srcs) and any(f"re-{suit}.webp" in src for src in srcs)
         assert result["white"] == []
 
 

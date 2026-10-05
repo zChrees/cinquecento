@@ -184,8 +184,7 @@
 }
 
 /*
- * Mazzo coperto con le carte rimaste e, al centro sopra il mazzo, il seme della
- * briscola (P71). Sul telefono, nel 1v1, il mazzo sta sul bordo destro del tavolo.
+ * Mazzo coperto con le carte rimaste (P108: la briscola sta solo nell'angolo, table.css). Sul telefono, nel 1v1, il mazzo sta sul bordo destro del tavolo.
  */
 .deck {
   position: relative;
@@ -213,20 +212,6 @@
 @keyframes deck-riffle {
   0%, 50%, 100% { translate: 0 0; rotate: 0deg; }
   25%, 75% { translate: var(--riffle-x) -6%; rotate: var(--riffle-turn); }
-}
-
-.deck__trump {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 62%;
-  aspect-ratio: 1;
-  padding: 4px;
-  border-radius: 50%;
-  background: var(--surface);
-  box-shadow: var(--shadow-2);
-  object-fit: contain;
-  translate: -50% -50%;
 }
 
 /* P77: mazzo finito, la carta coperta tiene solo il posto del mazzo; resta il seme */
