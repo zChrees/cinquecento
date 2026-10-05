@@ -7,8 +7,8 @@ manda sul documento l'evento "cinquecento:sound" con il suo nome, anche quando i
 browser non lo fa sentire: i test ascoltano quello.
 Controlla che ogni momento abbia il suo suono, nello stesso momento della sua
 animazione (carta che si posa e pescate in fila, presa raccolta quando le carte
-scivolano via, "tocca a te" dopo le pause e il ticchettio degli ultimi 5 secondi, la
-frase al tavolo); che con l'interruttore spento (pagina delle impostazioni, scelta nel
+scivolano via, il ticchettio degli ultimi 5 secondi contato dalla fine delle pause, la
+frase al tavolo; nessun suono quando comincia il tuo turno, P109); che con l'interruttore spento (pagina delle impostazioni, scelta nel
 browser) non suoni niente, anche dopo aver ricaricato la pagina; che il tavolo funzioni
 anche senza Web Audio.
 
@@ -131,7 +131,7 @@ def _closed_by_me(base, seconds_left):
     return view
 
 
-def test_presa_chiusa_lancio_pescate_presa_e_tocca_a_te(browser, server):
+def test_presa_chiusa_lancio_pescate_presa_e_ticchettio(browser, server):
     base = _not_my_turn(_view())
     _open(browser, server)
     _dispatch(browser, "demo:state", base)
@@ -147,21 +147,24 @@ def test_presa_chiusa_lancio_pescate_presa_e_tocca_a_te(browser, server):
     assert 450 <= at["card"] <= 750 and 450 <= draws[0] <= 750 and 400 <= draws[1] - draws[0] <= 600, sounds
     # La presa raccolta quando le carte scivolano via (1,1 s)
     assert 1000 <= at["trick"] <= 1350, sounds
-    # Tocca a te solo a pause finite (ultima presa 1,5 s, pescate fino a circa 1,55 s)
-    assert 1450 <= at["turn"] <= 1900, sounds
-    # Ultimi 5 secondi: 4 tic e l'ultimo diverso, un secondo l'uno dall'altro
+    # P109: nessun suono quando tocca a te (era un "ding" di vetro)
+    assert "turn" not in names, sounds
+    # Ultimi 5 secondi: 4 tic e l'ultimo diverso, un secondo l'uno dall'altro. Il conto
+    # parte a pause finite (ultima presa 1,5 s, pescate fino a circa 1,55 s): con 5,5 s
+    # di turno il primo tic arriva mezzo secondo dopo
     ticks = [ms for name, ms in sounds if name in ("tick", "last_tick")]
     assert names.count("tick") == 4 and names[-1] == "last_tick", sounds
     assert all(900 <= b - a <= 1100 for a, b in itertools.pairwise(ticks)), sounds
-    assert 400 <= ticks[0] - at["turn"] <= 700, sounds
+    assert 1450 + 400 <= ticks[0] <= 1900 + 700, sounds
 
 
-def test_un_canto_non_ripete_tocca_a_te(browser, server):
+def test_un_canto_non_fa_ripartire_il_ticchettio(browser, server):
     base = _view()  # è il turno di Mario, con il 20 a spade da cantare
+    base["turn"] = {**base["turn"], "seconds_left": 5.5}
     _open(browser, server)
     _dispatch(browser, "demo:state", _not_my_turn(copy.deepcopy(base)))
     _dispatch(browser, "demo:state", {**base, "version": base["version"] + 2})
-    _wait_sound(browser, "turn")
+    _wait_sound(browser, "tick")
     sang = copy.deepcopy(base)
     sang["version"] += 3
     sang["sings"] = base["sings"] + [{"seat": 0, "suit": "spade", "points": 20}]
@@ -170,8 +173,10 @@ def test_un_canto_non_ripete_tocca_a_te(browser, server):
         {"suit": "spade", "rank": 10}, {"suit": "spade", "rank": 9}], "show_seconds": 3})
     _dispatch(browser, "demo:state", sang)
     _wait_sound(browser, "sing")
-    time.sleep(0.5)
-    assert [name for name, _ in _sounds(browser)].count("turn") == 1
+    _wait_sound(browser, "last_tick", 8)
+    time.sleep(1.2)
+    names = [name for name, _ in _sounds(browser)]
+    assert names.count("tick") == 4 and names.count("last_tick") == 1 and "turn" not in names, names
 
 
 def test_fine_mano_mescolata_e_distribuzione(browser, server):
@@ -247,9 +252,9 @@ def test_tavolo_senza_web_audio(browser, server):
     base = _not_my_turn(_view())
     _dispatch(browser, "demo:state", base)
     _dispatch(browser, "demo:state", _closed_by_me(base, 15))
-    _wait_sound(browser, "turn", 4)
+    _wait_sound(browser, "trick", 4)
+    browser.wait_js("document.querySelector('[data-last-trick]') === null", "ultima presa tolta", 3)
     assert browser.js("document.querySelectorAll('.table__mine .hand > .card').length") == 5
-    assert browser.js("document.querySelector('[data-last-trick]') === null")
 
 
 def test_interruttore_nelle_impostazioni(browser, server):

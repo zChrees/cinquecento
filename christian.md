@@ -22,6 +22,19 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P109 (completato) — Niente "ding" di "tocca a te", presa raccolta più pulita (05/10/2026)
+
+- **Da dove viene**: dalla prova di Christian del 05/10 (`cose-da-sistemare.txt`): P109 andava bene solo a metà; ogni tanto un "ding" che non c'entra con le carte, e la presa raccolta con molto rumore di fondo
+- **Branch**: fix/p109-suoni-presa-turno (fatto da Claude, con il permesso di Christian per commit, merge e push)
+- **File**: creato `app/static/sounds/card-gather.mp3`; cancellati `card-shove-1.mp3`, `card-shove-2.mp3`, `turn.mp3`; modificati `app/static/js/core/sounds.js` (`SOUNDS`), `app/static/js/pages/game.js` (`turnSounds`), `app/static/sounds/LICENZA.md`, `tests/table/test_suoni.py`, questo file
+- **Cause** [T, misurate sui file dei pacchetti]: il "ding" è `turn.mp3` (Kenney `glass_001`), che ha l'88% dell'energia in una sola nota a 1,9 kHz e suonava a ogni tuo turno; le due registrazioni della presa (`card-shove-1`, `-2`) sono le più rumorose del pacchetto, con il fondo a circa −40/−43 dB (rapporto segnale/rumore 25–28 dB, contro i 48 di `card-slide-1`)
+- **Cosa cambia** (scelte di Christian, dopo aver ascoltato i candidati): **nessun suono quando tocca a te** (restano l'anello del tempo e il ticchettio degli ultimi 5 s, che parte sempre a pause finite); la **presa raccolta** è `card-gather.mp3`, due carte che scivolano sovrapposte a 90 ms (`card-slide-1` e `card-slide-3` di Casino Audio, CC0), con il fondo a −54 dB. Suoni in tutto: circa 120 kB
+- **Controlli**: `tests/table/test_suoni.py` **13 PASS**, 2 giri su 2 (aggiornati: nessun suono "turn", il primo tic a pause finite più mezzo secondo con 5,5 s di turno, un canto non fa ripartire il ticchettio, senza Web Audio si aspetta la presa raccolta). `ruff check .` pulito
+- **Decisioni prese**: quelle sopra (cambiano P103 e P109: niente "tocca a te" sonoro)
+- **Domande nuove**: nessuna
+- **Punti delicati**: nessuno nuovo
+- **Cosa devono fare gli altri**: **Chi è di turno sui documenti**: nella nota di P109, niente suono "tocca a te" e presa con `card-gather`
+
 ### P108 — Briscola solo nell'angolo, con Cavallo e Re (05/10/2026)
 
 - **Punto nuovo** (numero proposto; idea di Christian in `cose-da-sistemare.txt`, cambia P102): il seme della briscola non sta più sopra il mazzo, solo in alto a destra (telefono) e accanto al tabellone (computer); al posto dell'asso, il **Cavallo e il Re** della briscola appena cantata, come nel logo ma senza animazioni

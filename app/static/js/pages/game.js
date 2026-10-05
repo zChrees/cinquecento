@@ -593,11 +593,12 @@ function render(next) {
 }
 
 /**
- * P103: "tocca a te" e il ticchettio degli ultimi TICK_SECONDS secondi. Il turno
- * comincia quando il tavolo ha finito le pause (lanci, pescate, ultima presa, carte
- * calate, riepilogo, distribuzione), come il conto alla rovescia del server (P94):
- * fino ad allora il turno aspetta (turnPending). Un turno è nuovo quando cambiano la
- * mano o la presa (un canto lascia il turno a te: non si ripete).
+ * P103: il ticchettio degli ultimi TICK_SECONDS secondi del tuo turno (il suono di
+ * "tocca a te" è stato tolto in P109). Il turno comincia quando il tavolo ha finito
+ * le pause (lanci, pescate, ultima presa, carte calate, riepilogo, distribuzione), come
+ * il conto alla rovescia del server (P94): fino ad allora il turno aspetta
+ * (turnPending). Un turno è nuovo quando cambiano la mano o la presa (un canto lascia
+ * il turno a te: il ticchettio non riparte).
  */
 function turnSounds() {
   const mine = !replaced && view.status === 'playing' && view.turn && view.turn.seat === view.you.seat;
@@ -618,7 +619,6 @@ function turnSounds() {
   if (!turnPending || busy) return;
   turnKey = turnPending;
   turnPending = null;
-  playSound('turn');
   // Durante le pause la vista dice il turno pieno: il conto parte adesso
   const left = view.turn.seconds_left * 1000;
   for (let s = TICK_SECONDS; s >= 1; s -= 1) {

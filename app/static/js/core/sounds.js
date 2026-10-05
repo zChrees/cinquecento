@@ -1,7 +1,7 @@
 /**
  * Suoni al tavolo (P103, rifatti in P109 con suoni veri): file registrati dal vero,
- * del pacchetto Kenney "Casino Audio" (carte e fiches) e "Interface Sounds" (tocca a
- * te, frasi, ticchettio, fine partita), licenza CC0; dettagli in sounds/LICENZA.md.
+ * del pacchetto Kenney "Casino Audio" (carte e fiches) e "Interface Sounds" (frasi,
+ * ticchettio, fine partita), licenza CC0; dettagli in sounds/LICENZA.md.
  *
  *   preloadSounds()             // la pagina del tavolo, una volta
  *   playSound('card')           // subito
@@ -32,12 +32,11 @@ export const SOUNDS = {
   draw: ['card-slide-1', 'card-slide-2', 'card-slide-3', 'card-slide-4'], // pescata
   shuffle: ['card-shuffle'], // mescolata a inizio mano
   deal: ['card-fan'], // distribuzione
-  trick: ['card-shove-1', 'card-shove-2'], // presa raccolta
+  trick: ['card-gather'], // presa raccolta
   lay_down: ['cards-laid-down'], // calata
   sing: ['chips-stack'], // canto
   phrase: ['phrase'], // frase al tavolo
-  turn: ['turn'], // tocca a te
-  tick: ['tick'], // ultimi secondi del tuo turno
+  tick: ['tick'], // ultimi secondi del tuo turno (nessun suono quando comincia: P109)
   last_tick: ['tick-last'],
   win: ['win'],
   lose: ['lose'],
