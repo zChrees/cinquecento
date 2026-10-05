@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P73 — Partita contro la CPU nella home (05/10/2026)
+
+- **Branch**: feature/p73-cpu-home (fatto da Claude, con il permesso di Christian per commit, merge e push di P114–P115)
+- **File** (lista definitiva per 9.2): modificati `app/static/js/components/ModeModal.js` (scelta "Avversario", testi della CPU, 15 s), `app/static/js/pages/home.js` (`startCpu`, `play`), `app/static/js/core/events.js` (`CPU_START`), `app/static/js/components/Avatar.js` (robot per `cpu: true`), `app/static/css/components/mode-modal.css`, `app/static/fonts/icone.txt` e `material-symbols-rounded.woff2` (icona **`smart_toy`**, font riscaricato da Google: 6,3 kB), `tests/api/test_pagina_home.py` (2 test nuovi), questo file. **Non toccati** `index.html`, `home.css`, `Table.js`, né i file di Giuseppe
+- **Cosa cambia** (scelte di Christian del 05/10): nella carta-modal di **Partita Veloce 1v1**, sotto "Punti per vincere", la scelta **"Avversario: Giocatore · CPU"** (pillole come i punti, con le icone `person` e `smart_toy`), che riparte sempre da "Giocatore"; con **CPU**: descrizione "Giochi subito contro il computer, senza coda: allenati quanto vuoi.", "In breve" con "Parte subito, senza coda", "Non conta per il rating", "15 secondi per ogni turno", e niente frase "Incontri solo chi ha scelto X punti"; "Gioca" manda **`cpu:start`** (contratto 4.1, con `request_id`) e `game:start` porta al tavolo, dove la CPU ha il **robot** al posto dell'avatar. Le altre tre carte non cambiano. Corretto anche "30 secondi per ogni turno" → **15** nella Partita Veloce 1v1 (P94; ok di Christian)
+- **Spazio**: con la riga in più la carta scorreva a 1366×657 e 360×640: quando c'è la scelta dell'avversario e la carta è più bassa di 640 px, "In breve" sparisce prima (stessa precedenza di sempre: prima "Lo sapevi?", poi "In breve"). Le regole delle pillole valgono ora solo per lo `<span>` figlio diretto (`.target__option > span`), altrimenti cambiavano il font dell'icona
+- **Controlli**: suite `api` **377 PASS** (2 nuovi: la scelta c'è solo in Partita Veloce 1v1 e parte da Giocatore; con CPU cambiano testi e frase dei punti, "Gioca" porta al tavolo di una partita vera contro la CPU, senza rating, e il posto della CPU ha il robot); `test_icone.py` e `test_avatar.py` 28 PASS; dopo l'ultima correzione del CSS i test della carta-modal a tutte le misure e quelli di P73 21 PASS; suite `frontend` 131 PASS prima della correzione delle icone (vedi sotto). `ruff check .` pulito
+- **Decisioni prese**: quelle di Christian sopra; mia: "In breve" sparisce sotto i 640 px quando c'è la scelta dell'avversario
+- **Domande nuove**: nessuna
+- **Punti delicati**: (1) `test_icone.py` legge il **primo testo** di ogni elenco di `ModeModal.js` come nome di icona (`icon(name)`): negli elenchi nuovi il nome dell'icona va per primo; (2) i test della home che usano il database (coda, CPU) vanno lanciati con il runner: con pytest da solo il database dei test può essere vuoto e `queue:join` risponde "Errore del server"; (3) la suite `api` ora dura **204 s** su 240: un altro test lungo nel browser la porterebbe al limite
+- **Note per gli altri**: **Giuseppe**: in 4.1 di `docs/CONTRATTO-SOCKET.md` il titolo dice ancora "da approvare da Christian", ma è approvato (`DECISIONI.md`, 04/10). Visto nella home: "**1 giocatori online**" (singolare sbagliato), da sistemare in un punto a parte
+
 ### P114 — Suite `table` sotto il limite di tempo (05/10/2026)
 
 - **Branch**: feature/p114-suite-table (fatto da Claude, con il permesso di Christian per commit, merge e push di P114–P115)

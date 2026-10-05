@@ -24,6 +24,8 @@ export const EVENTS = Object.freeze({
   QUEUE_LEAVE: 'queue:leave',
   QUEUE_STATUS: 'queue:status',
   QUEUE_LEFT: 'queue:left',
+  // Partita contro la CPU (4.1)
+  CPU_START: 'cpu:start',
   // Home (5.1)
   HOME_STATUS: 'home:status',
   // Amici online (5.2)

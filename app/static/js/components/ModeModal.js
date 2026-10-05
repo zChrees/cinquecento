@@ -10,8 +10,9 @@
  *                   onPlay, onInvite, onCancelInvite });
  *
  * Il modal non parla con il server: lo fa la pagina con i callback.
- * - onPlay({ kind, mode, targetScore, invitees }): "Gioca" (la coda è di P28,
- *   gli inviti di P47); `invitees` sono gli amici che hanno accettato. Il modal si
+ * - onPlay({ kind, mode, targetScore, invitees, cpu }): "Gioca" (la coda è di P28,
+ *   gli inviti di P47); `invitees` sono gli amici che hanno accettato; `cpu` è true
+ *   se nella Partita Veloce 1v1 è scelto "Avversario: CPU" (P73). Il modal si
  *   chiude da solo.
  * - onInvite({ friend, mode, targetScore }): "Invita" (contratto 5.3, invite:send).
  *   Il risultato arriva con setInviteStatus(userId, status) (invite:update):
@@ -38,7 +39,7 @@ const MODE_TEXTS = {
     facts: (rating) => [
       ['person_search', 'Avversario scelto in base al rating'],
       ['trending_up', `Conta per il tuo rating 1v1${rating('1v1')}`],
-      ['timer', '30 secondi per ogni turno'],
+      ['timer', '15 secondi per ogni turno'],
     ],
   },
   'veloce-2v2': {
@@ -55,6 +56,16 @@ const MODE_TEXTS = {
   'amico-2v2': {
     desc: 'Invita fino a tre amici. Con uno siete in squadra, contro una coppia dalla coda; con più amici, squadre a sorte.',
   },
+};
+
+// P73: Partita Veloce 1v1 con "Avversario: CPU" (D43: solo 1v1, non conta per il rating)
+const CPU_TEXTS = {
+  desc: 'Giochi subito contro il computer, senza coda: allenati quanto vuoi.',
+  facts: [
+    ['smart_toy', 'Parte subito, senza coda'],
+    ['trending_up', 'Non conta per il rating'],
+    ['timer', '15 secondi per ogni turno'],
+  ],
 };
 
 // Consigli dal regolamento (docs/REGOLE-GIOCO.md), uno diverso a ogni apertura
@@ -112,6 +123,17 @@ function build() {
     targetNote,
   ]);
 
+  // P73: solo nella Partita Veloce 1v1, chi è l'avversario (D43)
+  const opponent = el('fieldset', { class: 'target opponent', data: { opponent: '' }, attrs: { hidden: true } }, [
+    el('legend', { class: 'target__legend', text: 'Avversario' }),
+    el('div', { class: 'target__options' }, [['person', 'player', 'Giocatore'], ['smart_toy', 'cpu', 'CPU']].map(([name, value, word]) => (
+      el('label', { class: 'target__option' }, [
+        el('input', { attrs: { type: 'radio', name: 'opponent', value }, on: { change: renderOpponent } }),
+        el('span', { class: 'opponent__choice' }, [icon(name), el('b', { text: word })]),
+      ])
+    ))),
+  ]);
+
   const factsList = el('ul', { class: 'facts' });
   const facts = el('section', { class: 'mode-modal__facts', attrs: { 'aria-labelledby': 'facts-title' } }, [
     el('h3', { class: 'mode-modal__section-title', text: 'In breve', attrs: { id: 'facts-title' } }),
@@ -144,7 +166,7 @@ function build() {
 
   const body = el('div', { class: 'mode-modal__body' }, [
     el('div', { class: 'mode-modal__head' }, [kicker, title]),
-    desc, target, facts, invite, tip, play,
+    desc, target, opponent, facts, invite, tip, play,
   ]);
   const back = el('div', { class: 'mode-modal__back', attrs: { 'aria-hidden': 'true' } });
   const flip = el('div', { class: 'mode-modal__flip' }, [
@@ -178,7 +200,7 @@ function build() {
 
   document.body.append(dialog);
   parts = {
-    flip, back, body, kicker, title, desc, target, targetNote, facts, factsList,
+    flip, back, body, kicker, title, desc, target, targetNote, opponent, facts, factsList,
     invite, inviteTitle, inviteList, inviteHint, tip, tipText, play,
   };
 }
@@ -349,6 +371,29 @@ export function setInviteStatus(userId, status) {
   parts.inviteHint.textContent = notes[status];
 }
 
+function renderFacts(facts) {
+  parts.factsList.replaceChildren(...facts.map(([name, text]) => el('li', {}, [
+    icon(name),
+    el('span', { text }),
+  ])));
+}
+
+/** true se nella Partita Veloce 1v1 è scelta la CPU come avversario (P73). */
+function cpuChosen() {
+  return !parts.opponent.hidden && dialog.querySelector('input[name="opponent"]:checked')?.value === 'cpu';
+}
+
+// P73: con la CPU descrizione e "In breve" sono i suoi, e la frase dei punti
+// ("Incontri solo chi ha scelto…") non serve; con "Giocatore" tornano quelli della coda
+function renderOpponent() {
+  const cpu = cpuChosen();
+  const texts = MODE_TEXTS[`${current.kind}-${current.mode}`];
+  parts.desc.textContent = cpu ? CPU_TEXTS.desc : texts.desc;
+  renderFacts(cpu ? CPU_TEXTS.facts : texts.facts(ratingText(current.ratings)));
+  parts.targetNote.hidden = cpu;
+  dialog.dataset.opponent = cpu ? 'cpu' : 'player';
+}
+
 function renderTexts(kind, mode, ratings) {
   const texts = MODE_TEXTS[`${kind}-${mode}`];
   const quick = kind === 'veloce';
@@ -364,13 +409,13 @@ function renderTexts(kind, mode, ratings) {
   parts.targetNote.hidden = !quick;
   parts.tip.hidden = !quick;
   if (quick) {
-    parts.factsList.replaceChildren(...texts.facts(ratingText(ratings)).map(([name, text]) => el('li', {}, [
-      icon(name),
-      el('span', { text }),
-    ])));
+    renderFacts(texts.facts(ratingText(ratings)));
   } else {
     clear(parts.factsList);
   }
+  // P73: la scelta dell'avversario c'è solo nella Partita Veloce 1v1; si riparte da "Giocatore"
+  parts.opponent.hidden = !(quick && mode === '1v1');
+  dialog.querySelector('input[name="opponent"][value="player"]').checked = true;
   let tip = Math.floor(Math.random() * TIPS.length);
   if (tip === lastTip) tip = (tip + 1) % TIPS.length;
   lastTip = tip;
@@ -466,9 +511,10 @@ export function openModeModal({ kind, mode, tile, ratings = null, friends = [], 
   if (!MODE_TEXTS[`${kind}-${mode}`]) return;
   if (!dialog) build();
   if (dialog.open || busy) return;
-  current = { kind, mode, tile, handlers: { onPlay, onInvite, onCancelInvite }, invites: new Map(), started: false };
+  current = { kind, mode, tile, ratings, handlers: { onPlay, onInvite, onCancelInvite }, invites: new Map(), started: false };
 
   renderTexts(kind, mode, ratings);
+  dialog.dataset.opponent = 'player';
   dialog.dataset.kind = kind;   // per il CSS: con un amico, sui telefoni bassi, meno testi
   dialog.style.setProperty('--tile', getComputedStyle(tile).getPropertyValue('--tile'));
 
@@ -506,6 +552,7 @@ function onPlayClick() {
     mode: current.mode,
     targetScore: selectedTarget(),
     invitees: acceptedFriends(),
+    cpu: cpuChosen(),   // P73: Partita Veloce 1v1 contro la CPU
   };
   setPlayReady(false);   // niente doppio clic
   current.started = true;

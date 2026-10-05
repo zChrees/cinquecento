@@ -13,9 +13,10 @@
  * controlla tests/frontend/test_avatar.py con Node). Un codice fuori elenco (per
  * esempio negli esempi di app/static/dev/) mostra l'iniziale.
  * L'avatar è decorativo (aria-hidden): accanto c'è sempre il nome.
+ * La CPU (giocatore con `cpu: true` nella vista, P68) ha l'icona del robot (P73, D43).
  */
 
-import { el } from '../utils/dom.js';
+import { el, icon } from '../utils/dom.js';
 
 export const AVATAR_CODES = Object.freeze([
   'coppe', 'denari', 'spade', 'bastoni',
@@ -31,11 +32,14 @@ export function avatarUrl(code) {
 }
 
 /**
- * @param {{username: string, avatar?: string|null}} user
+ * @param {{username: string, avatar?: string|null, cpu?: boolean}} user
  * @param {string} [className] classi dell'elemento ('avatar', 'mini-avatar …')
  * @returns {HTMLElement}
  */
 export function Avatar(user, className = 'avatar') {
+  if (user.cpu) {
+    return el('span', { class: `${className} avatar--cpu`, data: { cpu: '' }, attrs: { 'aria-hidden': 'true' } }, [icon('smart_toy')]);
+  }
   const url = avatarUrl(user.avatar);
   if (!url) {
     return el('span', { class: className, text: user.username.charAt(0).toUpperCase(), attrs: { 'aria-hidden': 'true' } });

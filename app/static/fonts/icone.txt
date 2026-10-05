@@ -27,5 +27,6 @@ progress_activity
 refresh
 send
 settings
+smart_toy
 timer
 trending_up

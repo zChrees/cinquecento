@@ -382,6 +382,60 @@ def test_intervallo_allargato_senza_riaprire_la_schermata(logged_in, server, mon
     logged_in.wait_js("!document.querySelector('[data-queue-overlay]')", "Esc sulla schermata di coda")
 
 
+OPPONENT = """(() => { const d = document.querySelector('[data-mode-modal]');
+  const f = d.querySelector('[data-opponent]');
+  return {hidden: f.hidden, checked: f.querySelector('input:checked')?.value ?? null,
+          desc: d.querySelector('[data-modal-desc]').textContent,
+          facts: d.querySelector('.facts').textContent,
+          note: d.querySelector('.target__note').getClientRects().length > 0}; })()"""
+
+
+def test_scelta_dell_avversario_solo_nella_partita_veloce_1v1(logged_in, server):
+    # P73 (D43): "Avversario: Giocatore · CPU" c'è solo nella Partita Veloce 1v1, parte da Giocatore
+    logged_in.open(f"{server}/", 1440, 900)
+    for kind, mode in TILES:
+        _open_modal(logged_in, kind, mode)
+        state = logged_in.js(OPPONENT)
+        assert state["hidden"] is ((kind, mode) != ("veloce", "1v1")), (kind, mode)
+        assert state["checked"] == "player", (kind, mode)
+        _close_modal(logged_in)
+    _open_modal(logged_in, "veloce", "1v1")
+    assert "15 secondi per ogni turno" in logged_in.js(OPPONENT)["facts"]   # P94: non più 30
+    labels = logged_in.js("[...document.querySelectorAll('[data-opponent] .opponent__choice')].map((s) => s.textContent)")
+    assert labels == ["personGiocatore", "smart_toyCPU"]   # icona (nome nel font) e parola
+    _close_modal(logged_in)
+
+
+def test_contro_la_cpu_si_va_subito_al_tavolo(logged_in, server):
+    # P73: con "Avversario: CPU" cambiano descrizione e "In breve", sparisce la frase dei
+    # punti, e "Gioca" manda cpu:start (contratto 4.1): niente coda, si va al tavolo
+    from app.realtime.room_manager import rooms
+
+    logged_in.open(f"{server}/", 1440, 900)
+    _open_modal(logged_in, "veloce", "1v1")
+    _click(logged_in, 'input[name="opponent"][value="cpu"]')
+    state = logged_in.js(OPPONENT)
+    assert "contro il computer" in state["desc"] and state["note"] is False
+    assert "Parte subito, senza coda" in state["facts"] and "Non conta per il rating" in state["facts"]
+    _click(logged_in, 'input[name="opponent"][value="player"]')   # e tornando a Giocatore torna tutto
+    state = logged_in.js(OPPONENT)
+    assert "Entri in coda" in state["desc"] and state["note"] is True and "Conta per il tuo rating 1v1" in state["facts"]
+    _click(logged_in, 'input[name="opponent"][value="cpu"]')
+    _click(logged_in, 'input[name="target"][value="150"]')
+    _click(logged_in, "[data-play]")
+    try:
+        logged_in.wait_js("location.pathname.startsWith('/game/')", "tavolo contro la CPU", 8)
+        assert logged_in.js("document.querySelector('[data-queue-overlay]')") is None
+        room = rooms.get(logged_in.js("location.pathname").split("/")[2])
+        assert room is not None and len(room.players) == 2 and room.cpu_seats == frozenset({1}) and room.rated is False
+        logged_in.wait_js("document.querySelector('.seat .avatar--cpu .icon')?.textContent === 'smart_toy'",
+                          "robot al posto dell'avatar della CPU", 8)
+    finally:
+        for room in rooms.rooms_of(7):   # FakeUser("Mario"): la partita contro la CPU non resta aperta
+            room.run(room._stop_timers)
+            rooms.remove(room.id)
+
+
 def test_senza_login_la_carta_apre_la_finestra_di_accesso(browser, server):
     browser.open(f"{server}/", 390, 844)
     assert browser.js("document.body.dataset.userId") == ""

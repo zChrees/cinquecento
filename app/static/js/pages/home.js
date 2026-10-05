@@ -13,6 +13,8 @@
  *   stesso utente); "Annulla" manda queue:leave e la schermata si chiude con
  *   queue:left (con "partner_left" un messaggio dice che il compagno è uscito);
  *   game:start porta al tavolo.
+ * - Contro la CPU (P73, contratto 4.1): nella Partita Veloce 1v1 con "Avversario:
+ *   CPU" "Gioca" manda cpu:start (niente coda) e game:start porta al tavolo.
  * - Stato vero della home (P44): home:status arriva appena la pagina si collega e
  *   a ogni cambiamento (utenti online, partita in corso finita) e prende sempre il
  *   posto di quello dei dati finti. Senza login la pagina non si collega.
@@ -271,6 +273,15 @@ async function joinQueue(mode, targetScore) {
   render(state);
 }
 
+// P73: partita contro la CPU (contratto 4.1): niente coda, arriva subito game:start
+async function startCpu(targetScore) {
+  if (joining || state.queue || starting) return;
+  joining = true;
+  const answer = await send(EVENTS.CPU_START, { request_id: newRequestId(), target_score: targetScore });
+  joining = false;
+  if (!answer.ok) showMessage(answer.error.message, 'error');
+}
+
 function showQueue(queue) {
   if (starting) return;
   realQueue = true;
@@ -367,12 +378,13 @@ function goToTable({ url } = {}) {
   window.location.assign(url);
 }
 
-function play({ kind, mode, targetScore }) {
+function play({ kind, mode, targetScore, cpu }) {
   if (!navigator.onLine) {
     showMessage('Sei offline: potrai giocare appena torna la connessione.', 'error');
     return;
   }
-  if (kind === 'veloce') joinQueue(mode, targetScore);
+  if (kind === 'veloce' && cpu) startCpu(targetScore);
+  else if (kind === 'veloce') joinQueue(mode, targetScore);
   else startInvite();   // "Gioca con un amico": si attiva solo dopo l'accettazione
 }
 

@@ -283,7 +283,7 @@
   cursor: not-allowed;
 }
 
-.target__option span {
+.target__option > span {
   display: grid;
   place-items: center;
   align-content: center;
@@ -324,6 +324,24 @@
 .target__option input:focus-visible + span {
   outline: 3px solid var(--primary);
   outline-offset: 2px;
+}
+
+/* P73: "Avversario: Giocatore · CPU", due pillole come i punti, con l'icona accanto */
+.opponent .target__options {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.target__option .opponent__choice {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  font-size: 1.05rem;
+}
+
+.opponent__choice .icon {
+  font-size: 1.3em;
 }
 
 /*
@@ -436,6 +454,13 @@
   }
 }
 
+/* P73: nella Partita Veloce 1v1 c'è anche "Avversario": "In breve" sparisce prima */
+@container carta (max-height: 640px) {
+  .mode-modal:has([data-opponent]:not([hidden])) .mode-modal__facts {
+    display: none;
+  }
+}
+
 @container carta (max-height: 600px) {
   .mode-modal__body {
     gap: 12px;
@@ -482,7 +507,7 @@
     font-size: 1.6rem;
   }
 
-  .target__option span {
+  .target__option > span {
     min-height: 44px;
   }
 
