@@ -22,6 +22,19 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P106 — Mano che non cambia misura quando restano meno carte (05/10/2026)
+
+- **Punto nuovo** (numero proposto; da `cose-da-sistemare.txt` di Christian): dal telefono, quando si lancia una carta e da 5 si passa a 4, cambiavano misure e posizioni di tutto il tavolo; devono restare fermi
+- **Branch**: fix/p106-mano-fissa (fatto da Claude, con il permesso di Christian)
+- **File**: modificati `app/static/css/components/table.css` (`.table__mine .hand > .card`), `tests/api/test_grafica_tavolo.py` (un test nuovo), questo file
+- **Causa** [T]: le carte della mano prendevano tutto lo spazio della riga fino a `--hand-card-max`: a 360×640 da 61 px con 5 carte a 78 con 4 e 96 con 3, la mano diventava più alta e presa, mazzo e la tua riga salivano di circa 30 px a ogni carta. Da computer (larghezza della mano fissa da P74) non succedeva
+- **Cosa cambia** (scelta di Christian: "stessa misura, centrate"): al tavolo ogni carta della mano è larga sempre come in una mano piena (5 carte e 4 spazi, al massimo `--hand-card-max`); con meno carte quelle rimaste si **ricentrano** soltanto e nient'altro si muove
+- **Controlli**: `test_grafica_tavolo.py::test_meno_carte_in_mano_niente_si_sposta` (1v1 e 2v2 a 360×640, 390×844, 768×1024, 1280×720: con 4, 3 e 1 carta la carta ha la stessa misura e mano, presa, mazzo, il tuo posto e quello in alto non si muovono); senza la correzione 4 casi su 8 falliscono. Con `test_grafica_tavolo.py`, `test_tavolo_telefono.py`, `test_frasi_di_lato.py`, `test_carte_pronte.py`, `test_lancio_mio.py`, `test_calata.py`, `test_carte_compagno.py`, `test_distribuzione.py`, `test_mano_ferma.py`: **104 PASS**. `ruff check .` pulito
+- **Decisioni prese**: quella sopra
+- **Domande nuove**: nessuna
+- **Punti delicati**: anche qui c'è il 5 di `rules.hand_size` (come nella larghezza della mano da computer, P74): se cambia, va cambiato anche in `.table__mine .hand > .card`
+- **Cosa devono fare gli altri**: **Chi è di turno sui documenti**: registrare P106; in `CLAUDE.md`, punto delicato "Tavolo da computer (P74)": il 5 di `rules.hand_size` sta anche nella regola di P106
+
 ### P105 — Coda: l'intervallo di rating cambia senza lampo (05/10/2026)
 
 - **Punto nuovo** (numero proposto; da `cose-da-sistemare.txt` di Christian): nel matchmaking, quando cambiano i punti dell'intervallo, lo schermo faceva un lampo; i numeri devono cambiare in modo fluido

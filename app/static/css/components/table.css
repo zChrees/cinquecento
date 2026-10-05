@@ -641,6 +641,16 @@
   max-width: 560px;
 }
 
+/*
+ * P106: ogni carta della mano è larga come in una mano piena (5 carte, rules.hand_size,
+ * e 4 spazi), anche quando ne restano meno: sul telefono le carte rimaste si
+ * ingrandivano, la mano diventava più alta e tutto il tavolo saliva. Le carte rimaste
+ * si ricentrano soltanto.
+ */
+.table__mine .hand > .card {
+  flex: 0 0 min(var(--hand-card-max), (100% - 4 * var(--hand-gap)) / 5);
+}
+
 /* Su tablet e computer la mano si rimpicciolisce sugli schermi bassi, così il tavolo non scorre */
 @media (min-width: 640px) {
   /* P100: la stessa misura serve anche per mettere il mazzo del 1v1 sotto "Frasi" */

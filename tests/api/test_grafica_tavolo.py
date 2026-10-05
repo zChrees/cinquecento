@@ -411,3 +411,32 @@ def test_nel_2v2_il_mazzo_non_cambia(browser, server):
     # P100: solo il 1v1; nel 2v2 sul telefono il mazzo resta da 56 px
     _open(browser, server, "2v2")
     assert abs(_boxes(browser)["deck"]["w"] - 56) <= 1
+
+
+HAND_PARTS = """(() => {
+  const r = (s) => { const e = document.querySelector(s); if (!e) return null; const b = e.getBoundingClientRect();
+    return { l: Math.round(b.left), t: Math.round(b.top), w: Math.round(b.width), h: Math.round(b.height) }; };
+  return { card: r('.table__mine .hand > .card'), hand: r('.table__mine .hand'), trick: r('[data-trick]'),
+           deck: r('.deck'), me: r('.table__mine [data-position="bottom"]'), top: r('.table__board [data-position="top"]') };
+})()"""
+
+
+@pytest.mark.parametrize("mode", ["1v1", "2v2"])
+@pytest.mark.parametrize("size", [(360, 640), (390, 844), (768, 1024), (1280, 720)], ids=lambda s: f"{s[0]}x{s[1]}")
+def test_meno_carte_in_mano_niente_si_sposta(browser, server, mode, size):
+    # P106: con meno carte in mano le carte non si ingrandiscono e il tavolo non si muove
+    base = _view(mode)
+    _open(browser, server, mode, size)
+    full = None
+    for count in (5, 4, 3, 1):
+        view = _state(base, hand=base["hand"][:count])
+        view["version"] = base["version"] + 10 - count  # versioni che salgono
+        _dispatch(browser, "demo:state", view)
+        parts = browser.js(HAND_PARTS)
+        if full is None:
+            full = parts
+            continue
+        assert parts["card"]["w"] == full["card"]["w"] and parts["card"]["h"] == full["card"]["h"], (count, parts)
+        for name in ("hand", "trick", "deck", "me", "top"):
+            assert parts[name] == full[name], (count, name, parts[name], full[name])
+
