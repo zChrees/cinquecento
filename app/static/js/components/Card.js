@@ -75,20 +75,35 @@ export function preloadCardImages() {
  * nuovi (P70). Un'immagine nuova, finché il browser non l'ha pronta, per un attimo
  * mostra il fondo bianco della carta: è il lampo bianco trovato giocando dal
  * telefono. Da chiamare subito prima di ridisegnare dentro `root`.
+ * P119: lo stesso per le immagini degli avatar e della briscola nell'angolo
+ * (REUSED_IMAGES), che a ogni lancio o pescata lampeggiavano: le riprendono
+ * Avatar.js e TrumpBadge (Trick.js) con reusedImage().
  * @param {HTMLElement} root
  */
 export function reuseCardImages(root) {
   reusable = new Map();
-  for (const img of root.querySelectorAll('img.card__face, img.card__back')) {
-    if (!reusable.has(img.src)) reusable.set(img.src, []);
-    reusable.get(img.src).push(img);
+  for (const img of root.querySelectorAll(REUSED_IMAGES)) {
+    const key = `${img.className} ${img.src}`;
+    if (!reusable.has(key)) reusable.set(key, []);
+    reusable.get(key).push(img);
   }
 }
 
-function cardImage(className, src) {
-  const old = reusable.get(src)?.pop();
+const REUSED_IMAGES = 'img.card__face, img.card__back, img.avatar__img, img.trump-badge__card';
+
+/**
+ * Un'immagine con classe `className` e indirizzo `src` (assoluto, come img.src):
+ * quella del disegno di prima, se c'era (reuseCardImages), altrimenti una nuova con
+ * gli attributi `attrs` in più.
+ */
+export function reusedImage(className, src, attrs = {}) {
+  const old = reusable.get(`${className} ${src}`)?.pop();
   if (old) return old;
-  return el('img', { class: className, attrs: { src, alt: '', draggable: 'false' } });
+  return el('img', { class: className, attrs: { src, alt: '', draggable: 'false', ...attrs } });
+}
+
+function cardImage(className, src) {
+  return reusedImage(className, src);
 }
 
 /**

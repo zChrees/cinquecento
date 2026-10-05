@@ -12,7 +12,7 @@
  */
 
 import { el } from '../utils/dom.js';
-import { Card, CardBack, cardName } from './Card.js';
+import { Card, CardBack, cardName, reusedImage } from './Card.js';
 
 const IMG_BASE = new URL('../../img/cards-bg/', import.meta.url).href;
 // Dopo quanto le carte della presa chiusa scivolano via: come il ritardo di trick-away in trick.css
@@ -125,10 +125,8 @@ export function TrumpBadge(trump) {
     class: 'trump-badge',
     data: { trumpBadge: trump },
     attrs: { role: 'img', 'aria-label': `Briscola: ${trump}` },
-  }, ['cavallo', 're'].map((figure) => el('img', {
-    class: 'trump-badge__card',
-    attrs: { src: `${IMG_BASE}${figure}-${trump}.webp`, alt: '' },
-  })));
+    // P119: le stesse immagini del disegno di prima (reuseCardImages), senza lampi
+  }, ['cavallo', 're'].map((figure) => reusedImage('trump-badge__card', `${IMG_BASE}${figure}-${trump}.webp`)));
 }
 
 /**

@@ -76,12 +76,15 @@ function SingBadges(view, seat) {
  * centro del tavolo; spariscono dopo show_seconds (lo decide pages/game.js).
  */
 function SangCards(sang, position) {
+  const cards = el('div', { class: 'sang__cards' }, sang.cards.map((card) => Card(card)));
+  // P119: l'entrata riprende dal tempo già passato (P70), così un ridisegno non la fa ripartire
+  cards.style.animationDelay = `${-Math.round(sang.shownFor ?? 0)}ms`;
   return el('div', {
     class: `sang sang--${position}`,
     data: { sangSeat: sang.seat, suit: sang.suit, points: sang.points },
     attrs: { 'aria-hidden': 'true' }, // lo annuncia già la riga di stato
   }, [
-    el('div', { class: 'sang__cards' }, sang.cards.map((card) => Card(card))),
+    cards,
     el('span', { class: 'sang__points', text: `Canta ${sang.points}` }),
   ]);
 }
@@ -198,19 +201,36 @@ function layDownText(view, seat) {
 }
 
 /**
+ * P93: la scritta quando le carte del compagno si scoprono. P119: l'entrata riprende
+ * dal tempo già passato, così un ridisegno non la fa ripartire.
+ */
+function PartnerNotice(name, shownFor) {
+  const notice = el('p', {
+    class: 'partner-notice',
+    data: { partnerNotice: '' },
+    attrs: { role: 'status' },
+    text: `Mazzo finito: ora vedi le carte di ${name}`,
+  });
+  notice.style.animationDelay = `${-Math.round(shownFor)}ms`;
+  return notice;
+}
+
+/**
  * P85: la scritta al centro mentre si vedono le carte calate (al posto della presa,
  * che a inizio presa è vuota). Per i lettori di schermo dice anche le carte di tutti.
  */
-function LaidDownNotice(view, laid, positionOf) {
+function LaidDownNotice(view, laid, positionOf, shownFor = 0) {
   const text = layDownText(view, laid.seat);
   const cards = laid.hands
     .filter(({ cards: list }) => list.length)
     .map(({ seat, cards: list }) => `${seat === view.you.seat ? 'tu' : view.players[seat]?.username}: ${list.map(cardName).join(', ')}`);
+  const label = el('span', { class: 'laid-down__text', text, attrs: { 'aria-hidden': 'true' } });
+  label.style.animationDelay = `${-Math.round(shownFor)}ms`;   // P119, come le carte calate
   return el('div', {
     class: `laid-down laid-down--from-${positionOf(laid.seat)}`,
     data: { laidDown: '', laidDownSeat: laid.seat },
     attrs: { role: 'status', 'aria-label': `${text}. ${cards.join('; ')}` },
-  }, [el('span', { class: 'laid-down__text', text, attrs: { 'aria-hidden': 'true' } })]);
+  }, [label]);
 }
 
 /**
@@ -232,7 +252,8 @@ function LaidDownNotice(view, laid, positionOf) {
  * @param {Array|null} [moments.handPoints] P72: punti della mano da mostrare al posto di
  *   hand_points (a fine mano, quelli della mano appena chiusa)
  * @param {function} [moments.onCloseSummary] pulsante "Ok" del riepilogo
- * @param {object} [moments.sang] posto → evento game:sang da mostrare
+ * @param {object} [moments.sang] posto → evento game:sang da mostrare, con shownFor (P119:
+ *   millisecondi da quando si vede)
  * @param {object|null} [moments.laidDown] P85: le carte calate (last_hand.laid_down) da mostrare adesso
  * @param {number} [moments.laidDownFor] P85: millisecondi da quando si vedono
  * @param {function} [handlers.onLayDown] P85: pulsante "Cala le carte"
@@ -299,7 +320,7 @@ export function Table(view, { onPlay, onSing, onLeave, onLayDown = null, onAdvis
     ...others.map((player) =>
       Seat(view, player, positionOf(player.seat), sang[player.seat], bubbles[player.seat], points[player.seat])),
     el('div', { class: 'table__center' }, [
-      laidDown ? LaidDownNotice(view, laidDown, positionOf) : null,
+      laidDown ? LaidDownNotice(view, laidDown, positionOf, laidDownFor) : null,
       lastTrick && !laidDown
         ? LastTrick(lastTrick, positionOf, winnerText(view, lastTrick.winner_seat), { shownFor: lastTrickFor, thrown })
         : null,
@@ -308,14 +329,7 @@ export function Table(view, { onPlay, onSing, onLeave, onLayDown = null, onAdvis
     ]),
     summary ? HandSummary(view, summary, { onClose: onCloseSummary }) : null,
     // P93: per un momento, quando le carte del compagno si scoprono
-    mateCards && partner?.notice
-      ? el('p', {
-        class: 'partner-notice',
-        data: { partnerNotice: '' },
-        attrs: { role: 'status' },
-        text: `Mazzo finito: ora vedi le carte di ${mate.username}`,
-      })
-      : null,
+    mateCards && partner?.notice ? PartnerNotice(mate.username, partner.shownFor ?? 0) : null,
   ]);
 
   // Sopra la mano: i tuoi punti a sinistra, tu al centro, le frasi a destra (P71, P72, P77)

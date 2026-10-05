@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P119 — Un'animazione non fa lampeggiare il resto del tavolo (05/10/2026)
+
+- **Branch**: fix/p119-niente-lampeggi (fatto da Claude, con il permesso di Christian per commit, merge e push di P114–P115)
+- **File** (lista definitiva per 9.2): modificati `app/static/js/pages/game.js` (ora di arrivo dei canti), `app/static/js/components/Table.js` (`SangCards`, `LaidDownNotice`, nuovo `PartnerNotice`), `Card.js` (`reuseCardImages` raccoglie anche avatar e briscola; nuovo `reusedImage`), `Avatar.js`, `Trick.js` (`TrumpBadge`); creato `tests/table2/test_niente_lampeggi.py`, questo file. Nessun CSS toccato
+- **Causa** [T] (riprodotta registrando ogni fotogramma durante un lancio, una pescata e una frase: il tavolo si ridisegna 3–4 volte): (1) le **carte del canto** ("40 cantati") rifacevano a ogni ridisegno l'entrata `sang-in`, da opacità 0; lo stesso difetto [L] avevano le scritte delle **carte calate** e di "**Mazzo finito: ora vedi le carte di …**"; (2) le immagini degli **avatar** e di **Cavallo e Re della briscola** nell'angolo erano elementi nuovi a ogni ridisegno (quelle della briscola senza `decoding: sync`): un'immagine nuova può restare vuota per un fotogramma [D]
+- **Cosa cambia**: le tre entrate riprendono dal tempo già passato (ritardo negativo, come P70); avatar e briscola riusano le stesse `<img>` del disegno di prima, come le carte (P70). Iniziale dell'avatar e tabellone si ricreano ancora, ma sono solo testo pieno, senza entrate né immagini
+- **Controlli**: `test_niente_lampeggi.py` **4 PASS** (1v1 e 2v2, telefono 390×844 e computer 1440×900: a ogni fotogramma le carte del canto sono piene e la loro entrata non riparte, avatar e briscola hanno sempre le stesse immagini); **senza la correzione falliscono tutti e 4** [T]. Suite `frontend` **132 PASS**, `table` **78 PASS**, `table2` **57 PASS**. `ruff check .` pulito. Non lanciata `api` (usa `Table.js` solo per le misure della grafica, che non cambiano)
+- **Decisioni prese**: nessuna
+- **Punti delicati**: (1) un'immagine nuova del tavolo va creata con `reusedImage` (classe in `REUSED_IMAGES` di `Card.js`), altrimenti lampeggia; (2) un elemento nuovo con un'animazione d'entrata riceve il tempo già passato da `game.js` (punto delicato P70); (3) in questo giro `table` è durata **194 s** e `table2` **192 s** (prima 166 e 141; il test nuovo pesa circa 22 s, il resto [D] è il carico del PC): un altro test lungo andrebbe in una suite nuova
+- **Note per gli altri**: nessuna
+
 ### P73 — Partita contro la CPU nella home (05/10/2026)
 
 - **Branch**: feature/p73-cpu-home (fatto da Claude, con il permesso di Christian per commit, merge e push di P114–P115)

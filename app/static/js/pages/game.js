@@ -127,7 +127,7 @@ let partnerNoticeTimer = 0;
 let myAdvice = null; // la carta del compagno che gli hai consigliato
 let adviceSending = false;
 let receivedAdvice = null; // { seat, card }: la carta che ti ha consigliato il compagno
-const sang = {}; // posto → { event, timer }
+const sang = {}; // posto → { event, timer, at } (at: performance.now() dell'arrivo, P119)
 let lastTrickAt = 0; // quando si è vista la presa chiusa (performance.now), per le animazioni
 // P70: throwKey(carta) → { at: performance.now() del lancio (P78: anche nel futuro), ms: durata,
 // from: P99, P107, da dove parte: { cx, cy, w, tilt } (centro, larghezza, rotazione), o null }
@@ -559,7 +559,8 @@ function render(next) {
     // P72: finché si vedono l'ultima presa e il riepilogo, i punti della mano appena chiusa
     handPoints: nextSummary || summary ? handTotals(nextSummary || summary) : null,
     onCloseSummary: () => { closeSummary(); redraw(); },
-    sang: Object.fromEntries(Object.entries(sang).map(([seat, { event }]) => [seat, event])),
+    // P119: con il tempo già passato, così un ridisegno non fa ripartire l'entrata delle carte
+    sang: Object.fromEntries(Object.entries(sang).map(([seat, { event, at }]) => [seat, { ...event, shownFor: performance.now() - at }])),
     laidDown,
     laidDownFor: laidDown ? performance.now() - laidDownAt : 0,
     partner: view.partner_hand ? {
@@ -958,7 +959,7 @@ function onSang(event) {
     if (sang[event.seat]?.event === event) delete sang[event.seat];
     redraw();
   }, seconds);
-  sang[event.seat] = { event, timer };
+  sang[event.seat] = { event, timer, at: performance.now() };
   playSound('sing'); // P103
 
   const who = view && view.players[event.seat] ? view.players[event.seat].username : 'Un giocatore';

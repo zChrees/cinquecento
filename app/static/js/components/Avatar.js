@@ -17,6 +17,7 @@
  */
 
 import { el, icon } from '../utils/dom.js';
+import { reusedImage } from './Card.js';
 
 export const AVATAR_CODES = Object.freeze([
   'coppe', 'denari', 'spade', 'bastoni',
@@ -46,7 +47,8 @@ export function Avatar(user, className = 'avatar') {
   }
   return el('span', { class: `${className} avatar--img`, data: { avatar: user.avatar }, attrs: { 'aria-hidden': 'true' } }, [
     // decoding sync: il tavolo si ridisegna a ogni vista, e un'immagine nuova
-    // decodificata dopo si vedrebbe vuota per un attimo (come le carte in P70)
-    el('img', { class: 'avatar__img', attrs: { src: url, alt: '', draggable: 'false', decoding: 'sync' } }),
+    // decodificata dopo si vedrebbe vuota per un attimo (come le carte in P70);
+    // P119: al tavolo si riusa proprio l'immagine del disegno di prima (reusedImage)
+    reusedImage('avatar__img', url, { decoding: 'sync' }),
   ]);
 }
