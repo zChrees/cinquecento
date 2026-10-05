@@ -22,6 +22,15 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: registrati P114, P73 e P119, aggiunti P120 e P121 (05/10/2026, notte)
+
+- **Branch**: docs/aggiornamento-05-10-notte
+- **File**: `SCALETTA.md` (spuntati **P114**, **P73**, **P119** con le note e le liste definitive in 9.2; aggiunti **P120** "1 giocatore online" al singolare e **P121** suite di nuovo vicine al limite, nel tracker, con le schede e nella tabella di 9.1; "Da dove si parte"), `DECISIONI.md` (Interfaccia: i dettagli della CPU nella home; Processo: suite `table2`), `CLAUDE.md` (riga "Stato", "Testing", punti delicati: suite `table` e `table2`, animazioni del tavolo con `reusedImage`, CPU, nuovo "CPU nella home (P73)"), questo file
+- **Controlli**: nessun test lanciato (solo documenti); ultimi giri delle suite toccate: `api` 377, `frontend` 132, `table` 78, `table2` 57 PASS
+- **Riepiloghi registrati**: `christian.md` fino a P119; `giuseppe.md` fino a P82; `antonio.md` niente di nuovo
+- **Punti rimasti a Christian**: P117, P118, P116, P115, P120, P121 (più P9, P36, P37)
+- **Cosa devono fare gli altri**: **Giuseppe**: le suite ora sono 10 (`table2`); `api`, `table` e `table2` sono vicine ai 240 s (P121): se aggiungi un test lungo nel browser, dimmelo
+
 ### P119 — Un'animazione non fa lampeggiare il resto del tavolo (05/10/2026)
 
 - **Branch**: fix/p119-niente-lampeggi (fatto da Claude, con il permesso di Christian per commit, merge e push di P114–P115)
