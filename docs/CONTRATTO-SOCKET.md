@@ -88,7 +88,7 @@ Chi è l'utente la pagina lo sa **senza chiederlo**: `base.html` scrive nel `<bo
 
 ## 2. Richieste HTTP in JSON
 
-Tutte richiedono il login e rispondono nella forma di 1.2.
+Tutte richiedono il login (tranne `GET /online`, 5.1) e rispondono nella forma di 1.2.
 
 ### 2.1 Statistiche (P30; dati finti per P40)
 
@@ -237,6 +237,10 @@ Il 2v2 con gli amici non passa da `queue:join`: la coppia o il gruppo di tre ent
 | `home:status` | server → pagina, appena collegata e poi a ogni cambiamento | `{"online_count", "resume"}` |
 
 `online_count` conta gli utenti collegati (lo stesso utente con due schede conta una volta). `resume` è `null`, oppure `{"game_id", "url", "mode", "target_score"}` quando l'utente ha una partita in corso da cui rientrare: la home mostra "Hai una partita in corso: rientra".
+
+**Senza login** (P82; approvato da Giuseppe e Christian il 05/10/2026) la pagina non si collega al tempo reale, quindi non riceve `home:status`. Il numero lo chiede con una richiesta HTTP, l'unica che **non richiede il login** (eccezione alla regola di 2):
+
+`GET /online` → `{"ok": true, "data": {"online_count": N}}`, lo stesso numero di `home:status`, senza cache (`Cache-Control: no-store`). La home senza login lo chiede all'apertura e poi ogni 15 secondi, solo mentre la scheda è visibile. Il numero finto dei dati di prova non si usa più.
 
 ### 5.2 Amici online (P47)
 

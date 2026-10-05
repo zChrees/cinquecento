@@ -16,6 +16,9 @@
  * - Stato vero della home (P44): home:status arriva appena la pagina si collega e
  *   a ogni cambiamento (utenti online, partita in corso finita) e prende sempre il
  *   posto di quello dei dati finti. Senza login la pagina non si collega.
+ * - Giocatori online senza login (P82, contratto 5.1): la pagina chiede il numero a
+ *   GET /online all'apertura e poi ogni ONLINE_POLL_MS, solo con la scheda visibile.
+ *   Il numero finto dei dati di prova non si usa più, né con né senza login.
  * - Inviti a partita (P47, contratto 5.3): la lista degli amici da invitare viene
  *   da GET /friends/ e si rilegge con friends:presence e friends:changed. "Invita"
  *   manda invite:send; invite:update aggiorna la carta-modal (setInviteStatus);
@@ -26,8 +29,8 @@
  *   tre (P59). L'invito ricevuto si apre in una finestra (components/InviteDialog.js)
  *   con "Rifiuta" e "Accetta".
  * - Il resto per ora viene dai dati finti di app/static/dev/ (attributi
- *   data-demo-*, solo in sviluppo e nei test): i rating di "In breve", e lo stato
- *   della home e gli amici finché non arrivano quelli veri. Con ?demo=rientro
+ *   data-demo-*, solo in sviluppo e nei test): i rating di "In breve" e gli amici
+ *   finché non arrivano quelli veri. Con ?demo=rientro
  *   l'avviso di rientro resta quello finto (si prova senza una partita vera).
  * - Connessione (P33): l'avviso in cima alla pagina lo mostra core/socket.js. Senza
  *   connessione "Gioca", "Invita" e i pulsanti dell'invito ricevuto sono spenti; la
@@ -293,13 +296,37 @@ function onQueueLeft({ reason } = {}) {
 // Stato vero della home (P44, contratto 5.1)
 // ------------------------------------------------------------
 
-let realStatus = false;   // è arrivato home:status: i dati finti non lo sostituiscono più
-
 function showStatus(status) {
   if (root.dataset.demoState === 'rientro') return;   // prova dell'avviso con i dati finti
-  realStatus = true;
   state.status = status;
   render(state);
+}
+
+// P82: senza login niente home:status; il numero lo dà GET /online (contratto 5.1),
+// chiesto di nuovo ogni ONLINE_POLL_MS finché la scheda è visibile
+const ONLINE_URL = '/online';
+const ONLINE_POLL_MS = 15000;
+let onlineTimer = 0;
+
+async function loadOnlineCount() {
+  clearTimeout(onlineTimer);
+  if (document.hidden) return;
+  try {
+    const body = await fetchJson(ONLINE_URL);
+    if (body.ok) showStatus({ online_count: body.data.online_count, resume: null });
+  } catch {
+    // senza risposta resta il numero di prima; si riprova al giro dopo
+  }
+  clearTimeout(onlineTimer);
+  if (!document.hidden) onlineTimer = setTimeout(loadOnlineCount, ONLINE_POLL_MS);
+}
+
+function watchOnlineCount() {
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) clearTimeout(onlineTimer);
+    else loadOnlineCount();
+  });
+  loadOnlineCount();
 }
 
 // ------------------------------------------------------------
@@ -426,10 +453,9 @@ async function loadDemo() {
   const [home, friends, stats] = await Promise.allSettled([
     fetchJson(demoHomeUrl), fetchJson(demoFriendsUrl), fetchJson(demoStatsUrl),
   ]);
-  if (home.status === 'fulfilled') {
-    const demoData = home.value;
-    if (demoState === 'rientro') state.status = demoData['home:status con partita in corso'];
-    else if (!realStatus) state.status = demoData['home:status'];
+  // Il numero finto degli online non si usa più (P82): solo l'avviso di rientro di prova
+  if (home.status === 'fulfilled' && demoState === 'rientro') {
+    state.status = home.value['home:status con partita in corso'];
   }
   if (friends.status === 'fulfilled' && !realFriends) state.friends = friends.value['GET /friends/']?.friends ?? [];
   if (stats.status === 'fulfilled') state.ratings = stats.value.ratings ?? null;
@@ -450,5 +476,7 @@ if (isLoggedIn()) {
   onStatus(onConnection);
   connect();
   loadFriends();
+} else {
+  watchOnlineCount();
 }
 if (demo) loadDemo();

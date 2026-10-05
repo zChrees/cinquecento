@@ -5,11 +5,18 @@ e partita in corso (home:status, P44), coda (P28), amici da invitare (P47).
 Finché quei punti non ci sono, in sviluppo e nei test la pagina usa i dati finti
 di app/static/dev/ (attributi data-demo-*); con ?demo=rientro mostra anche
 l'avviso "Hai una partita in corso". Nella demo vera i dati finti non ci sono.
+Da P82 "giocatori online" non usa più i dati finti.
+
+P82: GET /online dà il numero di giocatori online anche a chi non ha fatto il login
+(contratto 5.1), che non si collega al tempo reale e quindi non riceve home:status.
+Solo il numero, lo stesso di home:status: nessun dato sugli utenti.
 """
 
 from flask import abort, current_app, render_template, request, url_for
 
 from app.blueprints.main import bp
+from app.realtime.events import ok
+from app.realtime.presence import presence
 
 DEMO_ENVS = {"development", "testing"}
 DEMO_STATES = {"rientro"}
@@ -30,3 +37,8 @@ def index():
     if demo_env:
         demo_urls = {name: url_for("static", filename=path) for name, path in DEMO_FILES.items()}
     return render_template("main/index.html", demo_urls=demo_urls, demo_state=demo_state)
+
+
+@bp.get("/online")
+def online():
+    return ok({"online_count": presence.count()}), 200, {"Cache-Control": "no-store"}
