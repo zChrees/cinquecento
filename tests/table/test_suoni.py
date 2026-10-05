@@ -1,13 +1,16 @@
-"""P103: suoni al tavolo.
+"""P103, P109: suoni al tavolo.
 
-I suoni si creano nel browser con Web Audio (core/sounds.js, nessun file audio): la CSP
-non cambia. Ogni suono che parte manda sul documento l'evento "cinquecento:sound" con
-il suo nome, anche quando il browser non lo fa sentire: i test ascoltano quello.
+I suoni sono file registrati dal vero (Kenney, CC0: app/static/sounds/LICENZA.md),
+suonati con Web Audio da core/sounds.js; il contesto audio si crea solo al primo gesto
+dell'utente (P109: crearlo durante un ridisegno bloccava la pagina). Ogni suono che parte
+manda sul documento l'evento "cinquecento:sound" con il suo nome, anche quando il
+browser non lo fa sentire: i test ascoltano quello.
 Controlla che ogni momento abbia il suo suono, nello stesso momento della sua
-animazione (lancio e pescate in fila, presa raccolta quando le carte scivolano via,
-"tocca a te" dopo le pause e il ticchettio degli ultimi 5 secondi); che con
-l'interruttore spento (pagina delle impostazioni, scelta nel browser) non suoni niente,
-anche dopo aver ricaricato la pagina; che il tavolo funzioni anche senza Web Audio.
+animazione (carta che si posa e pescate in fila, presa raccolta quando le carte
+scivolano via, "tocca a te" dopo le pause e il ticchettio degli ultimi 5 secondi, la
+frase al tavolo); che con l'interruttore spento (pagina delle impostazioni, scelta nel
+browser) non suoni niente, anche dopo aver ricaricato la pagina; che il tavolo funzioni
+anche senza Web Audio.
 
 Il tavolo si apre nella prova (/game/prova?demo=1v1) in Chrome o Edge senza finestra
 (tests/browser.py), con "riduci movimento" spento dove servono le animazioni; le viste
@@ -17,6 +20,7 @@ arrivano con gli eventi del browser "demo:state" e "demo:sang". Non serve MySQL.
 import copy
 import itertools
 import json
+import re
 import time
 from pathlib import Path
 
@@ -43,12 +47,29 @@ LISTEN = """(() => {
 })()"""
 
 
-def test_niente_file_audio():
-    # Tutto sintetizzato: nessun file da scaricare (né licenze, né CSP media-src)
-    audio = [p for p in STATIC.rglob("*") if p.suffix.lower() in {".mp3", ".ogg", ".wav", ".m4a", ".webm", ".opus"}]
-    assert audio == []
-    sounds = (STATIC / "js" / "core" / "sounds.js").read_text(encoding="utf-8")
-    assert "new Audio(" not in sounds and "fetch(" not in sounds
+SOUNDS_DIR = STATIC / "sounds"
+
+
+def _sound_files():
+    """I file elencati in SOUNDS di core/sounds.js."""
+    js = (STATIC / "js" / "core" / "sounds.js").read_text(encoding="utf-8")
+    block = js[js.index("export const SOUNDS = {"):]
+    block = block[:block.index("};")]
+    return set(re.findall(r"'([a-z0-9-]+)'", block.split("{", 1)[1]))
+
+
+def test_file_dei_suoni_e_licenza():
+    files = _sound_files()
+    on_disk = {p.stem for p in SOUNDS_DIR.glob("*.mp3")}
+    assert files == on_disk  # ogni suono ha il suo file e nessun file resta inutilizzato
+    licence = (SOUNDS_DIR / "LICENZA.md").read_text(encoding="utf-8")
+    assert "CC0" in licence and "kenney.nl" in licence
+    for name in files:
+        assert f"`{name}.mp3`" in licence or f"`{name.rsplit('-', 1)[0]}-1.mp3`" in licence, name
+    weight = sum(p.stat().st_size for p in SOUNDS_DIR.glob("*.mp3"))
+    assert weight < 250_000, weight
+    # Nessun altro formato (l'MP3 lo legge anche Safari su iPhone)
+    assert not [p for p in STATIC.rglob("*") if p.suffix.lower() in {".ogg", ".wav", ".m4a", ".webm", ".opus"}]
 
 
 @pytest.fixture(scope="module")
@@ -120,10 +141,10 @@ def test_presa_chiusa_lancio_pescate_presa_e_tocca_a_te(browser, server):
     sounds = _sounds(browser)
     names = [name for name, _ in sounds]
     at = {name: ms for name, ms in reversed(sounds)}  # la prima volta di ogni suono
-    assert names[:3] == ["throw", "draw", "draw"], sounds
-    # Il lancio subito, le pescate a fine volo (0,55 s, P99) e una dopo l'altra (0,5 s)
+    assert names.count("card") == 1 and names.count("draw") == 2, sounds
+    # La carta si posa a fine volo (0,55 s, P99), le pescate cominciano lì, una dopo l'altra (0,5 s)
     draws = [ms for name, ms in sounds if name == "draw"]
-    assert at["throw"] < 150 and 450 <= draws[0] <= 750 and 400 <= draws[1] - draws[0] <= 600, sounds
+    assert 450 <= at["card"] <= 750 and 450 <= draws[0] <= 750 and 400 <= draws[1] - draws[0] <= 600, sounds
     # La presa raccolta quando le carte scivolano via (1,1 s)
     assert 1000 <= at["trick"] <= 1350, sounds
     # Tocca a te solo a pause finite (ultima presa 1,5 s, pescate fino a circa 1,55 s)
@@ -164,14 +185,13 @@ def test_fine_mano_mescolata_e_distribuzione(browser, server):
     new_hand["last_hand"] = {**base["last_hand"], "hand_number": base["hand_number"]}
     new_hand["trick"] = {"leader_seat": 1, "cards": [], "winning_seat": None}
     _dispatch(browser, "demo:state", new_hand)
-    _wait_sound(browser, "hand_end", 4)
+    browser.wait_js("document.querySelector('[data-hand-summary-close]') !== null", "riepilogo", 4)
     browser.click("[data-hand-summary-close]")  # "Ok" chiude il riepilogo: parte la distribuzione
-    _wait_sound(browser, "shuffle", 3)
-    # Un suono per carta distribuita: le tue e quelle dell'avversario
-    cards = len(new_hand["hand"]) + sum(p["cards_in_hand"] for p in new_hand["players"] if p["seat"] != 0)
-    wait(lambda: [n for n, _ in _sounds(browser)].count("deal") == cards, 4, "carte distribuite")
+    _wait_sound(browser, "deal", 3)
+    time.sleep(1)
+    # P109: un solo suono per la distribuzione (prima uno per carta) e niente per il riepilogo
     names = [name for name, _ in _sounds(browser)]
-    assert names.index("trick") < names.index("hand_end") < names.index("shuffle") < names.index("deal")
+    assert names == ["card", "card", "trick", "shuffle", "deal"], names  # le due carte dell'ultima presa
 
 
 def test_calata(browser, server):
@@ -244,3 +264,33 @@ def test_interruttore_nelle_impostazioni(browser, server):
     assert browser.js("document.querySelector('[data-sounds-toggle]').checked") is False
     browser.click("[data-sounds-toggle]")
     assert browser.js("localStorage.getItem('cinquecento.sounds')") == "on"
+
+
+def test_frase_al_tavolo(browser, server):
+    # P109: le frasi del tavolo hanno il loro suono, anche quelle degli altri
+    _open(browser, server)
+    _dispatch(browser, "demo:phrases", {"phrases": [{"code": "ciao", "text": "Ciao!"}]})
+    _dispatch(browser, "demo:phrase", {"seat": 1, "code": "ciao", "text": "Ciao!"})
+    _wait_sound(browser, "phrase", 3)
+
+
+def test_niente_audio_prima_di_un_gesto_poi_i_file(browser, server):
+    # P109: il contesto audio si crea al primo tocco o clic, mai durante un ridisegno
+    # (bloccava la pagina per più di 100 ms); i file si scaricano dopo il caricamento
+    browser.send("Page.enable")
+    browser.send("Page.addScriptToEvaluateOnNewDocument", source="""
+      window.__contexts = 0;
+      const Real = window.AudioContext;
+      window.AudioContext = class extends Real { constructor(...a) { super(...a); window.__contexts += 1; } };""")
+    _open(browser, server)
+    base = _not_my_turn(_view())
+    _dispatch(browser, "demo:state", base)
+    _dispatch(browser, "demo:state", _closed_by_me(base, 15))
+    _wait_sound(browser, "card", 3)
+    assert browser.js("window.__contexts") == 0
+    loaded = browser.js("""performance.getEntriesByType('resource').filter((r) => r.name.includes('/static/sounds/'))
+      .map((r) => r.name.split('/').pop())""")
+    assert sorted(loaded) == sorted(f"{name}.mp3" for name in _sound_files())
+    browser.click("[data-phrases-button], [data-leave]")
+    assert browser.js("window.__contexts") == 1
+

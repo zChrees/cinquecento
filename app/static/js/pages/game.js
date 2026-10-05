@@ -80,7 +80,7 @@ import { confirmModal } from '../components/Modal.js';
 import { Table } from '../components/Table.js';
 import { cardName, preloadCardImages, reuseCardImages, sameCard } from '../components/Card.js';
 import { throwKey } from '../components/Trick.js';
-import { playSound } from '../core/sounds.js';
+import { playSound, preloadSounds } from '../core/sounds.js';
 
 initLayout();
 
@@ -241,7 +241,6 @@ function showLastTrick(trick) {
 function openSummary(lastHand) {
   closeSummary();
   summary = lastHand;
-  playSound('hand_end'); // P103
   summaryTimer = setTimeout(() => { summary = null; redraw(); }, SUMMARY_MS);
 }
 
@@ -349,7 +348,7 @@ function noticeThrows(previous, next) {
   const now = performance.now();
   if (reducedMotion()) {
     // P103: niente volo, ma il suono della carta giocata sì
-    if (arrived.some(({ card }) => !before.has(throwKey(card)))) playSound('throw', 0, { land: 0 });
+    if (arrived.some(({ card }) => !before.has(throwKey(card)))) playSound('card');
     return;
   }
   let at = Math.max(now, throwsEnd);
@@ -361,7 +360,7 @@ function noticeThrows(previous, next) {
       const mine = seat === next.you.seat;
       const ms = mine ? MY_THROW_MS : THROW_MS;
       throws.set(key, { at, ms, from: throwStart(seat, card, mine) });
-      playSound('throw', at - now, { land: ms }); // P103: fruscio e, a fine volo, la carta che si posa
+      playSound('card', at - now + ms); // P103, P109: la carta che si posa, a fine volo
       at += ms;
     }
   }
@@ -441,8 +440,8 @@ function startDeal() {
   dealAt = performance.now();
   const cards = dealOrder(view).length;
   dealEnd = dealAt + SHUFFLE_MS + Math.max(cards - 1, 0) * DEAL_STEP_MS + DRAW_MS;
-  playSound('shuffle'); // P103
-  for (let k = 0; k < cards; k += 1) playSound('deal', SHUFFLE_MS + k * DEAL_STEP_MS);
+  playSound('shuffle'); // P103, P109: la mescolata, poi la distribuzione (un suono solo)
+  playSound('deal', SHUFFLE_MS);
   clearTimeout(dealTimer);
   dealTimer = redrawAfter(dealEnd - dealAt);
 }
@@ -676,6 +675,7 @@ function pausePhrases(ms) {
 }
 
 function showBubble(seat, text) {
+  playSound('phrase'); // P109: anche le frasi del tavolo hanno il loro suono
   clearTimeout(bubbles[seat]?.timer);
   const entry = { text };
   entry.timer = setTimeout(() => {
@@ -972,6 +972,7 @@ function preloadCards() {
   preloadCardImages().then((ok) => {
     if (ok) root.dataset.cardsReady = '1';
   });
+  preloadSounds(); // P109: anche i suoni, dopo il load (non lo fanno aspettare)
 }
 if (document.readyState === 'complete') preloadCards();
 else window.addEventListener('load', preloadCards, { once: true });
