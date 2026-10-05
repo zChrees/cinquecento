@@ -22,6 +22,14 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: P113 finito, D47 chiusa (05/10/2026, sera)
+
+- **Branch**: docs/aggiornamento-05-10-p113
+- **File**: `SCALETTA.md` (spuntato **P113**, con la nota e la lista definitiva; "Da dove si parte"), `DECISIONI.md` (Interfaccia: canto, vittoria e pareggio, **chiude D47**), `DA-DECIDERE.md` (tolta D47), `CLAUDE.md` (riga "Stato"; punto delicato "Suoni": tolta la nota sulla pagina di prova), questo file
+- **Controlli**: nessun test lanciato (solo documenti); ultimi su P113: `test_suoni.py` 13 PASS, `frontend` 132 PASS
+- **Riepiloghi registrati**: `christian.md` fino a "P113 (fine)"; `giuseppe.md` fino a P82; `antonio.md` niente di nuovo
+- **Cosa devono fare gli altri**: **Giuseppe**: i suoni del tavolo sono cambiati (canto, vittoria, pareggio e gli altri del 05/10): fai il pull e provali in una partita
+
 ### P113 (fine) — Canto, vittoria e pareggio scelti; pagina di prova cancellata (05/10/2026, sera)
 
 - **Branch**: feature/p113-pagina-suoni (ripreso dopo il merge della prima parte)
