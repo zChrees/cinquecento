@@ -22,6 +22,16 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P114 — Suite `table` sotto il limite di tempo (05/10/2026)
+
+- **Branch**: feature/p114-suite-table (fatto da Claude, con il permesso di Christian per commit, merge e push di P114–P115)
+- **File**: creata la suite **`tests/table2/`** (il runner la trova da solo, dopo `table`); spostati da `tests/table/` i 7 file aggiunti il 04–05/10: `test_suoni.py`, `test_calata.py`, `test_lancio_mio.py`, `test_carte_compagno.py`, `test_frasi_senza_lampeggio.py`, `test_partita_interrotta.py`, `test_mano_ferma.py`; in `table` restano i 10 file di P91. **Non toccati** `tests/esegui_tutti.py` né i test (solo spostati)
+- **Misura prima** (pytest, per file): `table` 303 s in tutto; il più lungo `test_suoni.py` (38 s)
+- **Controlli**: con il runner `table` **78 PASS in 166 s**, `table2` **53 PASS in 141 s** (tutte e due sotto i 200 s chiesti dal "Fatto quando"); giro completo non lanciato (richiesta di Christian). `ruff check .` pulito
+- **Decisioni prese**: divisione per data (i test di P91 in `table`, quelli dopo in `table2`); il nome `table2` lo ha scelto Claude
+- **Punti delicati**: un test lungo nuovo del tavolo nel browser va nella suite **più corta** tra `table` e `table2`; quando una supera circa 200 s, va divisa di nuovo
+- **Note per gli altri**: **Chi è di turno sui documenti**: spuntare P114; in `CLAUDE.md`, "Testing" e i punti delicati "Suite `table` (P91)" e "Suoni" (il test dei suoni ora è `tests/table2/test_suoni.py`): le suite sono 10
+
 ### Documenti: P113 finito, D47 chiusa (05/10/2026, sera)
 
 - **Branch**: docs/aggiornamento-05-10-p113
