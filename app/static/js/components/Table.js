@@ -246,6 +246,7 @@ function LaidDownNotice(view, laid, positionOf) {
  * @param {boolean} phrases.open l'elenco è aperto
  * @param {boolean} phrases.disabled pulsante e frasi spenti
  * @param {function} phrases.onToggle apre o chiude l'elenco
+ * @param {number} phrases.openFor ms da quando l'elenco è aperto (P110)
  * @param {function} phrases.onPick frase scelta (code)
  * @param {object} phrases.bubbles posto → testo del fumetto da mostrare
  * @returns {HTMLElement}

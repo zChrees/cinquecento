@@ -152,6 +152,7 @@ let resultPending = false;
 // Frasi del tavolo (P56)
 let phrases = null; // elenco di game:phrases: [{code, text}]
 let phrasesOpen = false;
+let phrasesOpenedAt = 0; // P110: l'entrata dell'elenco non riparte a ogni ridisegno
 let phraseSending = false; // una frase è partita e si aspetta la risposta
 let phrasePausedUntil = 0; // performance.now() fino a cui il pulsante resta spento
 let phrasePauseTimer = 0;
@@ -572,7 +573,12 @@ function render(next) {
     list: phrases,
     open: phrasesOpen,
     disabled: offline || phraseSending || performance.now() < phrasePausedUntil,
-    onToggle: () => { phrasesOpen = !phrasesOpen; redraw(); },
+    openFor: performance.now() - phrasesOpenedAt,
+    onToggle: () => {
+      phrasesOpen = !phrasesOpen;
+      phrasesOpenedAt = performance.now();
+      redraw();
+    },
     onPick: sendPhrase,
     bubbles: Object.fromEntries(Object.entries(bubbles).map(([seat, { text }]) => [seat, text])),
   };
@@ -580,6 +586,7 @@ function render(next) {
   const focused = document.activeElement;
   const focusKey = root.contains(focused) && (focused.dataset.phraseCode ?? ('phrasesButton' in focused.dataset ? '' : null));
   const hovered = root.querySelector('button.card:hover');
+  const phrasesScroll = root.querySelector('[data-phrases-menu]')?.scrollTop ?? 0; // P110
   reuseCardImages(root); // P70: niente immagini nuove (e lampi bianchi) a ogni ridisegno
   root.replaceChildren(Table(shown, { onPlay, onSing, onLeave, onLayDown, onAdvise }, status, moments, phrasesShown));
   if (hovered) keepHover(hovered);
@@ -590,6 +597,9 @@ function render(next) {
     const selector = focusKey ? `[data-phrase-code="${CSS.escape(focusKey)}"]` : '[data-phrases-button]';
     root.querySelector(selector)?.focus();
   }
+  // P110: l'elenco delle frasi ricreato resta allo scorrimento di prima (sul telefono scorre)
+  const menu = root.querySelector('[data-phrases-menu]');
+  if (menu) menu.scrollTop = phrasesScroll;
 }
 
 /**

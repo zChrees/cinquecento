@@ -41,9 +41,12 @@ export function PhrasesButton({ open, disabled, onToggle }) {
  * @param {object} options
  * @param {boolean} options.disabled frasi spente
  * @param {function} options.onPick frase scelta (code)
+ * @param {number} [options.openFor] P110: ms da quando l'elenco è aperto. Il tavolo si
+ *   ridisegna tutto (anche più volte durante un lancio): l'entrata riprende da lì
+ *   invece di ripartire da trasparente, altrimenti l'elenco lampeggia
  */
-export function PhrasesMenu(phrases, { disabled, onPick }) {
-  return el('div', {
+export function PhrasesMenu(phrases, { disabled, onPick, openFor = 0 }) {
+  const menu = el('div', {
     class: 'phrases-menu',
     data: { phrasesMenu: '' },
     attrs: { id: 'table-phrases', role: 'group', 'aria-label': 'Frasi da mandare al tavolo' },
@@ -56,6 +59,8 @@ export function PhrasesMenu(phrases, { disabled, onPick }) {
       on: { click: () => onPick(code) },
     }),
   ));
+  menu.style.animationDelay = `${-Math.round(openFor)}ms`;
+  return menu;
 }
 
 /**

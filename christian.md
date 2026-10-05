@@ -22,6 +22,19 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P110 — Elenco delle frasi che non lampeggia durante i lanci (05/10/2026)
+
+- **Punto nuovo** (numero proposto; da `cose-da-sistemare.txt` di Christian): sia da computer sia dal telefono, con l'elenco delle frasi aperto, quando un avversario lancia una carta l'elenco "lampeggia" più volte
+- **Branch**: fix/p110-frasi-senza-lampeggio (fatto da Claude, con il permesso di Christian per commit, merge e push)
+- **File**: creato `tests/table/test_frasi_senza_lampeggio.py`; modificati `app/static/js/pages/game.js` (`phrasesOpenedAt`, `openFor`, scorrimento dell'elenco in `render`), `app/static/js/components/TablePhrases.js` (`PhrasesMenu`: ritardo negativo), `components/Table.js` (solo il commento dei parametri), questo file
+- **Causa** [T]: il tavolo si ridisegna tutto a ogni vista e alla fine di ogni animazione (P70, P78); l'elenco ricreato faceva ripartire la sua entrata (`phrases-in` sul telefono, `phrases-side-in` da computer), che parte da trasparente: durante un solo lancio dell'avversario l'entrata ripartiva **2 volte** e l'elenco tornava a **opacità 0** (misurato a 360×640 e 1280×720)
+- **Cosa cambia**: come per le altre animazioni del tavolo (P70), `game.js` ricorda quando l'elenco si è aperto e `PhrasesMenu` usa il tempo passato come ritardo negativo: all'apertura l'entrata c'è, ai ridisegni dopo no. In più (scelta di Christian: "nello stesso punto"), sul telefono l'elenco fatto scorrere **resta dov'era** dopo un ridisegno (prima tornava in cima)
+- **Controlli**: `test_frasi_senza_lampeggio.py` **3 PASS**, 2 giri su 2 (nuovi: lancio dell'avversario con l'elenco aperto a 360×640 e 1280×720, nessuna entrata che riparte e opacità sempre 1, all'apertura l'entrata c'è; elenco fatto scorrere a 60 px che resta a 60 dopo il lancio); senza la correzione falliscono tutti e tre (2 ripartenze, opacità 0; scorrimento a 0). Con `test_frasi_pagina.py`, `test_frasi_di_lato.py`, `test_tocchi_tavolo.py`, `test_lancio_mio.py`: **40 PASS**. `ruff check .` pulito
+- **Decisioni prese**: nessuna (correzione)
+- **Domande nuove**: nessuna
+- **Punti delicati**: nei test, `animationstart` parte anche per un'animazione ridisegnata con il ritardo negativo, ma con `elapsedTime` già alla fine: una ripartenza vera ha `elapsedTime` vicino a 0
+- **Cosa devono fare gli altri**: **Chi è di turno sui documenti**: registrare P110; in `CLAUDE.md`, punto delicato "Frasi nella pagina (P56)": l'entrata dell'elenco usa il ritardo negativo di P70 e `render` rimette lo scorrimento dell'elenco
+
 ### P109 (completato) — Niente "ding" di "tocca a te", presa raccolta più pulita (05/10/2026)
 
 - **Da dove viene**: dalla prova di Christian del 05/10 (`cose-da-sistemare.txt`): P109 andava bene solo a metà; ogni tanto un "ding" che non c'entra con le carte, e la presa raccolta con molto rumore di fondo
