@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P113 (fine) — Canto, vittoria e pareggio scelti; pagina di prova cancellata (05/10/2026, sera)
+
+- **Branch**: feature/p113-pagina-suoni (ripreso dopo il merge della prima parte)
+- **Come si è arrivati alla scelta**: nella pagina sono arrivate prima 8 alternative in più per canto e vittoria e 7 per il pareggio (fiches, monete, campana, jingle, interruttori), con i tre momenti "Da scegliere" in cima; poi, su richiesta di Christian ("serve qualcosa di più musicale"), per il canto 16 suoni musicali brevi (jingle di pizzicato, steel drum, sax, fiati e 8-bit; toni a due e tre note del pacchetto **Digital Audio**, CC0; un rintocco di vetro)
+- **Scelta di Christian** (chiude **D47**): **canto `jingles_SAX06`** (Music Jingles), **vittoria `jingles_HIT01`** (Music Jingles), **pareggio `threeTone1`** (Digital Audio: proposto per il canto, a Christian piace per il pareggio)
+- **File**: `app/static/sounds/` (nuovo `sing.mp3`, cambiati `win.mp3` e `tie.mp3`, tolto `chips-stack.mp3`; circa 108 kB in tutto) e `LICENZA.md`, `app/static/js/core/sounds.js` (`SOUNDS.sing` e commento in cima), questo file. **Cancellati**, come previsto da P113: `app/static/dev/suoni.html`, `suoni.css`, `suoni.js`, `suoni.json`, `app/static/dev/suoni/` (candidati e licenza), `tests/frontend/test_pagina_suoni.py`
+- **Controlli**: `tests/table/test_suoni.py` **13 PASS** (ogni nome di `SOUNDS` ha il suo file e la sua riga di licenza, peso sotto i 250 kB); suite `frontend` **132 PASS** (7 in meno: il test della pagina cancellata). `ruff check .` pulito
+- **Decisioni prese**: la scelta sopra (D47 chiusa)
+- **Domande nuove**: nessuna
+- **Punti delicati**: la pagina di prova non c'è più, quindi la nota di `CLAUDE.md` ("Suoni": righe "Oggi" di `suoni.json`) va tolta
+- **Note per gli altri**: **Chi è di turno sui documenti**: spuntare **P113** (fatto), chiudere **D47** in `DA-DECIDERE.md` e scriverla in `DECISIONI.md` (canto, vittoria, pareggio); in `CLAUDE.md`, punto delicato "Suoni", togliere la frase sulla pagina di prova e su `test_pagina_suoni.py`
+
 ### Documenti: registrati P82 e P113, aggiunti P115–P119 (05/10/2026, sera)
 
 - **Branch**: docs/aggiornamento-05-10-sera

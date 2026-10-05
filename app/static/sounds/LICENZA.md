@@ -10,13 +10,13 @@ I suoni del tavolo (P103, rifatti con suoni registrati dal vero in P109, scelti 
 | `card-deal.mp3` | ogni carta distribuita, quando arriva | Casino Audio: `card-place-4` | CC0 |
 | `card-gather.mp3` | presa raccolta | Casino Audio: `card-slide-1` e `card-slide-3` sovrapposti, il secondo 90 ms dopo (P109, al posto di `card-shove-1` e `-2`, che avevano molto rumore di fondo) | CC0 |
 | `cards-laid-down.mp3` | "Cala le carte" | Casino Audio: `card-shove-1` | CC0 |
-| `chips-stack.mp3` | canto (40 o 20) | Casino Audio: `chips-stack-3` | CC0 |
+| `sing.mp3` | canto (40 o 20) | Kenney, **Music Jingles**: `jingles_SAX06` | CC0 |
 | `phrase.mp3` | frase al tavolo | Kenney, **Interface Sounds**: `drop_002` | CC0 |
 | `tick.mp3`, `tick-last.mp3` | ultimi 5 secondi del tuo turno | Interface Sounds: `tick_001`, `tick_002` | CC0 |
-| `win.mp3`, `tie.mp3` | fine partita: vittoria, pareggio | Interface Sounds: `confirmation_002`, `switch_003` | CC0 |
-| `lose.mp3` | fine partita: sconfitta | Kenney, **Music Jingles**: `jingles_PIZZI07` | CC0 |
+| `win.mp3`, `lose.mp3` | fine partita: vittoria, sconfitta | Music Jingles: `jingles_HIT01`, `jingles_PIZZI07` | CC0 |
+| `tie.mp3` | fine partita: pareggio | Kenney, **Digital Audio**: `threeTone1` | CC0 |
 
-**Fonte**: <https://kenney.nl/assets/casino-audio>, <https://kenney.nl/assets/interface-sounds> e <https://kenney.nl/assets/music-jingles> (autore Kenney, www.kenney.nl), scaricati il 05/10/2026. **Licenza CC0 1.0** (<https://creativecommons.org/publicdomain/zero/1.0/>): uso libero, anche modificati, senza obbligo di citare l'autore (lo citiamo comunque qui). Il testo della licenza è nel file `License.txt` dei pacchetti.
+**Fonte**: <https://kenney.nl/assets/casino-audio>, <https://kenney.nl/assets/interface-sounds>, <https://kenney.nl/assets/music-jingles> e <https://kenney.nl/assets/digital-audio> (autore Kenney, www.kenney.nl), scaricati il 05/10/2026. **Licenza CC0 1.0** (<https://creativecommons.org/publicdomain/zero/1.0/>): uso libero, anche modificati, senza obbligo di citare l'autore (lo citiamo comunque qui). Il testo della licenza è nel file `License.txt` dei pacchetti.
 
 **Come sono stati preparati**: dai file `.ogg` dei pacchetti a **MP3 mono, 44,1 kHz, 80 kbit/s** (lo leggono tutti i browser, anche Safari su iPhone, che con l'OGG non sempre funziona), con `ffmpeg` (`-af volume=…dB -ac 1 -ar 44100 -c:a libmp3lame -b:a 80k`). Il volume è stato pareggiato intorno a −27 dB di media, con il picco sotto −1 dB: carte quasi invariate, suoni dell'interfaccia e jingle abbassati, perché nei pacchetti sono molto più forti. In tutto circa **110 kB**.
 

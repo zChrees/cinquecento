@@ -1,7 +1,8 @@
 /**
- * Suoni al tavolo (P103, rifatti in P109 con suoni veri): file registrati dal vero,
- * del pacchetto Kenney "Casino Audio" (carte e fiches) e "Interface Sounds" (frasi,
- * ticchettio, fine partita), licenza CC0; dettagli in sounds/LICENZA.md.
+ * Suoni al tavolo (P103, rifatti in P109 con suoni veri, scelti dal gruppo in P113):
+ * file dei pacchetti Kenney "Casino Audio" (carte), "Interface Sounds" (frasi,
+ * ticchettio), "Music Jingles" e "Digital Audio" (canto, fine partita), licenza CC0;
+ * dettagli in sounds/LICENZA.md.
  *
  *   preloadSounds()             // la pagina del tavolo, una volta
  *   playSound('card')           // subito
@@ -34,7 +35,7 @@ export const SOUNDS = {
   deal: ['card-deal'], // ogni carta distribuita, quando arriva (D47)
   trick: ['card-gather'], // presa raccolta
   lay_down: ['cards-laid-down'], // calata
-  sing: ['chips-stack'], // canto
+  sing: ['sing'], // canto
   phrase: ['phrase'], // frase al tavolo
   tick: ['tick'], // ultimi secondi del tuo turno (nessun suono quando comincia: P109)
   last_tick: ['tick-last'],
