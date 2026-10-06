@@ -22,6 +22,12 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Giro completo dopo P115–P121 (06/10/2026)
+
+- **Branch**: docs/giro-completo-06-10 (solo questo file)
+- **Controlli**: `python tests/esegui_tutti.py` (chiesto da Christian) **1800 PASS in 11 suite**, 951 s, **TUTTO PASS**: `runner` 13, `engine` 666, `db` 89, `api` 299 (78 s), `services` 38, `sockets` 312 (127 s), `frontend` 153 (125 s), `e2e` 12, `table` 75 (144 s), `table2` 57 (146 s), `table3` 86 (151 s); file protetti intatti
+- **Note per gli altri**: **chi è di turno sui documenti**: è il numero da scrivere in `CLAUDE.md` ("Testing" e riga "Stato"); le suite sono 11 (P121)
+
 ### P115 — Suoni del menu: richiesta di amicizia, messaggio, invito (06/10/2026; suoni provvisori, manca la scelta)
 
 - **Branch**: feature/p115-suoni-menu (fatto da Claude, con il permesso di Christian per commit, merge e push di P115–P121)
