@@ -22,6 +22,15 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: registrati P115–P121, aperta D48 (06/10/2026)
+
+- **Branch**: docs/aggiornamento-06-10
+- **File**: `SCALETTA.md` (spuntati **P116**, **P117**, **P118**, **P120**, **P121** con le note; **P115** non spuntato, con la nota su cosa manca; schede della sezione 4 segnate come fatte, titolo nuovo di P117; liste definitive in 9.2; tabella di 9.1, controllo di parallelismo, "Da dove si parte"), `DECISIONI.md` (Interfaccia: lancio lungo uguale nel 1v1 (P117), distribuzione alla prima mano (P118), audio creato all'apertura della pagina, che cambia la regola di P109, telefono in orizzontale (P116), suoni del menu (P115); aggiornata la decisione del 27/09 sulla home in orizzontale; Processo: file di Giuseppe toccati in P118, suite `table3`, punti fatti da Claude in autonomia), `DA-DECIDERE.md` (**D48**, suoni del menu), `CLAUDE.md` (riga "Stato", "Testing" con 1800 PASS e 11 suite, punti delicati: timer, test nel browser, tavolo da computer, suoni, suite `table`, nuovo "Avviso Gira il telefono"), questo file
+- **Controlli**: nessun test lanciato (solo documenti); ultimo giro completo 06/10: **1800 PASS in 11 suite**
+- **Riepiloghi registrati**: `christian.md` fino a "Giro completo dopo P115–P121"; `giuseppe.md` e `antonio.md` niente di nuovo
+- **Punti rimasti a Christian**: la scelta dei suoni di P115 (D48), P9, P36, P37
+- **Cosa devono fare gli altri**: **Giuseppe**: pull di `dev` prima di toccare `room.py` o `test_turno.py` (P118); i test della grafica del tavolo ora sono nella suite `table3`
+
 ### Giro completo dopo P115–P121 (06/10/2026)
 
 - **Branch**: docs/giro-completo-06-10 (solo questo file)
