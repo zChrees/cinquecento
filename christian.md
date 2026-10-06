@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P120 — "1 giocatore online" al singolare (06/10/2026)
+
+- **Branch**: fix/p120-giocatore-online (fatto da Claude, con il permesso di Christian per commit, merge e push di P115–P121)
+- **File** (lista definitiva per 9.2): modificati `app/templates/main/index.html` (la scritta in uno `<span data-online-label>`), `app/static/js/pages/home.js` (`render`: singolare con 1), `tests/api/test_pagina_home.py`, questo file. Non toccati i file di Giuseppe (`test_online_senza_login.py`)
+- **Cosa cambia**: con un solo giocatore collegato la home dice "**1 giocatore online**", con più "N giocatori online", con e senza login
+- **Controlli**: `test_un_giocatore_online_al_singolare` (nuovo: senza login, con schede finte, "1 giocatore online" e "2 giocatori online") e una riga in più in `test_avviso_di_rientro_solo_se_previsto` (con il login: "giocatore online"); **senza la correzione il test nuovo fallisce** ("1 giocatori online") [T]. Suite `api` **302 PASS** (89 s), `frontend` **132 PASS** (101 s). `ruff check .` pulito
+- **Decisioni prese**: nessuna
+- **Domande nuove**: nessuna
+- **Punti delicati**: nessuno
+- **Note per gli altri**: niente
+
 ### P117 — Da computer, nel 1v1, il lancio è lungo uguale per te e per l'avversario (06/10/2026)
 
 - **Branch**: feature/p117-lancio-1v1 (fatto da Claude, con il permesso di Christian per commit, merge e push di P115–P121)

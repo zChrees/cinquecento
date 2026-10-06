@@ -121,6 +121,8 @@ function render(current) {
   const online = root.querySelector('[data-online]');
   online.hidden = Boolean(banner) || typeof status?.online_count !== 'number';
   root.querySelector('[data-online-count]').textContent = online.hidden ? '' : String(status.online_count);
+  // P120: "1 giocatore online", al singolare
+  root.querySelector('[data-online-label]').textContent = status?.online_count === 1 ? 'giocatore online' : 'giocatori online';
 
   renderQueue(current.queue);
 }

@@ -25,6 +25,7 @@ import pytest
 
 from app import create_app
 from app.realtime import matchmaking
+from app.realtime.presence import presence
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -451,6 +452,7 @@ def test_avviso_di_rientro_solo_se_previsto(logged_in, server):
     # Da P44 il numero degli online è quello vero (solo l'utente del test: 1); da P82 quello
     # finto non compare più, ma quello vero arriva con home:status, quindi si aspetta
     logged_in.wait_js("document.querySelector('[data-online-count]').textContent === '1'", "numero vero degli online")
+    assert logged_in.js("document.querySelector('[data-online-label]').textContent") == "giocatore online"  # P120
 
     for width, height in [(1440, 900), (360, 640), (844, 390)]:
         logged_in.open(f"{server}/?demo=rientro", width, height)
@@ -464,3 +466,25 @@ def test_avviso_di_rientro_solo_se_previsto(logged_in, server):
         for tile in m["tiles"]:
             assert not _overlap(m["status"][0], tile), (width, height)
             assert tile["bottom"] <= m["vh"] + EPS, (width, height)
+
+
+ONLINE_TEXT = "document.querySelector('[data-online]').textContent.replace(/\s+/g, ' ').trim()"
+
+
+def test_un_giocatore_online_al_singolare(browser, server):
+    # P120: "1 giocatore online", "2 giocatori online" (senza login, il numero di GET /online, P82);
+    # schede finte di utenti che non esistono (come test_online_senza_login.py)
+    before = presence.count()
+    if before > 1:
+        pytest.skip(f"già {before} utenti collegati")
+    tabs = [(9101, "p120-a"), (9102, "p120-b")][before:]
+    try:
+        for count, (user_id, sid) in enumerate(tabs, start=before + 1):
+            presence.add(user_id, sid)
+            browser.open(f"{server}/", 390, 844)  # HOME_READY aspetta la risposta di GET /online
+            browser.wait_js(f"{ONLINE_TEXT}.startsWith('{count} ')", f"{count} online")
+            expected = "1 giocatore online" if count == 1 else f"{count} giocatori online"
+            assert browser.js(ONLINE_TEXT) == expected
+    finally:
+        for user_id, sid in tabs:
+            presence.remove(user_id, sid)
