@@ -1,0 +1,110 @@
+{
+  "note": "P115: suoni del menu da confrontare. Ogni avviso ha il suono di oggi (id 'oggi', provvisorio, file in app/static/sounds/) e le alternative (file in app/static/dev/suoni/, fonte in suoni/LICENZA.md). 'files' sono percorsi relativi a app/static/dev/.",
+  "moments": [
+    {
+      "id": "friend_request",
+      "title": "Richiesta di amicizia",
+      "when": "Quando qualcuno ti manda una richiesta di amicizia (in ogni pagina con il login).",
+      "options": [
+        {
+          "id": "oggi",
+          "files": [
+            "../sounds/friend-request.mp3"
+          ],
+          "source": "Interface Sounds: confirmation_001 (provvisorio)"
+        },
+        {
+          "id": "A",
+          "files": [
+            "suoni/maximize-3.mp3"
+          ],
+          "source": "Interface Sounds: maximize_003"
+        },
+        {
+          "id": "B",
+          "files": [
+            "suoni/pluck-1.mp3"
+          ],
+          "source": "Interface Sounds: pluck_001"
+        },
+        {
+          "id": "C",
+          "files": [
+            "suoni/question-1.mp3"
+          ],
+          "source": "Interface Sounds: question_001"
+        }
+      ]
+    },
+    {
+      "id": "message",
+      "title": "Messaggio in chat",
+      "when": "Quando arriva un messaggio di un amico (in ogni pagina con il login, anche al tavolo).",
+      "options": [
+        {
+          "id": "oggi",
+          "files": [
+            "../sounds/chat-message.mp3"
+          ],
+          "source": "Interface Sounds: drop_001 (provvisorio)"
+        },
+        {
+          "id": "A",
+          "files": [
+            "suoni/glass-1.mp3"
+          ],
+          "source": "Interface Sounds: glass_001"
+        },
+        {
+          "id": "B",
+          "files": [
+            "suoni/select-3.mp3"
+          ],
+          "source": "Interface Sounds: select_003"
+        },
+        {
+          "id": "C",
+          "files": [
+            "suoni/bong-1.mp3"
+          ],
+          "source": "Interface Sounds: bong_001"
+        }
+      ]
+    },
+    {
+      "id": "invite",
+      "title": "Invito a una partita",
+      "when": "Quando un amico ti invita a giocare (nella home).",
+      "options": [
+        {
+          "id": "oggi",
+          "files": [
+            "../sounds/invite.mp3"
+          ],
+          "source": "Interface Sounds: confirmation_004 (provvisorio)"
+        },
+        {
+          "id": "A",
+          "files": [
+            "suoni/jingle-steel-00.mp3"
+          ],
+          "source": "Music Jingles: jingles_STEEL00"
+        },
+        {
+          "id": "B",
+          "files": [
+            "suoni/jingle-pizzi-00.mp3"
+          ],
+          "source": "Music Jingles: jingles_PIZZI00"
+        },
+        {
+          "id": "C",
+          "files": [
+            "suoni/chips-stack-1.mp3"
+          ],
+          "source": "Casino Audio: chips-stack-1"
+        }
+      ]
+    }
+  ]
+}

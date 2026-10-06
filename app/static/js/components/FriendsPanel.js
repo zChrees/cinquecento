@@ -32,6 +32,7 @@
 import { el, icon } from '../utils/dom.js';
 import { on, onStatus, send } from '../core/socket.js';
 import { EVENTS } from '../core/events.js';
+import { playSound, preloadSounds } from '../core/sounds.js';
 import { Avatar } from './Avatar.js';
 import { confirmModal, openModal } from './Modal.js';
 import { ChatWindow, appendMessage, disableWriting, setChatOnline } from './ChatWindow.js';
@@ -168,6 +169,9 @@ export function initFriendsPanel(button) {
   const baseUrl = button.dataset.friendsUrl.replace(/\/$/, '');
   const meId = Number(document.body.dataset.userId);
   const badge = button.querySelector('[data-friends-badge]');
+  // P115: i suoni del menu (sul tavolo li ha già preparati game.js: qui non fa niente). Il contesto
+  // audio subito, come al tavolo (P118): chi arriva da un clic di questo sito sente gli avvisi
+  preloadSounds({ now: true });
 
   let overview = null;     // ultima risposta di GET /friends/
   let loadSeq = 0;         // solo l'ultima lettura ridisegna
@@ -463,6 +467,7 @@ export function initFriendsPanel(button) {
   // si aggiunge e si segna come letto; altrimenti si aggiorna il contatore dei non letti.
   function onChatMessage({ message } = {}) {
     if (!message) return;
+    if (message.from_user_id !== meId) playSound('message');   // P115: non i tuoi, dalle altre schede
     const other = message.from_user_id === meId ? message.to_user_id : message.from_user_id;
     if (chatView && Number(chatView.dataset.chatWith) === other) {
       appendMessage(chatView, message, meId);
@@ -575,6 +580,9 @@ export function initFriendsPanel(button) {
   button.addEventListener('click', open);
   load();   // contatore sull'icona appena si apre la pagina
   on(EVENTS.FRIENDS_PRESENCE, () => load());   // P47
-  on(EVENTS.FRIENDS_CHANGED, () => load());
+  on(EVENTS.FRIENDS_CHANGED, ({ reason } = {}) => {
+    if (reason === 'request_received') playSound('friend_request');   // P115
+    load();
+  });
   on(EVENTS.CHAT_MESSAGE, onChatMessage);   // P48
 }

@@ -1,6 +1,6 @@
-# Suoni del tavolo: autore e licenza
+# Suoni del tavolo e del menu: autore e licenza
 
-I suoni del tavolo (P103, rifatti con suoni registrati dal vero in P109, scelti dal gruppo con la pagina di P113 il 05/10/2026, D47), usati da `js/core/sounds.js` (l'elenco nome → file è `SOUNDS`).
+I suoni del tavolo (P103, rifatti con suoni registrati dal vero in P109, scelti dal gruppo con la pagina di P113 il 05/10/2026, D47) e quelli del menu (P115: per ora **provvisori**, scelti da Claude; Christian li sceglie con la pagina di prova `app/static/dev/suoni.html`), usati da `js/core/sounds.js` (l'elenco nome → file è `SOUNDS`).
 
 | File | Momento | Fonte (file originale) | Licenza |
 |---|---|---|---|
@@ -15,6 +15,9 @@ I suoni del tavolo (P103, rifatti con suoni registrati dal vero in P109, scelti 
 | `tick.mp3`, `tick-last.mp3` | ultimi 5 secondi del tuo turno | Interface Sounds: `tick_001`, `tick_002` | CC0 |
 | `win.mp3`, `lose.mp3` | fine partita: vittoria, sconfitta | Music Jingles: `jingles_HIT01`, `jingles_PIZZI07` | CC0 |
 | `tie.mp3` | fine partita: pareggio | Kenney, **Digital Audio**: `threeTone1` | CC0 |
+| `friend-request.mp3` | P115: richiesta di amicizia ricevuta (provvisorio) | Interface Sounds: `confirmation_001` | CC0 |
+| `chat-message.mp3` | P115: messaggio di un amico (provvisorio) | Interface Sounds: `drop_001` | CC0 |
+| `invite.mp3` | P115: invito a una partita (provvisorio) | Interface Sounds: `confirmation_004` | CC0 |
 
 **Fonte**: <https://kenney.nl/assets/casino-audio>, <https://kenney.nl/assets/interface-sounds>, <https://kenney.nl/assets/music-jingles> e <https://kenney.nl/assets/digital-audio> (autore Kenney, www.kenney.nl), scaricati il 05/10/2026. **Licenza CC0 1.0** (<https://creativecommons.org/publicdomain/zero/1.0/>): uso libero, anche modificati, senza obbligo di citare l'autore (lo citiamo comunque qui). Il testo della licenza è nel file `License.txt` dei pacchetti.
 

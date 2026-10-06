@@ -1,5 +1,6 @@
 /**
- * Suoni al tavolo (P103, rifatti in P109 con suoni veri, scelti dal gruppo in P113):
+ * Suoni al tavolo (P103, rifatti in P109 con suoni veri, scelti dal gruppo in P113) e,
+ * da P115, quelli del menu (richiesta di amicizia, messaggio, invito):
  * file dei pacchetti Kenney "Casino Audio" (carte), "Interface Sounds" (frasi,
  * ticchettio), "Music Jingles" e "Digital Audio" (canto, fine partita), licenza CC0;
  * dettagli in sounds/LICENZA.md.
@@ -19,8 +20,8 @@
  * pagina funziona lo stesso.
  *
  * La scelta acceso/spento si ricorda nel browser (localStorage, chiave SOUNDS_KEY);
- * all'inizio i suoni sono accesi. La cambia l'interruttore della pagina delle
- * impostazioni.
+ * all'inizio i suoni sono accesi. La cambia l'interruttore "Suoni" della pagina delle
+ * impostazioni, e vale per tutti i suoni (P115: anche quelli del menu).
  *
  * Per i test: ogni suono che parte manda sul documento l'evento "cinquecento:sound"
  * con { name }, anche quando il browser non lo fa sentire; con i suoni spenti niente.
@@ -45,6 +46,10 @@ export const SOUNDS = {
   win: ['win'],
   lose: ['lose'],
   tie: ['tie'],
+  // P115, suoni del menu (provvisori: li sceglie Christian con app/static/dev/suoni.html)
+  friend_request: ['friend-request'], // richiesta di amicizia ricevuta
+  message: ['chat-message'], // messaggio di un amico
+  invite: ['invite'], // invito a una partita
 };
 
 let context = null;

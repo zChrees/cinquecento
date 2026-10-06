@@ -47,6 +47,7 @@
 import { initLayout, isLoggedIn } from '../core/layout.js';
 import { connect, isConnected, on, onStatus, send } from '../core/socket.js';
 import { EVENTS } from '../core/events.js';
+import { playSound } from '../core/sounds.js';
 import { openLoginPrompt } from '../components/LoginPrompt.js';
 import { initCardBackground } from '../components/CardBackground.js';
 import { openModeModal, setInviteStatus, setModeModalOnline } from '../components/ModeModal.js';
@@ -205,6 +206,7 @@ async function startInvite() {
 
 function onInviteReceived(invite) {
   if (starting || !invite?.invite_id) return;
+  playSound('invite');   // P115
   incoming?.close();
   incoming = openInviteDialog(invite, {
     onAccept: () => send(EVENTS.INVITE_ACCEPT, { invite_id: invite.invite_id }),

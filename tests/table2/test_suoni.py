@@ -270,7 +270,7 @@ def test_interruttore_nelle_impostazioni(browser, server):
     browser.open(f"{server}/profile/settings", *PHONE, ready)
     toggle = browser.js("""(() => { const t = document.querySelector('[data-sounds-toggle]');
       return { checked: t.checked, role: t.getAttribute('role'), label: t.closest('label').textContent.trim() }; })()""")
-    assert toggle == {"checked": True, "role": "switch", "label": "Suoni al tavolo"}  # accesi all'inizio
+    assert toggle == {"checked": True, "role": "switch", "label": "Suoni"}  # accesi all'inizio (P115: tutti i suoni)
     browser.click("[data-sounds-toggle]")
     assert browser.js("localStorage.getItem('cinquecento.sounds')") == "off"
     browser.open(f"{server}/profile/settings", *PHONE, ready)
