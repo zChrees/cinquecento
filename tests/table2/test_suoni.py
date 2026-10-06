@@ -1,8 +1,8 @@
 """P103, P109: suoni al tavolo.
 
 I suoni sono file registrati dal vero (Kenney, CC0: app/static/sounds/LICENZA.md),
-suonati con Web Audio da core/sounds.js; il contesto audio si crea solo al primo gesto
-dell'utente (P109: crearlo durante un ridisegno bloccava la pagina). Ogni suono che parte
+suonati con Web Audio da core/sounds.js; il contesto audio si crea all'apertura del tavolo
+(P118; mai durante un ridisegno, P109: bloccava la pagina). Ogni suono che parte
 manda sul documento l'evento "cinquecento:sound" con il suo nome, anche quando il
 browser non lo fa sentire: i test ascoltano quello.
 Controlla che ogni momento abbia il suo suono, nello stesso momento della sua
@@ -287,23 +287,27 @@ def test_frase_al_tavolo(browser, server):
     _wait_sound(browser, "phrase", 3)
 
 
-def test_niente_audio_prima_di_un_gesto_poi_i_file(browser, server):
-    # P109: il contesto audio si crea al primo tocco o clic, mai durante un ridisegno
-    # (bloccava la pagina per più di 100 ms); i file si scaricano dopo il caricamento
+def test_audio_all_apertura_mai_durante_un_ridisegno_poi_i_file(browser, server):
+    # P109: il contesto audio non si crea mai durante un ridisegno (bloccava la pagina per
+    # più di 100 ms); P118: si crea una volta sola all'apertura del tavolo, prima che il
+    # tavolo sia disegnato, così si sente la distribuzione della prima mano
     browser.send("Page.enable")
     browser.send("Page.addScriptToEvaluateOnNewDocument", source="""
       window.__contexts = 0;
+      window.__drawnAtContext = null;
       const Real = window.AudioContext;
-      window.AudioContext = class extends Real { constructor(...a) { super(...a); window.__contexts += 1; } };""")
+      window.AudioContext = class extends Real { constructor(...a) { super(...a); window.__contexts += 1;
+        window.__drawnAtContext = document.querySelector('[data-mode]') !== null; } };""")
     _open(browser, server)
+    assert browser.js("[window.__contexts, window.__drawnAtContext]") == [1, False]
     base = _not_my_turn(_view())
     _dispatch(browser, "demo:state", base)
     _dispatch(browser, "demo:state", _closed_by_me(base, 15))
     _wait_sound(browser, "card", 3)
-    assert browser.js("window.__contexts") == 0
+    assert browser.js("window.__contexts") == 1
     loaded = browser.js("""performance.getEntriesByType('resource').filter((r) => r.name.includes('/static/sounds/'))
       .map((r) => r.name.split('/').pop())""")
     assert sorted(loaded) == sorted(f"{name}.mp3" for name in _sound_files())
     browser.click("[data-phrases-button], [data-leave]")
-    assert browser.js("window.__contexts") == 1
+    assert browser.js("window.__contexts") == 1  # il primo tocco lo fa solo ripartire, se era sospeso
 

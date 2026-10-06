@@ -114,6 +114,13 @@ def utc_now():
     return datetime.now(UTC).replace(tzinfo=None)
 
 
+def deal_seconds(players):
+    """Mescolata e distribuzione di una mano: le carte partono una alla volta (DEAL_STEP_MS)
+    e ognuna vola per DRAW_MS (startDeal di js/pages/game.js); in secondi, senza PAUSE_SCALE."""
+    cards = players * 5  # rules.hand_size: le carte distribuite a inizio mano
+    return SHUFFLE_SECONDS + (cards - 1) * DEAL_STEP_SECONDS + DRAW_SECONDS
+
+
 def table_pause(before, after):
     """P94: secondi di pausa del tavolo che cominciano con la mossa da `before` a `after`.
 
@@ -121,13 +128,13 @@ def table_pause(before, after):
       mescolata e la distribuzione;
     - presa chiusa a metà mano: l'ultima presa al centro, e intanto la carta che chiude la
       presa si posa e si pesca una carta a testa, una alla volta (P78), finché c'è il mazzo;
-    - altrimenti nessuna (una carta giocata dentro la presa, la prima mano della partita).
+    - altrimenti nessuna (una carta giocata dentro la presa).
+    La prima mano della partita ha la sua pausa, la distribuzione (P118: first_deal_pause).
     """
     players = after.num_players
     if after.hand_number != before.hand_number:
         laid = after.last_hand is not None and after.last_hand.laid_down is not None
-        cards = players * 5  # rules.hand_size: le carte distribuite a inizio mano
-        deal = SHUFFLE_SECONDS + (cards - 1) * DEAL_STEP_SECONDS + DRAW_SECONDS
+        deal = deal_seconds(players)
         pause = (LAID_DOWN_SECONDS if laid else LAST_TRICK_SECONDS) + SUMMARY_SECONDS + deal
     elif before.hand.trick and not after.hand.trick:
         drawing = THROW_SECONDS + players * DRAW_SECONDS if before.hand.deck else 0
@@ -135,6 +142,12 @@ def table_pause(before, after):
     else:
         pause = 0.0
     return pause * PAUSE_SCALE
+
+
+def first_deal_pause(players):
+    """P118: all'inizio della partita la pagina mostra mescolata e distribuzione: il primo
+    turno comincia dopo."""
+    return deal_seconds(players) * PAUSE_SCALE
 
 
 def card_details(card):
@@ -185,6 +198,7 @@ class Room:
         self.sids = {}  # posto -> connessione al tavolo (l'ultima scheda che ha fatto game:join, D14)
         self._rng = None
         self._turn_started = None
+        self._all_seated = False  # P118: tutti i giocatori veri sono arrivati al tavolo almeno una volta
 
         # Timer, riconnessione e abbandono (P25)
         self.turn_seconds = TURN_SECONDS
@@ -257,7 +271,8 @@ class Room:
             self._advice = {}
             self._cpu_memory = {seat: CpuMemory() for seat in self.cpu_seats}
             self._cpu_rng = random.Random(self._rng.random())  # la CPU pensa fuori dal lock
-            self._start_turn()
+            self._all_seated = False
+            self._start_turn(first_deal_pause(len(self.players)))
             self._cpu_see()  # dopo il turno (la vista ne ha il tempo); la CPU gioca solo con il lock
 
     @property
@@ -287,9 +302,22 @@ class Room:
             waiting = self._reconnect.pop(seat, None)
             if waiting is not None:
                 waiting[1].cancel()
+            self._first_deal_for_everyone()
             if old != sid:
                 self.version += 1
             return old if old not in (None, sid) else None
+
+    def _first_deal_for_everyone(self):
+        """P118: quando l'ultimo giocatore vero arriva al tavolo, se nessuno ha ancora fatto una
+        mossa il primo turno riparte con la pausa della distribuzione: la pagina la mostra alla
+        prima vista, e chi arriva dopo gli altri ha tutto il tempo del turno (sotto il lock)."""
+        if self._all_seated or self.game is None or self.finished:
+            return
+        if any(seat not in self.sids for seat in range(len(self.players)) if seat not in self.cpu_seats):
+            return
+        self._all_seated = True
+        if not self._moves:
+            self._start_turn(first_deal_pause(len(self.players)))
 
     def is_table_connection(self, seat, sid):
         with self.lock:

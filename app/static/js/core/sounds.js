@@ -4,16 +4,19 @@
  * ticchettio), "Music Jingles" e "Digital Audio" (canto, fine partita), licenza CC0;
  * dettagli in sounds/LICENZA.md.
  *
- *   preloadSounds()             // la pagina del tavolo, una volta
+ *   preloadSounds({ now: true }) // la pagina del tavolo, una volta, appena si apre
  *   playSound('card')           // subito
  *   playSound('draw', 500)      // tra 500 ms (in fila con le animazioni)
  *   soundsEnabled() / setSoundsEnabled(false)
  *
- * I file si scaricano dopo il caricamento della pagina (fetch, senza bloccarla). Il
- * contesto audio si crea solo al primo tocco o tasto: i browser (Safari soprattutto)
- * fanno suonare la pagina solo dopo un gesto, e crearlo durante un ridisegno del
- * tavolo lo bloccava per più di 100 ms (P109). Prima di allora, o se il browser non ha
- * Web Audio, non suona niente e la pagina funziona lo stesso.
+ * I file si scaricano con fetch, senza bloccare la pagina. Il contesto audio si crea al
+ * primo tocco o tasto, oppure (P118, `now`) subito, all'apertura del tavolo, prima del
+ * primo ridisegno: mai durante un ridisegno, che bloccava per più di 100 ms (P109).
+ * I browser fanno suonare la pagina solo dopo un gesto: Chrome conta anche il clic
+ * nella pagina di prima dello stesso sito ("Gioca" nella home), così si sente la
+ * distribuzione della prima mano; Safari no, e il contesto resta sospeso fino al primo
+ * tocco. Prima di allora, o se il browser non ha Web Audio, non suona niente e la
+ * pagina funziona lo stesso.
  *
  * La scelta acceso/spento si ricorda nel browser (localStorage, chiave SOUNDS_KEY);
  * all'inizio i suoni sono accesi. La cambia l'interruttore della pagina delle
@@ -93,10 +96,14 @@ function unlock() {
   if (context.state === 'suspended') context.resume().catch(() => {});
 }
 
-/** Scarica i file dei suoni (una volta) e prepara lo sblocco dell'audio al primo gesto. */
-export function preloadSounds() {
+/**
+ * Scarica i file dei suoni (una volta) e prepara lo sblocco dell'audio al primo gesto.
+ * @param {{now?: boolean}} [options] now: crea subito il contesto audio (P118)
+ */
+export function preloadSounds({ now = false } = {}) {
   if (preloading) return;
   preloading = true;
+  if (now) unlock();
   for (const type of ['pointerup', 'touchend', 'click', 'keydown']) {
     window.addEventListener(type, unlock, { capture: true, passive: true });
   }

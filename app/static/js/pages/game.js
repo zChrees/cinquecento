@@ -54,6 +54,11 @@
  *     mescola (SHUFFLE_MS) e le carte partono una alla volta, a giro dal giocatore
  *     dopo il mazziere (DEAL_STEP_MS l'una dall'altra). Fino alla fine un tocco sulle
  *     proprie carte non gioca niente.
+ *   - P118, distribuzione della prima mano: alla prima vista, se la partita è appena
+ *     cominciata (prima mano, nessuna carta giocata, turno ancora pieno: il server lo
+ *     fa partire a distribuzione finita) e in questa scheda non si è già vista
+ *     (sessionStorage, chiave FIRST_DEAL_KEY + game_id): chi ricarica la pagina o
+ *     arriva a partita cominciata non la rivede.
  *   Con "riduci movimento" i tempi sono gli stessi, senza animazioni.
  * - P79: appena si apre il tavolo si scaricano tutte le immagini delle carte
  *   (preloadCardImages), altrimenti con una rete lenta una carta mai vista restava
@@ -102,6 +107,7 @@ const DEAL_STEP_MS = 80; // tra una carta distribuita e la successiva
 const HIDDEN = -1e6; // "parte tra molto": la carta resta nascosta finché la distribuzione non comincia
 const TRICK_AWAY_MS = 1100; // P103: le carte della presa chiusa scivolano via (AWAY_DELAY_MS di Trick.js)
 const TICK_SECONDS = 5; // P103: il ticchettio negli ultimi secondi del tuo turno
+const FIRST_DEAL_KEY = 'cinquecento.first-deal.'; // P118: + game_id, la distribuzione della prima mano già vista
 
 let view = null;
 let viewAt = 0; // quando è arrivata la vista (performance.now), per far scendere i secondi
@@ -474,6 +480,32 @@ function noticeDeal(previous, next) {
   dealEnd = 0;
 }
 
+/**
+ * P118: la partita è appena cominciata (prima mano, nessuna carta giocata né canto, tutti
+ * con le carte in mano e il turno ancora pieno): vale anche per chi arriva per ultimo,
+ * perché il server fa partire il primo turno quando tutti sono al tavolo.
+ */
+function freshStart(next) {
+  return next.status === 'playing' && next.hand_number === 1 && !next.last_hand && !next.last_trick
+    && !next.trick.cards.length && !next.sings.length && Boolean(next.turn)
+    && next.turn.seconds_left >= next.turn.seconds_total
+    && next.players.every((player) => player.seat === next.you.seat || player.cards_in_hand === next.hand.length);
+}
+
+/** P118: alla prima vista la distribuzione della prima mano, una volta sola per scheda. */
+function noticeFirstDeal(next) {
+  if (reducedMotion() || !freshStart(next)) return;
+  const key = FIRST_DEAL_KEY + next.game_id;
+  try {
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, '1');
+  } catch {
+    // Memoria del browser bloccata: la distribuzione si vede, al massimo anche dopo un ricaricamento
+  }
+  dealWaiting = true;
+  dealEnd = 0;
+}
+
 /** Momenti che cominciano con la vista nuova (P57, P58): presa appena chiusa, fine mano. */
 function noticeMoments(previous, next) {
   if (!previous) return; // prima vista: niente da mostrare "per un momento"
@@ -524,6 +556,7 @@ function handTotals(lastHand) {
 /** Ridisegna il tavolo dalla vista. È l'unico punto che tocca il DOM del tavolo. */
 function render(next) {
   if (next !== view) {
+    if (!view) noticeFirstDeal(next);
     noticeMoments(view, next);
     view = next;
     viewAt = performance.now();
@@ -1002,8 +1035,11 @@ function preloadCards() {
   preloadCardImages().then((ok) => {
     if (ok) root.dataset.cardsReady = '1';
   });
-  preloadSounds(); // P109: anche i suoni, dopo il load (non lo fanno aspettare)
 }
+
+// P118: i suoni (fetch, non fanno aspettare il load) e il contesto audio subito, prima
+// della prima vista: così si sente anche la distribuzione della prima mano
+preloadSounds({ now: true });
 if (document.readyState === 'complete') preloadCards();
 else window.addEventListener('load', preloadCards, { once: true });
 
