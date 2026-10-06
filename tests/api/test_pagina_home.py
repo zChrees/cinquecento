@@ -36,11 +36,12 @@ TILES = [("veloce", "1v1"), ("veloce", "2v2"), ("amico", "1v1"), ("amico", "2v2"
 PAGE_CSS = ("pages/home", "components/card-background", "components/mode-modal", "components/queue-overlay")
 COMPONENTS = ("ModeModal", "CardBackground", "QueueOverlay", "ResumeBanner")
 
-# Misure controllate nel prototipo (docs/prototipo/LEGGIMI.md)
-NO_SCROLL_SIZES = [(360, 640), (375, 667), (390, 844), (412, 915), (768, 1024), (844, 390),
+# Misure controllate nel prototipo (docs/prototipo/LEGGIMI.md); P116: niente telefono in orizzontale
+# (844×390, 667×375), dove la pagina è coperta dall'avviso "Gira il telefono" (test_gira_telefono.py)
+NO_SCROLL_SIZES = [(360, 640), (375, 667), (390, 844), (412, 915), (768, 1024),
                    (1280, 720), (1440, 900), (1920, 1080)]
 MODAL_SIZES = [(1920, 1080), (1440, 900), (1366, 657), (1536, 730), (360, 560), (360, 640),
-               (390, 844), (412, 915), (844, 390), (667, 375)]
+               (390, 844), (412, 915)]
 
 
 @pytest.fixture
@@ -454,7 +455,7 @@ def test_avviso_di_rientro_solo_se_previsto(logged_in, server):
     logged_in.wait_js("document.querySelector('[data-online-count]').textContent === '1'", "numero vero degli online")
     assert logged_in.js("document.querySelector('[data-online-label]').textContent") == "giocatore online"  # P120
 
-    for width, height in [(1440, 900), (360, 640), (844, 390)]:
+    for width, height in [(1440, 900), (360, 640), (768, 1024)]:
         logged_in.open(f"{server}/?demo=rientro", width, height)
         banner = logged_in.js("""(() => { const b = document.querySelector('[data-resume]');
           return b && {text: b.textContent, href: b.querySelector('[data-resume-link]').getAttribute('href'),

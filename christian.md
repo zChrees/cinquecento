@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P116 — Sul telefono in orizzontale l'avviso "Gira il telefono in verticale" (06/10/2026)
+
+- **Branch**: feature/p116-gira-il-telefono (fatto da Claude, con il permesso di Christian per commit, merge e push di P115–P121)
+- **File** (lista definitiva per 9.2): creati `app/templates/partials/rotate_notice.html`, `app/static/css/components/rotate-notice.css`, `tests/frontend/test_gira_telefono.py`; modificati `app/templates/base.html` (un CSS e un `include` **aggiunti**, niente cambiato), `app/static/fonts/icone.txt` e `material-symbols-rounded.woff2` (icona **`screen_rotation`**, font riscaricato da Google: 6,6 kB), `tests/frontend/test_base.py` (13 CSS nella base), `tests/api/test_pagina_home.py` e `tests/table3/test_tavolo_telefono.py` (tolte le misure di telefono in orizzontale), questo file
+- **Cosa cambia** (scelte di Christian del 05/10 e del 06/10): su un telefono in **orizzontale** (schermo più largo che alto e **alto al massimo 500 px**) **ogni pagina** (home, tavolo, impostazioni, accesso, registrazione, errori: l'avviso sta in `base.html`) è coperta da un avviso sul panno: l'icona che gira, "**Gira il telefono in verticale**" e "Cinquecento si gioca con il telefono in verticale.". Sotto la pagina va avanti (una partita continua); le finestre aperte (pannello amici, carta-modal, conferme) si nascondono finché il telefono è girato e tornano com'erano. Verticale, tablet e computer non cambiano. Solo CSS: niente JS
+- **Controlli**: `test_gira_telefono.py` **10 PASS** (6 pagine a 844×390, 667×375 e 640×360: avviso grande quanto lo schermo e sopra tutto; 3 pagine in verticale, sul tablet e da computer: niente; con il pannello amici aperto l'avviso si vede e il pannello torna in verticale). Suite `frontend` **142 PASS** (117 s), `api` **299 PASS** (76 s), `table3` **86 PASS** (143 s): `api` e `table3` hanno 3 e 2 controlli in meno perché non misurano più la home e il tavolo in orizzontale. `ruff check .` pulito
+- **Decisioni prese**: di Christian: "telefono" = orizzontale e alto al massimo 500 px (06/10). Mie: le finestre aperte si nascondono sotto l'avviso; l'icona gira (ferma con "riduci movimento")
+- **Domande nuove**: nessuna
+- **Punti delicati**: (1) un `<dialog>` aperto con `showModal` sta sopra ogni `z-index` e rende il resto della pagina inerte: per questo `rotate-notice.css` nasconde `dialog[open]` e il suo sfondo; una finestra nuova fatta senza `<dialog>` dovrebbe stare sotto lo `z-index` 100 dell'avviso; (2) in un test del browser una pagina con il login va lasciata solo **dopo** il collegamento al tempo reale: in `test_gira_telefono.py` si aspetta con `import('/static/js/core/socket.js').then((m) => m.isConnected())` (lo stesso modulo della pagina); la prima versione del test non aspettava e la suite `frontend` si bloccava nel file dopo (`test_inviti_2v2.py`), come dice il punto delicato P58/P62
+- **Note per gli altri**: **chi è di turno sui documenti**: in `DECISIONI.md` va aggiornata la decisione del 27/09 "su telefono in orizzontale le quattro carte stanno su una sola fila" (ora in orizzontale c'è l'avviso)
+
 ### P120 — "1 giocatore online" al singolare (06/10/2026)
 
 - **Branch**: fix/p120-giocatore-online (fatto da Claude, con il permesso di Christian per commit, merge e push di P115–P121)

@@ -1,0 +1,61 @@
+/*
+ * P116: avviso "Gira il telefono in verticale" (partials/rotate_notice.html), su tutte
+ * le pagine. Si vede solo su un telefono in orizzontale: schermo più largo che alto e
+ * alto al massimo 500 px (i telefoni in orizzontale sono alti 360-430 px; tablet e
+ * computer almeno 600). Copre tutta la pagina, che sotto va avanti (una partita in
+ * corso continua); in verticale, su tablet e da computer non c'è.
+ */
+.rotate-notice {
+  display: none;
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .rotate-notice {
+    position: fixed;
+    inset: 0;
+    z-index: 100;   /* sopra tutto: avviso di connessione (70), messaggi (60), tavolo */
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 8px;
+    padding: 24px calc(24px + env(safe-area-inset-right)) 24px calc(24px + env(safe-area-inset-left));
+    background: inherit;   /* il panno del body, con la sua luce */
+    color: var(--on-navbar);
+    text-align: center;
+    text-shadow: var(--relief-text);
+    touch-action: none;
+  }
+
+  /* Le finestre aperte (pannelli, carta-modal, conferme) stanno nel livello più alto
+     della pagina, sopra ogni z-index: si nascondono finché il telefono è girato */
+  dialog[open] {
+    visibility: hidden;
+  }
+
+  dialog[open]::backdrop {
+    background: none;
+  }
+
+  .rotate-notice__icon {
+    font-size: 64px;
+    animation: rotate-notice-turn 2.4s ease-in-out infinite;
+  }
+
+  .rotate-notice__title {
+    font-family: var(--font-title);
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+
+  .rotate-notice__text {
+    max-width: 32ch;
+    font-weight: 600;
+  }
+}
+
+/* L'icona gira avanti e indietro, come il telefono da girare (niente con "riduci movimento", reset.css) */
+@keyframes rotate-notice-turn {
+  0%, 20% { rotate: 0deg; }
+  50%, 70% { rotate: -90deg; }
+  100% { rotate: 0deg; }
+}

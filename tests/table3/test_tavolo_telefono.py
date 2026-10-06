@@ -26,7 +26,7 @@ from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_
 
 ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"
-SMALL = [(320, 568), (360, 640), (390, 844), (412, 915), (768, 1024), (844, 390)]
+SMALL = [(320, 568), (360, 640), (390, 844), (412, 915), (768, 1024)]  # P116: niente 844×390 (avviso "Gira il telefono")
 NAMES = ["Christian", "Giuseppe", "Salvatore", "Rosalia"]
 
 # Elementi visibili (immagini, pulsanti, testi) che toccano il rettangolo di "Esci"

@@ -45,6 +45,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/components/friends-panel.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/components/chat.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/components/banner.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components/rotate-notice.css') }}">
   {% block styles %}{% endblock %}
   {% block page_script %}{% endblock %}
 </head>
@@ -60,5 +61,6 @@
   </main>
 
   {% include "partials/flash.html" %}
+  {% include "partials/rotate_notice.html" %}
 </body>
 </html>
