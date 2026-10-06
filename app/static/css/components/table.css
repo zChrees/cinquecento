@@ -761,6 +761,24 @@
   .table__board--1v1 .table__center {
     position: relative;
     justify-self: stretch;
+    /*
+     * P117: presa e mazzo scendono, così tra il ventaglio dell'avversario e la sua carta
+     * c'è lo stesso spazio che tra la tua carta e la tua mano (il lancio è lungo uguale):
+     * prima sopra c'erano circa 96 px in meno, a ogni misura (il centro del tavolo parte
+     * sotto "Esci", il ventaglio sta più in basso, e sotto ci sono la riga "Canta" e gli
+     * spazi della tua riga). Se cambiano il ventaglio in alto, la riga "Canta" o gli spazi
+     * di .table__mine va rimisurato (lo segnala test_da_computer_lancio_lungo_uguale).
+     */
+    translate: 0 48px;
+  }
+
+  /*
+   * P117: nel 1v1 la riga di "Canta" e "Cala le carte" (pulsanti btn--small, 44 px) tiene
+   * il suo spazio anche vuota: quando i pulsanti sparivano il tavolo si allungava e presa
+   * e mazzo scendevano di 22 px
+   */
+  .table__inner[data-mode="1v1"] > .table__mine {
+    grid-template-rows: minmax(44px, auto) auto auto;
   }
 
   .table__board--1v1 .deck {

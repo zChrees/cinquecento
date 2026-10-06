@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P117 — Da computer, nel 1v1, il lancio è lungo uguale per te e per l'avversario (06/10/2026)
+
+- **Branch**: feature/p117-lancio-1v1 (fatto da Claude, con il permesso di Christian per commit, merge e push di P115–P121)
+- **File** (lista definitiva per 9.2): modificati `app/static/css/components/table.css` (da 1024 px), `tests/table3/test_grafica_tavolo.py` (test nuovo), questo file. Nessun JS toccato
+- **Causa** [T] (misurata a 1024×768, 1280×720, 1366×657, 1440×900 e 1920×1080): le due carte della presa erano già simmetriche rispetto al mazzo (lo aveva detto Christian guardando lo screenshot), ma tutto il gruppo stava in alto: tra il ventaglio dell'avversario e la sua carta c'erano circa **96 px in meno** che tra la tua carta e la tua mano, a ogni misura. Per questo la tua carta sembrava lanciata "troppo in avanti". Trovato anche un salto: quando spariva il pulsante "Canta" (o "Cala le carte") il tavolo si allungava e presa e mazzo **scendevano di 22 px**
+- **Cosa cambia** (scelta di Christian del 06/10: abbassare insieme mazzo e presa, lancio lungo uguale): nel 1v1 da computer presa e mazzo scendono di **48 px** (`translate` su `.table__center`): i due spazi ora sono uguali (meno di 0,5 px di differenza) a tutte le misure; la riga di "Canta" tiene il suo spazio anche vuota (44 px, `grid-template-rows` di `.table__mine` nel 1v1), quindi niente salta più. Telefono, tablet e 2v2 non cambiano. Tra la tua carta e "Canta" restano almeno 30 px (a 1366×657), 44 a 1280×720
+- **Controlli**: `test_da_computer_lancio_lungo_uguale` **5 PASS** (le cinque misure: spazi uguali entro 2 px, con e senza "Canta" tutto fermo, la presa non tocca "Canta", il mazzo non tocca "Frasi"); **senza la correzione falliscono tutti e 5** [T]. Suite `table3` **88 PASS** (164 s), `table2` **57** (154 s), `api` **301** (94 s), `table` **74 PASS e 1 fallito**: `test_i_timer_della_pagina_scattano_in_anticipo` (P91; controlla solo che il trucco del test, timer della pagina 10 ms in anticipo, funzioni: un timer da 50 ms ne ha impiegati 51,3), poi **5 PASS su 5** da solo: caso raro [D], non legato al CSS. `ruff check .` pulito
+- **Decisioni prese**: di Christian (sopra); mia: "lancio lungo uguale" = stesso spazio libero tra ventaglio e carta in alto e tra carta e mano in basso
+- **Domande nuove**: nessuna
+- **Punti delicati**: lo spostamento di 48 px dipende dal ventaglio in alto (`--edge-card` 72 px), dalla riga "Canta" (44 px) e dagli spazi di `.table__mine`: se cambiano, va rimisurato (lo segnala `test_da_computer_lancio_lungo_uguale`)
+- **Note per gli altri**: niente
+
 ### P121 — Suite col browser sotto i 200 s (06/10/2026)
 
 - **Branch**: feature/p121-suite-sotto-il-limite (fatto da Claude, con il permesso di Christian per commit, merge e push di P115–P121)

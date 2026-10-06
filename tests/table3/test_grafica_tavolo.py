@@ -388,6 +388,39 @@ def test_da_computer_mazzo_del_1v1_sotto_frasi(browser, server, size):
     assert box["scrollH"] <= box["h"] and box["scrollW"] <= box["w"]
 
 
+LAUNCH = """(() => {
+  const r = (e) => { const b = e.getBoundingClientRect(); return { l: b.left, t: b.top, r: b.right, b: b.bottom }; };
+  const q = (s) => { const e = document.querySelector(s); return e ? r(e) : null; };
+  return { fan: q('[data-edge-hand="top"]'), hand: q('.table__mine .hand'), deck: q('.deck .card'),
+           top: q('.trick__card--top .card'), bottom: q('.trick__card--bottom .card'),
+           sing: q('.table__mine .sing-buttons:not(:empty)'), button: q('[data-phrases-button]') };
+})()"""
+
+
+@pytest.mark.parametrize("size", [(1024, 768), (1280, 720), (1366, 657), (1440, 900), (1920, 1080)],
+                         ids=lambda s: f"{s[0]}x{s[1]}")
+def test_da_computer_lancio_lungo_uguale(browser, server, size):
+    # P117: nel 1v1 da computer tra il ventaglio dell'avversario e la sua carta c'è lo stesso
+    # spazio che tra la tua carta e la tua mano; con o senza "Canta" presa e mazzo stanno fermi
+    base = _view("1v1")
+    _open(browser, server, "1v1", size)
+    trick = {"leader_seat": 1, "cards": [{"seat": 1, "card": {"suit": "coppe", "rank": 3}},
+                                         {"seat": 0, "card": {"suit": "coppe", "rank": 1}}], "winning_seat": None}
+    seen = []
+    for sing in (base["legal"]["sing"], []):
+        _dispatch(browser, "demo:state", _state(base, version=base["version"] + 1 + len(seen), trick=trick,
+                                                 legal={**base["legal"], "sing": sing}))
+        box = browser.js(LAUNCH)
+        above, below = box["top"]["t"] - box["fan"]["b"], box["hand"]["t"] - box["bottom"]["b"]
+        assert abs(above - below) <= 2, (size, bool(sing), above, below)
+        assert above >= 20, (size, above)
+        if box["sing"]:
+            assert box["bottom"]["b"] <= box["sing"]["t"] - 12, (size, "la presa tocca Canta")
+        assert not _overlap(box["deck"], box["button"]), (size, "il mazzo tocca Frasi")
+        seen.append((box["top"], box["bottom"], box["deck"], box["hand"]))
+    assert seen[0] == seen[1], (size, "presa, mazzo o mano si spostano quando sparisce Canta")
+
+
 @pytest.mark.parametrize("mode", ["1v1", "2v2"])
 @pytest.mark.parametrize("size", [(1024, 768), (1280, 720), (1440, 900)], ids=lambda s: f"{s[0]}x{s[1]}")
 def test_da_computer_briscola_a_sinistra_del_tabellone(browser, server, mode, size):
