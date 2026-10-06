@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P121 — Suite col browser sotto i 200 s (06/10/2026)
+
+- **Branch**: feature/p121-suite-sotto-il-limite (fatto da Claude, con il permesso di Christian per commit, merge e push di P115–P121)
+- **File** (lista definitiva per 9.2): creata la suite **`tests/table3/`** (il runner la trova da solo, dopo `table2`) con 7 file spostati, senza cambiarli: da `api` `test_grafica_tavolo.py`, `test_presa_affiancata.py`, `test_tavolo_telefono.py`, `test_frasi_di_lato.py`, `test_stile_tavolo.py`; da `table` `test_carte_pronte.py`; da `table2` `test_niente_lampeggi.py`. Corrette solo le descrizioni di due file che dicevano "sta nella suite api". **Non toccati** `tests/esegui_tutti.py` né il limite di 240 s
+- **Come**: misurata prima la durata di ogni file (516 test, tutti PASS, 9 minuti); spostati i test della grafica del tavolo (circa 110 s in `api`, nessuno usa MySQL [L]) e un file lungo da `table` e da `table2`, per pareggiare le quattro suite
+- **Controlli** (tre giri di ogni suite, PC libero): `api` **301 PASS** in 117, 94 e 97 s (prima 214); `table` **75** in 176, 175 e 160 s (prima 188); `table2` **57** in 155, 161 e 155 s (prima 206); `table3` **83** in 159, 169 e 159 s. Stessi 516 test di prima. `ruff check .` pulito
+- **Decisioni prese**: mia: i test della grafica del tavolo non stanno più in `api` (P91 li aveva lasciati lì) ma in `table3`
+- **Domande nuove**: nessuna
+- **Punti delicati**: le suite sono ora **11**; un test lungo nuovo del tavolo nel browser va nella più corta tra `table`, `table2` e `table3`; `api` ha di nuovo spazio (circa 100 s)
+- **Note per gli altri**: **Giuseppe**: dopo il pull i test della grafica del tavolo si lanciano con `python tests/esegui_tutti.py table3`. **Chi è di turno sui documenti**: in `CLAUDE.md` vanno aggiornati "Testing" e il punto delicato "Suite `table`" (11 suite, `table3`), e il punto delicato "Tavolo da computer" che cita `test_grafica_tavolo` "in api"
+
 ### P118 — Mescolata e distribuzione anche alla prima mano (06/10/2026)
 
 - **Branch**: feature/p118-distribuzione-prima-mano (fatto da Claude, con il permesso di Christian per commit, merge e push di P115–P121)

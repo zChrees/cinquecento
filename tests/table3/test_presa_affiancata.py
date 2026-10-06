@@ -8,8 +8,8 @@ sollevata e più grande, e i lettori di schermo sentono "Sta vincendo").
 
 Il tavolo si apre nella prova (/game/prova?demo=1v1 o 2v2) in Chrome o Edge senza
 finestra (tests/browser.py), con le viste di app/static/dev/ mandate con l'evento
-del browser "demo:state". Non serve MySQL; sta nella suite api perché la suite
-frontend è vicina al limite di tempo (P91).
+del browser "demo:state". Non serve MySQL; sta nella suite table3 (P121: prima in api, poi
+vicina al limite di tempo).
 """
 
 import copy
