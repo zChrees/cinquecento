@@ -468,7 +468,7 @@ def test_avviso_di_rientro_solo_se_previsto(logged_in, server):
             assert tile["bottom"] <= m["vh"] + EPS, (width, height)
 
 
-ONLINE_TEXT = "document.querySelector('[data-online]').textContent.replace(/\s+/g, ' ').trim()"
+ONLINE_TEXT = r"document.querySelector('[data-online]').textContent.replace(/\s+/g, ' ').trim()"
 
 
 def test_un_giocatore_online_al_singolare(browser, server):
