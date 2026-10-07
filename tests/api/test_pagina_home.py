@@ -392,20 +392,82 @@ OPPONENT = """(() => { const d = document.querySelector('[data-mode-modal]');
           note: d.querySelector('.target__note').getClientRects().length > 0}; })()"""
 
 
-def test_scelta_dell_avversario_solo_nella_partita_veloce_1v1(logged_in, server):
-    # P73 (D43): "Avversario: Giocatore · CPU" c'è solo nella Partita Veloce 1v1, parte da Giocatore
+# P123: registra i dati di ogni cpu:start mandato al server. Il client Socket.IO è un
+# modulo: importato dal test con lo stesso indirizzo, è lo stesso della pagina. I dati
+# stanno in sessionStorage, che resta quando la scheda passa al tavolo.
+RECORD_CPU_START = """import('/static/js/vendor/socket.io.min.js').then((m) => {
+  sessionStorage.setItem('test-cpu-start', '[]');
+  const emit = m.Socket.prototype.emit;
+  m.Socket.prototype.emit = function (event, ...args) {
+    if (event === 'cpu:start') {
+      const sent = JSON.parse(sessionStorage.getItem('test-cpu-start'));
+      sessionStorage.setItem('test-cpu-start', JSON.stringify([...sent, args[0]]));
+    }
+    return emit.call(this, event, ...args);
+  };
+  return true;
+})"""
+CPU_START_SENT = "JSON.parse(sessionStorage.getItem('test-cpu-start') ?? '[]')"
+
+CHOICES = "[...document.querySelectorAll('fieldset[data-opponent] .opponent__choice')].map((s) => s.textContent)"
+LEGEND = "document.querySelector('fieldset[data-opponent] legend').textContent"   # la finestra ha anche data-opponent
+
+
+def test_scelta_dell_avversario_solo_nella_partita_veloce(logged_in, server):
+    # P73 (D43): "Avversario: Giocatore · CPU" nella Partita Veloce 1v1; P123: "Gioca con:
+    # Giocatori · CPU" nella Partita Veloce 2v2; con un amico niente; parte sempre da Giocatore
     logged_in.open(f"{server}/", 1440, 900)
     for kind, mode in TILES:
         _open_modal(logged_in, kind, mode)
         state = logged_in.js(OPPONENT)
-        assert state["hidden"] is ((kind, mode) != ("veloce", "1v1")), (kind, mode)
+        assert state["hidden"] is (kind != "veloce"), (kind, mode)
         assert state["checked"] == "player", (kind, mode)
         _close_modal(logged_in)
     _open_modal(logged_in, "veloce", "1v1")
     assert "15 secondi per ogni turno" in logged_in.js(OPPONENT)["facts"]   # P94: non più 30
-    labels = logged_in.js("[...document.querySelectorAll('[data-opponent] .opponent__choice')].map((s) => s.textContent)")
-    assert labels == ["personGiocatore", "smart_toyCPU"]   # icona (nome nel font) e parola
+    assert logged_in.js(LEGEND) == "Avversario"
+    assert logged_in.js(CHOICES) == ["personGiocatore", "smart_toyCPU"]   # icona (nome nel font) e parola
     _close_modal(logged_in)
+    _open_modal(logged_in, "veloce", "2v2")
+    assert logged_in.js(LEGEND) == "Gioca con"
+    assert logged_in.js(CHOICES) == ["personGiocatori", "smart_toyCPU"]
+    _close_modal(logged_in)
+    _open_modal(logged_in, "veloce", "1v1")   # e tornando al 1v1 le parole tornano quelle del 1v1
+    assert logged_in.js(LEGEND) == "Avversario" and logged_in.js(CHOICES)[0] == "personGiocatore"
+    _close_modal(logged_in)
+
+
+def test_contro_la_cpu_nel_2v2(logged_in, server):
+    # P123 (D49): con "Gioca con: CPU" cambiano descrizione e "In breve", sparisce la frase
+    # dei punti, e "Gioca" manda cpu:start con mode "2v2". La partita 2v2 vera la crea il
+    # server di P122 (tests/sockets): qui si controlla solo cosa manda la pagina.
+    from app.realtime.room_manager import rooms
+
+    logged_in.open(f"{server}/", 1440, 900)
+    logged_in.wait_js("import('/static/js/core/socket.js').then((m) => m.isConnected())", "collegamento al tempo reale")
+    assert logged_in.js(RECORD_CPU_START) is True
+    _open_modal(logged_in, "veloce", "2v2")
+    _click(logged_in, 'input[name="opponent"][value="cpu"]')
+    state = logged_in.js(OPPONENT)
+    assert "in coppia con il computer" in state["desc"] and state["note"] is False
+    assert "Parte subito, senza coda" in state["facts"] and "Non conta per il rating" in state["facts"]
+    assert "CPU 1, la tua compagna, siede di fronte a te" in state["facts"]
+    _click(logged_in, 'input[name="opponent"][value="player"]')   # e tornando a Giocatori torna tutto
+    state = logged_in.js(OPPONENT)
+    assert "Entri in coda da solo" in state["desc"] and state["note"] is True and "Conta per il tuo rating 2v2" in state["facts"]
+    _click(logged_in, 'input[name="opponent"][value="cpu"]')
+    _click(logged_in, 'input[name="target"][value="300"]')
+    _click(logged_in, "[data-play]")
+    try:
+        logged_in.wait_js("location.pathname.startsWith('/game/')", "tavolo contro la CPU", 8)
+        assert logged_in.js("document.querySelector('[data-queue-overlay]')") is None   # niente coda
+        sent = logged_in.js(CPU_START_SENT)
+        assert len(sent) == 1 and sent[0]["mode"] == "2v2" and sent[0]["target_score"] == 300, sent
+        assert isinstance(sent[0]["request_id"], str) and sent[0]["request_id"], sent
+    finally:
+        for room in rooms.rooms_of(7):   # FakeUser("Mario"): la partita contro la CPU non resta aperta
+            room.run(room._stop_timers)
+            rooms.remove(room.id)
 
 
 def test_contro_la_cpu_si_va_subito_al_tavolo(logged_in, server):
@@ -414,6 +476,8 @@ def test_contro_la_cpu_si_va_subito_al_tavolo(logged_in, server):
     from app.realtime.room_manager import rooms
 
     logged_in.open(f"{server}/", 1440, 900)
+    logged_in.wait_js("import('/static/js/core/socket.js').then((m) => m.isConnected())", "collegamento al tempo reale")
+    assert logged_in.js(RECORD_CPU_START) is True
     _open_modal(logged_in, "veloce", "1v1")
     _click(logged_in, 'input[name="opponent"][value="cpu"]')
     state = logged_in.js(OPPONENT)
@@ -428,6 +492,7 @@ def test_contro_la_cpu_si_va_subito_al_tavolo(logged_in, server):
     try:
         logged_in.wait_js("location.pathname.startsWith('/game/')", "tavolo contro la CPU", 8)
         assert logged_in.js("document.querySelector('[data-queue-overlay]')") is None
+        assert [d["mode"] for d in logged_in.js(CPU_START_SENT)] == ["1v1"]   # P123 (D49)
         room = rooms.get(logged_in.js("location.pathname").split("/")[2])
         assert room is not None and len(room.players) == 2 and room.cpu_seats == frozenset({1}) and room.rated is False
         logged_in.wait_js("document.querySelector('.seat .avatar--cpu .icon')?.textContent === 'smart_toy'",

@@ -427,12 +427,13 @@
   --edge-card: 52px;
 }
 
-.revealed-hand--partner > .card {
+/* P123: solo le carte che si toccano (con la CPU compagna le carte non sono pulsanti) */
+.revealed-hand--partner > button.card {
   pointer-events: auto;
   cursor: pointer;
 }
 
-.revealed-hand--partner > .card:disabled {
+.revealed-hand--partner > button.card:disabled {
   cursor: default;
 }
 

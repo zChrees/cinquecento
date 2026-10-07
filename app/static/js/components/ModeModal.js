@@ -12,8 +12,8 @@
  * Il modal non parla con il server: lo fa la pagina con i callback.
  * - onPlay({ kind, mode, targetScore, invitees, cpu }): "Gioca" (la coda è di P28,
  *   gli inviti di P47); `invitees` sono gli amici che hanno accettato; `cpu` è true
- *   se nella Partita Veloce 1v1 è scelto "Avversario: CPU" (P73). Il modal si
- *   chiude da solo.
+ *   se nella Partita Veloce è scelta la CPU: "Avversario: CPU" nel 1v1 (P73),
+ *   "Gioca con: CPU" nel 2v2 (P123). Il modal si chiude da solo.
  * - onInvite({ friend, mode, targetScore }): "Invita" (contratto 5.3, invite:send).
  *   Il risultato arriva con setInviteStatus(userId, status) (invite:update):
  *   "accepted" attiva "Gioca"; "declined", "expired" e "cancelled" chiudono
@@ -58,14 +58,31 @@ const MODE_TEXTS = {
   },
 };
 
-// P73: Partita Veloce 1v1 con "Avversario: CPU" (D43: solo 1v1, non conta per il rating)
+// Partita Veloce contro la CPU (D43, non conta per il rating): 1v1 con "Avversario: CPU"
+// (P73), 2v2 con "Gioca con: CPU", tu e CPU 1 contro CPU 2 e CPU 3 (P123)
 const CPU_TEXTS = {
-  desc: 'Giochi subito contro il computer, senza coda: allenati quanto vuoi.',
-  facts: [
-    ['smart_toy', 'Parte subito, senza coda'],
-    ['trending_up', 'Non conta per il rating'],
-    ['timer', '15 secondi per ogni turno'],
-  ],
+  '1v1': {
+    desc: 'Giochi subito contro il computer, senza coda: allenati quanto vuoi.',
+    facts: [
+      ['smart_toy', 'Parte subito, senza coda'],
+      ['trending_up', 'Non conta per il rating'],
+      ['timer', '15 secondi per ogni turno'],
+    ],
+  },
+  '2v2': {
+    desc: 'Giochi subito in coppia con il computer, contro due computer: allenati quanto vuoi.',
+    facts: [
+      ['smart_toy', 'Parte subito, senza coda'],
+      ['event_seat', 'CPU 1, la tua compagna, siede di fronte a te'],
+      ['trending_up', 'Non conta per il rating'],
+    ],
+  },
+};
+
+// P123: la scelta si chiama "Avversario" nel 1v1 e "Gioca con" nel 2v2
+const OPPONENT_WORDS = {
+  '1v1': { legend: 'Avversario', player: 'Giocatore' },
+  '2v2': { legend: 'Gioca con', player: 'Giocatori' },
 };
 
 // Consigli dal regolamento (docs/REGOLE-GIOCO.md), uno diverso a ogni apertura
@@ -123,13 +140,14 @@ function build() {
     targetNote,
   ]);
 
-  // P73: solo nella Partita Veloce 1v1, chi è l'avversario (D43)
+  // P73: solo nella Partita Veloce, chi gioca con te (D43; nel 2v2 da P123)
+  const opponentLegend = el('legend', { class: 'target__legend', text: OPPONENT_WORDS['1v1'].legend });
   const opponent = el('fieldset', { class: 'target opponent', data: { opponent: '' }, attrs: { hidden: true } }, [
-    el('legend', { class: 'target__legend', text: 'Avversario' }),
+    opponentLegend,
     el('div', { class: 'target__options' }, [['person', 'player', 'Giocatore'], ['smart_toy', 'cpu', 'CPU']].map(([name, value, word]) => (
       el('label', { class: 'target__option' }, [
         el('input', { attrs: { type: 'radio', name: 'opponent', value }, on: { change: renderOpponent } }),
-        el('span', { class: 'opponent__choice' }, [icon(name), el('b', { text: word })]),
+        el('span', { class: 'opponent__choice' }, [icon(name), el('b', { text: word, data: { opponentWord: value } })]),
       ])
     ))),
   ]);
@@ -200,7 +218,7 @@ function build() {
 
   document.body.append(dialog);
   parts = {
-    flip, back, body, kicker, title, desc, target, targetNote, opponent, facts, factsList,
+    flip, back, body, kicker, title, desc, target, targetNote, opponent, opponentLegend, facts, factsList,
     invite, inviteTitle, inviteList, inviteHint, tip, tipText, play,
   };
 }
@@ -378,7 +396,7 @@ function renderFacts(facts) {
   ])));
 }
 
-/** true se nella Partita Veloce 1v1 è scelta la CPU come avversario (P73). */
+/** true se nella Partita Veloce è scelta la CPU (P73 nel 1v1, P123 nel 2v2). */
 function cpuChosen() {
   return !parts.opponent.hidden && dialog.querySelector('input[name="opponent"]:checked')?.value === 'cpu';
 }
@@ -388,8 +406,8 @@ function cpuChosen() {
 function renderOpponent() {
   const cpu = cpuChosen();
   const texts = MODE_TEXTS[`${current.kind}-${current.mode}`];
-  parts.desc.textContent = cpu ? CPU_TEXTS.desc : texts.desc;
-  renderFacts(cpu ? CPU_TEXTS.facts : texts.facts(ratingText(current.ratings)));
+  parts.desc.textContent = cpu ? CPU_TEXTS[current.mode].desc : texts.desc;
+  renderFacts(cpu ? CPU_TEXTS[current.mode].facts : texts.facts(ratingText(current.ratings)));
   parts.targetNote.hidden = cpu;
   dialog.dataset.opponent = cpu ? 'cpu' : 'player';
 }
@@ -413,8 +431,10 @@ function renderTexts(kind, mode, ratings) {
   } else {
     clear(parts.factsList);
   }
-  // P73: la scelta dell'avversario c'è solo nella Partita Veloce 1v1; si riparte da "Giocatore"
-  parts.opponent.hidden = !(quick && mode === '1v1');
+  // P73, P123: la scelta c'è solo nella Partita Veloce; si riparte da "Giocatore" ("Giocatori" nel 2v2)
+  parts.opponent.hidden = !quick;
+  parts.opponentLegend.textContent = OPPONENT_WORDS[mode].legend;
+  parts.opponent.querySelector('[data-opponent-word="player"]').textContent = OPPONENT_WORDS[mode].player;
   dialog.querySelector('input[name="opponent"][value="player"]').checked = true;
   let tip = Math.floor(Math.random() * TIPS.length);
   if (tip === lastTip) tip = (tip + 1) % TIPS.length;

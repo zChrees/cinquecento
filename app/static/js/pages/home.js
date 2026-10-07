@@ -14,7 +14,8 @@
  *   queue:left (con "partner_left" un messaggio dice che il compagno è uscito);
  *   game:start porta al tavolo.
  * - Contro la CPU (P73, contratto 4.1): nella Partita Veloce 1v1 con "Avversario:
- *   CPU" "Gioca" manda cpu:start (niente coda) e game:start porta al tavolo.
+ *   CPU", e nel 2v2 con "Gioca con: CPU" (P123), "Gioca" manda cpu:start con la
+ *   modalità (niente coda) e game:start porta al tavolo.
  * - Stato vero della home (P44): home:status arriva appena la pagina si collega e
  *   a ogni cambiamento (utenti online, partita in corso finita) e prende sempre il
  *   posto di quello dei dati finti. Senza login la pagina non si collega.
@@ -278,10 +279,11 @@ async function joinQueue(mode, targetScore) {
 }
 
 // P73: partita contro la CPU (contratto 4.1): niente coda, arriva subito game:start
-async function startCpu(targetScore) {
+// P123 (D49): `mode` dice se è un 1v1 o un 2v2 (tu e CPU 1 contro CPU 2 e CPU 3)
+async function startCpu(mode, targetScore) {
   if (joining || state.queue || starting) return;
   joining = true;
-  const answer = await send(EVENTS.CPU_START, { request_id: newRequestId(), target_score: targetScore });
+  const answer = await send(EVENTS.CPU_START, { request_id: newRequestId(), mode, target_score: targetScore });
   joining = false;
   if (!answer.ok) showMessage(answer.error.message, 'error');
 }
@@ -387,7 +389,7 @@ function play({ kind, mode, targetScore, cpu }) {
     showMessage('Sei offline: potrai giocare appena torna la connessione.', 'error');
     return;
   }
-  if (kind === 'veloce' && cpu) startCpu(targetScore);
+  if (kind === 'veloce' && cpu) startCpu(mode, targetScore);
   else if (kind === 'veloce') joinQueue(mode, targetScore);
   else startInvite();   // "Gioca con un amico": si attiva solo dopo l'accettazione
 }

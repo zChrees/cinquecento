@@ -112,13 +112,15 @@ export function EdgeHand(count, side, drawn = null, dealt = null) {
  *
  * P93: le carte del compagno (partner_hand) usano lo stesso ventaglio, un po' più
  * grande e con le carte che si toccano per consigliargli quale giocare (`advise`).
+ * P123: con la CPU compagna (`advise.onPick` null) lo stesso ventaglio, ma le carte
+ * non si toccano: la CPU non riceve consigli (D49).
  *
  * @param {Array<{suit: string, rank: number}>} cards le sue carte
  * @param {string} side 'top' | 'left' | 'right'
  * @param {number} seat il suo posto (data-revealed-seat, per i test)
  * @param {string} [label] etichetta per i lettori di schermo
  * @param {object|null} [advise] P93, solo per il compagno
- * @param {function} advise.onPick chiamata con la carta toccata
+ * @param {function|null} advise.onPick chiamata con la carta toccata (null: niente consiglio)
  * @param {object|null} advise.picked la carta che hai consigliato, segnata
  * @param {boolean} advise.disabled carte spente (per esempio senza connessione)
  * @param {string} advise.name il nome del compagno, per le etichette
@@ -126,8 +128,9 @@ export function EdgeHand(count, side, drawn = null, dealt = null) {
  */
 export function RevealedHand(cards, side, seat, label = 'Carte scoperte', advise = null) {
   const items = cards.map((card, i) => {
-    const face = advise ? Card(card, { onPlay: advise.onPick, playable: !advise.disabled }) : Card(card);
-    if (advise) {
+    const pickable = Boolean(advise?.onPick);
+    const face = pickable ? Card(card, { onPlay: advise.onPick, playable: !advise.disabled }) : Card(card);
+    if (pickable) {
       const picked = advise.picked && sameCard(advise.picked, card);
       face.setAttribute('aria-label', `Consiglia a ${advise.name}: ${cardName(card)}`);
       face.setAttribute('aria-pressed', picked ? 'true' : 'false');

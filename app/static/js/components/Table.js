@@ -367,7 +367,9 @@ export function Table(view, { onPlay, onSing, onLeave, onLayDown = null, onAdvis
     }
     if (mateCards && player.seat === mate.seat) {
       const revealed = RevealedHand(mateCards, side, player.seat, `Carte di ${player.username}`, {
-        onPick: onAdvise, picked: partner?.picked ?? null, disabled: !onAdvise || Boolean(partner?.disabled), name: player.username,
+        // P123 (D49): la CPU compagna non riceve consigli, le sue carte non si toccano
+        onPick: player.cpu ? null : onAdvise,
+        picked: partner?.picked ?? null, disabled: !onAdvise || Boolean(partner?.disabled), name: player.username,
       });
       revealed.style.animationDelay = `${-Math.round(partner?.shownFor ?? 0)}ms`;
       return revealed;

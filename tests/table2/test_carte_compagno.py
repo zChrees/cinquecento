@@ -196,6 +196,43 @@ def test_consiglio_ricevuto_nella_tua_mano(browser, server):
     assert browser.js("document.querySelector('.table__mine .hand [data-advice]')") is None
 
 
+def _cpu_mate(view):
+    """P123: la stessa vista con la CPU compagna (posto 2), come la manda il server di P122 (D49)."""
+    view = copy.deepcopy(view)
+    mate = next(p for p in view["players"] if p["seat"] == 2)
+    mate.update(user_id=0, username="CPU 1", avatar=None, rating=None, cpu=True)
+    return view
+
+
+def test_cpu_compagna_carte_scoperte_ma_niente_consiglio(browser, server):
+    # P123 (D49): con la CPU compagna le carte si vedono come con un compagno vero, ma non
+    # sono pulsanti: niente consiglio, niente manina da computer
+    base = _cpu_mate(_endgame(_view("2v2")))
+    _open(browser, server, (1280, 720))
+    _send(browser, base)
+    _send(browser, _with_mate(base))
+    assert _mate_cards(browser) == MATE
+    assert browser.js("document.querySelector('[data-partner-notice]').textContent") == \
+        "Mazzo finito: ora vedi le carte di CPU 1"
+    cards = browser.js("""[...document.querySelectorAll('[data-revealed-seat="2"] .card')].map((c) => ({
+      tag: c.tagName, label: c.getAttribute('aria-label'), cursor: getComputedStyle(c).cursor }))""")
+    assert len(cards) == 5
+    assert all(c["tag"] == "DIV" and c["cursor"] != "pointer" for c in cards), cards
+    assert cards[0]["label"] == "Asso di denari"
+    assert browser.js("document.querySelectorAll('[data-advise-card], [data-revealed-seat=\"2\"] button').length") == 0
+    # Stesso ventaglio del compagno vero: un po' più grande di quello coperto degli avversari
+    assert browser.js("document.querySelector('[data-revealed-seat=\"2\"]').classList.contains('revealed-hand--partner')")
+    widths = browser.js("[document.querySelector('[data-revealed-hand] .card').offsetWidth, "
+                        "document.querySelector('[data-edge-hand] .card').offsetWidth]")
+    assert widths[0] > widths[1]
+    # Un tocco su una sua carta non segna niente
+    browser.js("document.querySelector('[data-revealed-seat=\"2\"] .card').click()")
+    assert browser.js("document.querySelector('[data-advised]')") is None
+    # Con un compagno vero, nella stessa partita di prova, le carte tornano pulsanti
+    _send(browser, _with_mate(_with_mate(_endgame(_view("2v2")))))
+    assert browser.js("document.querySelectorAll('[data-advise-card]').length") == 5
+
+
 def test_nel_1v1_niente(browser, server):
     base = _endgame(_view("1v1"))
     browser.open(f"{server}/game/prova?demo=1v1", *PHONE, "document.querySelector('[data-mode]') !== null")
