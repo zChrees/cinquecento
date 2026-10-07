@@ -35,6 +35,7 @@ import websocket
 from werkzeug.serving import make_server
 
 from app.extensions import login_manager
+from app.realtime.presence import presence
 
 PORT = 5099
 TEST_COOKIE = ("prova_utente", "mario")
@@ -104,7 +105,12 @@ def wait(condition, timeout, what):
 
 @contextlib.contextmanager
 def running_server(app, user=None):
-    """Avvia `app` sulla porta dei test; con il cookie di prova risulta collegato `user`."""
+    """Avvia `app` sulla porta dei test; con il cookie di prova risulta collegato `user`.
+
+    P124: spegnendo il server, le schede ancora collegate non passano dallo scollegamento
+    (connection_events.py): quelle segnate online mentre era acceso si tolgono da
+    presence.py, altrimenti i file di test dopo vedrebbero "2 online" invece di 1.
+    """
     with socket.socket() as probe:
         if probe.connect_ex(("127.0.0.1", PORT)) == 0:
             pytest.fail(f"La porta {PORT} è occupata: chiudi il server che la usa e rilancia.", pytrace=False)
@@ -112,6 +118,7 @@ def running_server(app, user=None):
     def load_test_user(request):
         return user if user and request.cookies.get(TEST_COOKIE[0]) == TEST_COOKIE[1] else None
 
+    before = {user_id: set(presence.tabs_of(user_id)) for user_id in presence.online_users()}
     previous = login_manager._request_callback
     login_manager.request_loader(load_test_user)
     srv = make_server("127.0.0.1", PORT, app, threaded=True)
@@ -123,6 +130,9 @@ def running_server(app, user=None):
         srv.shutdown()
         thread.join(timeout=5)
         login_manager._request_callback = previous
+        for user_id in presence.online_users():
+            for sid in set(presence.tabs_of(user_id)) - before.get(user_id, set()):
+                presence.remove(user_id, sid)
 
 
 class Browser:

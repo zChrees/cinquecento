@@ -22,6 +22,19 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P124 (numero proposto) — Il server dei test non lascia schede online (07/10/2026)
+
+- **Branch**: fix/p124-test-suoni-stabile
+- **Punto nuovo**, proposto nel riepilogo di P123 e chiesto da Christian lo stesso giorno: il numero lo conferma chi è di turno sui documenti
+- **File**: modificato `tests/browser.py` (`running_server`; **file di tutti**, toccato anche da Giuseppe, con l'ok di Christian); creato `tests/frontend/test_server_dei_test.py`; questo file. Nessun file dell'applicazione
+- **Causa** [T]: i tre test di `test_suoni_menu.py` (P115) aspettano "1 online" nella home e fallivano quando giravano dopo `test_rifinitura.py`: registrando gli utenti online all'inizio di ogni prova, risultava **ancora collegato l'utente 12** di `test_rifinitura.py` (quindi "2 online"), e non per qualche secondo: per tutto il resto del giro. Spegnendo il server dei test (`running_server`), le schede ancora collegate non passano dallo scollegamento (`connection_events.py`), quindi nessuno le toglieva da `presence.py`. Passava solo quando, per caso, l'ultimo browser di `test_rifinitura.py` si chiudeva prima di collegarsi. **Non dipendeva da P123**: falliva anche senza (3 giri su 3)
+- **Cosa cambia**: allo spegnimento `running_server` toglie da `presence.py` le schede segnate online **mentre era acceso**, e lascia quelle che c'erano già prima (funzioni pubbliche `tabs_of` e `remove`)
+- **Controlli**: `test_server_dei_test.py` **1 PASS** (fallisce senza la correzione [T]); `test_rifinitura.py` + `test_suoni_menu.py` insieme: **3 giri su 3 PASS** (prima 3 su 3 con 3 FAIL); suite con `running_server`: `api` **300 PASS** (89 s), `frontend` **147 PASS** (135 s, uno nuovo), `table` **75 PASS** (151 s), `table2` **58 PASS** (152 s), `table3` **86 PASS** (164 s), tutte nei tempi di sempre. Un primo giro delle cinque insieme era andato molto più lento (47 minuti invece di circa 12, `table2` fermata dopo 965 s invece di 240: [D] PC carico o in pausa), con 3 test scaduti all'apertura della pagina, 3 suite fermate e `test_un_giocatore_online_al_singolare` (P120, "Tempo scaduto: 2 online"); rilanciate a PC libero, tutte PASS. `ruff check .` pulito
+- **Decisioni prese**: di Christian: correggere la causa in `running_server` (scartato: correggere solo `test_suoni_menu.py`)
+- **Domande nuove**: nessuna
+- **Punti delicati**: un test che spegne il server dei test e poi controlla gli online non trova più le schede di quel server: è voluto
+- **Cosa devono fare gli altri**: **Giuseppe**: `tests/browser.py` è cambiato (solo `running_server`): fai il pull prima di toccarlo. **Chi è di turno sui documenti**: registrare il punto (P124 se il numero è libero) nel tracker e in 9.2 con questa lista; in `CLAUDE.md`, punto delicato "Test nel browser e tempo reale", la nota su `running_server`
+
 ### P123 — CPU nel 2v2: home e tavolo (07/10/2026)
 
 - **Branch**: feature/p123-cpu-2v2
