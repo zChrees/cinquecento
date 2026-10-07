@@ -22,6 +22,15 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: chiusi P115 e D48, CPU nel 2v2 (P122, P123, D49) (07/10/2026)
+
+- **Branch**: docs/aggiornamento-07-10
+- **File**: `SCALETTA.md` (spuntato **P115** con la nota del 07/10, scheda e lista definitiva in 9.2; nuovi **P122** e **P123** nel tracker, schede in "Richieste del 07/10/2026", righe della tabella di 9.1, voci in 9.2, controllo di parallelismo; elenchi di Giuseppe e Christian; "Da dove si parte"), `DECISIONI.md` (Interfaccia: suoni del menu scelti, telefono in orizzontale che resta con l'avviso; Gioco: **CPU anche nel 2v2**, che cambia il punto 2 di D43), `DA-DECIDERE.md` (chiusa **D48**, aperta **D49**: contratto di `cpu:start` per il 2v2), `CLAUDE.md` (riga "Stato", punti delicati "Suoni" e "CPU"), questo file
+- **Controlli**: nessun test lanciato (solo documenti); ultimo giro completo 06/10: **1800 PASS in 11 suite**; dopo, `frontend` 146 PASS (07/10, 7 test in meno con la pagina dei suoni)
+- **Riepiloghi registrati**: `christian.md` fino a "P115 — Scelta dei suoni del menu, chiude D48"; `giuseppe.md` e `antonio.md` niente di nuovo
+- **Punti rimasti a Christian**: **P123** (dopo D49), P9, P36, P37
+- **Cosa devono fare gli altri**: **Giuseppe**: leggi la decisione "CPU anche nel 2v2" in `DECISIONI.md` (Gioco, 07/10) e **D49** in `DA-DECIDERE.md`: serve il tuo ok al contratto di `cpu:start` (`mode` obbligatorio, nomi "CPU 1/2/3" dal server, `game:advise` alla CPU rifiutato), o i nomi e le forme che preferisci; poi **P122** (scheda in `SCALETTA.md`, sezione 4, "Richieste del 07/10/2026"), in parallelo con il mio P123: il merge in `dev` lo facciamo lo stesso giorno, il mio prima o insieme, perché oggi la home non manda `mode`
+
 ### P115 — Scelta dei suoni del menu, chiude D48 (07/10/2026)
 
 - **Branch**: fix/p115-scelta-suoni
