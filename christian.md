@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P115 — Scelta dei suoni del menu, chiude D48 (07/10/2026)
+
+- **Branch**: fix/p115-scelta-suoni
+- **File**: modificati `app/static/sounds/friend-request.mp3` e `invite.mp3` (scambiati tra loro), `app/static/sounds/LICENZA.md`, `app/static/js/core/sounds.js` (solo il commento), questo file; cancellati la pagina di prova `app/static/dev/suoni.html`, `suoni.js`, `suoni.css`, `suoni.json`, la cartella `app/static/dev/suoni/` e `tests/frontend/test_pagina_suoni.py`
+- **Cosa cambia**: Christian tiene i suoni proposti, ma **scambia** quelli di richiesta di amicizia e invito: ora la **richiesta di amicizia** è `confirmation_004` e l'**invito** a una partita è `confirmation_001`; il messaggio resta `drop_001` (Kenney, Interface Sounds, CC0). I nomi in `SOUNDS` di `sounds.js` non cambiano
+- **Controlli**: suite `frontend` **146 PASS** (141 s; prima 153, meno i 7 di `test_pagina_suoni.py`), file protetti intatti; `ruff check .` pulito
+- **Decisioni prese**: di Christian: i suoni del menu (D48 chiusa)
+- **Domande nuove**: nessuna
+- **Altre decisioni del 07/10 (non fanno parte di P115)**: (1) **CPU nel 2v2**: Christian la vuole, come **tu + CPU compagna contro 2 CPU**, dalla carta Partita Veloce 2v2 ("Avversari: Giocatori · CPU", come nel 1v1); la CPU compagna **non dà consigli e ignora i tuoi** (P92). Da fare come punto nuovo, diviso come P68/P73: server (`cpu:start` con la modalità, cambiamento al contratto da approvare con Giuseppe; test e controllo della forza della CPU in squadra, finora misurata solo nel 1v1) per Giuseppe, home per Christian. Analisi di Claude [L]: `cpu.py` ragiona già a squadre e usa le carte del compagno, la stanza accetta già la CPU in qualunque posto; oggi blocca solo `lobby_events.py`, che crea sempre un 1v1. (2) **Telefono in orizzontale**: resta com'è (avviso "Gira il telefono in verticale", P116); scartato un layout orizzontale "come da computer" (sarebbe servito un terzo layout per schermi alti 360–430 px)
+- **Punti delicati**: nessuno nuovo; la pagina di prova non c'è più, quindi non serve escluderla da `main`
+- **Cosa devono fare gli altri**: **chi è di turno sui documenti**: spuntare **P115**, chiudere **D48** (in `DECISIONI.md`, Interfaccia), togliere da `CLAUDE.md` (punto delicato "Suoni" e riga "Stato") e da "Da dove si parte" la pagina di prova; la suite `frontend` ha 7 test in meno (`test_pagina_suoni.py`)
+
 ### Documenti: registrati P115–P121, aperta D48 (06/10/2026)
 
 - **Branch**: docs/aggiornamento-06-10

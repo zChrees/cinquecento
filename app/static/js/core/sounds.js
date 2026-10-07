@@ -46,7 +46,7 @@ export const SOUNDS = {
   win: ['win'],
   lose: ['lose'],
   tie: ['tie'],
-  // P115, suoni del menu (provvisori: li sceglie Christian con app/static/dev/suoni.html)
+  // P115, suoni del menu (scelti da Christian il 07/10/2026, D48)
   friend_request: ['friend-request'], // richiesta di amicizia ricevuta
   message: ['chat-message'], // messaggio di un amico
   invite: ['invite'], // invito a una partita
