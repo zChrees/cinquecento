@@ -22,6 +22,16 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: aperto P126 (registrazione senza scorrimento), registrato ngrok di Giuseppe (08/10/2026 sera, secondo giro)
+
+- **Branch**: docs/p126-registrazione
+- **File**: `SCALETTA.md` (punto nuovo **P126** nel tracker, con scheda in "Richieste dell'08/10/2026", riga della tabella di 9.1 e controllo di parallelismo; nota di **P39** con ngrok, da non spuntare; elenco di Christian; "Da dove si parte"), `DECISIONI.md` (Interfaccia: "Registrazione senza scorrimento", che aggiorna per accesso e registrazione la decisione del 28/09 "Pagine con un modulo"; Processo: D20 aggiornata con ngrok), `CLAUDE.md` (riga "Stato"), questo file. `DA-DECIDERE.md` invariato
+- **Controlli**: nessun test lanciato (solo documenti). Le misure di P126 [T] sono state prese in Chrome con uno script temporaneo fuori dal progetto, a 8 misure di schermo
+- **Decisioni prese** (Christian, 08/10): (1) **P126**: la registrazione non deve scorrere né dal telefono né dal computer, nemmeno dentro il riquadro; il modulo deve entrare sempre; opzione A (solo CSS in `auth.css`, solo sugli schermi bassi: spazi più stretti, sottotitolo nascosto sui telefoni bassi, suggerimento della password più piccolo, caselle da 44 px); file `auth.css` e `tests/frontend/test_pagine_accesso.py`, confermati; il lavoro si fa più tardi; (2) i **possibili errori della CPU** non diventano un punto finché non se ne parla (09/10, con Giuseppe)
+- **Riepiloghi registrati**: `christian.md` niente di nuovo oltre a questo; `giuseppe.md` fino a "P39 (in parte) — ngrok configurato e pagina con il QR code"; `antonio.md` niente di nuovo
+- **Domande nuove**: nessuna
+- **Cosa devono fare gli altri**: **Giuseppe**: niente di nuovo; P126 non tocca i tuoi `register.html` e `forms.py` (il testo del suggerimento della password resta quello). Se P126 arriva in `dev` dopo l'aggiornamento di `main`, va portato anche in `main` prima della demo
+
 ### Documenti: registrato P125, chiuso il "Da concordare" su `auth.js` (08/10/2026 sera)
 
 - **Branch**: docs/aggiornamento-08-10-sera
