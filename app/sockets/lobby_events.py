@@ -1,5 +1,5 @@
 """Entrata e uscita dalle code di matchmaking (P28, P29; contratto 4): queue:join, queue:leave.
-P68: cpu:start, la partita 1v1 contro la CPU.
+P68: cpu:start, la partita contro la CPU (P122: anche nel 2v2).
 
 - Tutto quello che arriva dalla pagina si controlla qui: un dato non valido si rifiuta
   con `invalid_data`, senza correzioni.
@@ -10,12 +10,17 @@ P68: cpu:start, la partita 1v1 contro la CPU.
   che chiama matchmaker.join_pair.
 - Annullare da un giocatore della coppia fa uscire tutta la coppia (partner_left).
 - La coda e gli abbinamenti stanno in app/realtime/matchmaking.py.
-- cpu:start `{"request_id", "target_score"}` (P68, D43): crea subito la partita 1v1,
-  tu al posto 0 e la CPU all'1 (chi comincia lo tira a sorte il motore), senza rating e
-  senza salvataggio; arriva game:start come dalla coda. `busy` se l'utente è già in
-  coda, in partita o ha un invito aperto. Gira sotto il lock degli inviti, come
-  invite:start: un invito non si apre mentre la partita parte.
+- cpu:start `{"request_id", "target_score", "mode"}` (P68, D43; P122, D49: `mode`
+  obbligatorio come in queue:join): crea subito la partita, senza rating e senza
+  salvataggio; arriva game:start come dalla coda. Tu sei sempre al posto 0 (chi comincia
+  lo tira a sorte il motore). Nel 1v1 la CPU è all'1; nel 2v2 "CPU 1", la compagna, è al
+  2 (di fronte), "CPU 2" all'1 e "CPU 3" al 3. Tutte le CPU hanno user_id 0 (D49): la
+  pagina le riconosce da `cpu`. `busy` se l'utente è già in coda, in partita o ha un
+  invito aperto. Gira sotto il lock degli inviti, come invite:start: un invito non si
+  apre mentre la partita parte.
 """
+
+from dataclasses import replace
 
 from flask import current_app, request
 from flask_login import current_user
@@ -33,8 +38,15 @@ MODES = ("1v1", "2v2")
 
 recent = RecentRequests()
 
+# P122 (D49): i posti delle CPU per modalità, con i nomi; il giocatore vero è al posto 0
+CPU_NAMES = {
+    "1v1": {1: "CPU"},
+    "2v2": {1: "CPU 2", 2: "CPU 1", 3: "CPU 3"},  # CPU 1 è la compagna, di fronte
+}
+
 
 def _join_data(data):
+    """`request_id`, `mode` e `target_score`, comuni a queue:join e cpu:start (P122)."""
     request_id, target_score = _request(data)
     mode = data.get("mode")
     if not isinstance(mode, str) or mode not in MODES:
@@ -43,7 +55,7 @@ def _join_data(data):
 
 
 def _request(data):
-    """`request_id` e `target_score`, comuni a queue:join e cpu:start."""
+    """`request_id` e `target_score`."""
     if not isinstance(data, dict):
         raise EventError("invalid_data", "Richiesta non valida.")
     request_id = data.get("request_id")
@@ -72,20 +84,22 @@ def on_leave(data=None):
 
 @handler
 def on_cpu_start(data=None):
-    """Partita contro la CPU (P68): risponde ok con `{"game_id"}`."""
-    request_id, target_score = _request(data)
+    """Partita contro la CPU (P68, P122): risponde ok con `{"game_id"}`."""
+    request_id, mode, target_score = _join_data(data)
     user = current_user._get_current_object()
-    return recent.run(user.id, "cpu:start", request_id, lambda: _start_cpu(user, target_score))
+    return recent.run(user.id, "cpu:start", request_id, lambda: _start_cpu(user, mode, target_score))
 
 
-def _start_cpu(user, target_score):
+def _start_cpu(user, mode, target_score):
+    names = CPU_NAMES[mode]
+    players = [Player.of(user)] + [replace(CPU_PLAYER, username=names[seat]) for seat in sorted(names)]
     with invites.lock:
         if user.id in matchmaker.queue:
             raise EventError("busy", "Sei già in coda: annulla la ricerca prima di giocare contro la CPU.")
         if invites.open_of(user.id) is not None:
             raise EventError("busy", "Hai un invito aperto: annullalo prima di giocare contro la CPU.")
         try:
-            room = create_room([Player.of(user), CPU_PLAYER], "1v1", target_score, rated=False, cpu_seats=(1,))
+            room = create_room(players, mode, target_score, rated=False, cpu_seats=tuple(names))
         except RoomError:
             raise EventError("busy", "Sei già in partita.") from None
     return {"game_id": room.id}

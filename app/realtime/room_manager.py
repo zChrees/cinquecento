@@ -9,6 +9,8 @@ Funzioni esposte da P24, che altri punti usano senza modificare questo file:
 
 P68: create_room(..., cpu_seats=(1,)) crea la partita contro la CPU (il giocatore
 CPU_PLAYER di room.py a quei posti): la CPU può essere in più partite insieme.
+P122 (D49): nel 2v2 le CPU sono tre, tutte con user_id 0: il controllo "stesso giocatore
+in due posti" guarda solo i giocatori veri.
 
 P88: create_room legge una volta sola il rating di ogni giocatore vero nella modalità
 della partita (gli stessi numeri del pannello statistiche, stats_service.stats_of) e
@@ -66,7 +68,8 @@ class RoomManager:
         players = tuple(Player.of(p) for p in players)
         if len(players) != MODES[mode]:
             raise RoomError(f"Nel {mode} servono {MODES[mode]} giocatori, non {len(players)}.")
-        if len({p.user_id for p in players}) != len(players):
+        humans = [p.user_id for seat, p in enumerate(players) if seat not in cpu_seats]
+        if len(set(humans)) != len(humans):
             raise RoomError("Lo stesso giocatore non può avere due posti.")
         ratings = _ratings_of(players, mode, cpu_seats)  # database: prima del lock dell'elenco
         with self._lock:

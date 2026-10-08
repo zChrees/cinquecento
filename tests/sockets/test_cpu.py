@@ -1,4 +1,4 @@
-"""P68: partita 1v1 contro la CPU con il server vero (D43).
+"""P68: partita 1v1 contro la CPU con il server vero (D43). P122: anche nel 2v2 (D49).
 
 Il giocatore vero è un client Socket.IO simulato (conftest.py); la CPU gioca nella
 stanza da sola. Le attese della CPU si riducono a pochi millesimi cambiando le
@@ -97,9 +97,9 @@ class Table:
         return self.client.call(event, data, timeout=WAIT)
 
 
-def start_cpu(client, target_score=150, request_id=None):
+def start_cpu(client, target_score=150, request_id=None, mode="1v1"):
     return client.call("cpu:start", {"request_id": request_id or uuid.uuid4().hex,
-                                     "target_score": target_score}, timeout=WAIT)
+                                     "target_score": target_score, "mode": mode}, timeout=WAIT)
 
 
 def my_turn_or_end(acted):
@@ -171,6 +171,10 @@ def test_stesso_request_id_una_partita_sola(connect, server):
     None, {}, {"target_score": 150}, {"request_id": "", "target_score": 150},
     {"request_id": "a", "target_score": 100}, {"request_id": "a", "target_score": "150"},
     {"request_id": "a", "target_score": True},
+    # P122 (D49): `mode` obbligatorio, come in queue:join
+    {"request_id": "a", "target_score": 150}, {"request_id": "a", "target_score": 150, "mode": None},
+    {"request_id": "a", "target_score": 150, "mode": "3v3"}, {"request_id": "a", "target_score": 150, "mode": "2V2"},
+    {"request_id": "a", "target_score": 150, "mode": 2},
 ])
 def test_dati_non_validi(connect, data):
     answer = connect("Primo").call("cpu:start", data, timeout=WAIT)
@@ -300,3 +304,102 @@ def test_se_la_vista_cambia_mentre_pensa_la_cpu_ci_ripensa(connect, users_for_cp
     view = first.wait_latest(lambda v: v["version"] > version and len(v["trick"]["cards"]) == 1)
     assert view["trick"]["cards"][0]["seat"] == 1  # la CPU ha giocato, dopo averci ripensato
     assert len(calls) >= 2 and calls[1] > calls[0]
+
+
+# --- 2v2: tu e CPU 1 contro CPU 2 e CPU 3 (P122, D49) -------------------------------
+
+
+def test_cpu_start_2v2_crea_la_partita(connect, server, inbox):
+    client = connect("Primo")
+    starts = inbox(client, "game:start")
+    answer = start_cpu(client, 500, mode="2v2")
+    assert answer["ok"] is True, answer
+    game_id = answer["data"]["game_id"]
+    assert starts.wait() and starts.items[0] == {"game_id": game_id, "url": f"/game/{game_id}"}
+    room = rooms.get(game_id)
+    assert room.cpu_seats == {1, 2, 3} and room.rated is False
+    assert room.members == {server["user_ids"]["Primo"]}  # le CPU non sono membri
+    table = Table(client)
+    assert table.call("game:join", {"game_id": game_id}) == ok()
+    view = table.wait_latest(lambda v: True)
+    assert view["mode"] == "2v2" and view["target_score"] == 500 and view["rated"] is False
+    assert view["you"] == {"seat": 0}
+    seen = [(p["seat"], p["team"], p["user_id"], p["username"], p["avatar"], p["rating"], p["cpu"], p["connected"])
+            for p in view["players"]]
+    assert seen[1:] == [
+        (1, 1, 0, "CPU 2", None, None, True, True),
+        (2, 0, 0, "CPU 1", None, None, True, True),  # la compagna, di fronte
+        (3, 1, 0, "CPU 3", None, None, True, True),
+    ]
+    assert seen[0][3] == "Primo" and seen[0][6] is False
+
+
+def test_2v2_e_1v1_con_lo_stesso_request_id(connect, server):
+    """Lo stesso tentativo resta lo stesso anche cambiando modalità: una partita sola."""
+    client = connect("Primo")
+    request_id = uuid.uuid4().hex
+    first = start_cpu(client, request_id=request_id, mode="2v2")
+    again = start_cpu(client, request_id=request_id, mode="1v1")
+    assert first["ok"] is True and again == first
+    assert rooms.get(first["data"]["game_id"]).cpu_seats == {1, 2, 3}
+
+
+def test_due_giocatori_contro_tre_cpu_insieme(connect, server):
+    assert start_cpu(connect("Primo"), mode="2v2")["ok"] is True
+    assert start_cpu(connect("Secondo"), mode="2v2")["ok"] is True
+    assert find_room_of_user(0) is None
+
+
+def play_2v2(table, game_id, seen):
+    """Come play_as_human, ma la prima volta che si vedono le carte della CPU compagna
+    prova a consigliarle una carta: il consiglio va rifiutato (D49)."""
+    acted = 0
+    for _ in range(1000):
+        view = table.wait_latest(my_turn_or_end(acted))
+        if view["status"] == "finished":
+            return view
+        if view["partner_hand"] and "advise" not in seen:
+            seen["partner_hand"] = view["partner_hand"]
+            seen["advise"] = table.call("game:advise", {"game_id": game_id, "card": view["partner_hand"][0]})
+        if view["legal"]["sing"]:
+            answer = table.call("game:sing", {"game_id": game_id, "version": view["version"],
+                                              "suit": view["legal"]["sing"][0]})
+        else:
+            answer = table.call("game:play_card", {"game_id": game_id, "version": view["version"],
+                                                   "card": view["legal"]["play"][0]})
+        assert answer == ok(), answer
+        acted = view["version"]
+    raise AssertionError("la partita non finisce")
+
+
+def test_partita_2v2_intera_contro_tre_cpu(connect, saved_matches, users_for_cpu):
+    """"Fatto quando" di P122: le tre CPU giocano fino in fondo, cantano e calano; le carte
+    della compagna si vedono a mazzo finito ma non si consigliano; la partita non si salva.
+    Con un mazzo fisso (rng) la partita è sempre la stessa: si gioca finché non si è visto tutto."""
+    before = saved_matches()
+    found = {"canta": False, "cala_carte": False, "partner_hand": False, "advise": False}
+    for seed in range(20):
+        players = [users_for_cpu["Primo"]] + [replace(CPU_PLAYER, username=n) for n in ("CPU 2", "CPU 1", "CPU 3")]
+        room = create_room(players, "2v2", 150, rated=False, rng=random.Random(seed),
+                           cpu_seats=(1, 2, 3), announce=False)
+        table = sit(connect, room.id)
+        seen = {}
+        final = play_2v2(table, room.id, seen)
+        assert final["result"]["reason"] == "score" and final["turn"] is None
+        played = {move.seat for move in room._moves if move.kind == "gioca_carta"}
+        assert {1, 2, 3} <= played  # tutte e tre le CPU hanno giocato davvero
+        assert all(move.kind != "mossa_automatica" for move in room._moves)  # nessuna CPU è rimasta ferma
+        found["canta"] |= any(move.seat in room.cpu_seats and move.kind == "canta" for move in room._moves)
+        found["cala_carte"] |= any(move.seat in room.cpu_seats and move.kind == "cala_carte" for move in room._moves)
+        if "advise" in seen:
+            found["partner_hand"] = True
+            answer = seen["advise"]
+            assert answer["ok"] is False and answer["error"]["code"] == "illegal_move", answer
+            assert answer["error"]["message"] == "La CPU non riceve consigli."
+            found["advise"] = True
+        table.client.disconnect()
+        rooms.remove(room.id)
+        if all(found.values()):
+            break
+    assert all(found.values()), found
+    assert saved_matches() == before  # come nel 1v1, la partita contro la CPU non si salva

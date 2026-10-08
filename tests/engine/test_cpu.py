@@ -4,6 +4,7 @@ Prima parte: il "giocatore medio" (heuristic_move, la prima CPU), che la strateg
 nelle mani immaginate; le situazioni si costruiscono a mano come viste del contratto (3.3).
 Seconda parte: la strategia "simulazione" (cpu_move), con partite giocate con il motore vero.
 Per andare veloci, quasi tutti i test riducono le mani immaginate (fixture quick).
+Le prove di forza (contro il giocatore medio, 1v1 e 2v2) stanno nella suite forza (P122).
 """
 
 import random
@@ -280,29 +281,6 @@ def test_a_mazzo_finito_sceglie_la_mossa_migliore(seed):
     action = cpu_move(view, random.Random(1), memories[seat])
     best = best_by_brute_force(game.hand, seat)
     assert best_by_brute_force(apply(game.hand, action), seat) == best
-
-
-def test_la_cpu_batte_il_giocatore_medio(monkeypatch):
-    """D43, "Fatto quando": batte la prima CPU in gran parte delle partite.
-
-    Qui pensa un terzo del vero, per stare nei tempi della suite: il 04/10/2026 con un terzo
-    ha vinto 28 partite su 40, con il budget vero 81 su 100. Qui 12 partite, per i tempi della suite. Con meno ancora (600, minimo 4
-    mani) perdeva: le mani immaginate sono troppo poche.
-    """
-    monkeypatch.setattr(cpu_module, "SIMULATED_PLAYS", 1500)
-    monkeypatch.setattr(cpu_module, "MIN_WORLDS", 8)
-    wins = 0
-    for seed in range(12):
-        mine = seed % 2  # metà delle partite da un posto, metà dall'altro
-
-        def mixed(game, seat, rng, memories, mine=mine):
-            if seat == mine:
-                return cpu(game, seat, rng, memories)
-            return heuristic_move(player_view(game, seat), rng)
-
-        game = play_game(2, seed, mixed)
-        wins += game.result.winner_team == mine
-    assert wins >= 8, wins
 
 
 def test_mossa_rifiutata_se_la_vista_e_vecchia(quick):

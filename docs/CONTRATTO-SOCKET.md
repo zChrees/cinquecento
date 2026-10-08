@@ -213,18 +213,20 @@ Stato della coda (esempio `"queue:status"` in `home_esempio.json`): `mode`, `tar
 
 Il 2v2 con gli amici non passa da `queue:join`: la coppia o il gruppo di tre entrano in coda con `invite:start` (5.3).
 
-### 4.1 Partita contro la CPU (P68, D43; proposta di Giuseppe del 04/10/2026, **da approvare da Christian**)
+### 4.1 Partita contro la CPU (P68, D43; P122, D49: anche nel 2v2, approvato da Giuseppe e Christian il 07/10/2026)
 
 | Evento | Chi → chi | Dati | Risposta |
 |---|---|---|---|
-| `cpu:start` | pagina → server | `{"request_id", "target_score"}` | `ok` con `data` = `{"game_id"}`, o errore (`busy`, `invalid_data`) |
+| `cpu:start` | pagina → server | `{"request_id", "target_score", "mode"}` | `ok` con `data` = `{"game_id"}`, o errore (`busy`, `invalid_data`) |
 
-- Crea **subito** una partita **1v1** contro la CPU (D43: solo 1v1), ai punti scelti (150, 300 o 500): tu al posto 0, la CPU al posto 1; chi comincia lo tira a sorte il server, come in ogni partita. Poi arriva `game:start` (3.2), come dalla coda, e il tavolo si apre come sempre.
+- `mode` è **obbligatorio**: `"1v1"` o `"2v2"`, controllato come in `queue:join`; mancante o diverso → `invalid_data` ("Modalità non valida.").
+- Crea **subito** la partita contro la CPU, ai punti scelti (150, 300 o 500); tu sei sempre al posto 0 e chi comincia lo tira a sorte il server, come in ogni partita. Nel **1v1** la CPU è al posto 1. Nel **2v2** (P122) giochi in coppia con una CPU contro due CPU: **"CPU 1"**, la tua compagna, al posto 2 (di fronte), **"CPU 2"** al posto 1 e **"CPU 3"** al posto 3. Poi arriva `game:start` (3.2), come dalla coda, e il tavolo si apre come sempre.
 - `request_id` come in 1.3: lo stesso tentativo ripetuto riceve la stessa risposta e crea una partita sola (doppio clic, due schede).
 - `busy` se sei già in coda, in partita o hai un invito aperto (mandato o ricevuto), con il messaggio da mostrare.
 - La partita **non conta** per il rating (`rated` `false`) e **non si salva**: niente statistiche (D43).
-- Nella vista la CPU è il giocatore con **`cpu: true`** (3.3): nome `"CPU"`, `user_id` 0, `avatar` e `rating` `null`, sempre `connected`. La pagina mostra l'icona del robot al posto dell'avatar (P73).
-- La CPU gioca da sola dopo un'attesa di circa 1–2 secondi, un po' a caso (più lunga dopo una presa o a inizio mano, per le animazioni del tavolo); canta, cala le carte (P84) e riceve gli stessi eventi degli altri giocatori. Se esci, la partita è persa per abbandono come sempre (`game:leave`).
+- Nella vista la CPU è il giocatore con **`cpu: true`** (3.3): nome `"CPU"` nel 1v1, `"CPU 1"`, `"CPU 2"`, `"CPU 3"` nel 2v2 (li decide il server); `user_id` 0 per **tutte** le CPU (D49: la pagina le distingue dal posto); `avatar` e `rating` `null`, sempre `connected`. La pagina mostra l'icona del robot al posto dell'avatar (P73).
+- Nel 2v2 la CPU compagna **non riceve consigli**: `game:advise` (P92) verso di lei risponde `illegal_move` con il messaggio "La CPU non riceve consigli.", e la pagina non mostra il pulsante (P123). La CPU non manda mai consigli. Le sue carte scoperte a mazzo finito (`partner_hand`, D46) si vedono come quelle di un compagno vero.
+- Ogni CPU gioca da sola dopo un'attesa di circa 1–2 secondi (uguale nel 1v1 e nel 2v2), un po' a caso (più lunga dopo una presa o a inizio mano, per le animazioni del tavolo); canta, cala le carte (P84) e riceve gli stessi eventi degli altri giocatori. Se esci, la partita è persa per abbandono come sempre (`game:leave`).
 
 ---
 

@@ -50,6 +50,9 @@ sceglie con cpu_move dalla sua vista, sotto il lock e con il numero di turno, co
 timer. Se canta, la stanza manda game:sang a tutti e aspetta di nuovo prima della carta.
 La partita non si salva e non conta per il rating; gli avvisi di inizio e fine
 partita vanno solo ai giocatori veri.
+
+P122 (D49): anche nel 2v2, con tre CPU (tutte user_id 0, nomi dati da lobby_events.py).
+La CPU compagna non riceve consigli (advise li rifiuta) e non ne manda.
 """
 
 import logging
@@ -362,6 +365,8 @@ class Room:
             if self.finished or not partner_cards_visible(hand):
                 raise InvalidMoveError("Le carte del compagno si vedono solo a mazzo finito, con la briscola.")
             partner = (seat + 2) % 4
+            if partner in self.cpu_seats:
+                raise InvalidMoveError("La CPU non riceve consigli.")  # P122, D49
             if card is None:
                 self._advice.pop(partner, None)
             elif card not in hand.hands[partner]:
