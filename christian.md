@@ -22,6 +22,16 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: chiusi P122, P123, P124, D49, D1 e D31 (08/10/2026)
+
+- **Branch**: docs/aggiornamento-08-10
+- **Decisioni prese** (Christian, 08/10): **consegna il 12/10/2026** (chiude D1); **niente da tagliare** (chiude D31: tutti i punti dell'ordine di taglio sono fatti o tolti). Resta aperta solo D21
+- **File**: `SCALETTA.md` (spuntati **P122**, **P123** e **P124**, quest'ultimo registrato come punto nuovo, con scheda in "Richieste del 07/10/2026", riga della tabella di 9.1 e lista definitiva in 9.2; liste definitive di P122 e P123; controllo di parallelismo; "Da dove si parte"), `DECISIONI.md` (Gioco: contratto di `cpu:start` per il 2v2, con `user_id` 0 per tutte le CPU), `DA-DECIDERE.md` (chiuse **D49**, **D1** e **D31**; anche in `DECISIONI.md`, Progetto e tempi, e nella sezione 5 di `SCALETTA.md`), `CLAUDE.md` (riga "Stato"; "Progetto": la CPU nel 1v1 e nel 2v2, la data di consegna; punti delicati "CPU" con la suite `forza` e le CPU con `user_id` 0, "Test nel browser e tempo reale" con `running_server`; "Testing": 1806 PASS in 12 suite), questo file
+- **Controlli**: nessun test lanciato (solo documenti); ultimo giro completo di Giuseppe, 08/10, dopo P122: **1806 PASS in 12 suite**, TUTTO PASS
+- **Riepiloghi registrati**: `christian.md` fino a "P124 (numero proposto) — Il server dei test non lascia schede online" (il numero P124 è confermato); `giuseppe.md` fino a "P122 — CPU nel 2v2: server"; `antonio.md` niente di nuovo
+- **Punti rimasti a Christian**: la prova a mano della CPU nel 2v2, P9, P36, P37
+- **Cosa devono fare gli altri**: **Giuseppe**: P38 e P39 (demo); da P124 `running_server` di `tests/browser.py` è cambiato, fai il pull prima di toccarlo
+
 ### P124 (numero proposto) — Il server dei test non lascia schede online (07/10/2026)
 
 - **Branch**: fix/p124-test-suoni-stabile
