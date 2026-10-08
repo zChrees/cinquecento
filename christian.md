@@ -22,6 +22,20 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P125 (numero proposto) — Script delle pagine di accesso e registrazione (08/10/2026)
+
+- **Branch**: feature/p125-auth-js
+- **Punto nuovo**: è il "Da concordare" di `js/pages/auth.js` (sezione 9 di `SCALETTA.md`), fatto da Christian con l'ok di Giuseppe ai suoi due template (P16); il numero lo conferma chi è di turno sui documenti
+- **File**: creati `app/static/js/pages/auth.js`, `tests/frontend/test_pagine_accesso.py`; modificati `app/templates/auth/login.html` e `register.html` (solo il blocco `page_script`, **file di Giuseppe, con il suo ok**), questo file. Non toccati rotte, moduli, testi né CSS
+- **Causa** [L, T]: accesso e registrazione erano le uniche pagine con la navbar ma senza script di pagina, quindi senza `initLayout()`: "Accedi" e "Amici" non aprivano niente e il logo non si girava. Senza script mancavano anche due regole del progetto: il pulsante del modulo non si spegneva (con un doppio clic sulla registrazione arrivavano **2 richieste** al server [T], e la seconda avrebbe trovato l'username già preso) e il modulo partiva anche senza connessione
+- **Cosa cambia**: `auth.js`, uno per le due pagine (come `profile.js`): (1) `initLayout()`: navbar e logo come nelle altre pagine; (2) al primo invio il pulsante si spegne (si riaccende tornando indietro alla pagina, `pageshow`); (3) senza connessione il modulo non parte e compare la finestra "Nessuna connessione" (`Modal.js`, stesso testo delle impostazioni)
+- **Controlli**: `test_pagine_accesso.py` **5 PASS** (nelle due pagine "Accedi" e "Amici" aprono "Accedi o registrati per giocare"; doppio clic = una richiesta sola, nelle due pagine; senza connessione niente richiesta e avviso, poi con la connessione il modulo parte); **senza le modifiche ai template falliscono tutti e 5** [T]. Il server del test conta i POST e risponde da sé dopo 1,5 s, quindi non serve il database. Suite `api` **300 PASS** (96 s), `frontend` **152 PASS** (159 s, 5 nuovi; era circa 140 s); giro completo non lanciato. `ruff check .` pulito
+- **Decisioni prese**: di Christian: fa lui il punto (ok di Giuseppe ai template) e nella versione completa (navbar e logo, pulsante spento, blocco senza rete). Prova a mano di P125 fatta da Christian l'08/10: tutto va bene
+- **Prova a mano della CPU nel 2v2** (non fa parte di P125): fatta da Christian l'08/10, **va bene**; forse si può rendere un po' più intelligente: se ne parla il 09/10 (con Giuseppe, se diventa un punto)
+- **Domande nuove**: nessuna
+- **Punti delicati**: nei test, `Input.dispatchMouseEvent` (clic vero del mouse da DevTools) **aspetta la fine della navigazione** quando il clic invia un modulo: per un doppio clic su un modulo il secondo clic va mandato dalla pagina (`setTimeout`), altrimenti finisce sulla pagina della risposta
+- **Cosa devono fare gli altri**: **Giuseppe**: `login.html` e `register.html` hanno una riga in più (`page_script`): fai il pull prima di toccarli. **Chi è di turno sui documenti**: registrare P125 nel tracker e in 9.2 con questa lista; togliere il "Da concordare" su `auth.js` da "Da dove si parte" e dalla riga "Stato" di `CLAUDE.md`; nel punto delicato "Navbar e pagine (P40)" ricordare che anche accesso e registrazione hanno ora il loro script (`auth.js`); la suite `frontend` è a circa 159 s (la più lunga dopo le `table*`)
+
 ### Documenti: chiusi P122, P123, P124, D49, D1 e D31 (08/10/2026)
 
 - **Branch**: docs/aggiornamento-08-10

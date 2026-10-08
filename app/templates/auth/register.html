@@ -13,6 +13,7 @@
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/auth.css') }}">
 {% endblock %}
+{% block page_script %}<script type="module" src="{{ url_for('static', filename='js/pages/auth.js') }}"></script>{% endblock %}
 
 {% macro field(input, type, autocomplete) %}
 {#- Le regole del campo (description nel modulo, per ora solo la password: P61) si
