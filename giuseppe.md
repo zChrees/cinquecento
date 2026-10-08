@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### P39 (in parte) — ngrok configurato e pagina con il QR code (08/10/2026)
+
+- **Branch**: docs/giuseppe-ngrok-qr (solo questo file: Giuseppe non è di turno sui documenti condivisi)
+- **File**: modificato solo questo file. **Nessun file del progetto toccato**: ngrok e la pagina del QR code stanno fuori dal repository. `docs/DEMO.md` non ancora riscritto
+- **ngrok** (sul PC di Giuseppe, il PC della demo per D20): versione **3.39.11** in `C:\ngrok\ngrok.exe` (fuori da OneDrive), `C:\ngrok` aggiunto al PATH dell'utente Windows [T]; account gratuito con il token salvato nella configurazione di ngrok (`%LOCALAPPDATA%\ngrok\ngrok.yml`, mai nel progetto; `ngrok config check` dice valida [T]). Dominio fisso gratuito dell'account: **`plentiful-craftsman-absence.ngrok-free.dev`**. Comando, con il sito già acceso: `ngrok http --url=plentiful-craftsman-absence.ngrok-free.dev 5000`; si chiude con `Ctrl+C`
+- **Prova** (08/10, sito di sviluppo, non ancora la demo da `main`): dal telefono con il tunnel aperto il sito **funziona** (prova a mano di Giuseppe). Dopo la chiusura: nessun processo ngrok, porte 4040 e 5000 libere e l'indirizzo pubblico risponde 404 [T]
+- **Pagina con il QR code**: porta a `https://plentiful-craftsman-absence.ngrok-free.dev`, con l'indirizzo scritto sotto e tre passi per i colleghi (inquadra, tocca "Visit Site" nella pagina di ngrok, registrati e gioca), con i colori e i font del sito. Salvata da Giuseppe sul suo PC (fuori dal progetto; la libreria del QR code è dentro il file, funziona anche senza rete; controllato che il codice si disegni [T]); ce n'è anche una copia privata su claude.ai. **Non ancora scansionata con un telefono**: da provare prima della presentazione
+- **Decisioni prese**: di Giuseppe, sulla raccomandazione di Claude: (1) **piano gratuito** di ngrok (basta per meno di 50 persone e dà un dominio fisso, così il QR code non cambia); (2) ngrok si installa sul PC della demo, **non** nel progetto (niente `pyngrok` né eseguibili nel repository); (3) la pagina del QR code resta fuori dal repository
+- **Domande nuove**: nessuna
+- **Punti delicati**: limiti del piano gratuito: **20.000 richieste e 1 GB in uscita al mese** (si azzerano il primo del mese) e una **pagina di avviso di ngrok** prima del sito, una volta per browser ("Visit Site"). Ogni telefono alla prima apertura fa circa un centinaio di richieste [D] (moduli JS, carte, avatar, suoni) e le prove contano nello stesso limite; se Socket.IO non usa il WebSocket le richieste salgono in fretta: dopo la prova generale guardare i consumi nella dashboard di ngrok. Il dominio finisce in `.ngrok-free.dev`, non `.ngrok-free.app`
+- **Note per gli altri**: **Chi è di turno sui documenti**: P38 e P39 restano **da non spuntare**; nella nota di P39 (sezione 2 di `SCALETTA.md`) e in "Da dove si parte": ngrok configurato e provato, pagina del QR code pronta (fuori dal repository); in `DECISIONI.md`, sotto la decisione della demo (D20): piano gratuito, dominio fisso `plentiful-craftsman-absence.ngrok-free.dev`, ngrok e QR code fuori dal repository. **Restano a Giuseppe**: riscrivere i campi di D20 in cima a `docs/DEMO.md` e il passo 11 per ngrok (senza il token), installare la demo da `main` (P38, dopo l'aggiornamento di `main`) e la prova generale con il QR code dal telefono (P39)
+
 ### P122 — CPU nel 2v2: server (08/10/2026)
 
 - **Branch**: feature/p122-cpu-2v2
