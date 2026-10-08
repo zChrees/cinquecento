@@ -22,6 +22,14 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: registrato P125, chiuso il "Da concordare" su `auth.js` (08/10/2026 sera)
+
+- **Branch**: docs/aggiornamento-08-10-sera
+- **File**: `SCALETTA.md` (spuntato **P125**, numero confermato, con scheda in "Richieste dell'08/10/2026" e riga della tabella di 9.1; elenco di Christian; "Da dove si parte": niente più "Da concordare", prova a mano della CPU nel 2v2 fatta, il 09/10 si decide se renderla più intelligente), `CLAUDE.md` (riga "Stato"; punto delicato "Navbar e pagine (P40)" con `auth.js` e il doppio clic nei test), questo file. `DECISIONI.md` e `DA-DECIDERE.md` invariati
+- **Controlli**: nessun test lanciato (solo documenti); ultimo giro completo di Giuseppe, 08/10, dopo P122: **1806 PASS in 12 suite**; dopo, P125 ha aggiunto 5 test (`frontend` 152 PASS)
+- **Riepiloghi registrati**: `christian.md` fino a "P125 (numero proposto) — Script delle pagine di accesso e registrazione"; `giuseppe.md` e `antonio.md` niente di nuovo
+- **Cosa devono fare gli altri**: **Giuseppe**: fai il pull (P125 ha toccato i tuoi `login.html` e `register.html`, una riga); il 09/10 ne parliamo per la CPU più intelligente
+
 ### P125 (numero proposto) — Script delle pagine di accesso e registrazione (08/10/2026)
 
 - **Branch**: feature/p125-auth-js
