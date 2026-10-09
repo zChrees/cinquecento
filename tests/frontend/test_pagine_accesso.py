@@ -6,7 +6,8 @@ il modulo partiva anche senza connessione. Qui si controlla, in Chrome o Edge se
 finestra (tests/browser.py, saltato se nessuno dei due è installato):
 - "Accedi" e "Amici" aprono la finestra "Accedi o registrati per giocare";
 - un doppio clic (due clic a 0,15 s) manda una sola richiesta;
-- senza connessione il modulo non parte e compare "Nessuna connessione".
+- senza connessione il modulo non parte e compare "Nessuna connessione";
+- (P126) a ogni misura di schermo il riquadro entra sotto la navbar, senza scorrere.
 
 Il server dei test non arriva mai alle rotte vere: un `before_request` conta i POST
 e risponde da sé dopo 1,5 s (così il secondo clic arriva mentre il primo aspetta),
@@ -21,6 +22,8 @@ import pytest
 from app import create_app
 from tests.browser import Browser, find_browser, running_server
 
+SCREENS = [(360, 640), (375, 667), (390, 844), (412, 915),
+           (1024, 768), (1280, 720), (1366, 768), (1920, 1080)]
 PAGES = {"login": "/auth/login", "register": "/auth/register"}
 FORM = {"login": "[data-login-form]", "register": "[data-register-form]"}
 ANSWER_SECONDS = 1.5
@@ -130,3 +133,33 @@ def test_senza_connessione_il_modulo_non_parte(server, browser):
     _mouse_click(browser, submit)
     browser.wait_js("document.querySelector('[data-received]') !== null", "risposta del server")
     assert _posts(server, PAGES["login"]) == 1
+
+
+# Il riquadro, il pulsante e il collegamento sotto devono stare dentro lo schermo, e la
+# pagina (che scorre solo come ultima risorsa, layout.css) non deve avere niente da scorrere.
+MEASURE = """(() => {
+  const page = document.querySelector('main.page');
+  const bottom = (s) => document.querySelector(s).getBoundingClientRect().bottom;
+  const heights = [...document.querySelectorAll('.auth .input, .auth button[type=submit]')]
+    .map((e) => e.getBoundingClientRect().height);
+  return { overflow: page.scrollHeight - page.clientHeight, screen: innerHeight,
+           panel: bottom('.auth'), submit: bottom('.auth button[type=submit]'),
+           link: bottom('.auth__switch a'), smallest: Math.min(...heights) };
+})()"""
+
+
+@pytest.mark.parametrize("page", PAGES)
+def test_il_modulo_entra_senza_scorrere(server, browser, page):
+    # Un browser solo per le otto misure: aprire Chrome per ognuna allungava la suite di 30 s.
+    problems = []
+    for width, height in SCREENS:
+        browser.open(f"{server[0]}{PAGES[page]}", width, height,
+                     f"document.querySelector('{FORM[page]}') !== null && document.fonts.status === 'loaded'")
+        m = browser.js(MEASURE)
+        if m["overflow"] > 0:
+            problems.append(f"{width}x{height}: la pagina scorre di {m['overflow']} px")
+        if max(m["panel"], m["submit"], m["link"]) > m["screen"]:
+            problems.append(f"{width}x{height}: riquadro fuori dallo schermo {m}")
+        if m["smallest"] < 44:
+            problems.append(f"{width}x{height}: caselle e pulsante sotto i 44 px ({m['smallest']})")
+    assert not problems, "; ".join(problems)

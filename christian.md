@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P126 — La registrazione entra nello schermo, senza scorrimento (09/10/2026)
+
+- **Branch**: feature/p126-registrazione
+- **File**: modificati `app/static/css/pages/auth.css`, `tests/frontend/test_pagine_accesso.py`, questo file. Non toccati `layout.css`, `register.html` e `forms.py` (il testo del suggerimento della password non cambia)
+- **Cosa cambia** (opzione A, solo CSS, solo sugli schermi bassi): **fino a 800 px di altezza** meno margine sopra e sotto il riquadro (8 px invece di 16), spazi più stretti tra titolo, campi e pulsante, pulsante alto 48 px; **fino a 700 px** (telefoni bassi) niente sottotitolo, titolo un po' più piccolo, suggerimento della password più piccolo (0,8 rem), pulsante alto 44 px. A 390×844, 412×915 e 1920×1080 la pagina è identica a prima. Vale anche per l'accesso, che entrava già (ora è più compatto sugli schermi bassi)
+- **Misure** [T] (riquadro della registrazione, prima → dopo; margine che resta): 360×640 686 → 526 px (34 px); 375×667 686 → 509 (78); 1024×768 e 1366×768 657 → 591 (77); 1280×720 657 → 591 (29)
+- **Controlli**: `test_pagine_accesso.py` **7 PASS** (2 nuovi, `test_il_modulo_entra_senza_scorrere`, uno per pagina: alle 8 misure della scaletta la pagina non scorre, riquadro, pulsante e collegamento sotto sono dentro lo schermo, caselle e pulsante alti almeno 44 px); **senza la modifica al CSS il test della registrazione fallisce** proprio a 360×640, 375×667, 1024×768, 1280×720 e 1366×768 [T]. Suite `frontend` **154 PASS** (170 s). Le 8 misure stanno in un test per pagina con un solo browser: con 16 test separati la suite saliva a 193 s. Giro completo non lanciato. `ruff check` pulito
+- **Decisioni prese** (Christian, 09/10): con **due o più messaggi d'errore insieme** sotto i campi la registrazione può ancora scorrere di poco (opzione A: si accetta). Misure [T]: a 360×640 e 1280×720 bastano 2 errori (16 e 25 px in più), a 375×667 e 1024×768 ne servono 3; con un errore solo entra sempre. Scartata l'opzione B (nascondere il suggerimento della password quando c'è un errore: con 3–4 errori scorreva comunque)
+- **Domande nuove**: nessuna
+- **Punti delicati**: le regole per gli schermi bassi di `auth.css` toccano anche `.page--form`, ma valgono solo per accesso e registrazione (il file lo caricano solo loro). Se si aggiunge un campo o si allunga un testo della registrazione, `test_il_modulo_entra_senza_scorrere` lo segnala: a 1280×720 restano solo 29 px
+- **Cosa devono fare gli altri**: **Chi è di turno sui documenti**: spuntare **P126** (tracker e tabella di 9.1), registrare in `DECISIONI.md` (Interfaccia, accanto a "Registrazione senza scorrimento") che con due o più errori insieme il riquadro può scorrere; prova a mano di Christian (telefono e PC) ancora da fare. **Giuseppe**: niente; se P126 arriva in `dev` dopo l'aggiornamento di `main`, va portato anche in `main` prima della demo
+
 ### Documenti: aperto P126 (registrazione senza scorrimento), registrato ngrok di Giuseppe (08/10/2026 sera, secondo giro)
 
 - **Branch**: docs/p126-registrazione
