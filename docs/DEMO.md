@@ -2,12 +2,10 @@
 
 Guida per chi prepara la demo (P38 e P39). Si segue dall'alto in basso, sul PC che ospita la demo; ogni comando si lancia in **PowerShell**.
 
-> **Da decidere (D20)** prima di cominciare:
-> - **quale PC ospita la demo**: ____________________
-> - **come si collegano gli altri**: stessa rete Wi-Fi (consigliato) oppure un tunnel come ngrok: ____________________
-> - **da quale branch si installa**: finché `main` non viene aggiornato si usa `dev` (portare `dev` in `main` lo decide il gruppo).
->
-> Finché D20 non è deciso questa guida si può leggere, ma non seguire.
+> **Deciso (D20, 29/09/2026; ngrok configurato l'08/10/2026)**:
+> - **quale PC ospita la demo**: il PC di **Giuseppe**;
+> - **come si collegano gli altri**: un **tunnel ngrok** (piano gratuito, dominio fisso), con un **QR code** da inquadrare con il telefono (passo 11); se ngrok non va, la stessa rete Wi-Fi (passo 11b);
+> - **da quale branch si installa**: **`main`**, il branch di produzione, aggiornato con i soli file del sito.
 
 ## Perché una cartella separata
 
@@ -31,8 +29,11 @@ Fuori da OneDrive e da cartelle sincronizzate (un file bloccato dalla sincronizz
 ```powershell
 git clone https://github.com/zChrees/cinquecento.git C:\cinquecento-demo
 cd C:\cinquecento-demo
-git switch dev
+git branch --show-current
+# → main
 ```
+
+Il clone scarica `main`. Prima di installare, controlla che `main` sia stato aggiornato: `git log --oneline -3` non deve mostrare solo il primo commit.
 
 ## 3. Il file PRODUZIONE
 
@@ -80,7 +81,7 @@ Poi, nel `.env`:
 |---|---|
 | `APP_ENV` | `demo` |
 | `SECRET_KEY` | la stringa appena generata (**diversa** da quella di sviluppo) |
-| `HOST` | `0.0.0.0` se gli altri si collegano dalla rete locale (P39), altrimenti `127.0.0.1` |
+| `HOST` | `127.0.0.1` con ngrok (il tunnel si collega dal PC stesso); `0.0.0.0` solo con la stessa rete Wi-Fi (passo 11b) |
 | `PORT` | `5000` |
 | `DB_USER` / `DB_PASSWORD` | l'utente `cinquecento` e la sua password, tra apici singoli: `DB_PASSWORD='...'` |
 | `DB_NAME` | `cinquecento` |
@@ -96,7 +97,7 @@ python scripts\migrate.py
 python run.py
 ```
 
-Deve comparire `Cinquecento (demo): http://0.0.0.0:5000` (o `127.0.0.1`). Nella demo la home non usa i dati finti di sviluppo (`/?demo=rientro` risponde 404) e il debug è spento. Per fermarlo: **Ctrl+C** nella finestra di PowerShell.
+Deve comparire `Cinquecento (demo): http://127.0.0.1:5000` (o `0.0.0.0` con la stessa rete Wi-Fi). Nella demo la home non usa i dati finti di sviluppo (`/?demo=rientro` risponde 404) e il debug è spento. Per fermarlo: **Ctrl+C** nella finestra di PowerShell.
 
 ## 8. Backup pianificato
 
@@ -147,9 +148,38 @@ python run.py
 
 Nella cartella della demo **non si modifica mai il codice**: si cambia nella cartella di sviluppo, passa da `dev`, e qui si fa solo `git pull`.
 
-## 11. Accesso dagli altri dispositivi (P39)
+## 11. Accesso dagli altri dispositivi con ngrok (P39)
 
-Solo se D20 sceglie la **stessa rete Wi-Fi**:
+ngrok crea un indirizzo pubblico in `https` che porta al server acceso sul PC. Non serve aprire porte nel firewall e i telefoni possono stare su qualunque rete, anche in 4G.
+
+**Una volta sola** (sul PC di Giuseppe è già fatto, l'08/10/2026):
+
+1. Scarica ngrok (versione usata: **3.39.11**) da `ngrok.com` e metti `ngrok.exe` in `C:\ngrok`, **fuori da OneDrive**; aggiungi `C:\ngrok` al PATH dell'utente Windows.
+2. Crea un account gratuito su `ngrok.com` e salva il token dell'account nella configurazione di ngrok:
+
+   ```powershell
+   ngrok config add-authtoken <IL-TUO-TOKEN>
+   ngrok config check
+   ```
+
+   Il token resta in `%LOCALAPPDATA%\ngrok\ngrok.yml`: **mai** nel progetto, in chat o in una foto (come il `.env`).
+3. Nella dashboard di ngrok, alla voce "Domains", prendi il **dominio fisso gratuito** dell'account. Quello della demo è `plentiful-craftsman-absence.ngrok-free.dev`: non cambia, quindi il QR code resta sempre lo stesso.
+
+**Il giorno della demo**, con il server già acceso (passo 7), in una **seconda** finestra di PowerShell:
+
+```powershell
+ngrok http --url=plentiful-craftsman-absence.ngrok-free.dev 5000
+```
+
+- Dai telefoni si apre `https://plentiful-craftsman-absence.ngrok-free.dev`, oppure si inquadra il **QR code**. La pagina con il QR code sta sul PC di Giuseppe, fuori dal repository, e funziona anche senza rete.
+- Alla prima apertura ngrok mostra una sua **pagina di avviso**, una volta per browser: si tocca **"Visit Site"**.
+- Per chiudere il tunnel: **Ctrl+C** nella finestra di ngrok. Dopo, l'indirizzo pubblico non porta più al PC.
+
+**Limiti del piano gratuito**: **20.000 richieste e 1 GB in uscita al mese** (si azzerano il primo del mese). Ogni telefono alla prima apertura fa circa un centinaio di richieste (pagine, carte, avatar, suoni), e anche le prove contano. Dopo la prova generale guarda i consumi nella dashboard di ngrok.
+
+## 11b. In alternativa: la stessa rete Wi-Fi
+
+Solo se ngrok non funziona:
 
 1. Nel `.env` della demo `HOST=0.0.0.0` (passo 6), poi riavvia il server.
 2. La rete Wi-Fi del PC deve essere **privata** (Impostazioni → Rete e Internet → Wi-Fi → la rete → Tipo di profilo di rete: Privata).
@@ -161,9 +191,7 @@ Solo se D20 sceglie la **stessa rete Wi-Fi**:
 
    Per toglierla dopo la demo: `Remove-NetFirewallRule -DisplayName "Cinquecento demo"`.
 4. L'indirizzo del PC: `ipconfig`, riga "Indirizzo IPv4" della scheda Wi-Fi (per esempio `192.168.1.23`).
-5. Dai telefoni: `http://192.168.1.23:5000` (con l'indirizzo vero). È `http`, non `https`: va bene sulla rete di casa o della scuola.
-
-Se D20 sceglie un tunnel (ngrok), questo passo va riscritto.
+5. Dai telefoni: `http://192.168.1.23:5000` (con l'indirizzo vero). È `http`, non `https`: va bene sulla rete di casa o della scuola. Il QR code del passo 11 qui non serve: porta all'indirizzo di ngrok.
 
 ## 12. Lista di controllo del giorno della demo (P39)
 
@@ -173,13 +201,15 @@ Prima (almeno il giorno prima):
 - [ ] backup fatto e copiato fuori dal PC
 - [ ] PC in carica, sospensione e aggiornamenti di Windows rimandati per la durata della demo
 - [ ] copia del `.env` a portata di mano
+- [ ] QR code provato con un telefono: si apre il sito, dopo "Visit Site" (passo 11)
+- [ ] consumi di ngrok del mese lontani dal limite (dashboard di ngrok)
 
 Il giorno della demo:
 
 - [ ] MySQL acceso, `python run.py` avviato, nessun errore nella finestra
 - [ ] dal PC stesso la home si apre e il login funziona
-- [ ] da un telefono sulla stessa rete la home si apre (passo 11)
+- [ ] tunnel ngrok aperto nella seconda finestra (passo 11) e dal telefono, con il QR code, la home si apre
 - [ ] prova generale (fatto quando di P39): **tre telefoni e un PC** si registrano, diventano amici, si invitano e giocano **una partita 2v2 completa**
-- [ ] dopo la demo: un backup (passo 8, `Start-ScheduledTask ...`) e, se non serve più, la regola del firewall tolta
+- [ ] dopo la demo: tunnel chiuso (Ctrl+C), un backup (passo 8, `Start-ScheduledTask ...`) e, se è stata usata la Wi-Fi (passo 11b), la regola del firewall tolta
 
 Se qualcosa non va: guarda `logs\cinquecento.log` (errori del server) e `logs\backup.log` (backup).

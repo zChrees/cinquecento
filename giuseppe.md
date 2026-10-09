@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### P39 (in parte) — `docs/DEMO.md` riscritta per ngrok e per `main` (10/10/2026)
+
+- **Branch**: feature/p39-demo-ngrok
+- **File**: modificati `docs/DEMO.md`, questo file
+- **Cosa cambia**: in cima le scelte di D20 al posto dei campi vuoti (PC di Giuseppe, tunnel ngrok con QR code, Wi-Fi come riserva, installazione da `main`); passo 2: il clone scarica `main`, con il controllo che `main` sia stato aggiornato (niente più `git switch dev`); passo 6: `HOST=127.0.0.1` con ngrok (il tunnel si collega dal PC stesso, nessuna porta aperta nel firewall), `0.0.0.0` solo con la Wi-Fi; **passo 11 nuovo** per ngrok: installazione in `C:\ngrok` fuori da OneDrive, `ngrok config add-authtoken <IL-TUO-TOKEN>` (il token mai nel progetto), dominio fisso `plentiful-craftsman-absence.ngrok-free.dev`, comando del giorno della demo, "Visit Site", limiti del piano gratuito; il vecchio passo della Wi-Fi diventa **11b**; lista di controllo con QR code provato, consumi di ngrok e tunnel chiuso a fine demo
+- **Controlli**: suite `db` **89 PASS** (`test_guida_con_i_passi_della_demo` legge la guida: tutte le parole che cerca ci sono ancora). Nessun altro test legge `DEMO.md`; il giro completo di poco prima (P127) era 1825 PASS
+- **Decisioni prese**: nessuna nuova (quelle dell'08/10 su ngrok, già nel riepilogo di quel giorno)
+- **Domande nuove**: nessuna
+- **Punti delicati**: la guida dice di installare da `main`, che su GitHub ha ancora solo il primo commit: P38 si può fare solo dopo l'aggiornamento di `main`
+- **Note per gli altri**: **Chi è di turno sui documenti**: nella nota di P39 "`docs/DEMO.md` riscritta il 10/10"; P38 e P39 restano **da non spuntare** (mancano la demo da `main`, il QR code provato dal telefono e la prova generale)
+
 ### P127 (numero proposto) — CPU: niente carichi regalati né Re e Cavalli buttati a pari merito (D50, 10/10/2026)
 
 - **Branch**: feature/p127-cpu-errori
