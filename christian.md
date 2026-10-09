@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P9 (in parte) — README riscritto e installazione provata su un clone nuovo (10/10/2026)
+
+- **Branch**: feature/p9-readme
+- **File**: modificato `README.md` (tutto il file), questo file
+- **Scelte di Christian** (10/10): (1) la prima versione del 03/10 era stata annullata perché **troppo presto** (il codice cambiava ancora); (2) P9 copre **tutto il README**, non solo l'installazione; (3) il README è scritto per **chi valuta il progetto e chi lo installa** (andrà in `main`): presentazione in alto, installazione da `main`, regole di lavoro brevi con i collegamenti ai documenti del branch `dev` su GitHub (scaletta, decisioni, domande aperte e `CLAUDE.md` non vanno in `main`); (4) la prova su un altro PC la fa **Giuseppe** sul suo PC
+- **Cosa cambia**: tolto lo stato del 27/09; funzioni aggiornate (CPU nel 1v1 e nel 2v2, calata, carte del compagno e consiglio, suoni, login con email, statistiche e rating provvisorio, blocchi, inviti a più amici); struttura delle cartelle presa dai file veri (`cpu.py`, `lay_down.py`, `sounds/`, `fonts/`, `pianifica_backup.ps1`, suite `forza`, `table`, `table2`, `table3`); installazione con requisiti dei test (Chrome o Edge, Node facoltativo, internet la prima volta), comandi PowerShell, `activate` bloccato, chiave segreta, errore 1045; test con le 12 suite, circa un quarto d'ora, porta 5099 e PC libero; "Come lavoriamo" con la regola dei riepiloghi e dei documenti a turno (prima diceva "solo Christian" e "`main` non si tocca"); crediti di carte (Matsoftware, CC BY-SA 3.0) e suoni (Kenney, CC0); una riga dice che il lavoro è stato fatto con l'aiuto di Claude Code
+- **Controlli** [T]: su un clone nuovo di `dev` in una cartella temporanea fuori dal progetto: `py -3.14 --version` → 3.14.4, ambiente virtuale e `pip install` dei due file riusciti, `ruff check .` "All checks passed!", chiave da 64 caratteri, `copy .env.example .env` va; con una password sbagliata `run.py` si ferma con "errore MySQL 1045", come scritto. **Non provati** qui: il passo 6 (`setup_db.sql`, già fatto su questo PC), l'avvio con il database vero, le suite sul clone e `Set-ExecutionPolicy` (preso dalla prima versione). Nessuna suite lanciata: nessun test legge il README. Clone temporaneo cancellato
+- **Decisioni prese**: quelle di Christian qui sopra
+- **Domande nuove**: nessuna; da decidere all'aggiornamento di `main`: se `tests/` va in `main` (il README ha la sezione "Test" e il passo 8 dice di lanciarli: se `tests/` resta fuori, vanno adattati)
+- **Punti delicati**: il clone senza `-b` scarica `main`, che su GitHub ha ancora solo il primo commit: finché `main` non viene aggiornato, il passo 3 funziona solo con `-b dev` (il README lo dice per chi lavora al progetto)
+- **Cosa devono fare gli altri**: **Giuseppe**: quando installi la demo da `main` (P38), segui anche il `README.md` dall'inizio (o almeno passi 1–8) e scrivi nel tuo riepilogo cosa non torna: è la prova che chiude P9. **Chi è di turno sui documenti**: P9 resta **da non spuntare** finché Giuseppe non ha fatto la prova; nella nota di P9: README riscritto il 10/10, scelte di Christian
+
 ### Documenti: registrato P126, aperta D50 sulla CPU (09/10/2026)
 
 - **Branch**: docs/aggiornamento-09-10
