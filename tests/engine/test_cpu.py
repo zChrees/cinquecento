@@ -292,3 +292,147 @@ def test_mossa_rifiutata_se_la_vista_e_vecchia(quick):
     game = apply_game(game, auto_move(game, rng), rng=rng)
     with pytest.raises(InvalidMoveError):
         apply_game(game, cpu_move(old, random.Random(1)), rng=rng)
+
+
+# --- Pari merito (P127, D50) ---------------------------------------------------------
+
+
+def situation(players, seed, step):
+    """Vista e memoria del posto 0 dopo `step` mosse di una partita giocata dal giocatore medio."""
+    rng = random.Random(seed)
+    game = new_game(players, 150, rng=rng)
+    memories = {seat: CpuMemory() for seat in range(players)}
+    for _ in range(step):
+        for seat, memory in memories.items():
+            memory.see(player_view(game, seat))
+        game = apply_game(game, heuristic_move(player_view(game, game.hand.turn_seat), rng), rng=rng)
+    for seat, memory in memories.items():
+        memory.see(player_view(game, seat))
+    assert game.hand.turn_seat == 0
+    return player_view(game, 0), memories[0]
+
+
+@pytest.mark.parametrize(("players", "seed", "step", "bad"), [
+    # 2v2: il Tre di denari finiva agli avversari 16 volte su 20 con la CPU di prima
+    (4, 2, 30, {"denari-3"}),
+    # 2v2, inizio mano: Tre e Asso regalati o il Re di spade buttato 12 volte su 20
+    (4, 0, 1, {"coppe-3", "denari-1", "spade-10"}),
+    # 2v2 da ultima: un Cavallo ancora accoppiabile buttato 9 volte su 20
+    (4, 1, 11, {"bastoni-9", "denari-9"}),
+    # 1v1: Asso regalato o Cavallo buttato 10 volte su 20
+    (2, 0, 24, {"coppe-1", "coppe-9", "spade-1"}),
+    # 1v1 da ultima: il Cavallo di coppe buttato 5 volte su 20
+    (2, 0, 29, {"coppe-9"}),
+])
+def test_a_pari_merito_non_regala_carichi_ne_butta_re_e_cavalli(quick, players, seed, step, bad):
+    """Situazioni vere trovate il 10/10/2026: tra carte che valgono quasi uguale decideva il caso.
+
+    Dipendono dai semi fissi, come la suite forza: se cambia il modo in cui motore o giocatore
+    medio usano rng, la situazione cambia (il primo assert lo segnala).
+    """
+    view, memory = situation(players, seed, step)
+    assert bad < {f"{card['suit']}-{card['rank']}" for card in view["legal"]["play"]}
+    for attempt in range(20):
+        move = cpu_move(view, random.Random(attempt), CpuMemory(memory.hand_number, set(memory.seen)))
+        assert played(move) not in bad, (attempt, played(move))
+
+
+def test_pari_merito_entro_due_volte_l_incertezza():
+    # La prima mossa vale sempre 10 punti di più: nessun pari merito
+    assert cpu_module._ties([[10, 0], [12, 2], [9, -1], [11, 1]]) == [0]
+    # Distacco medio di mezzo punto con differenze di ±5: pari merito
+    assert cpu_module._ties([[5, 0], [-5, 0], [6, 0], [-4, 0]]) == [0, 1]
+    # Una mano sola (calcolo esatto): pari merito solo a valore uguale
+    assert cpu_module._ties([[3, 3, 1]]) == [0, 1]
+
+
+def table_view(hand, plays=(), players=2, trump=None, deck=10, sings=(), partner=None):
+    """Vista per gli aiuti del pari merito: plays sono coppie (posto, carta) già sulla presa."""
+    view = {
+        "you": {"seat": 0},
+        "players": [{"seat": seat, "team": seat % 2, "cards_in_hand": 5} for seat in range(players)],
+        "hand": [card_to_dict(c(code)) for code in hand],
+        "trick": {"leader_seat": plays[0][0] if plays else 0,
+                  "cards": [{"seat": seat, "card": card_to_dict(c(code))} for seat, code in plays]},
+        "trump": trump,
+        "deck_count": deck,
+        "sings": [{"seat": 1, "suit": suit, "points": 40} for suit in sings],
+    }
+    if partner is not None:
+        view["partner_hand"] = [card_to_dict(c(code)) for code in partner]
+    return view
+
+
+def test_re_e_cavalli_accoppiabili():
+    pairable = cpu_module._pairable
+    empty = CpuMemory()
+    # Il Cavallo di spade non è uscito e si può ancora pescare
+    assert pairable(c("spade-10"), table_view(["spade-10", "denari-2"]), empty)
+    # ... non se è uscito, se spade è già cantato o se la carta non si canta
+    assert not pairable(c("spade-10"), table_view(["spade-10"]), CpuMemory(None, {c("spade-9")}))
+    assert not pairable(c("spade-10"), table_view(["spade-10"], sings=["spade"]), empty)
+    assert not pairable(c("spade-1"), table_view(["spade-1"]), empty)
+    # Né se il Cavallo è scoperto in mano al compagno (con lui non si canta)
+    assert not pairable(c("spade-10"), table_view(["spade-10"], players=4, partner=["spade-9"]), empty)
+    # A mazzo finito serve averlo in mano e restare con almeno 3 carte
+    assert not pairable(c("spade-10"), table_view(["spade-10", "denari-2", "coppe-4", "bastoni-5"], deck=0), empty)
+    hand = ["spade-10", "spade-9", "coppe-4", "bastoni-5"]
+    assert pairable(c("spade-10"), table_view(hand, deck=0), empty)
+    assert not pairable(c("spade-10"), table_view(hand[:3], deck=0), empty)
+
+
+def test_carico_al_sicuro_solo_se_nessuna_carta_non_vista_lo_batte():
+    safe = cpu_module._safe_load
+    view = table_view(["denari-1", "coppe-2"], plays=[(3, "denari-4")], players=4)
+    # 2v2, secondo: l'Asso di denari sul 4 senza briscola non lo batte nessuno
+    assert safe([(3, c("denari-4"))], c("denari-1"), 0, None, view, CpuMemory())
+    # Con la briscola a coppe una coppe non vista lo prende
+    assert not safe([(3, c("denari-4"))], c("denari-1"), 0, Suit.COPPE, view, CpuMemory())
+    # Il Tre di denari è battuto dall'Asso, finché l'Asso non è uscito
+    view = table_view(["denari-3", "coppe-2"], plays=[(3, "denari-4")], players=4)
+    assert not safe([(3, c("denari-4"))], c("denari-3"), 0, None, view, CpuMemory())
+    assert safe([(3, c("denari-4"))], c("denari-3"), 0, None, view, CpuMemory(None, {c("denari-1")}))
+    # Una presa che resta agli avversari non è mai al sicuro
+    assert not safe([(3, c("denari-1"))], c("denari-3"), 0, None, view, CpuMemory())
+
+
+def test_da_ultima_gioca_il_risultato_migliore_nella_presa():
+    preferred = cpu_module._preferred
+    moves = [PlayCardAction(0, c(code)) for code in ("spade-1", "bastoni-2", "spade-7")]
+    # Sul 4 di spade l'Asso prende 11 punti
+    view = table_view(["spade-1", "bastoni-2", "spade-7"], plays=[(1, "spade-4")])
+    assert preferred(view, CpuMemory(), moves, [0, 0, 0]) == [moves[0]]
+    # Sull'Asso di denari nessuna prende: la carta che dà meno punti, non di briscola, la più debole
+    view = table_view(["spade-1", "bastoni-2", "spade-7"], plays=[(1, "denari-1")], trump="coppe")
+    assert preferred(view, CpuMemory(), moves, [0, 0, 0]) == [moves[1]]
+
+
+def test_costretta_sacrifica_il_re_e_tiene_il_carico():
+    # 2v2, secondo dopo un avversario: Asso di coppe che può finire agli avversari o Re di spade
+    # ancora accoppiabile: gioca il Re, anche se la stima del carico è un po' più alta
+    view = table_view(["coppe-1", "spade-10"], plays=[(3, "denari-4")], players=4, trump="denari")
+    moves = [PlayCardAction(0, c("coppe-1")), PlayCardAction(0, c("spade-10"))]
+    assert cpu_module._preferred(view, CpuMemory(), moves, [5, 3]) == [moves[1]]
+
+
+def test_calcolo_esatto_nel_2v2_a_mazzo_finito_con_poche_carte():
+    def players_with(count, cards):
+        return [{"seat": seat, "team": seat % 2, "cards_in_hand": cards} for seat in range(count)]
+    assert cpu_module._exact_worlds({"players": players_with(4, 3), "deck_count": 0})
+    assert not cpu_module._exact_worlds({"players": players_with(4, 4), "deck_count": 0})
+    assert not cpu_module._exact_worlds({"players": players_with(4, 3), "deck_count": 4})
+    # Nel 1v1 a mazzo finito c'è già una mano sola, calcolata in modo esatto
+    assert not cpu_module._exact_worlds({"players": players_with(2, 3), "deck_count": 0})
+
+
+def test_passo_del_calcolo_esatto_uguale_alla_differenza_dei_punti():
+    """_step_gain (P127) conta solo le carte prese e i canti nuovi: deve dare quanto _gain."""
+    for players in (2, 4):
+        rng = random.Random(players)
+        state = new_game(players, 500, rng=rng).hand
+        while not state.finished:
+            after = apply(state, cpu_module._policy(state, rng))
+            for seat in range(players):
+                expected = cpu_module._gain(after, seat) - cpu_module._gain(state, seat)
+                assert cpu_module._step_gain(state, after, seat) == expected
+            state = after

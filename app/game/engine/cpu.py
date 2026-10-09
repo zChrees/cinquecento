@@ -16,6 +16,18 @@ Strategia (D43, decisa il 04/10/2026):
 - quando le carte nascoste sono tutte note (1v1 a mazzo finito: sono quelle in mano
   all'avversario) calcola la mossa migliore in modo esatto, supponendo che anche
   l'avversario giochi al meglio. Nel calcolo esatto chi può cantare canta sempre.
+  Nel 2v2 a mazzo finito con al massimo EXACT_MAX_CARDS carte a testa fa il calcolo esatto
+  su ogni mano immaginata (P127, D50), invece di giocarla da giocatore medio.
+
+P127 (D50, proposta di Christian del 09/10/2026): quando le mosse migliori valgono quasi
+uguale (sotto la migliore di meno di TIE_SPREAD volte l'incertezza della stima, misurata
+mano immaginata per mano immaginata), non decide il caso:
+- da ultima nella presa gioca la carta con il risultato migliore nella presa (punti della
+  sua squadra meno quelli dati agli avversari), poi una carta non di briscola, poi la più
+  debole; Re e Cavalli ancora accoppiabili solo se non c'è altro;
+- altrimenti evita i carichi (Asso e Tre) che possono finire agli avversari e i Re e
+  Cavalli ancora accoppiabili (per il 40 e per il 20); se è costretta sacrifica prima il Re
+  o il Cavallo e tiene il carico; tra le carte rimaste gioca quella stimata meglio.
 A parità sceglie a caso.
 
 Il numero di mani immaginate si ricava dalle carte che restano (SIMULATED_PLAYS), non dal
@@ -31,6 +43,7 @@ from app.game.engine.cards import Card, Rank, Suit
 from app.game.engine.deck import full_deck
 from app.game.engine.errors import EngineError
 from app.game.engine.game import apply
+from app.game.engine.rules import MARIANNA
 from app.game.engine.singing import Sing, singable_suits
 from app.game.engine.state import TEAMS, HandState, LastTrick, TrickPlay, team_of
 
@@ -38,6 +51,9 @@ TRUMP_WORTH = 10  # giocatore medio: punti della presa per cui vale la pena usar
 SIMULATED_PLAYS = 6000  # carte giocate in tutto nelle mani immaginate per una mossa (circa 0,2 s)
 MIN_WORLDS = 20
 MAX_WORLDS = 200
+TIE_SPREAD = 2  # P127: "pari merito" = sotto la migliore di meno di 2 volte l'incertezza
+EXACT_MAX_CARDS = 3  # P127: calcolo esatto nel 2v2 a mazzo finito fino a 3 carte a testa
+EXACT_WORLDS = 6  # P127: mani immaginate con il calcolo esatto (con 3 carte a testa fino a 70 ms l'una)
 
 
 @dataclass
@@ -80,27 +96,153 @@ def cpu_move(view: dict, rng: random.Random | None = None, memory: CpuMemory | N
         moves = [PlayCardAction(seat, _card(card)) for card in legal["play"]]
     if len(moves) == 1:
         return moves[0]
-    worlds = _worlds(view, memory, rng)
+    exact = _exact_worlds(view)
+    worlds = _worlds(view, memory, rng, EXACT_WORLDS if exact else None)
     if worlds is None:
         return heuristic_move(view, rng)  # memoria incompleta: meglio non immaginare mani sbagliate
-    if len(worlds) == 1:
-        scores = [_gain_of(worlds[0], move, seat) + _exact_gain(apply(worlds[0], move), seat) for move in moves]
-    else:
-        scores = [0] * len(moves)
-        for world in worlds:
-            seed = rng.random()  # stesse scelte a caso per tutte le mosse: si confrontano meglio
-            for index, move in enumerate(moves):
-                after = apply(world, move)
-                scores[index] += _gain_of(world, move, seat) + _rollout_gain(after, seat, random.Random(seed))
-    best = max(scores)
-    return rng.choice([move for move, score in zip(moves, scores, strict=True) if score == best])
+    results = []  # per ogni mano immaginata, quanto guadagna ogni mossa
+    for world in worlds:
+        if exact or len(worlds) == 1:
+            known: dict[tuple, int] = {}  # le mosse arrivano spesso alle stesse situazioni: si calcolano una volta
+            results.append([_gain_of(world, move, seat) + _exact_gain(apply(world, move), seat, known)
+                            for move in moves])
+            continue
+        seed = rng.random()  # stesse scelte a caso per tutte le mosse: si confrontano meglio
+        results.append([_gain_of(world, move, seat) + _rollout_gain(apply(world, move), seat, random.Random(seed))
+                        for move in moves])
+    scores = [sum(row[index] for row in results) for index in range(len(moves))]
+    ties = _ties(results)
+    if isinstance(moves[0], PlayCardAction) and len(ties) > 1:
+        ties = _preferred(view, memory, [moves[index] for index in ties], [scores[index] for index in ties])
+        return rng.choice(ties)
+    best = max(scores[index] for index in ties)
+    return rng.choice([moves[index] for index in ties if scores[index] == best])
+
+
+# --- Pari merito (P127, D50) ---------------------------------------------------------
+
+
+def _ties(results: list[list[int]]) -> list[int]:
+    """Le mosse a pari merito con la migliore: sotto di meno di TIE_SPREAD volte l'incertezza.
+
+    L'incertezza (errore standard) si misura sulla differenza con la migliore mano per mano,
+    perché le mosse sono giocate sulle stesse mani immaginate. Con una mano sola (calcolo
+    esatto) sono a pari merito solo le mosse che valgono uguale.
+    """
+    count = len(results)
+    moves = len(results[0])
+    totals = [sum(row[index] for row in results) for index in range(moves)]
+    best = max(range(moves), key=lambda index: totals[index])
+    ties = []
+    for index in range(moves):
+        gaps = [row[best] - row[index] for row in results]
+        mean = sum(gaps) / count
+        if count > 1:
+            variance = sum((gap - mean) ** 2 for gap in gaps) / (count - 1)
+            if mean < TIE_SPREAD * (variance / count) ** 0.5 or mean == 0:
+                ties.append(index)
+        elif mean == 0:
+            ties.append(index)
+    return ties
+
+
+def _preferred(view: dict, memory: CpuMemory, moves: list[PlayCardAction], scores: list[int]) -> list[Action]:
+    """Tra le carte a pari merito, quelle che un buon giocatore preferisce (vedi in cima)."""
+    seat = view["you"]["seat"]
+    trump = None if view["trump"] is None else Suit(view["trump"])
+    plays = [(play["seat"], _card(play["card"])) for play in view["trick"]["cards"]]
+    pairable = {move.card for move in moves if _pairable(move.card, view, memory)}
+    if len(plays) + 1 == len(view["players"]):
+        keep = [move for move in moves if move.card not in pairable] or moves
+
+        def key(move):
+            return (-_trick_result(plays, move.card, seat, trump), move.card.suit == trump, move.card.strength)
+        lowest = min(key(move) for move in keep)
+        return [move for move in keep if key(move) == lowest]
+
+    def penalty(move):
+        if move.card.points >= 10 and not _safe_load(plays, move.card, seat, trump, view, memory):
+            return 2
+        return 1 if move.card in pairable else 0
+    lowest = min(penalty(move) for move in moves)
+    keep = [(move, score) for move, score in zip(moves, scores, strict=True) if penalty(move) == lowest]
+    best = max(score for _, score in keep)
+    return [move for move, score in keep if score == best]
+
+
+def _trick_result(plays, card, seat, trump) -> int:
+    """Da ultima: punti della presa per la squadra della CPU (negativi se va agli avversari)."""
+    all_plays = [*plays, (seat, card)]
+    winner, _ = _winning(all_plays, trump)
+    worth = sum(played.points for _, played in all_plays)
+    return worth if team_of(winner) == team_of(seat) else -worth
+
+
+def _winning(plays, trump):
+    lead = plays[0][1].suit
+    best = plays[0]
+    for play in plays[1:]:
+        if _beats(play[1], best[1], lead, trump):
+            best = play
+    return best
+
+
+def _safe_load(plays, card, seat, trump, view, memory) -> bool:
+    """Un carico (Asso, Tre) giocato non da ultima resta di sicuro alla squadra della CPU?
+
+    Sì se, giocata la carta, la presa è della sua squadra e nessuna carta che la CPU non vede
+    (non uscita, non in mano sua né scoperta del compagno) può batterla.
+    """
+    all_plays = [*plays, (seat, card)]
+    winner, best = _winning(all_plays, trump)
+    if team_of(winner) != team_of(seat):
+        return False
+    lead = all_plays[0][1].suit
+    return not any(_beats(other, best, lead, trump) for other in _unseen(view, memory))
+
+
+def _unseen(view: dict, memory: CpuMemory) -> list[Card]:
+    known = memory.seen | {_card(card) for card in view["hand"]}
+    known |= {_card(card) for card in view.get("partner_hand") or ()}
+    known |= {_card(play["card"]) for play in view["trick"]["cards"]}
+    return [card for card in full_deck() if card not in known]
+
+
+def _pairable(card: Card, view: dict, memory: CpuMemory) -> bool:
+    """Un Re o un Cavallo che si può ancora cantare (40 o 20) insieme all'altra carta del seme.
+
+    Il seme non è cantato, l'altra carta non è uscita e la CPU può ancora averla: in mano,
+    oppure ancora da pescare (non scoperta in mano al compagno); a mazzo finito deve averla in
+    mano e restare con almeno le carte che servono per cantare.
+    """
+    if card.rank not in (Rank.KING, Rank.KNIGHT):
+        return False
+    if any(done["suit"] == card.suit.value for done in view["sings"]):
+        return False
+    other = Card(card.suit, Rank.KNIGHT if card.rank == Rank.KING else Rank.KING)
+    if other in memory.seen or other in {_card(play["card"]) for play in view["trick"]["cards"]}:
+        return False
+    if other in {_card(mate) for mate in view.get("partner_hand") or ()}:
+        return False
+    hand = {_card(mine) for mine in view["hand"]}
+    if view["deck_count"] == 0:
+        return other in hand and len(hand) - 1 >= MARIANNA.min_hand_to_sing_after_deck
+    return True
+
+
+def _exact_worlds(view: dict) -> bool:
+    """2v2 a mazzo finito con poche carte: il calcolo esatto su ogni mano immaginata costa poco."""
+    return (len(view["players"]) == 4 and view["deck_count"] == 0
+            and max(entry["cards_in_hand"] for entry in view["players"]) <= EXACT_MAX_CARDS)
 
 
 # --- Mani immaginate ---------------------------------------------------------------
 
 
-def _worlds(view: dict, memory: CpuMemory, rng: random.Random) -> list[HandState] | None:
+def _worlds(view: dict, memory: CpuMemory, rng: random.Random, cap: int | None = None) -> list[HandState] | None:
     """Le mani possibili dal punto di vista della CPU; una sola se le carte nascoste sono tutte note.
+
+    cap: al massimo quante mani (P127, calcolo esatto su ogni mano).
 
     None se i conti non tornano (la memoria non ha tutte le carte uscite).
     """
@@ -140,6 +282,8 @@ def _worlds(view: dict, memory: CpuMemory, rng: random.Random) -> list[HandState
     else:
         remaining = len(hand) + sum(sizes.values()) + view["deck_count"]
         count = max(MIN_WORLDS, min(MAX_WORLDS, SIMULATED_PLAYS // (len(view["legal"]["play"]) * remaining)))
+        if cap is not None:
+            count = min(count, cap)
     worlds = []
     for _ in range(count):
         cards = list(pool)
@@ -180,25 +324,44 @@ def _rollout_gain(state: HandState, seat: int, rng: random.Random) -> int:
     return _gain(state, seat) - start
 
 
-def _exact_gain(state: HandState, seat: int) -> int:
-    """Quanto guadagna ancora la squadra della CPU se tutti giocano al meglio (carte tutte note)."""
+def _exact_gain(state: HandState, seat: int, known: dict[tuple, int] | None = None) -> int:
+    """Quanto guadagna ancora la squadra della CPU se tutti giocano al meglio (carte tutte note).
+
+    known: le situazioni già calcolate nella stessa mano immaginata (P127).
+    """
     team = team_of(seat)
-    known: dict[tuple, int] = {}
+    if known is None:
+        known = {}
 
     def future(state: HandState) -> int:
         if state.finished:
             return 0
         key = (state.hands, state.trick, state.sings, state.turn_seat)
         if key not in known:
-            before = _gain(state, seat)
             values = []
             for move in _exact_moves(state):
                 after = apply(state, move)
-                values.append(_gain(after, seat) - before + future(after))
+                values.append(_step_gain(state, after, seat) + future(after))
             known[key] = max(values) if team_of(state.turn_seat) == team else min(values)
         return known[key]
 
     return future(state)
+
+
+def _step_gain(before: HandState, after: HandState, seat: int) -> int:
+    """Come _gain(after) - _gain(before) dopo una mossa, contando solo le carte prese e i canti nuovi.
+
+    Le prese si aggiungono in fondo a captured (game.py, _close_trick): il calcolo esatto
+    lo chiama a ogni passo e rifare la somma di tutte le carte prese costava troppo (P127).
+    """
+    mine = team_of(seat)
+    gain = 0
+    for team, taken in enumerate(after.captured):
+        points = sum(card.points for card in taken[len(before.captured[team]):])
+        gain += points if team == mine else -points
+    for done in after.sings[len(before.sings):]:
+        gain += done.points if team_of(done.seat) == mine else -done.points
+    return gain
 
 
 def _exact_moves(state: HandState) -> list[Action]:
@@ -210,6 +373,9 @@ def _exact_moves(state: HandState) -> list[Action]:
 
 
 def _singable(state: HandState) -> list[Suit]:
+    hand = state.hands[state.turn_seat]
+    if not any(Card(suit, Rank.KING) in hand and Card(suit, Rank.KNIGHT) in hand for suit in Suit):
+        return []  # senza una coppia Re e Cavallo in mano non si canta: si evita il controllo completo
     return singable_suits(hand=state.hands[state.turn_seat], sings=state.sings, played_cards=state.played_cards,
                           deck_count=len(state.deck), is_turn=True, first_trick=state.last_trick is None)
 
