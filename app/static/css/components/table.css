@@ -557,11 +557,14 @@
  * Riga sopra la mano (P71): la briscola a sinistra, tu al centro, il pulsante delle
  * frasi a destra, larga quanto la mano. L'elenco delle frasi si apre da qui verso
  * l'alto (table-phrases.css).
+ * P131: le colonne ai lati non scendono sotto il loro contenuto (i punti, "Frasi"):
+ * con un nome lungo è il nome ad accorciarsi con i puntini, e non finisce più sopra
+ * punti, canti e "Frasi".
  */
 .table__me {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-columns: minmax(min-content, 1fr) auto minmax(min-content, 1fr);
   align-items: center;
   gap: 8px;
   justify-self: stretch;
@@ -633,6 +636,37 @@
 
 .seat--bottom .seat__label {
   text-align: left;
+}
+
+/* P131: i tuoi canti restano su una riga accanto al nome, che si accorcia lui */
+.seat--bottom .seat__sings {
+  flex: none;
+  flex-wrap: nowrap;
+}
+
+/*
+ * P131, sotto i 1024 px (scelte di Christian del 10/10/2026):
+ * - le tue carte appena cantate stanno sopra il lato destro della tua riga (sopra
+ *   "Frasi"), non più sopra l'avatar, dove c'è il tuo fumetto e lo coprivano: la .sang
+ *   si misura su .table__me (position: relative) invece che sul tuo posto;
+ * - il nome di chi sta in alto è largo al massimo l'avatar (42 px) più 10 px per lato,
+ *   lo spazio fra l'avatar e il suo fumetto (a destra, table-phrases.css): un nome
+ *   lungo, centrato sotto l'avatar, finiva sotto il fumetto.
+ */
+@media (max-width: 1023px) {
+  .table__me > .seat--bottom {
+    position: static;
+  }
+
+  .table__me .sang--bottom {
+    left: auto;
+    right: 0;
+    transform: none;
+  }
+
+  .seat--top .seat__name {
+    max-width: calc(42px + 2 * 10px);
+  }
 }
 
 .seat--bottom .seat__title {

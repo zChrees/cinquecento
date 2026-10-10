@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P131 — Nome lungo al tavolo sul telefono (10/10/2026)
+
+- **Branch**: fix/p131-nome-lungo
+- **File** (lista definitiva, punto con file non sicuri): modificati `app/static/css/components/table.css`, `tests/table3/test_tavolo_telefono.py`, questo file. Nessun JS
+- **Riprodotto** [T, WebKit e Chrome, nomi di 20 "W" a 360, 375 e 390 px, 1v1 e 2v2, con canti, carte appena cantate e fumetti di tutti]: (1) **le icone dei tuoi canti finivano sopra "Frasi"** (35–39 px) e il tuo avatar sopra i tuoi punti: la tua riga è una griglia punti | tu | Frasi, con le colonne ai lati che potevano scendere a 0 (`minmax(0, 1fr)`), e il nome lungo si prendeva tutto; (2) **le tue carte appena cantate stavano sotto il tuo fumetto** (circa 64×42 px), **anche con i nomi corti**: tutti e due sopra il tuo avatar; (3) il nome lungo di chi sta in alto arrivava sotto il suo fumetto (4 px, a 360 e 375)
+- **Cosa cambia** (scelte di Christian del 10/10 sulle raccomandazioni di Claude per (2) e (3)): (1) le colonne ai lati della tua riga non scendono sotto il loro contenuto (`minmax(min-content, 1fr)`) e i tuoi canti restano su una riga (`flex: none`, `nowrap`): si accorcia il nome, con i puntini; (2) sotto i 1024 px le tue carte appena cantate compaiono **sopra il lato destro della tua riga** (sopra "Frasi"): la `.sang` si misura su `.table__me` (il tuo posto è `position: static`); (3) sotto i 1024 px il nome di chi sta in alto è largo al massimo **62 px** (avatar 42 px più 10 px per lato, lo spazio fra l'avatar e il suo fumetto). Da computer non cambia niente
+- **Controlli**: 6 test nuovi in `test_tavolo_telefono.py` (1v1 e 2v2 a 360, 375, 390: nome, canti, fumetto, carte cantate, "Frasi", avatar e tuoi punti non si toccano, i nomi hanno i puntini), falliscono tutti con il CSS di prima [T]; il file intero 19 PASS. Suite intere alla fine di P128–P133. `ruff check` pulito
+- **Decisioni prese**: di Christian, il 10/10: (a) le tue carte appena cantate, sul telefono, sopra il lato destro della tua riga (cambia il posto "accanto a chi ha cantato, verso il centro" del 28/09 solo per te: restano accanto a te, verso il centro); scartati "fumetto più in alto finché si vedono le carte" e "lascia com'è"; (b) nome di chi sta in alto più corto sul telefono (62 px); scartato "lascia com'è" (si toccava solo il riquadro della riga, non le lettere)
+- **Domande nuove**: nessuna
+- **Punti delicati**: se cambiano la misura dell'avatar al tavolo (42 px) o lo spazio fra avatar e fumetto in alto (10 px, `table-phrases.css`), va cambiata la larghezza del nome in alto (`calc(42px + 2 * 10px)` in `table.css`). Restano, anche con i nomi corti e già prima: nel 2v2 a 360 px i fumetti di chi sta ai lati possono toccarsi al centro, e quello di destra copre i suoi punti
+- **Cosa devono fare gli altri**: niente. **Chi è di turno sui documenti**: spuntare P131; in `DECISIONI.md` le due scelte qui sopra; la lista definitiva nella sezione 9.2
+
 ### P128 — Chat e pannello amici su iPhone (10/10/2026)
 
 - **Branch**: fix/p128-chat-iphone

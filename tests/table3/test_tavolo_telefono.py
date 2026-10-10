@@ -148,3 +148,63 @@ def test_il_riepilogo_mostra_il_punteggio_sul_telefono(browser, server):
     total = browser.js("""(() => { const row = document.querySelector('[data-hand-summary] .hand-summary__total');
       return row && row.getClientRects().length > 0 ? row.textContent : null; })()""")
     assert total is not None and "273" in total and "247" in total
+
+
+# --- P131: nomi lunghi, canto e fumetto insieme ----------------------------------------
+
+LONGEST = "W" * 20  # USERNAME_MAX di config.py, con la lettera più larga
+
+# Coppie di cose che si toccano tra nome, canti, fumetto, carte cantate, "Frasi",
+# avatar e i tuoi punti (le cose dello stesso tipo si confrontano solo per i canti)
+OVERLAPS = r"""(() => {
+  const parts = [['nome', '.seat__name'], ['canti', '.sing-badge'], ['fumetto', '[data-phrase-bubble]'],
+    ['cantate', '[data-sang-seat]'], ['frasi', '[data-phrases-button]'], ['avatar', '.seat__avatar .avatar'],
+    ['punti', '.table__me-side .hand-points']];
+  const boxes = [];
+  for (const [name, selector] of parts) {
+    for (const node of document.querySelectorAll(selector)) {
+      const r = node.getBoundingClientRect();
+      if (r.width && r.height) boxes.push({ name, seat: node.closest('[data-seat]')?.dataset.seat ?? '-', r, node });
+    }
+  }
+  const hits = [];
+  for (let i = 0; i < boxes.length; i++) {
+    for (let j = i + 1; j < boxes.length; j++) {
+      const a = boxes[i], b = boxes[j];
+      if (a.node.contains(b.node) || b.node.contains(a.node) || (a.name === b.name && a.name !== 'canti')) continue;
+      const w = Math.min(a.r.right, b.r.right) - Math.max(a.r.left, b.r.left);
+      const h = Math.min(a.r.bottom, b.r.bottom) - Math.max(a.r.top, b.r.top);
+      if (w > 0.5 && h > 0.5) hits.push(`${a.name}[${a.seat}] e ${b.name}[${b.seat}]`);
+    }
+  }
+  return { hits, names: boxes.filter((b) => b.name === 'nome').length,
+           truncated: [...document.querySelectorAll('.seat__name')].every((n) => n.scrollWidth > n.clientWidth) };
+})()"""
+
+
+def _dispatch(browser, name, detail):
+    browser.js(f"document.querySelector('[data-table]').dispatchEvent(new CustomEvent({json.dumps(name)}, "
+               f"{{ detail: {json.dumps(detail)} }}))")
+
+
+@pytest.mark.parametrize("mode", ["1v1", "2v2"])
+@pytest.mark.parametrize("width", [360, 375, 390])
+def test_nomi_lunghi_canto_e_fumetto_non_si_toccano(browser, server, mode, width):
+    # P131: con un nome lungo i tuoi canti finivano sopra "Frasi" e l'avatar sopra i punti;
+    # le tue carte cantate stavano sotto il tuo fumetto; il nome in alto sotto il suo fumetto
+    view = _crowded(mode)
+    for player in view["players"]:
+        player["username"] = LONGEST[:-1] + str(player["seat"])
+    view["sings"] = [{"seat": 0, "suit": "coppe", "points": 40}, {"seat": 0, "suit": "bastoni", "points": 20},
+                     {"seat": 1, "suit": "spade", "points": 20}]
+    browser.open(f"{server}/game/prova?demo={mode}", width, 740, "document.querySelector('[data-leave]') !== null")
+    _dispatch(browser, "demo:state", view)
+    _dispatch(browser, "demo:phrases", {"phrases": [{"code": "bravo", "text": "Bella giocata, complimenti!"}]})
+    _dispatch(browser, "demo:sang", {"seat": 0, "suit": "denari", "points": 20, "show_seconds": 30,
+                                     "cards": [{"suit": "denari", "rank": 10}, {"suit": "denari", "rank": 9}]})
+    for player in view["players"]:
+        _dispatch(browser, "demo:phrase", {"seat": player["seat"], "code": "bravo"})
+    found = browser.js(OVERLAPS)
+    assert found["names"] == len(view["players"])
+    assert found["hits"] == []
+    assert found["truncated"]  # i nomi si accorciano con i puntini
