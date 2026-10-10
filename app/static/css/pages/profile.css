@@ -98,8 +98,15 @@
   line-height: 1.2;
 }
 
-.avatar-choice:hover {
-  border-color: var(--primary);
+/*
+ * P129: gli effetti al passaggio del mouse solo dove c'è un puntatore vero
+ * (@media (hover: hover), come le carte in P97): sul telefono il browser lascia
+ * ":hover" sull'elemento appena toccato, e restava il cerchio o il colore.
+ */
+@media (hover: hover) {
+  .avatar-choice:hover {
+    border-color: var(--primary);
+  }
 }
 
 .avatar-choice:has(.avatar-choice__input:checked) {
@@ -131,8 +138,11 @@
   cursor: pointer;
 }
 
-.switch:hover {
-  border-color: var(--primary);
+/* P129: solo con il mouse */
+@media (hover: hover) {
+  .switch:hover {
+    border-color: var(--primary);
+  }
 }
 
 .switch__input {

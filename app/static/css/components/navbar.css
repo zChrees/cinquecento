@@ -71,11 +71,21 @@
   min-width: 44px;
 }
 
-.navbar__friends:hover,
 .navbar__friends:focus-visible,
-.navbar__account:hover,
 .navbar__account:focus-visible {
   transform: translateY(-2px);
+}
+
+/*
+ * P129: gli effetti al passaggio del mouse solo dove c'è un puntatore vero
+ * (@media (hover: hover), come le carte in P97): sul telefono il browser lascia
+ * ":hover" sull'elemento appena toccato, e restava il cerchio o il colore.
+ */
+@media (hover: hover) {
+  .navbar__friends:hover,
+  .navbar__account:hover {
+    transform: translateY(-2px);
+  }
 }
 
 /* Avatar: si ingrandisce, si inclina e l'anello giallo si illumina */
@@ -83,21 +93,40 @@
   transition: transform 0.25s cubic-bezier(0.3, 1.6, 0.5, 1), box-shadow 0.25s ease;
 }
 
-.navbar__account:hover .avatar,
 .navbar__account:focus-visible .avatar {
   transform: scale(1.08) rotate(-8deg);
   box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--yellow), 0 0 18px 4px var(--avatar-glow);
 }
 
+/* P129: solo con il mouse */
+@media (hover: hover) {
+  .navbar__account:hover .avatar {
+    transform: scale(1.08) rotate(-8deg);
+    box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--yellow), 0 0 18px 4px var(--avatar-glow);
+  }
+}
+
 /* Amici: l'icona saluta oscillando e il contatore rimbalza */
-.navbar__friends:hover .icon,
 .navbar__friends:focus-visible .icon {
   animation: wave 0.6s ease;
 }
 
-.navbar__friends:hover .badge,
+/* P129: solo con il mouse */
+@media (hover: hover) {
+  .navbar__friends:hover .icon {
+    animation: wave 0.6s ease;
+  }
+}
+
 .navbar__friends:focus-visible .badge {
   animation: pop 0.4s ease;
+}
+
+/* P129: solo con il mouse */
+@media (hover: hover) {
+  .navbar__friends:hover .badge {
+    animation: pop 0.4s ease;
+  }
 }
 
 @keyframes wave {
@@ -229,12 +258,15 @@
   transform: rotate(10deg);
 }
 
-.logo:hover .logo__card:first-child {
-  transform: rotate(-18deg);
-}
+/* P129: solo con il mouse */
+@media (hover: hover) {
+  .logo:hover .logo__card:first-child {
+    transform: rotate(-18deg);
+  }
 
-.logo:hover .logo__card:last-child {
-  transform: rotate(18deg);
+  .logo:hover .logo__card:last-child {
+    transform: rotate(18deg);
+  }
 }
 
 .logo__flip {

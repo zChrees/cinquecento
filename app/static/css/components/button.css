@@ -37,8 +37,15 @@
   box-shadow: 0 4px 0 var(--primary-strong);
 }
 
-.btn--primary:hover:not(:disabled) {
-  filter: brightness(1.06);
+/*
+ * P129: gli effetti al passaggio del mouse solo dove c'è un puntatore vero
+ * (@media (hover: hover), come le carte in P97): sul telefono il browser lascia
+ * ":hover" sull'elemento appena toccato, e restava il cerchio o il colore.
+ */
+@media (hover: hover) {
+  .btn--primary:hover:not(:disabled) {
+    filter: brightness(1.06);
+  }
 }
 
 .btn--ghost {
@@ -46,8 +53,11 @@
   color: var(--text);
 }
 
-.btn--ghost:hover:not(:disabled) {
-  filter: brightness(0.97);
+/* P129: solo con il mouse */
+@media (hover: hover) {
+  .btn--ghost:hover:not(:disabled) {
+    filter: brightness(0.97);
+  }
 }
 
 .btn--danger {
@@ -56,8 +66,11 @@
   box-shadow: 0 4px 0 var(--danger-strong);
 }
 
-.btn--danger:hover:not(:disabled) {
-  filter: brightness(1.06);
+/* P129: solo con il mouse */
+@media (hover: hover) {
+  .btn--danger:hover:not(:disabled) {
+    filter: brightness(1.06);
+  }
 }
 
 .btn--small {
@@ -89,8 +102,11 @@
   cursor: pointer;
 }
 
-.icon-btn:hover {
-  background: var(--surface-2);
+/* P129: solo con il mouse */
+@media (hover: hover) {
+  .icon-btn:hover {
+    background: var(--surface-2);
+  }
 }
 
 .icon-btn:disabled {
@@ -103,6 +119,9 @@
   color: var(--on-primary);
 }
 
-.icon-btn--filled:hover {
-  background: var(--primary-strong);
+/* P129: solo con il mouse */
+@media (hover: hover) {
+  .icon-btn--filled:hover {
+    background: var(--primary-strong);
+  }
 }

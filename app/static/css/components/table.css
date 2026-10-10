@@ -38,9 +38,16 @@
   backdrop-filter: blur(8px);
 }
 
-.table__leave:hover:not(:disabled) {
-  background: var(--glass-hover);
-  filter: none;
+/*
+ * P129: gli effetti al passaggio del mouse solo dove c'è un puntatore vero
+ * (@media (hover: hover), come le carte in P97): sul telefono il browser lascia
+ * ":hover" sull'elemento appena toccato, e restava il cerchio o il colore.
+ */
+@media (hover: hover) {
+  .table__leave:hover:not(:disabled) {
+    background: var(--glass-hover);
+    filter: none;
+  }
 }
 
 /*

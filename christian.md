@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P129 — Sul telefono niente `:hover` (10/10/2026)
+
+- **Branch**: fix/p129-hover
+- **File**: creato `tests/frontend/test_hover.py`; modificati `components/button.css`, `friends-panel.css`, `mode-modal.css`, `navbar.css`, `stats-panel.css`, `table-phrases.css`, `table.css`, `pages/home.css`, `profile.css` (in `app/static/css/`), questo file. `card.css` era già a posto (P97)
+- **Causa confermata** [T]: in WebKit con l'iPhone 13 simulato, dopo un tocco sulla X del pannello amici la X resta `:hover` con lo sfondo `--surface-2` (il "cerchio"), mentre `:focus-visible` è spento; con la correzione lo sfondo resta trasparente
+- **Cosa cambia**: ogni regola `:hover` sta dentro `@media (hover: hover)` (solo con un puntatore vero, come le carte di P97). Le regole che valevano per `:hover` e `:focus-visible` insieme (navbar, "Riprendi la partita", tessere dei modi) sono state divise: il fuoco della tastiera resta fuori e vale anche sul telefono con una tastiera
+- **Controlli**: `test_hover.py` 3 PASS (falliscono 2 su 3 con i CSS di prima [T]): nessuna regola `:hover` fuori da `@media (hover: hover)`, il controllo trova davvero le regole, le regole del fuoco restano fuori. Suite `frontend` e giro completo alla fine di P128–P133 (vedi il riepilogo finale). `ruff check` pulito
+- **Decisioni prese**: nessuna (spec già approvato il 10/10)
+- **Domande nuove**: nessuna
+- **Punti delicati**: una regola `:hover` nuova va scritta dentro `@media (hover: hover)`, altrimenti `test_hover.py` fallisce
+- **Cosa devono fare gli altri**: niente. **Chi è di turno sui documenti**: spuntare P129; nei punti delicati di `CLAUDE.md` ("Tocchi al tavolo") la regola vale ora per tutte le pagine
+
 ### Documenti: registrati P127, P9 e P39, aperti P128–P134 (prova a mano e prove sulla CPU) (10/10/2026)
 
 - **Branch**: docs/aggiornamento-10-10

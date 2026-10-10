@@ -154,9 +154,19 @@
   font-size: 18px;
 }
 
-.resume__link:hover .resume__btn,
 .resume__link:focus-visible .resume__btn {
   filter: brightness(1.06);
+}
+
+/*
+ * P129: gli effetti al passaggio del mouse solo dove c'è un puntatore vero
+ * (@media (hover: hover), come le carte in P97): sul telefono il browser lascia
+ * ":hover" sull'elemento appena toccato, e restava il cerchio o il colore.
+ */
+@media (hover: hover) {
+  .resume__link:hover .resume__btn {
+    filter: brightness(1.06);
+  }
 }
 
 .home__sections {
@@ -275,15 +285,28 @@
   pointer-events: none;
 }
 
-.mode-tile:hover,
 .mode-tile:focus-visible {
   --lift: -6px;
   --edge: 3px;
 }
 
-.mode-tile:hover::after,
+/* P129: solo con il mouse */
+@media (hover: hover) {
+  .mode-tile:hover {
+    --lift: -6px;
+    --edge: 3px;
+  }
+}
+
 .mode-tile:focus-visible::after {
   opacity: 1;
+}
+
+/* P129: solo con il mouse */
+@media (hover: hover) {
+  .mode-tile:hover::after {
+    opacity: 1;
+  }
 }
 
 /* Premuta: la carta scende e lo spessore si schiaccia */
