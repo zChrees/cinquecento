@@ -39,6 +39,21 @@ a {
   outline-offset: 2px;
 }
 
+/*
+ * P129 (scelta di Christian del 10/10/2026): al tocco niente contorno del fuoco. Quando
+ * si apre una finestra (pannello amici, statistiche, conferma) la pagina dà il fuoco al
+ * primo pulsante (la X, "Annulla"), e Safari su iPhone mostrava il contorno finché non si
+ * toccava altrove. Vale dove non c'è un puntatore che passa sopra (come P97 e le regole
+ * :hover); da computer il contorno resta per chi usa la tastiera. Tutti i contorni
+ * (outline) del sito sono del fuoco, anche quelli più specifici (carte, opzioni della
+ * carta-modal, impostazioni): per questo la regola vale per ogni elemento, con !important.
+ */
+@media (hover: none) {
+  * {
+    outline: none !important;
+  }
+}
+
 /* Testo letto dai lettori di schermo ma non visibile */
 .visually-hidden {
   position: absolute;

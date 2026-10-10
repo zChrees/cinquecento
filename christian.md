@@ -22,6 +22,19 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P129 (seconda parte) — Al tocco niente contorno del fuoco (10/10/2026)
+
+- **Branch**: fix/p129-contorno
+- **Perché**: dalla prova sull'iPhone di Christian (10/10) la prima parte di P129 (`:hover`) non correggeva il difetto: il "cerchio" era il **contorno rosso del fuoco** (`:focus-visible`), lo stesso che da computer compare dopo Esc, sulle X e anche su "Annulla" ed "Esci"
+- **File**: creato `tests/frontend/test_contorno_tocco.py`; modificati `app/static/css/base/typography.css`, questo file
+- **Causa confermata** [T, WebKit con l'iPhone 13 simulato]: aprendo il pannello amici con un tocco la pagina dà il fuoco alla X, che ha `:focus-visible` acceso e il contorno `solid`, finché non si tocca altrove; con la correzione `none`
+- **Cosa cambia**: dove non c'è un puntatore che passa sopra (`@media (hover: none)`) nessun elemento ha il contorno (`outline: none !important` su tutti: tutti i contorni del sito sono del fuoco, anche quelli più specifici di carte, carta-modal e impostazioni). Da computer il contorno resta, anche dopo Esc
+- **Controlli**: `test_contorno_tocco.py` 2 PASS (da computer contorno con Tab; con il tocco simulato no), il secondo fallisce con il CSS di prima [T]. `ruff check` pulito
+- **Decisioni prese**: di Christian, il 10/10: al tocco mai contorno del fuoco (scartati "fuoco alla finestra" e "togli il contorno ovunque"); da computer il contorno dopo Esc resta; la prima parte di P129 (`:hover` solo con il mouse) resta
+- **Domande nuove**: nessuna
+- **Punti delicati**: un `outline` nuovo che non sia del fuoco sul telefono non si vedrebbe (regola in `typography.css`)
+- **Cosa devono fare gli altri**: niente. **Christian**: riprovare le X, "Annulla" ed "Esci" sull'iPhone. **Chi è di turno sui documenti**: spuntare P129 dopo la prova; in `DECISIONI.md` le scelte qui sopra. P133: dopo altre prove Christian non riesce più a ingrandire con il doppio tocco (forse la prima prova usava il `game.js` vecchio dalla cache di Safari [D])
+
 ### P131 — Nome lungo al tavolo sul telefono (10/10/2026)
 
 - **Branch**: fix/p131-nome-lungo
