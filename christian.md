@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P132 — L'anello del tempo parte dopo le pause (10/10/2026)
+
+- **Branch**: fix/p132-anello
+- **File**: creato `tests/table/test_anello_tempo.py`; modificati `app/static/js/pages/game.js`, `app/static/js/components/Timer.js`, `tests/table/test_distribuzione.py`, questo file. Non toccati `room.py` né `timer.css`
+- **Causa confermata** [T]: in una partita vera contro la CPU, a fine della prima distribuzione l'anello era già all'83% (circa 2,5 s persi su 15), perché `timed` contava i secondi dall'arrivo della vista
+- **Cosa cambia**: la condizione "tavolo in pausa" del ticchettio (lanci, pescate, ultima presa, carte calate, riepilogo, distribuzione) ora è una funzione sola, `tablePaused()`, usata dal ticchettio e dall'anello. Finché il tavolo è in pausa la pagina aggiunge `turn.paused` e `Timer` resta pieno e fermo (`data-paused`, `animationPlayState`); finita la pausa i secondi scendono da lì (`turnClockAt`), non più dall'arrivo della vista. Il conto del rientro (scollegati) resta dall'arrivo della vista
+- **Controlli**: `test_anello_tempo.py` (partita vera contro la CPU, pause vere: anello pieno e fermo per tutta la distribuzione, poi sopra il 97%) e un test nuovo in `test_distribuzione.py` (fine mano nella prova: pieno e fermo durante riepilogo e mescolata, poi scende), PASS; tutti e due falliscono con il `game.js` di prima [T]. Suite intere alla fine di P128–P133. `ruff check` pulito
+- **Decisioni prese**: nessuna (vale la decisione del 04/10, "Turno da 15 secondi")
+- **Domande nuove**: nessuna
+- **Punti delicati**: una pausa nuova del tavolo va aggiunta in `tablePaused()` di `game.js`, così la rispettano sia il ticchettio sia l'anello (e va aggiunta anche in `table_pause` di `room.py`, P94)
+- **Cosa devono fare gli altri**: niente. **Chi è di turno sui documenti**: spuntare P132; nel punto delicato "Timer" di `CLAUDE.md` aggiungere `tablePaused()`
+
 ### P130 — I fumetti delle frasi non rifanno l'entrata (10/10/2026)
 
 - **Branch**: fix/p130-fumetti

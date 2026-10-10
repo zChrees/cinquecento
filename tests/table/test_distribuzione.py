@@ -172,3 +172,32 @@ def test_con_riduci_movimento_niente_distribuzione(browser, server):
     _send_state(browser, _new_hand())
     assert browser.js("document.querySelector('[data-dealt], [data-dealing], [data-shuffling]')") is None
     assert browser.js(DEAL)["mineVisible"] == 5
+
+
+# P132: l'anello del tempo di chi deve giocare (pieno = 1) e se è fermo
+RING = """(() => {
+  const timer = document.querySelector('[data-timer]');
+  return timer && { paused: 'paused' in timer.dataset,
+                    full: Number(getComputedStyle(timer).getPropertyValue('--timer-p')) };
+})()"""
+
+
+def test_l_anello_del_tempo_resta_pieno_fino_alla_fine_della_distribuzione(browser, server):
+    # P132: l'anello cominciava a scendere già durante ultima presa, riepilogo e distribuzione
+    _open(browser, server)
+    view = _new_hand()
+    view["turn"] = {**view["turn"], "seat": 0, "seconds_total": 15, "seconds_left": 15}
+    _send_state(browser, view)
+    browser.wait_js("document.querySelector('[data-hand-summary-close]') !== null", "riepilogo", 6)
+    ring = browser.js(RING)
+    assert ring == {"paused": True, "full": 1}, ring
+    _real_click(browser, "[data-hand-summary-close]")
+    time.sleep(1)  # mescolata in corso (1,3 s)
+    ring = browser.js(RING)
+    assert ring == {"paused": True, "full": 1}, ring
+    browser.wait_js("document.querySelector('[data-dealt], [data-dealing], [data-shuffling]') === null",
+                    "distribuzione finita", 4)
+    ring = browser.js(RING)
+    assert not ring["paused"] and ring["full"] > 0.95, ring  # parte adesso, dai secondi della vista
+    time.sleep(0.6)
+    assert browser.js(RING)["full"] < 0.99  # e scende

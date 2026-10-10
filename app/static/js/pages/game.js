@@ -112,6 +112,7 @@ const FIRST_DEAL_KEY = 'cinquecento.first-deal.'; // P118: + game_id, la distrib
 
 let view = null;
 let viewAt = 0; // quando è arrivata la vista (performance.now), per far scendere i secondi
+let turnClockAt = 0; // P132: da quando scende il tempo del turno (null: tavolo in pausa)
 let status = '';
 let waiting = false; // una mossa è partita e si aspetta la risposta
 let replaced = false; // la partita è aperta in un'altra scheda
@@ -176,19 +177,36 @@ function showMessage(text) {
 
 /**
  * La vista con i secondi (turno e rientro) scesi dal momento in cui è arrivata.
+ * P132: il tempo del turno scende solo a tavolo fermo (tablePaused), come il conto
+ * alla rovescia del server (P94) e il ticchettio: durante le pause la vista dice il
+ * turno pieno, e l'anello resta pieno e fermo (turn.paused, components/Timer.js);
+ * finita la pausa scende dai secondi della vista.
  * Nella prova (?demo=) la vista finta è una fotografia: i secondi restano fermi.
  */
-function timed(current) {
-  if (demo) return current;
-  const elapsed = (performance.now() - viewAt) / 1000;
-  const later = (seconds) => Math.max(0, seconds - elapsed);
+function timed(current, paused) {
+  if (paused) turnClockAt = null;
+  else if (turnClockAt === null) turnClockAt = performance.now();
+  const turn = current.turn && paused ? { ...current.turn, paused: true } : current.turn;
+  if (demo) return { ...current, turn };
+  const later = (from) => (seconds) => Math.max(0, seconds - (performance.now() - from) / 1000);
   return {
     ...current,
-    turn: current.turn && { ...current.turn, seconds_left: later(current.turn.seconds_left) },
+    turn: turn && (paused ? turn : { ...turn, seconds_left: later(turnClockAt)(turn.seconds_left) }),
     players: current.players.map((player) => (player.reconnect_seconds_left == null
       ? player
-      : { ...player, reconnect_seconds_left: later(player.reconnect_seconds_left) })),
+      : { ...player, reconnect_seconds_left: later(viewAt)(player.reconnect_seconds_left) })),
   };
+}
+
+/**
+ * Il tavolo è in pausa: lanci, pescate, ultima presa, carte calate, riepilogo,
+ * distribuzione. Il turno aspetta la fine, come il conto alla rovescia del server
+ * (P94): il ticchettio (P103) e l'anello del tempo (P132) partono dopo.
+ */
+function tablePaused() {
+  const draws = drawing();
+  return Boolean(Object.keys(flying()).length || Object.keys(draws.seats).length
+    || Object.keys(draws.cards).length || dealing() || lastTrick || laidDown || summary || nextSummary);
 }
 
 /** Ridisegna, se c'è una vista e la partita non è aperta altrove (per i timer). */
@@ -561,6 +579,7 @@ function render(next) {
     noticeMoments(view, next);
     view = next;
     viewAt = performance.now();
+    turnClockAt = viewAt;
     // P93: il consiglio ricevuto lo ripete la vista (advice, solo nel 2v2); quello dato
     // vale finché la carta è ancora in mano al compagno
     if ('advice' in next) receivedAdvice = next.advice;
@@ -580,7 +599,8 @@ function render(next) {
   // nessun canto sono attivi
   const offline = !demo && !isConnected();
   const handEnding = Boolean(nextSummary || summary || laidDown);
-  const shown = timed(waiting || leaving || offline || handEnding ? { ...view, legal: NO_MOVES } : view);
+  const shown = timed(waiting || leaving || offline || handEnding ? { ...view, legal: NO_MOVES } : view,
+    tablePaused());
   const drawn = drawing();
   const moments = {
     lastTrick,
@@ -678,10 +698,7 @@ function turnSounds() {
     turnPending = key;
     clearTicks();
   }
-  const draws = drawing();
-  const busy = Object.keys(flying()).length || Object.keys(draws.seats).length || Object.keys(draws.cards).length
-    || dealing() || lastTrick || laidDown || summary || nextSummary;
-  if (!turnPending || busy) return;
+  if (!turnPending || tablePaused()) return;
   turnKey = turnPending;
   turnPending = null;
   // Durante le pause la vista dice il turno pieno: il conto parte adesso

@@ -3,13 +3,16 @@
  * svuota in 30 secondi e sotto i 10 diventa rosso. Si muove con un'animazione CSS
  * che parte dai secondi rimasti (turn.seconds_left): niente conteggio in JS.
  * Con "riduci movimento" l'anello resta fermo su quanto tempo restava all'arrivo
- * della vista. Stile in css/components/timer.css.
+ * della vista. P132: con turn.paused (il tavolo è in pausa, pages/game.js) resta
+ * fermo anche lui, pieno, finché il turno non comincia davvero.
+ * Stile in css/components/timer.css.
  */
 
 import { el } from '../utils/dom.js';
 
 /**
- * @param {{seconds_total: number, seconds_left: number}} turn il campo turn della vista
+ * @param {{seconds_total: number, seconds_left: number, paused?: boolean}} turn il campo
+ *   turn della vista (paused lo aggiunge la pagina, P132)
  * @returns {HTMLElement}
  */
 export function Timer(turn) {
@@ -23,5 +26,9 @@ export function Timer(turn) {
   timer.style.setProperty('--timer-start', String(left / total));
   timer.style.setProperty('--timer-left', String(left));
   timer.classList.toggle('timer--warn', left <= 10);
+  if (turn.paused) {
+    timer.dataset.paused = '';
+    timer.style.animationPlayState = 'paused';
+  }
   return timer;
 }
