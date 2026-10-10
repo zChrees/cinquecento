@@ -17,6 +17,7 @@ from app.game.engine.actions import LayDownAction, PlayCardAction, SingAction
 from app.game.engine.auto_move import auto_move
 from app.game.engine.cards import Card, Rank, Suit
 from app.game.engine.cpu import TRUMP_WORTH, CpuMemory, cpu_move, heuristic_move
+from app.game.engine.deck import full_deck
 from app.game.engine.errors import EngineError, InvalidMoveError
 from app.game.engine.game import (
     apply,
@@ -25,6 +26,8 @@ from app.game.engine.game import (
     legal_actions,
     new_game,
 )
+from app.game.engine.singing import Sing
+from app.game.engine.state import HandState, LastTrick, TrickPlay
 from app.game.engine.views import card_to_dict, player_view
 
 
@@ -399,12 +402,35 @@ def test_carico_al_sicuro_solo_se_nessuna_carta_non_vista_lo_batte():
 def test_da_ultima_gioca_il_risultato_migliore_nella_presa():
     preferred = cpu_module._preferred
     moves = [PlayCardAction(0, c(code)) for code in ("spade-1", "bastoni-2", "spade-7")]
-    # Sul 4 di spade l'Asso prende 11 punti
+    # 1v1: sul 4 di spade l'Asso prende 11 punti (P134 vale solo nel 2v2)
     view = table_view(["spade-1", "bastoni-2", "spade-7"], plays=[(1, "spade-4")])
     assert preferred(view, CpuMemory(), moves, [0, 0, 0]) == [moves[0]]
     # Sull'Asso di denari nessuna prende: la carta che dà meno punti, non di briscola, la più debole
     view = table_view(["spade-1", "bastoni-2", "spade-7"], plays=[(1, "denari-1")], trump="coppe")
     assert preferred(view, CpuMemory(), moves, [0, 0, 0]) == [moves[1]]
+
+
+def test_da_ultima_niente_briscola_alta_su_una_presa_povera():
+    """P134 (D51), solo nel 2v2: da ultima conta solo quello che la presa sposta, non i punti della sua carta."""
+    preferred = cpu_module._preferred
+    # Sul Fante di spade (2 punti) prende con la carta più bassa che basta: il Cavallo, non l'Asso
+    moves = [PlayCardAction(0, c(code)) for code in ("spade-1", "spade-9", "bastoni-4")]
+    plays = [(1, "spade-8"), (2, "spade-2"), (3, "spade-6")]
+    view = table_view(["spade-1", "spade-9", "bastoni-4"], plays=plays, players=4)
+    assert preferred(view, CpuMemory(None, {c("spade-10")}), moves, [0, 0, 0]) == [moves[1]]
+    # Nel 1v1 resta P127: l'Asso, che con la sua carta "vale" di più
+    view = table_view(["spade-1", "spade-9", "bastoni-4"], plays=[(1, "spade-8")])
+    assert preferred(view, CpuMemory(None, {c("spade-10")}), moves, [0, 0, 0]) == [moves[0]]
+    moves = [PlayCardAction(0, c(code)) for code in ("denari-1", "denari-3", "denari-5", "coppe-2")]
+    hand = ["denari-1", "denari-3", "denari-5", "coppe-2"]
+    # 2v2 da ultima, briscola denari, presa da 0 punti degli avversari: scarta la cartina
+    plays = [(1, "spade-4"), (2, "spade-2"), (3, "spade-6")]
+    view = table_view(hand, plays=plays, players=4, trump="denari")
+    assert preferred(view, CpuMemory(), moves, [0, 0, 0, 0]) == [moves[3]]
+    # Con 3 punti sulla presa prende, con la briscola più bassa
+    plays = [(1, "spade-10"), (2, "spade-2"), (3, "spade-6")]
+    view = table_view(hand, plays=plays, players=4, trump="denari")
+    assert preferred(view, CpuMemory(None, {c("spade-9")}), moves, [0, 0, 0, 0]) == [moves[2]]
 
 
 def test_costretta_sacrifica_il_re_e_tiene_il_carico():
@@ -436,3 +462,166 @@ def test_passo_del_calcolo_esatto_uguale_alla_differenza_dei_punti():
                 expected = cpu_module._gain(after, seat) - cpu_module._gain(state, seat)
                 assert cpu_module._step_gain(state, after, seat) == expected
             state = after
+
+
+# --- Prese povere (P134, D51) ---------------------------------------------------------
+
+SHORT = {"d": "denari", "c": "coppe", "s": "spade", "b": "bastoni"}
+
+
+def cards(codes):
+    """Carte scritte corte: "d3 b10" = 3 di denari, Re di bastoni."""
+    return tuple(c(f"{SHORT[code[0]]}-{code[1:]}") for code in codes.split())
+
+
+def poor_trick(hands, trick, leader, sings, last, gone):
+    """Vista e memoria di chi è di turno, dalla mano salvata (2v2, briscola già cantata).
+
+    gone: le carte delle prese chiuse; il mazzo sono le carte che restano. La CPU non usa i
+    posti dell'ultima presa (né la squadra che ha preso le carte uscite), quindi sono di comodo.
+    """
+    players = len(hands)
+    hands = tuple(cards(cards_of) for cards_of in hands)
+    on_table, gone = cards(trick), cards(gone)
+    used = {*on_table, *gone, *(card for cards_of in hands for card in cards_of)}
+    turn = (leader + len(on_table)) % players
+    state = HandState(
+        num_players=players, hands=hands, deck=tuple(card for card in full_deck() if card not in used),
+        trick=tuple(TrickPlay((leader + index) % players, card) for index, card in enumerate(on_table)),
+        leader_seat=leader, turn_seat=turn,
+        sings=tuple(Sing(int(done[0]), Suit(SHORT[done[1]]), int(done[2:])) for done in sings.split()),
+        captured=(gone, ()),
+        last_trick=None if last is None else LastTrick(
+            leader, tuple(TrickPlay((leader + index) % players, card) for index, card in enumerate(cards(last)))),
+    )
+    view = player_view(replace(new_game(players, 150, rng=random.Random(0)), hand=state), turn)
+    return view, CpuMemory(view["hand_number"], {*gone, *on_table})
+
+
+# Situazioni vere delle prove del 10/10/2026 (riepilogo di christian.md): 140 partite 2v2 con
+# il posto 0 giocatore medio e i posti 1-3 CPU con il calcolo vero, rigiocate con il cpu.py
+# di P127 e salvate nel momento in cui la CPU giocava la carta sbagliata (ultimo campo):
+# Asso o Tre di briscola su una presa povera, o la briscola più alta. Rigiocarle con il seme
+# non basta: con il cpu.py nuovo la partita prende un'altra strada prima di arrivarci.
+# Fuori il caso del seme 3, posto 3, 3° nella presa: presa da 13 punti, sbaglia la stima.
+POOR_TRICKS = [
+    # seme 0, posto 3, 4° nella presa, 16 carte nel mazzo, presa da 4 punti
+    ('seme0-posto3', ('s1 c6 c8 d7', 'b10 s7 d9 s10', 'd5 s9 s5 s2', 'b7 c7 b5 b6 d3'),
+     'c2 d10 c5', 0, '1d40', 'd2 s6 s4 b4',
+     'd2 s6 s4 b4', 'd3'),
+    # seme 7, posto 1, 4° nella presa, 16 carte nel mazzo, presa da 4 punti
+    ('seme7-posto1-4a', ('d6 s3 s1 s8', 'c7 c1 c6 b6 c8', 's5 d9 c10 c9', 'c3 b9 b3 b1'),
+     'b7 b4 b10', 2, '2c40', 'd1 s2 c5 c2',
+     'd1 s2 c5 c2', 'c1'),
+    # seme 19, posto 1, 3° nella presa, 8 carte nel mazzo, presa da 3 punti
+    ('seme19-posto1', ('c8 d1 s8 d9', 'd5 s7 s1 b7 c10', 'c7 b9 b6 c4 d10', 'b1 d3 b8 d4'),
+     's9 d6', 3, '3s40', 'c6 c1 s5 s10',
+     's2 b5 d2 d7 c5 b2 c2 s4 c6 c1 s5 s10', 's1'),
+    # seme 20, posto 1, 4° nella presa, 12 carte nel mazzo, presa da 3 punti
+    ('seme20-posto1', ('d9 s10 b10 b9', 'd8 c2 b3 d1 c6', 'c3 d10 s3 s9', 'd3 c10 s4 c5'),
+     'c4 s2 c9', 2, '0b40', 'b8 b1 s5 s6',
+     'b8 b1 s5 s6 c8 b5 s8 d6', 'b3'),
+    # seme 22, posto 2, 4° nella presa, 16 carte nel mazzo, presa da 2 punti
+    ('seme22-posto2', ('d7 b3 c3 s10', 'b10 s8 b7 c4', 's6 s5 d3 d4 s4', 'd10 d9 s1 c9'),
+     'b5 b8 s7', 3, '3d40', 'd5 c7 d1 b6',
+     'd5 c7 d1 b6', 'd3'),
+    # seme 24, posto 2, 3° nella presa, 16 carte nel mazzo, presa da 0 punti
+    ('seme24-posto2', ('b5 d3 b8 s6', 'c9 c2 c10 c7', 'b10 b1 s3 c6 c1', 'd8 b3 s10 d10 s9'),
+     's2 d2', 0, '1c40', 'c4 b9 s7 s8',
+     'c4 b9 s7 s8', 'c1'),
+    # seme 25, posto 3, 4° nella presa, 8 carte nel mazzo, presa da 2 punti
+    ('seme25-posto3', ('c9 d8 c3 s10', 'c10 b7 b10 b6', 'd9 d7 c5 b1', 's1 d1 d3 b3 c4'),
+     'c8 s7 d4', 0, '1b40 2d20', 's8 d10 s2 b2',
+     's8 d10 s2 b2 c1 d2 c7 d6 b9 d5 b8 s6', 'b3'),
+    # seme 25, posto 2, 4° nella presa, 4 carte nel mazzo, presa da 3 punti
+    ('seme25-posto2', ('d8 c3 s10 s5', 'c10 b7 b10 b6', 'd9 d7 c5 b1 s3', 's1 d1 d3 s4'),
+     'c4 c9 c2', 3, '1b40 2d20', 'c8 s7 d4 b3',
+     's8 d10 s2 b2 c1 d2 c7 d6 b9 d5 b8 s6 c8 s7 d4 b3', 'b1'),
+    # seme 40, posto 3, 4° nella presa, 16 carte nel mazzo, presa da 0 punti
+    ('seme40-posto3-4a', ('b5 d10 c3 d7', 's8 s2 b7 s1', 'b9 b10 s5 d2', 'c1 b3 b1 c10 d5'),
+     'd4 c2 s6', 0, '2b40', 'd6 d8 b6 b2',
+     'd6 d8 b6 b2', 'b1'),
+    # seme 40, posto 3, 3° nella presa, 8 carte nel mazzo, presa da 0 punti
+    ('seme40-posto3-3a', ('b5 d10 c3 c7 c8', 's8 s1 d1 c5', 'b9 b10 s5 s4', 'c1 b3 c10 s10 s9'),
+     's2 s7', 1, '2b40 3s20', 'd5 d7 b7 d2',
+     'd6 d8 b6 b2 d4 c2 s6 b1 d5 d7 b7 d2', 'b3'),
+    # seme 43, posto 2, 4° nella presa, 16 carte nel mazzo, presa da 0 punti
+    ('seme43-posto2', ('b8 b5 b7 d1', 's9 c7 c9 b3', 'c3 s3 d2 b1 b6', 'b9 c1 s7 b10'),
+     'b2 s4 d6', 3, '3b40', 'c2 c4 c6 d4',
+     'c2 c4 c6 d4', 'b1'),
+    # seme 43, posto 1, 4° nella presa, 12 carte nel mazzo, presa da 0 punti
+    ('seme43-posto1', ('b8 b7 d1 s10', 's9 c7 c9 b3 b4', 'c3 s3 d2 d10', 'b9 c1 b10 d7'),
+     'b6 s7 b5', 2, '3b40', 'b2 s4 d6 b1',
+     'b2 s4 d6 b1 c2 c4 c6 d4', 'b3'),
+    # seme 44, posto 3, 4° nella presa, 12 carte nel mazzo, presa da 0 punti
+    ('seme44-posto3', ('s8 b8 c8 s1', 's9 c10 d9 d10', 'c6 d5 s7 d6', 'd3 b7 s2 s10 b1'),
+     'c7 b6 s4', 0, '1d40', 'c3 d7 s6 s3',
+     'c3 d7 s6 s3 c1 b2 b3 c4', 'd3'),
+    # seme 29, posto 1, 4° nella presa, 16 carte nel mazzo, presa da 0 punti
+    ('seme29-posto1', ('s5 d1 b1 c6', 'b5 d5 d9 d10 d3', 'c3 b6 s10 c10', 'b7 s9 c8 c1'),
+     's2 d7 s4', 2, '1d40', 'b4 c7 b8 c4',
+     'b4 c7 b8 c4', 'd3'),
+    # seme 1, posto 1, 4° nella presa, 8 carte nel mazzo, presa da 0 punti
+    ('seme1-posto1', ('s6 d6 c6 d9', 's9 b10 s10 c4 b3', 'b7 b1 d7 c10', 's3 c3 d3 s4'),
+     's5 c7 b4', 2, '1s40', 'b5 b2 s7 s8',
+     'd4 d5 d10 c5 b5 b2 s7 s8 c2 b6 d2 c1', 's10'),
+    # seme 2, posto 1, 4° nella presa, 0 carte nel mazzo, presa da 14 punti
+    ('seme2-posto1', ('s3 s10 s1', 'b8 c5 d3 d1', 'd4 b4 d2', 'b3 d10 d9'),
+     's7 b1 s9', 2, '3d40 3b20 0s20', 's4 d8 b9 b7',
+     'c2 c6 b5 c3 s4 d8 b9 b7 d7 c4 s8 s2 d5 s5 d6 b2 c7 c8 c9 c1 c10 s6 b10 b6', 'd1'),
+    # seme 3, posto 3, 4° nella presa, 4 carte nel mazzo, presa da 13 punti
+    ('seme3-posto3', ('c10 d8 b3 b10', 's10 c7 s3 c2', 's2 c1 b5 s9', 'd1 d7 d10 b1 d9'),
+     's6 s8 s1', 0, '3d40', 'd5 c4 d6 b7',
+     'c8 d4 c9 b4 b6 c6 s5 b8 d5 c4 d6 b7 c5 s7 d2 c3', 'd1'),
+    # seme 4, posto 1, 4° nella presa, 0 carte nel mazzo, presa da 5 punti
+    ('seme4-posto1', ('s9', 'd3 d7', 'c10', 'b1'),
+     'b2 b9 s8', 2, '0d40', 's6 s3 d5 b8',
+     'c5 c4 d4 c6 b5 b3 s5 c1 d8 d9 c9 c3 d10 s10 b4 c7 s6 s3 d5 b8 s4 c2 b7 s1 b6 b10 s2 d1 d2 c8 d6 s7', 'd3'),
+    # seme 7, posto 2, 4° nella presa, 8 carte nel mazzo, presa da 5 punti
+    ('seme7-posto2-4a', ('s3 s1 s9 d3', 'c7 c6 c8 d2', 's5 d9 c10 c9 c4', 'b3 b1 s10 b2'),
+     'b9 s8 b6', 3, '2c40', 's7 d8 c3 d6',
+     'd1 s2 c5 c2 b7 b4 b10 c1 s7 d8 c3 d6', 'c10'),
+    # seme 7, posto 1, 3° nella presa, 0 carte nel mazzo, presa da 0 punti
+    ('seme7-posto1-3a', ('s3 s1 d3', 'c7 c6 c8 b5', 'd9 c9 c4 s6', 'b3 b1 s10'),
+     'b2 d7', 3, '2c40', 'd5 d4 b8 d10',
+     'd1 s2 c5 c2 b9 s8 b6 c10 s5 s4 s9 d2 b7 b4 b10 c1 s7 d8 c3 d6 d5 d4 b8 d10', 'c8'),
+    # seme 7, posto 2, 2° nella presa, 0 carte nel mazzo, presa da 0 punti
+    ('seme7-posto2-2a', ('c3 c10 b3 s3', 'c1 c9 d1', 's10 s4 s1 s9', 's5 d3 b7 b5'),
+     's6', 1, '2s40', 'd6 c7 d10 c6',
+     'd7 d9 c4 d8 d4 c8 s7 d5 s2 b4 c5 s8 b8 b9 b10 d2 b2 c2 b6 b1 d6 c7 d10 c6', 's1'),
+]
+
+
+@pytest.mark.parametrize(("hands", "trick", "leader", "sings", "last", "gone", "bad"),
+                         [case[1:] for case in POOR_TRICKS], ids=[case[0] for case in POOR_TRICKS])
+def test_a_pari_merito_niente_carichi_ne_briscole_alte_su_prese_povere(hands, trick, leader, sings, last, gone, bad):
+    """Con tutte le carte a pari merito la CPU non sceglie più la carta sbagliata (P127 la sceglieva)."""
+    view, memory = poor_trick(hands, trick, leader, sings, last, gone)
+    seat = view["you"]["seat"]
+    moves = [PlayCardAction(seat, cpu_module._card(card)) for card in view["legal"]["play"]]
+    assert cards(bad)[0] in {move.card for move in moves}
+    chosen = cpu_module._preferred(view, memory, moves, [0] * len(moves))
+    assert cards(bad)[0] not in {move.card for move in chosen}, [str(move.card) for move in chosen]
+
+
+@pytest.mark.parametrize("ident", ["seme2-posto1", "seme4-posto1", "seme7-posto1-4a", "seme40-posto3-4a"])
+def test_con_il_calcolo_vero_niente_carichi_ne_briscole_alte_su_prese_povere(ident):
+    """La mossa intera, con il calcolo vero (circa 0,3 s): casi in cui P127 sbagliava 10 volte su 10."""
+    case = next(case for case in POOR_TRICKS if case[0] == ident)
+    view, memory = poor_trick(*case[1:-1])
+    for attempt in range(3):
+        move = cpu_move(view, random.Random(attempt), CpuMemory(memory.hand_number, set(memory.seen)))
+        assert move.card != cards(case[-1])[0], (attempt, str(move.card))
+
+
+def test_non_da_ultima_la_briscola_piu_bassa_su_una_presa_povera():
+    """P134 (D51): secondo nel 2v2, briscola denari, presa da meno di TRUMP_WORTH punti."""
+    preferred = cpu_module._preferred
+    hand = ["denari-1", "denari-7", "denari-5", "coppe-2"]
+    moves = [PlayCardAction(0, c(code)) for code in hand]
+    view = table_view(hand, plays=[(3, "coppe-4")], players=4, trump="denari")
+    # L'Asso di briscola non lo batte nessuno, ma su una presa da 0 è sprecato; il 7 è più del necessario
+    assert preferred(view, CpuMemory(), moves, [9, 7, 5, 5]) == [moves[2], moves[3]]
+    # Su una presa che vale (Asso di coppe, 11 punti) l'Asso di briscola al sicuro va bene
+    view = table_view(hand, plays=[(3, "coppe-1")], players=4, trump="denari")
+    assert preferred(view, CpuMemory(), moves, [9, 7, 5, 5]) == [moves[0]]

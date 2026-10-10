@@ -30,6 +30,14 @@ mano immaginata per mano immaginata), non decide il caso:
   o il Cavallo e tiene il carico; tra le carte rimaste gioca quella stimata meglio.
 A parità sceglie a caso.
 
+P134 (D51, 10/10/2026), **solo nel 2v2** (scelta di Giuseppe: nel 1v1, dove chi risponde è
+sempre l'ultimo, la CPU vinceva meno partite): da ultima il risultato della presa conta solo
+le carte degli altri (se la presa è sua guadagna i loro punti; se la perde regala anche la sua
+carta), così su una presa povera scarta una cartina e su una che vale prende con la carta più
+bassa che basta; su una presa che vale meno di TRUMP_WORTH evita l'Asso e il Tre di briscola
+(anche da ultima, aggiunta di Giuseppe) e, non da ultima, le briscole più alte di quella più
+bassa che prende.
+
 Il numero di mani immaginate si ricava dalle carte che restano (SIMULATED_PLAYS), non dal
 tempo: nella stessa situazione e con lo stesso rng la mossa è sempre la stessa.
 """
@@ -152,30 +160,47 @@ def _preferred(view: dict, memory: CpuMemory, moves: list[PlayCardAction], score
     trump = None if view["trump"] is None else Suit(view["trump"])
     plays = [(play["seat"], _card(play["card"])) for play in view["trick"]["cards"]]
     pairable = {move.card for move in moves if _pairable(move.card, view, memory)}
+    two_v_two = len(view["players"]) == 4  # P134 solo nel 2v2: nel 1v1 la CPU perdeva più partite
+    worth = sum(card.points for _, card in plays)
+    winning_trumps = [move.card for move in moves if two_v_two and plays and worth < TRUMP_WORTH
+                      and move.card.suit == trump and _winning([*plays, (seat, move.card)], trump)[0] == seat]
     if len(plays) + 1 == len(view["players"]):
         keep = [move for move in moves if move.card not in pairable] or moves
 
         def key(move):
-            return (-_trick_result(plays, move.card, seat, trump), move.card.suit == trump, move.card.strength)
+            wasted = move.card in winning_trumps and move.card.points >= 10
+            return (wasted, -_trick_result(plays, move.card, seat, trump, only_others=two_v_two),
+                    move.card.suit == trump, move.card.strength)
         lowest = min(key(move) for move in keep)
         return [move for move in keep if key(move) == lowest]
 
     def penalty(move):
-        if move.card.points >= 10 and not _safe_load(plays, move.card, seat, trump, view, memory):
-            return 2
-        return 1 if move.card in pairable else 0
+        if move.card.points >= 10 and (move.card in winning_trumps
+                                       or not _safe_load(plays, move.card, seat, trump, view, memory)):
+            return 2  # P134: un carico di briscola su una presa povera è sprecato anche se al sicuro
+        if move.card in pairable:
+            return 1
+        if move.card in winning_trumps and move.card != min(winning_trumps, key=lambda card: card.strength):
+            return 1  # P134: su una presa povera basta la briscola più bassa che prende
+        return 0
     lowest = min(penalty(move) for move in moves)
     keep = [(move, score) for move, score in zip(moves, scores, strict=True) if penalty(move) == lowest]
     best = max(score for _, score in keep)
     return [move for move, score in keep if score == best]
 
 
-def _trick_result(plays, card, seat, trump) -> int:
-    """Da ultima: punti della presa per la squadra della CPU (negativi se va agli avversari)."""
-    all_plays = [*plays, (seat, card)]
-    winner, _ = _winning(all_plays, trump)
-    worth = sum(played.points for _, played in all_plays)
-    return worth if team_of(winner) == team_of(seat) else -worth
+def _trick_result(plays, card, seat, trump, only_others: bool) -> int:
+    """Da ultima: punti che la presa sposta per la squadra della CPU.
+
+    only_others (P134, D51, nel 2v2): se la presa è della sua squadra guadagna i punti delle
+    carte degli altri (quelli della sua carta li avrebbe comunque); se va agli avversari regala
+    tutto, compresa la sua carta. Senza (P127, nel 1v1): conta anche la sua carta se vince.
+    """
+    winner, _ = _winning([*plays, (seat, card)], trump)
+    others = sum(played.points for _, played in plays)
+    if team_of(winner) != team_of(seat):
+        return -others - card.points
+    return others if only_others else others + card.points
 
 
 def _winning(plays, trump):
