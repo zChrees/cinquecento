@@ -26,6 +26,10 @@
  * riceve i messaggi arrivati nel frattempo.
  * Si chiude con la X, con Esc, toccando fuori e con "indietro" del browser o del
  * telefono (dalla chat, "indietro" torna alla lista).
+ * P128: su iPhone la tastiera non accorcia la pagina, Safari la sposta in su: aperto,
+ * il pannello è alto quanto la parte visibile (visualViewport) e sta lì, e un
+ * trascinamento su una sua parte che non scorre non passa alla pagina dietro (prima,
+ * con la chat vuota o cercando un amico, si scorreva fino a vedere il verde dietro).
  * Tutti i testi degli utenti entrano come testo, mai come HTML.
  */
 
@@ -488,6 +492,31 @@ export function initFriendsPanel(button) {
     else showList();
   }
 
+  // --- P128: tastiera del telefono ---
+  // Il pannello copre solo la parte visibile sopra la tastiera. Non con lo zoom delle
+  // due dita (scale diverso da 1): lì deve restare grande come la pagina.
+  const visible = window.visualViewport;
+  function fitToVisible() {
+    const fit = visible && dialog.open && Math.abs(visible.scale - 1) < 0.01;
+    dialog.style.top = fit ? `${visible.offsetTop}px` : '';
+    dialog.style.height = fit ? `${visible.height}px` : '';
+  }
+  visible?.addEventListener('resize', fitToVisible);
+  visible?.addEventListener('scroll', fitToVisible);
+
+  // Un trascinamento con un dito scorre solo un elenco del pannello che può scorrere
+  function scrollsInside(target) {
+    for (let node = target; node && node !== dialog; node = node.parentElement) {
+      const { overflowY } = getComputedStyle(node);
+      if ((overflowY === 'auto' || overflowY === 'scroll') && node.scrollHeight > node.clientHeight) return true;
+    }
+    return false;
+  }
+  dialog.addEventListener('touchmove', (event) => {
+    if (event.touches.length !== 1 || !event.cancelable) return;   // due dita: zoom
+    if (!(event.target instanceof Element) || !scrollsInside(event.target)) event.preventDefault();
+  }, { passive: false });
+
   // --- Apertura e chiusura, anche con "indietro" ---
   function open() {
     if (dialog.open) return;   // doppio clic
@@ -496,6 +525,7 @@ export function initFriendsPanel(button) {
     addError.hidden = true;
     renderList();
     dialog.showModal();
+    fitToVisible();
     history.pushState({ friendsPanel: 'list' }, '');
     load();
   }
@@ -505,6 +535,7 @@ export function initFriendsPanel(button) {
     const done = () => {
       dialog.classList.remove('is-closing');
       dialog.close();
+      fitToVisible();   // P128: chiuso torna alle misure del CSS
       showList();
     };
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {

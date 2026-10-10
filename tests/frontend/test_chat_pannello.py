@@ -183,3 +183,73 @@ def test_indietro_dalla_chat_alla_lista_poi_chiude(browser, server, users):
     browser.js("history.back()")
     browser.wait_js("document.querySelector('[data-friends-panel]').open === false", "chiusura con indietro")
     assert browser.js("history.state?.friendsPanel ?? null") is None
+
+
+# P128: dove stanno l'ultimo messaggio, l'elenco e la casella
+LAST = """(() => {
+  const msgs = [...document.querySelectorAll('.chat__msg')];
+  const last = msgs[msgs.length - 1].getBoundingClientRect();
+  const list = document.querySelector('[data-chat-messages]').getBoundingClientRect();
+  const form = document.querySelector('[data-chat-form]').getBoundingClientRect();
+  return { lastTop: last.top, lastBottom: last.bottom, listTop: list.top, listBottom: list.bottom,
+           formTop: form.top, firstTop: msgs[0].getBoundingClientRect().top };
+})()"""
+
+
+def test_pochi_messaggi_attaccati_in_fondo_anche_con_la_tastiera(browser, server, users):
+    # P128: con pochi messaggi stavano in cima, e su iPhone aprendo la tastiera sparivano
+    _open_chat(browser, server, users["Giulia"], 390, 844)
+    where = browser.js(LAST)
+    assert where["listBottom"] - 16 <= where["lastBottom"] <= where["listBottom"], where  # in fondo
+    assert where["firstTop"] - where["listTop"] > 100, where  # lo spazio vuoto è sopra
+    # La tastiera accorcia lo schermo: gli ultimi messaggi restano visibili sopra la casella
+    browser.send("Emulation.setDeviceMetricsOverride", width=390, height=420, deviceScaleFactor=1, mobile=False)
+    browser.wait_js("innerHeight === 420", "schermo più basso")
+    browser.wait_js(f"(() => {{ const w = {LAST}; return w.lastBottom <= w.listBottom + 1"
+                    " && w.lastTop >= w.listTop; })()", "ultimo messaggio visibile", 3)
+    where = browser.js(LAST)
+    assert where["listBottom"] <= where["formTop"] + 1, where
+
+
+def test_con_molti_messaggi_si_scorre_fino_al_primo(browser, server, users):
+    # Lo spazio vuoto in alto non deve rendere irraggiungibili i messaggi più vecchi
+    _open_chat(browser, server, users["Giulia"], 390, 420)
+    for n in range(12):
+        browser.js(f"""(() => {{ const list = document.querySelector('[data-chat-messages]');
+          const li = document.createElement('li'); li.className = 'chat__msg'; li.textContent = 'riga {n}';
+          list.append(li); list.scrollTop = list.scrollHeight; }})()""")
+    browser.js("document.querySelector('[data-chat-messages]').scrollTop = 0")
+    where = browser.js(LAST)
+    assert where["firstTop"] >= where["listTop"], where  # il primo si vede tutto
+    assert browser.js("document.querySelector('[data-chat-messages]').scrollTop") == 0
+
+
+def _touch_drag(browser, selector, fingers=1):
+    """Un trascinamento verso l'alto su `selector`; restituisce se il touchmove è stato bloccato."""
+    point = browser.js(f"""(() => {{ const b = document.querySelector({selector!r}).getBoundingClientRect();
+      window.__moves = [];
+      document.addEventListener('touchmove', (e) => setTimeout(() => window.__moves.push(e.defaultPrevented)),
+                                {{ once: true }});
+      return {{ x: b.left + b.width / 2, y: b.top + b.height / 2 }}; }})()""")
+
+    def points(dy):
+        return [{"x": point["x"] + 30 * i, "y": point["y"] + dy, "id": i} for i in range(fingers)]
+
+    browser.send("Input.dispatchTouchEvent", type="touchStart", touchPoints=points(0))
+    browser.send("Input.dispatchTouchEvent", type="touchMove", touchPoints=points(-40))
+    browser.send("Input.dispatchTouchEvent", type="touchEnd", touchPoints=[])
+    browser.wait_js("window.__moves.length === 1", "touchmove", 3)
+    return browser.js("window.__moves[0]")
+
+
+def test_trascinare_dove_non_si_scorre_non_muove_la_pagina_dietro(browser, server, users):
+    # P128: su iPhone, con la chat vuota (o cercando un amico) si scorreva fino a vedere la pagina dietro
+    browser.send("Emulation.setTouchEmulationEnabled", enabled=True, maxTouchPoints=5)
+    _open_chat(browser, server, users["Giulia"], 390, 844)
+    assert _touch_drag(browser, ".chat .drawer__head") is True  # la testata non scorre
+    assert _touch_drag(browser, "[data-chat-messages]") is True  # pochi messaggi: l'elenco non scorre
+    assert _touch_drag(browser, ".chat .drawer__head", fingers=2) is False  # lo zoom con due dita resta
+    browser.send("Emulation.setDeviceMetricsOverride", width=390, height=300, deviceScaleFactor=1, mobile=False)
+    browser.wait_js("(() => { const l = document.querySelector('[data-chat-messages]');"
+                    " return l.scrollHeight > l.clientHeight; })()", "elenco che scorre", 3)
+    assert _touch_drag(browser, ".chat__msg") is False  # un elenco che scorre scorre

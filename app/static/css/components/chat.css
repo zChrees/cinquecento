@@ -47,6 +47,20 @@
   overscroll-behavior: contain;
 }
 
+/*
+ * P128: i messaggi stanno attaccati in fondo, sopra la casella, e i nuovi entrano
+ * sotto spingendo su i vecchi (come le app di messaggi): con pochi messaggi lo spazio
+ * vuoto è in alto, e con la tastiera aperta restano visibili gli ultimi. Lo spazio lo
+ * prende questo elemento vuoto, che si riduce a zero quando l'elenco scorre
+ * (justify-content: flex-end renderebbe irraggiungibili i messaggi in cima). Senza
+ * messaggi l'avviso resta al centro.
+ */
+.chat__messages:not(:has(> [data-chat-empty]))::before {
+  content: "";
+  flex: 1 0 0;
+  margin-bottom: -8px;   /* senza lo spazio fra gli elementi (gap) sotto di lui */
+}
+
 .chat__empty {
   margin: auto;
   color: var(--muted);

@@ -101,6 +101,16 @@ export function ChatWindow({
   ]);
   list.prepend(more);
 
+  // P128: quando l'elenco si accorcia (la tastiera del telefono che si apre) chi era in
+  // fondo resta in fondo, sugli ultimi messaggi
+  let atBottom = true;
+  list.addEventListener('scroll', () => {
+    atBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 4;
+  }, { passive: true });
+  new ResizeObserver(() => {
+    if (atBottom) list.scrollTop = list.scrollHeight;
+  }).observe(list);
+
   async function loadMore() {
     const button = more.querySelector('button');
     if (button.disabled || !onLoadMore) return;

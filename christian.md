@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P128 — Chat e pannello amici su iPhone (10/10/2026)
+
+- **Branch**: fix/p128-chat-iphone
+- **File** (lista definitiva, punto con file non sicuri, approvata da Christian il 10/10): modificati `app/static/css/components/chat.css`, `app/static/js/components/ChatWindow.js`, `app/static/js/components/FriendsPanel.js`, `tests/frontend/test_chat_pannello.py`, questo file. Non toccato `friends-panel.css`
+- **Cause** [L, D]: (1) e (3) un trascinamento su una parte del pannello che non scorre (la vista della chat ha `overflow: hidden`; la lista degli amici quando è corta) passava alla pagina dietro, che con la tastiera di Safari può scorrere: si vedeva il verde; (2) i messaggi stavano in cima, e Safari aprendo la tastiera sposta la pagina in su
+- **Cosa cambia**: (a) **messaggi attaccati in fondo** (decisione del 10/10): un elemento vuoto in cima all'elenco (`::before`, `flex: 1 0 0`) prende lo spazio libero e si riduce a zero quando l'elenco scorre, così i messaggi vecchi restano raggiungibili; senza messaggi l'avviso resta al centro; (b) se l'elenco si accorcia (la tastiera) e si era in fondo, si resta sugli ultimi (`ResizeObserver` in `ChatWindow.js`); (c) aperto, il pannello è alto quanto la parte visibile (`visualViewport`: `top` e `height`), non con lo zoom delle due dita; (d) un trascinamento con un dito su una parte che non scorre viene bloccato (`touchmove`), quello su un elenco che scorre no, con due dita mai
+- **Controlli**: 3 test nuovi in `test_chat_pannello.py` (pochi messaggi in fondo e visibili con lo schermo accorciato; con molti si arriva al primo; trascinamenti bloccati solo dove non si scorre, mai con due dita), il file intero 8 PASS; i 2 test del difetto falliscono con il codice di prima [T]. In WebKit (motore di Safari) la regola dei messaggi in fondo funziona come in Chrome [T]. La tastiera vera di Safari non si può simulare qui [N]: serve la prova a mano sull'iPhone. Suite intere alla fine di P128–P133. `ruff check` pulito
+- **Decisioni prese**: nessuna nuova (messaggi in fondo, decisione del 10/10)
+- **Domande nuove**: nessuna
+- **Punti delicati**: nel pannello amici un elemento nuovo che deve scorrere va fatto con `overflow-y: auto` (o `scroll`): altrimenti il trascinamento con un dito è bloccato. Il pannello aperto ha `top` e `height` scritti dalla pagina (`fitToVisible`)
+- **Cosa devono fare gli altri**: niente. **Christian**: prova a mano su iPhone (chat vuota, pochi messaggi con la tastiera aperta, ricerca di un amico). **Chi è di turno sui documenti**: spuntare P128 dopo la prova sull'iPhone; scrivere la lista definitiva nella sezione 9.2; nel punto delicato "Chat e tastiera" di `CLAUDE.md` i due punti delicati qui sopra
+
 ### P133 — Niente zoom con il doppio tocco al tavolo su iPhone (10/10/2026)
 
 - **Branch**: fix/p133-zoom
