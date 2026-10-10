@@ -9,9 +9,9 @@ riprendono dal tempo già passato e le immagini sono le stesse del disegno di pr
 
 Controlla fotogramma per fotogramma, nel 1v1 e nel 2v2, sul telefono e da computer,
 mentre arrivano un canto, un lancio e altri ridisegni: le carte del canto restano
-piene, avatar e briscola tengono le stesse immagini. Il tavolo si apre nella prova
-(/game/prova?demo=…) in Chrome o Edge senza finestra, con "riduci movimento" spento.
-Non serve MySQL.
+piene, avatar, briscola e pillola del canto (P135) tengono le stesse immagini. Il
+tavolo si apre nella prova (/game/prova?demo=…) in Chrome o Edge senza finestra, con
+"riduci movimento" spento. Non serve MySQL.
 """
 
 import copy
@@ -42,6 +42,7 @@ WATCH = """(() => {
         restarted: e.getAnimations().some((a) => a.animationName === 'sang-in' && a.currentTime < 250)})),
       avatars: [...document.querySelectorAll('.seat .avatar img')].map(id),
       trump: [...document.querySelectorAll('[data-trump-badge] img')].map(id),
+      badges: [...document.querySelectorAll('.sing-badge img')].map(id),
     });
     if (performance.now() - t0 < 2500) requestAnimationFrame(tick);
   };
@@ -121,3 +122,6 @@ def test_canto_avatar_e_briscola_non_lampeggiano(browser, server, mode, size):
     trump = {tuple(f["trump"]) for f in frames}
     assert len(avatars) == 1 and frames[0]["avatars"], avatars
     assert len(trump) == 1 and len(frames[0]["trump"]) == 2, trump
+    # P135: anche l'Asso nella pillola del canto (prima a ogni ridisegno era un'immagine nuova)
+    badges = {tuple(f["badges"]) for f in frames}
+    assert len(badges) == 1 and len(frames[0]["badges"]) == 1, badges

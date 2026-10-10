@@ -22,6 +22,19 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P135 (numero proposto) — L'Asso nella pillola del canto non lampeggia (10/10/2026)
+
+- **Branch**: fix/p135-pillola-canto
+- **Perché**: dalla prova di Christian del 10/10, dopo P130: nella pillola fissa del canto (40 o 20, accanto al nome) l'Asso del seme lampeggiava a ogni animazione del tavolo
+- **File**: modificati `app/static/js/components/Table.js` (`SingBadges`), `app/static/js/components/Card.js` (`REUSED_IMAGES` e commento), `tests/table3/test_niente_lampeggi.py`, questo file. Punto nuovo, nato dalla prova: i file sono tutti di Christian
+- **Causa confermata** [T]: a ogni ridisegno l'immagine dell'Asso era un elemento `<img>` nuovo (5 diversi durante un lancio), come avatar e briscola prima di P119
+- **Cosa cambia**: l'Asso si crea con `reusedImage('sing-badge__img', …)` e la classe è in `REUSED_IMAGES`: il ridisegno riusa la stessa immagine
+- **Controlli**: `test_niente_lampeggi.py` (1v1 e 2v2, telefono e computer) controlla anche l'immagine della pillola: 4 PASS, falliscono tutti e 4 con il codice di prima [T]. `ruff check` pulito
+- **Decisioni prese**: nessuna
+- **Domande nuove**: nessuna
+- **Punti delicati**: nessuno nuovo (vale quello di P119: ogni immagine del tavolo si crea con `reusedImage`)
+- **Cosa devono fare gli altri**: niente. **Chi è di turno sui documenti**: aprire P135 con questo numero (o quello libero) e spuntarlo dopo la prova di Christian
+
 ### P129 (seconda parte) — Al tocco niente contorno del fuoco (10/10/2026)
 
 - **Branch**: fix/p129-contorno

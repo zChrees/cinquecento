@@ -77,7 +77,8 @@ export function preloadCardImages() {
  * telefono. Da chiamare subito prima di ridisegnare dentro `root`.
  * P119: lo stesso per le immagini degli avatar e della briscola nell'angolo
  * (REUSED_IMAGES), che a ogni lancio o pescata lampeggiavano: le riprendono
- * Avatar.js e TrumpBadge (Trick.js) con reusedImage().
+ * Avatar.js e TrumpBadge (Trick.js) con reusedImage(); da P135 anche l'Asso nella
+ * pillola del canto (SingBadges di Table.js).
  * @param {HTMLElement} root
  */
 export function reuseCardImages(root) {
@@ -89,7 +90,7 @@ export function reuseCardImages(root) {
   }
 }
 
-const REUSED_IMAGES = 'img.card__face, img.card__back, img.avatar__img, img.trump-badge__card';
+const REUSED_IMAGES = 'img.card__face, img.card__back, img.avatar__img, img.trump-badge__card, img.sing-badge__img';
 
 /**
  * Un'immagine con classe `className` e indirizzo `src` (assoluto, come img.src):

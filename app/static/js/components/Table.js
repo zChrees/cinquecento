@@ -33,7 +33,7 @@
 
 import { el, icon } from '../utils/dom.js';
 import { Avatar } from './Avatar.js';
-import { Card, cardName } from './Card.js';
+import { Card, cardName, reusedImage } from './Card.js';
 import { EdgeHand, Hand, RevealedHand } from './Hand.js';
 import { HandSummary } from './HandSummary.js';
 import { Scoreboard } from './Scoreboard.js';
@@ -65,7 +65,8 @@ function SingBadges(view, seat) {
       // P34: con role="img" l'etichetta si legge (su uno span senza ruolo non vale)
       attrs: { role: 'img', title: `Ha cantato ${sing.points} a ${sing.suit}`, 'aria-label': `Ha cantato ${sing.points} a ${sing.suit}` },
     }, [
-      el('img', { attrs: { src: `${IMG_BASE}asso-${sing.suit}-figura.webp`, alt: '' } }),
+      // P135: la stessa immagine del disegno di prima, altrimenti l'Asso lampeggia a ogni ridisegno (P119)
+      reusedImage('sing-badge__img', `${IMG_BASE}asso-${sing.suit}-figura.webp`),
       el('span', { text: sing.points, attrs: { 'aria-hidden': 'true' } }),
     ]),
   ));
