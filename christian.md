@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P133 — Niente zoom con il doppio tocco al tavolo su iPhone (10/10/2026)
+
+- **Branch**: fix/p133-zoom
+- **File**: modificati `app/static/js/pages/game.js`, `tests/table/test_tocchi_tavolo.py`, questo file. La lista definitiva (punto con file non sicuri, sezione 9.2) è risultata quella "sicura": nessun CSS toccato
+- **Cosa passava ancora** [T, WebKit di Playwright con l'iPhone 13 simulato]: se il tavolo si ridisegna a metà di uno dei due tocchi (fra `touchstart` e `touchend`; al tavolo succede spesso: viste nuove, fine di lanci e pescate, timer), l'elemento toccato esce dalla pagina e il suo `touchend` non sale più fino a `document`. Il blocco di P104 non lo vedeva: il secondo tocco non era bloccato, sul panno e sulle carte. Senza ridisegno era già bloccato. Il WebKit di Windows non ingrandisce mai con il doppio tocco, quindi lo zoom vero si vede solo sull'iPhone [N]
+- **Cosa cambia**: il `touchend` si ascolta sull'elemento toccato, aggiunto al `touchstart` (`onTouchEnd`, `once`); il clic che la pagina manda da sé va all'elemento che c'è **adesso** nel punto toccato (`elementFromPoint`) se quello toccato non è più nella pagina. In WebKit, dopo la correzione, il secondo `touchend` è bloccato in tutti e quattro i casi (panno e carta, con e senza ridisegno) [T]
+- **Controlli**: 2 test nuovi in `test_tocchi_tavolo.py` (ridisegno a metà del primo o del secondo tocco: il secondo `touchend` è bloccato e il clic arriva al pulsante nuovo), falliscono con il `game.js` di prima [T]; il file intero 9 PASS. Suite intere alla fine di P128–P133. `ruff check` pulito
+- **Decisioni prese**: nessuna
+- **Domande nuove**: nessuna
+- **Punti delicati**: un ascoltatore di eventi del tocco su `document` non vede i tocchi su elementi tolti da un ridisegno: al tavolo vanno ascoltati sull'elemento. Rischio residuo [N]: se Safari riconosce come doppio tocco anche due tocchi a più di 0,3 s (`DOUBLE_TAP_MS`), quelli passano ancora; non verificabile senza l'iPhone
+- **Cosa devono fare gli altri**: niente. **Christian**: riprovare il doppio tocco sull'iPhone, anche mentre le carte volano. **Chi è di turno sui documenti**: spuntare P133 dopo la prova sull'iPhone; nel punto delicato "Tocchi al tavolo" di `CLAUDE.md` aggiungere che il `touchend` si ascolta sull'elemento toccato
+
 ### P132 — L'anello del tempo parte dopo le pause (10/10/2026)
 
 - **Branch**: fix/p132-anello

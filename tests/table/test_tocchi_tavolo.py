@@ -129,3 +129,42 @@ def test_tocchi_lenti_come_sempre(browser, server):
     _tap(browser, "[data-phrases-button]")
     assert browser.js("document.querySelector('[data-phrases-menu]') === null") is True
     assert browser.js("window.__blocked") == [False, False]
+
+
+# --- P133: il tavolo che si ridisegna a metà di un tocco --------------------------------
+
+# Il touchend va all'elemento dove il tocco è cominciato: si guarda lì, perché un elemento
+# tolto dal ridisegno non lo fa salire fino a window (è proprio il difetto)
+WATCH_TARGET = """(() => {
+  window.__ends = [];
+  document.addEventListener('touchstart', (e) => {
+    e.target.addEventListener('touchend', (ev) => setTimeout(() => window.__ends.push(ev.defaultPrevented)),
+                              { once: true });
+  }, true);
+})()"""
+
+REDRAW = ("document.querySelector('[data-table]').dispatchEvent(new CustomEvent('demo:phrases', "
+          "{ detail: { phrases: [{ code: 'ciao', text: 'Ciao!' }] } }))")
+
+
+def _tap_with_redraw(browser, selector):
+    """Un tocco durante il quale il tavolo si ridisegna (tra touchstart e touchend)."""
+    point = browser.js(f"""(() => {{ const b = document.querySelector({selector!r}).getBoundingClientRect();
+      return {{ x: b.left + b.width / 2, y: b.top + b.height / 2 }}; }})()""")
+    browser.send("Input.dispatchTouchEvent", type="touchStart", touchPoints=[point])
+    browser.js(REDRAW)
+    browser.send("Input.dispatchTouchEvent", type="touchEnd", touchPoints=[])
+
+
+@pytest.mark.parametrize("which", ["primo", "secondo"])
+def test_doppio_tocco_bloccato_anche_con_un_ridisegno_a_meta(browser, server, which):
+    # P133: su iPhone il doppio tocco ingrandiva ancora quando il tavolo si ridisegnava
+    # a metà di uno dei due tocchi: il blocco di P104 non vedeva quel touchend
+    _open_touch(browser, server)
+    browser.js(WATCH_TARGET)
+    for tap in ("primo", "secondo"):
+        (_tap_with_redraw if tap == which else _tap)(browser, "[data-phrases-button]")
+    browser.wait_js("window.__ends.length === 2", "i due touchend", 3)
+    assert browser.js("window.__ends") == [False, True]
+    # Il secondo tocco arriva comunque al pulsante (quello nuovo): l'elenco aperto dal primo si chiude
+    assert browser.js("document.querySelector('[data-phrases-menu]') === null") is True

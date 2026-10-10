@@ -825,20 +825,32 @@ document.addEventListener('pointerdown', (event) => {
  * sul touchend); così però il browser non manda nemmeno il clic, e la pagina lo
  * manda da sé al pulsante o alla carta toccata: due tocchi veloci non si perdono.
  * Lo zoom con due dita resta.
+ * P133: il touchend arriva all'elemento dove il tocco è cominciato. Se a metà del
+ * tocco il tavolo si ridisegna (succede spesso: viste, fine delle animazioni)
+ * quell'elemento non è più nella pagina e l'evento non sale fino a document: il
+ * blocco non lo vedeva e Safari ingrandiva. Per questo il touchend si ascolta
+ * sull'elemento stesso, dal touchstart, e il clic va a quello che c'è adesso nel punto
+ * toccato.
  */
 const DOUBLE_TAP_MS = 300;
 let lastTapEnd = -Infinity;
-document.addEventListener('touchend', (event) => {
+function onTouchEnd(event) {
   if (event.touches.length || event.changedTouches.length !== 1) return; // dita ancora giù: due dita
   const now = event.timeStamp;
   const double = now - lastTapEnd <= DOUBLE_TAP_MS;
   lastTapEnd = now;
   if (!double || !event.cancelable) return;
   event.preventDefault();
-  const target = event.target instanceof Element
-    ? event.target.closest('button, a[href], [role="button"], summary, label') : null;
+  const touch = event.changedTouches[0];
+  const touched = event.target instanceof Element && event.target.isConnected
+    ? event.target : document.elementFromPoint(touch.clientX, touch.clientY);
+  const target = touched ? touched.closest('button, a[href], [role="button"], summary, label') : null;
   if (target && !target.disabled) target.click();
-}, { passive: false });
+}
+document.addEventListener('touchstart', (event) => {
+  // Lo stesso ascoltatore con le stesse opzioni non si aggiunge due volte (più dita sullo stesso elemento)
+  event.target.addEventListener('touchend', onTouchEnd, { once: true, passive: false });
+}, { capture: true, passive: true });
 
 // Chi è scollegato: "scollegato · 48 s" scende ogni secondo, senza aspettare il server
 setInterval(() => {
