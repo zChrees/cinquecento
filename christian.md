@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P130 — I fumetti delle frasi non rifanno l'entrata (10/10/2026)
+
+- **Branch**: fix/p130-fumetti
+- **File**: modificati `app/static/js/pages/game.js`, `app/static/js/components/TablePhrases.js`, `tests/table2/test_frasi_senza_lampeggio.py`, questo file; `app/static/js/components/Table.js` **solo una riga di commento** (fuori elenco, con l'ok di Christian del 10/10: il dato del fumetto passa da lì e il commento diceva "testo")
+- **Causa confermata** [T]: con il lancio di una carta dell'avversario il fumetto già visibile rifaceva `phrase-pop` 2 volte, passando da opacità 0
+- **Cosa cambia**: `showBubble` si ricorda l'ora d'arrivo (`since`); `bubbles` diventa posto → `{ text, shownFor }` e `PhraseBubble` usa `shownFor` come ritardo negativo dell'entrata (come P70 e P110), così il fumetto ridisegnato riprende dalla fine
+- **Controlli**: 2 test nuovi in `test_frasi_senza_lampeggio.py` (telefono e computer), PASS; falliscono con il `game.js` di prima [T]. Suite intere alla fine di P128–P133. `ruff check` pulito
+- **Decisioni prese**: nessuna
+- **Domande nuove**: nessuna
+- **Punti delicati**: `phrases.bubbles` di `Table` non è più posto → testo ma posto → `{ text, shownFor }`
+- **Cosa devono fare gli altri**: niente. **Chi è di turno sui documenti**: spuntare P130; nel punto delicato "Frasi nella pagina" di `CLAUDE.md` aggiungere che anche il fumetto riceve il tempo passato
+
 ### P129 — Sul telefono niente `:hover` (10/10/2026)
 
 - **Branch**: fix/p129-hover

@@ -69,6 +69,7 @@
  *   PHRASE_PAUSE_MS, o i retry_after secondi di too_fast. game:phrase {seat, code}
  *   mostra il fumetto accanto a chi ha parlato per BUBBLE_MS (anche il proprio: il
  *   server lo rimanda a tutti). Si mandano anche a partita finita, per i saluti.
+ *   Il fumetto riceve da quanto è comparso (P130, come P70): ridisegnato, non rifà l'entrata.
  *   L'elenco si chiude con una frase, con Esc o toccando fuori.
  * - Solo nella prova (?demo=): la pagina accetta gli eventi del browser "demo:state"
  *   (una vista nuova), "demo:sang" (un canto), "demo:phrases" (l'elenco delle frasi)
@@ -162,7 +163,7 @@ let phrasesOpenedAt = 0; // P110: l'entrata dell'elenco non riparte a ogni ridis
 let phraseSending = false; // una frase è partita e si aspetta la risposta
 let phrasePausedUntil = 0; // performance.now() fino a cui il pulsante resta spento
 let phrasePauseTimer = 0;
-const bubbles = {}; // posto → { text, timer }
+const bubbles = {}; // posto → { text, timer, since } (since: P130, l'entrata non riparte)
 
 function showMessage(text) {
   root.replaceChildren();
@@ -615,7 +616,8 @@ function render(next) {
       redraw();
     },
     onPick: sendPhrase,
-    bubbles: Object.fromEntries(Object.entries(bubbles).map(([seat, { text }]) => [seat, text])),
+    bubbles: Object.fromEntries(Object.entries(bubbles).map(([seat, { text, since }]) =>
+      [seat, { text, shownFor: performance.now() - since }])),
   };
   // Il tavolo si ridisegna tutto: chi stava usando le frasi con la tastiera resta dov'era
   const focused = document.activeElement;
@@ -740,7 +742,7 @@ function pausePhrases(ms) {
 function showBubble(seat, text) {
   playSound('phrase'); // P109: anche le frasi del tavolo hanno il loro suono
   clearTimeout(bubbles[seat]?.timer);
-  const entry = { text };
+  const entry = { text, since: performance.now() };
   entry.timer = setTimeout(() => {
     if (bubbles[seat] === entry) delete bubbles[seat];
     redraw();

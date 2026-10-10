@@ -65,13 +65,16 @@ export function PhrasesMenu(phrases, { disabled, onPick, openFor = 0 }) {
 
 /**
  * @param {string} name chi ha parlato (letto dai lettori di schermo, non si vede)
- * @param {string} text la frase
+ * @param {{text: string, shownFor: number}} phrase la frase e da quanti ms è comparsa
+ *   (P130): il tavolo si ridisegna tutto, e l'entrata riprende da lì invece di ripartire
  * @param {string} position 'bottom' | 'right' | 'top' | 'left', il posto al tavolo
  */
-export function PhraseBubble(name, text, position) {
-  return el('p', {
+export function PhraseBubble(name, { text, shownFor = 0 }, position) {
+  const bubble = el('p', {
     class: `phrase-bubble phrase-bubble--${position}`,
     data: { phraseBubble: '' },
     attrs: { role: 'status' },
   }, [el('span', { class: 'visually-hidden', text: `${name}: ` }), text]);
+  bubble.style.animationDelay = `${-Math.round(shownFor)}ms`;
+  return bubble;
 }

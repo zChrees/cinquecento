@@ -269,7 +269,7 @@ function LaidDownNotice(view, laid, positionOf, shownFor = 0) {
  * @param {function} phrases.onToggle apre o chiude l'elenco
  * @param {number} phrases.openFor ms da quando l'elenco è aperto (P110)
  * @param {function} phrases.onPick frase scelta (code)
- * @param {object} phrases.bubbles posto → testo del fumetto da mostrare
+ * @param {object} phrases.bubbles posto → fumetto da mostrare ({ text, shownFor }, P130)
  * @returns {HTMLElement}
  */
 export function Table(view, { onPlay, onSing, onLeave, onLayDown = null, onAdvise = null }, status = '', moments = {}, phrases = null) {

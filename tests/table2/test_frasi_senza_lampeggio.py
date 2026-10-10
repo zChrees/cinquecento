@@ -159,3 +159,40 @@ def test_sul_telefono_l_elenco_si_apre_al_suo_posto_e_non_si_muove(browser, serv
     assert {f["transform"] for f in frames} == {"none"}, frames  # entrata senza movimento
     assert row < frames[0]["top"] <= row + 10, (row, frames[0])  # subito sotto la tua riga
     assert frames[0]["bottom"] <= 844
+
+
+# P130: conta le entrate dei fumetti che ripartono da capo e la loro opacità più bassa
+# dopo la prima entrata (come WATCH per l'elenco)
+BUBBLE_WATCH = """(() => {
+  window.__bubble = { starts: 0, minOpacity: 1 };
+  document.addEventListener('animationstart', (e) => {
+    if (e.animationName === 'phrase-pop' && e.elapsedTime < 0.15) window.__bubble.starts += 1;
+  });
+  const sample = () => {
+    const bubble = document.querySelector('[data-phrase-bubble]');
+    if (bubble) window.__bubble.minOpacity = Math.min(window.__bubble.minOpacity, Number(getComputedStyle(bubble).opacity));
+    requestAnimationFrame(sample);
+  };
+  requestAnimationFrame(sample);
+})()"""
+
+
+@pytest.mark.parametrize("size", [(360, 640), (1280, 720)], ids=["telefono", "computer"])
+def test_il_fumetto_non_rifa_l_entrata_quando_il_tavolo_si_ridisegna(browser, server, size):
+    # P130: il fumetto ricreato a ogni ridisegno rifaceva phrase-pop e sembrava una frase nuova
+    browser.open(f"{server}/game/prova?demo=1v1", *size, "document.querySelector('[data-mode]') !== null")
+    browser.send("Emulation.setEmulatedMedia", features=[{"name": "prefers-reduced-motion", "value": "no-preference"}])
+    _dispatch(browser, "demo:phrases", PHRASES)
+    base = _waiting()
+    _dispatch(browser, "demo:state", base)
+    browser.js(BUBBLE_WATCH)
+    _dispatch(browser, "demo:phrase", {"seat": 1, "code": PHRASES["phrases"][0]["code"]})
+    browser.wait_js("document.querySelector('[data-phrase-bubble]') !== null", "fumetto", 3)
+    time.sleep(0.5)  # l'entrata (0,2 s) è finita
+    assert browser.js("window.__bubble.starts") == 1  # all'arrivo l'entrata c'è
+    browser.js("window.__bubble = { starts: 0, minOpacity: 1 }")
+    _dispatch(browser, "demo:state", _turi_plays(base))  # lancio di Turi: più ridisegni
+    wait(lambda: browser.js("document.querySelector('.card--thrown') !== null"), 3, "carta lanciata")
+    time.sleep(1.2)
+    assert browser.js("document.querySelector('[data-phrase-bubble]') !== null"), "il fumetto è sparito"
+    assert browser.js("window.__bubble") == {"starts": 0, "minOpacity": 1}
