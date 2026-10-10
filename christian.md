@@ -22,6 +22,19 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: registrati P128–P135 e P134, giro completo da 1872 PASS (11/10/2026)
+
+- **Branch**: docs/aggiornamento-11-10
+- **File**: modificati `SCALETTA.md`, `CLAUDE.md`, `DECISIONI.md`, questo file. `DA-DECIDERE.md` non toccato: nessuna domanda nuova
+- **Registrati**: `christian.md` fino a "P135 (numero proposto) — L'Asso nella pillola del canto non lampeggia" (P128–P133, la seconda parte di P129, P135); `giuseppe.md` fino a "P134 — CPU: niente carichi né briscole alte sprecati su prese povere"; `antonio.md` niente di nuovo. **Spuntati** P128–P135 (P135 aperto con questo numero), tutti provati a mano da Christian sull'iPhone; P134 fatto da Giuseppe
+- **`SCALETTA.md`**: tracker con le note e i commit; "Fatto il 10/10" nei dettagli dei punti; P135 nuovo (tracker, dettaglio, tabella 9.1); liste definitive di P128, P131 e P133 nella sezione 9.2; "Da dove si parte" riscritta
+- **`DECISIONI.md`**: al tocco niente contorno del fuoco (P129); nome lungo al tavolo, con le carte cantate sopra "Frasi" e il nome in alto da 62 px (P131); P134 solo nel 2v2 con l'aggiunta a D51 (scelte di Giuseppe)
+- **`CLAUDE.md`**: riga "Stato"; 1872 PASS; punti delicati Timer (`tablePaused`), Frasi nella pagina (fumetto con `shownFor`), Animazioni (pillola del canto), Tocchi al tavolo (`touchend` sull'elemento, `:hover` e contorno), Chat e tastiera (P128), Tavolo sul telefono (P131), CPU (P134 solo nel 2v2, `forza` 16/24), suite `table` (tempi vicini ai 240 s, blocco raro in `frontend`)
+- **Giro completo** (10/10, `dev` con P134 e P128–P135): **1872 PASS in 12 suite, TUTTO PASS** (1346 s): runner 13, engine 704, db 89, api 300, services 38, sockets 321, frontend 162, e2e 12, forza 2, table 79, table2 60, table3 92. Il primo giro delle suite del browser si era fermato in `frontend` (blocco raro in `test_banner_connessione.py`, 1 volta su 11 lanciando il file da solo): rilanciata, PASS
+- **Decisioni prese**: nessuna oltre a quelle registrate
+- **Domande nuove**: nessuna
+- **Cosa devono fare gli altri**: **Giuseppe**: P38 dopo l'aggiornamento di `main`; niente di tuo toccato da P128–P135
+
 ### P135 (numero proposto) — L'Asso nella pillola del canto non lampeggia (10/10/2026)
 
 - **Branch**: fix/p135-pillola-canto
