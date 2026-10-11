@@ -1,5 +1,7 @@
 # Code review indipendente (P36)
 
+> **Tracker attivo** dal 11/10/2026 (P37): la scaletta è archiviata in `docs/archivio/SCALETTA-2026-09.md`. Lo stato di ogni finding e i punti ancora aperti della scaletta (P38) sono in fondo, in "Stato e punti aperti". Lo aggiorna chi è di turno sui documenti, come prima la scaletta.
+
 > 11/10/2026. I finding sono stati scritti **prima** di leggere `DECISIONI.md`; poi sono stati confrontati con le decisioni (sezione "Confronto con DECISIONI.md"): quelli che ne contraddicono una sono segnati "rischio residuo", senza riproporre le soluzioni scartate. La review non ha modificato il codice.
 
 Legenda dell'evidenza: **[T]** verificato con una prova · **[L]** letto nel codice · **[D]** dedotto · **[N]** non verificabile.
@@ -14,7 +16,7 @@ Gravità: critico, alto, medio, basso.
 
 ## Finding
 
-### R1 — medio — Username ed email accettano un a-capo finale [T]
+### R1 — medio — Username ed email accettano un a-capo finale [T] · fatto (P137)
 
 - **Dove**: `app/blueprints/auth/forms.py:326` (`Regexp(r"^[A-Za-z0-9_]+$")`), `:331` (email); `migrations/001_init.sql:63` (`ck_utenti_nome`).
 - **Cosa**: in Python `$` vale anche prima di un a-capo finale, e `Regexp` di WTForms usa `re.match`. Il `CHECK` di MySQL (`REGEXP_LIKE`, ICU) fa lo stesso. Il campo non toglie gli spazi.
@@ -24,7 +26,7 @@ Gravità: critico, alto, medio, basso.
 - **Decisioni**: nessuna in contrasto; è un difetto dell'attuazione di D7 (solo lettere, numeri e `_`).
 - **File**: `app/blueprints/auth/forms.py`, `tests/api/test_auth.py`; facoltativo `migrations/002_….sql`.
 
-### R2 — medio — Chi non arriva mai al tavolo non ha limite di tempo [L] · rischio residuo
+### R2 — medio — Chi non arriva mai al tavolo non ha limite di tempo [L] · rischio residuo, poi fatto (P138)
 
 - **Dove**: `app/realtime/room.py:17-19`, `:506-522` (il conto alla rovescia parte solo da `disconnect`, cioè per chi era seduto).
 - **Scenario**: la coda abbina due giocatori; uno chiude la scheda proprio in quel momento e non fa mai `game:join`. L'altro gioca tutta la partita (fino a 500 punti) contro le mosse automatiche, 15 s a turno, oppure preme "Esci" e **perde per abbandono**, con il rating che scende a lui e non a chi è sparito.
@@ -32,7 +34,7 @@ Gravità: critico, alto, medio, basso.
 - **Correzione**: nessuna proposta nuova; se il gruppo vuole riaprirla, si riparte dalla decisione del 28/09.
 - **File**: —
 
-### R3 — medio — Suite dei test vicine al limite di 240 s [L] · in parte rischio residuo
+### R3 — medio — Suite dei test vicine al limite di 240 s [L] · in parte rischio residuo, poi fatto (P139)
 
 - **Dove**: `tests/esegui_tutti.py` (`SUITE_TIMEOUT`); misure nei riepiloghi del 10/10: `table3` 226 s, `frontend` 206 s.
 - **Scenario**: con il PC un po' carico una suite supera il limite e il giro risulta FAIL senza un difetto vero; con il tempo si smette di fidarsi del rosso. In `frontend` c'è anche un blocco raro in `test_banner_connessione.py` (circa 1 giro su 10).
@@ -107,19 +109,20 @@ Gravità: critico, alto, medio, basso.
 - **Correzione**: nessuna per la consegna; da riprendere con D21 (uso pubblico).
 - **File**: —
 
-### R13 — basso — In sviluppo il debugger di Werkzeug è acceso [D]
+### R13 — basso — In sviluppo il debugger di Werkzeug è acceso [L] · fatto (P140)
 
 - **Dove**: `config.py:99-101` (`DEBUG = True`), `run.py:24`.
 - **Scenario**: chi avvia in sviluppo con `HOST=0.0.0.0` (per provare dal telefono) espone il debugger interattivo alla rete locale (protetto da un PIN).
 - **Correzione**: una riga in `.env.example`/`README.md`: in rete usare `APP_ENV=demo`; oppure `use_debugger=False` quando `HOST` non è locale.
 - **File**: `.env.example`, `README.md` (o `run.py`).
 
-### R14 — basso — Backup sullo stesso PC e non cifrati [L]
+### R14 — basso — Backup sullo stesso PC e non cifrati [L] · fatto (P140)
 
 - **Dove**: `scripts/backup.py`, `docs/DEMO.md` passo 8.
 - **Scenario**: se il disco del PC della demo si rompe, si perdono database e backup insieme. I file contengono email e hash delle password in chiaro (compressi).
 - **Correzione**: copiare ogni tanto l'ultimo backup su un altro supporto; nella guida, dire dove tenerli e che contengono dati personali.
 - **File**: `docs/DEMO.md`.
+- **Precisazione (P140)**: il passo 8 di `DEMO.md` diceva già di copiare i backup fuori dal PC (nella review non era stato visto); mancava solo l'avviso sui dati personali, aggiunto in P140.
 
 ### R15 — basso — Mancano due test [L]
 
@@ -160,3 +163,36 @@ Letto dopo la bozza. Cosa è cambiato:
 1. **R1**: piccola correzione (due regole e un test), riguarda la sicurezza.
 2. **R7** e **R4**: solo se c'è tempo; con meno di 50 persone non si vedono.
 3. Il resto dopo la consegna, o da citare nella relazione come limiti noti (R2, R5, R10, R12 in particolare).
+
+Scelta di Christian (11/10): corretti R1, R2, R3, R13 e R14; gli altri restano limiti noti (`DECISIONI.md`, Processo, 11/10).
+
+## Stato e punti aperti
+
+Si spunta solo dopo l'ok dell'utente, il commit e il merge in `dev`, come nella scaletta.
+
+### Finding
+
+- [x] R1 — username ed email senza a-capo finale — *P137, 11/10 (commit `fefbab7`)*
+- [x] R2 — chi non arriva al tavolo ha 60 secondi — *P138, 11/10 (commit `e626987`; riaperta la scelta del 28/09)*
+- [x] R3 — suite dei test più corte (16 suite) — *P139, 11/10 (commit `704713d`)*
+- [ ] R4 — stanze finite tolte dalla memoria — dopo la consegna (limite noto)
+- [ ] R5 — `legal.lay_down` — rischio residuo (regola di D45): da citare nella relazione
+- [ ] R6 — secondo tentativo del salvataggio — dopo la consegna (limite noto)
+- [ ] R7 — coda, CPU e inviti sotto lo stesso lock — dopo la consegna (limite noto)
+- [ ] R8 — cookie `Secure` con ngrok — dopo la consegna (va legato a una variabile del `.env`, altrimenti con la Wi-Fi il login non funziona)
+- [ ] R9 — sessione revocabile — dopo la consegna (serve una colonna nuova)
+- [ ] R10 — blocco del login di un altro — rischio residuo (P16, P96): da citare nella relazione
+- [ ] R11 — limite sulle richieste HTTP degli amici — dopo la consegna
+- [ ] R12 — server di sviluppo nella demo — rischio residuo: da riprendere con D21
+- [x] R13 — avviso sul debugger in rete — *P140, 11/10 (commit `7bf7863`)*
+- [x] R14 — avviso sui dati personali nei backup — *P140, 11/10 (commit `7bf7863`)*
+- [ ] R15 — test mancanti: (a) fatto con P137; (b) resta con R4
+- [ ] R16 — piccole copie nel codice — dopo la consegna
+
+### Punti della scaletta non chiusi (copiati da `docs/archivio/SCALETTA-2026-09.md`, P37)
+
+- [ ] **P38** (Fase 5): installazione demo separata e backup pianificato — Giuseppe (punto di Antonio, passato a lui il 28/09)
+  - *File*: `docs/DEMO.md` e `scripts/pianifica_backup.ps1` (con `tests/db/test_demo.py`), già in `dev` e in `main`; il resto (cartella della demo, `.env`, `PRODUZIONE`, firewall, ngrok) è fuori dal repository.
+  - *Da quale branch*: **`main`** (D20), oggi "Cinquecento v1.0.1".
+  - *Cosa resta*: sul PC di Giuseppe i passi 1–9 di `docs/DEMO.md`, poi la prova generale con il QR code dal telefono (passi 11 e 12, P39).
+  - *Fatto quando*: nella cartella della demo c'è il file `PRODUZIONE` (`Test-Path PRODUZIONE` → `True`: da P136 in `main` non ci sono i test, quindi il rifiuto del runner non si prova lì); il backup pianificato produce un file; un ripristino di prova su `cinquecento_test` funziona.

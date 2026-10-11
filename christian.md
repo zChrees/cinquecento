@@ -22,6 +22,29 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P37 — Chiusura e archiviazione della scaletta (sera dell'11/10/2026)
+
+- **Branch**: docs/aggiornamento-11-10-sera (insieme all'aggiornamento dei documenti qui sotto: le due cose toccano le stesse righe di `CLAUDE.md`)
+- **File**: spostato `SCALETTA.md` → `docs/archivio/SCALETTA-2026-09.md` (in cima: "Archivio, non più aggiornato. Tracker attivo: `REVIEW.md`."; P37 spuntato prima di spostarla); modificati `REVIEW.md`, `CLAUDE.md`, `README.md` (sezione "Come lavoriamo"), `DA-DECIDERE.md` (riga 4, rimando alla scaletta), `DECISIONI.md` (Processo), questo file. `DA-DECIDERE.md` non è nell'elenco di P37 ma è un documento condiviso e il passo 4 chiede di togliere i rimandi alla scaletta come tracker
+- **I quattro passi**: (1) **P38**, l'unico punto non spuntato, copiato in fondo a `REVIEW.md` ("Stato e punti aperti") con il "Fatto quando" aggiornato a P136 (`Test-Path PRODUZIONE`), insieme allo stato di ogni finding (fatti R1, R2, R3, R13, R14; gli altri limiti noti o rischi residui); R13 passa a [L] e R14 ha la precisazione di P140; (2) scaletta archiviata; (3) in `CLAUDE.md` la riga del tracker attivo, "Chi lavora", "Documenti condivisi", "Tocca solo i file elencati", il controllo della colonna "Attende" e la riga "Stato"; (4) nessun documento rimanda più alla scaletta come tracker attivo: il README collega `REVIEW.md` e la scaletta archiviata. I commenti dei test e del codice che citano "il Fatto quando di SCALETTA.md (Pn)" restano: sono rimandi storici e il file esiste ancora, in archivio
+- **Controlli**: nessuna suite lanciata (solo documenti)
+- **Decisioni prese**: nessuna nuova (procedura dello spec di P37), registrata in `DECISIONI.md`
+- **Domande nuove**: nessuna
+- **Note per gli altri**: **da ora il tracker è `REVIEW.md`**: chi è di turno spunta lì i finding e P38. **Giuseppe**: quando P38 è fatto, il riepilogo va in `giuseppe.md` come sempre; chi è di turno lo spunta in fondo a `REVIEW.md`
+
+### Documenti: registrati P36 e P136–P140 (sera dell'11/10/2026)
+
+- **Branch**: docs/aggiornamento-11-10-sera
+- **File**: modificati `SCALETTA.md`, `CLAUDE.md`, `DECISIONI.md`, `docs/CONTRATTO-SOCKET.md` (una frase, conseguenza di P138 approvata da Giuseppe), questo file. `DA-DECIDERE.md` non toccato: nessuna domanda nuova
+- **Registrati**: `christian.md` fino a "P140 (numero proposto) — Avvisi su debugger e backup"; `giuseppe.md` e `antonio.md` niente di nuovo. **Spuntati** P36 e P136–P140 (aperti con questi numeri), con le note e i commit; righe nuove nella tabella 9.1; "Da dove si parte" riscritta
+- **`DECISIONI.md`**: la decisione del 28/09 "Chi non arriva mai al tavolo non ha limite di tempo" è barrata e sostituita da P138 (Gioco); in Processo: file esclusi da `main` (P136), quali finding della review si correggono prima della consegna, suite divise (P139)
+- **`CLAUDE.md`**: riga "Stato"; regole di `main` (esclusi `tests/`, `requirements-dev.txt`, `app/static/dev/`; come si aggiorna); punti delicati Accesso (`\Z`, P137), Timer (P138), suite del tavolo (sei suite, P139); Testing: 1875 PASS in 16 suite
+- **`docs/CONTRATTO-SOCKET.md`** (3.3): `reconnect_seconds_left` vale anche per chi non è ancora arrivato al tavolo (P138)
+- **Controlli**: nessuna suite lanciata (solo documenti); il numero viene dal giro di P139
+- **Decisioni prese**: nessuna oltre a quelle registrate
+- **Domande nuove**: nessuna
+- **Cosa devono fare gli altri**: **Giuseppe**: P38 da `main` ("Cinquecento v1.0.1"), poi la prova generale
+
 ### P140 (numero proposto) — Avvisi su debugger e backup (R13 e R14 di REVIEW.md, 11/10/2026)
 
 - **Branch**: docs/p140-avvisi-sviluppo-e-backup
