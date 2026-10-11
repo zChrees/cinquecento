@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P139 (numero proposto) — Suite `table4` e `frontend2` (R3 di REVIEW.md, 11/10/2026)
+
+- **Branch**: fix/p139-suite-piu-corte
+- **File**: spostati (contenuto invariato, solo due commenti con il nome della suite) da `tests/table3/` a `tests/table4/`: `test_carte_pronte.py`, `test_frasi_di_lato.py`, `test_niente_lampeggi.py`, `test_presa_affiancata.py`, `test_stile_tavolo.py`, `test_tavolo_telefono.py`; da `tests/frontend/` a `tests/frontend2/`: `test_gira_telefono.py`, `test_inviti_2v2.py`, `test_banner_connessione.py`, `test_pannello_amici.py`, `test_suoni_menu.py`, `test_invito_ricevuto.py`; da `tests/table/` a `tests/table5/`: `test_momenti_tavolo.py`, `test_frasi_pagina.py`, `test_anello_tempo.py`, `test_timer_in_anticipo.py`; da `tests/table2/` a `tests/table6/`: `test_suoni.py`, `test_calata.py`, `test_partita_interrotta.py`; modificato questo file. Il runner non cambia (trova le suite da solo; quelle nuove vanno dopo `e2e`, in ordine alfabetico). Le suite diventano **16**
+- **Perché**: misurate file per file l'11/10 con il PC carico (`--durations`) [T]: `table3` 334 s e `frontend` 337 s, tutte e due oltre i 240 s (il 10/10 erano 226 e 206). In `table3` `test_grafica_tavolo.py` da solo vale 178 s, più di metà: resta da solo in `table3`, gli altri sei (150 s) in `table4`. `frontend` divisa in due metà da circa 167 s. Il primo giro completo dopo questa divisione (11/10, PC carico, 1646 s) ha dato **12 suite PASS (1736 controlli)** e `table` e `table2` fermate a 240 s senza nessun test fallito; rilanciate da sole senza limite passano tutte (79 e 60) in 232 e 218 s, nessun test bloccato (il più lento 9,3 s) [T]: per questo sono state divise anche loro (scelta di Christian, opzione A: dopo la divisione si rilanciano solo le suite del tavolo, le altre dieci erano appena passate con lo stesso codice). Il limite di 240 s non cambia (deciso il 29/09 e il 06/10)
+- **Controlli**: giro completo come sopra; poi le sei suite del tavolo, **tutte PASS** [T]: `table` 126 s (45), `table2` 98 s (36), `table3` 127 s (50), `table4` 115 s (42), `table5` 100 s (34), `table6` 102 s (24). In tutto, con le dieci suite del giro completo: **1875 PASS in 16 suite** (1872 del 10/10 + 2 di P137 + 1 di P138), `ruff check` pulito sui file spostati. Nella misura di `table3` è fallito una volta il caso raro già noto `test_meno_carte_in_mano_niente_si_sposta[360x640-2v2]` (1 px, P106)
+- **Decisioni prese**: Christian: dividere le suite (R3)
+- **Domande nuove**: nessuna
+- **Punti delicati**: un test lungo nuovo del tavolo nel browser va nella più corta delle sei suite del tavolo (`table`, `table2`, … `table6`); un test nuovo del browser fuori dal tavolo nella più corta tra `frontend` e `frontend2`. `frontend2` gira dopo `e2e`: un suo test che usa il database lo prepara da sé, come già in `frontend`
+- **Note per gli altri**: **chi è di turno sui documenti**: in `CLAUDE.md` (suite `table`, Testing) le suite sono 16 e le regole per i test lunghi nuovi sono quelle qui sopra; `test_banner_connessione.py` (blocco raro) ora sta in `frontend2`
+
 ### P138 (numero proposto) — Chi non arriva al tavolo ha 60 secondi (R2 di REVIEW.md, 11/10/2026)
 
 - **Branch**: fix/p138-arrivo-al-tavolo

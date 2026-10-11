@@ -12,7 +12,7 @@ con 5 carte agli avversari e nomi lunghi: tra "Esci" e il ventaglio restano alme
 si apre nella prova (/game/prova?demo=…) in Chrome o Edge senza finestra
 (tests/browser.py); le viste arrivano con l'evento del browser "demo:state". Non
 serve MySQL. Se né Chrome né Edge sono installati i controlli si saltano. Il file sta
-nella suite table3 (P121: prima in api, poi vicina ai 240 s).
+nella suite table4 (P121: prima in api, poi in table3; P139: vicine ai 240 s).
 """
 
 import copy
