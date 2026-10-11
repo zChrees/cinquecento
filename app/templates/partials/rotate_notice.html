@@ -1,0 +1,11 @@
+{#
+  P116: avviso "Gira il telefono in verticale". Sul telefono il gioco si usa solo in
+  verticale e una pagina web non può bloccare la rotazione: in orizzontale questo
+  avviso copre tutta la pagina (che sotto va avanti: è solo una copertura). Quando si
+  vede lo decide css/components/rotate-notice.css; senza CSS non compare.
+#}
+<div class="rotate-notice" data-rotate-notice>
+  <span class="icon rotate-notice__icon" aria-hidden="true">screen_rotation</span>
+  <p class="rotate-notice__title">Gira il telefono in verticale</p>
+  <p class="rotate-notice__text">Cinquecento si gioca con il telefono in verticale.</p>
+</div>

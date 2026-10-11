@@ -1,0 +1,118 @@
+/*
+ * Finestra chat (P46), dal prototipo di P52 (".chat"): si apre dentro il
+ * pannello amici, che su telefono è a tutto schermo. Scorre solo l'elenco dei
+ * messaggi; il campo di scrittura resta sempre visibile in fondo.
+ * La crea js/components/ChatWindow.js; il testo dei messaggi è sempre testo.
+ */
+
+.chat {
+  overflow: hidden;   /* scorre solo l'elenco dei messaggi */
+}
+
+.chat__presence {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.chat__title {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.chat__title .drawer__title {
+  font-size: 1.3rem;
+}
+
+/* Avviso in cima (chat di prova, conversazione in sola lettura) */
+.chat__notice {
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-m);
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.chat__messages {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+  padding: 8px 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/*
+ * P128: i messaggi stanno attaccati in fondo, sopra la casella, e i nuovi entrano
+ * sotto spingendo su i vecchi (come le app di messaggi): con pochi messaggi lo spazio
+ * vuoto è in alto, e con la tastiera aperta restano visibili gli ultimi. Lo spazio lo
+ * prende questo elemento vuoto, che si riduce a zero quando l'elenco scorre
+ * (justify-content: flex-end renderebbe irraggiungibili i messaggi in cima). Senza
+ * messaggi l'avviso resta al centro.
+ */
+.chat__messages:not(:has(> [data-chat-empty]))::before {
+  content: "";
+  flex: 1 0 0;
+  margin-bottom: -8px;   /* senza lo spazio fra gli elementi (gap) sotto di lui */
+}
+
+.chat__empty {
+  margin: auto;
+  color: var(--muted);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.chat__msg {
+  max-width: 80%;
+  padding: 8px 12px;
+  border-radius: 18px 18px 18px 6px;
+  background: var(--surface-2);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;   /* il testo si mostra così com'è */
+}
+
+.chat__msg--mine {
+  align-self: flex-end;
+  border-radius: 18px 18px 6px 18px;
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.chat__time {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.7rem;
+  opacity: 0.75;
+  text-align: right;
+}
+
+.chat__form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.chat__form .input {
+  flex: 1;
+}
+
+/* P81: un tocco su "Invia" spento passa al modulo, che non toglie il fuoco alla
+   casella (Chrome non manda eventi a un pulsante spento): la tastiera resta aperta */
+.chat__form button:disabled {
+  pointer-events: none;
+}
+
+.chat__error {
+  width: 100%;
+  color: var(--red-strong);
+  font-size: 0.85rem;
+  font-weight: 700;
+}

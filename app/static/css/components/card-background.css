@@ -1,0 +1,90 @@
+/*
+ * Cascata di carte dello sfondo della home (P22), dal prototipo (P52).
+ * Carte di dorso e, di faccia, Assi, Tre (i carichi) e coppie Cavallo + Re
+ * (cantare 40), da app/static/img/cards-bg/. Le crea js/components/CardBackground.js.
+ * Passano dietro a tutto, anche dietro la navbar (z-index -1: nessun contenitore
+ * della pagina crea un nuovo livello). Con "riduci movimento" restano ferme
+ * (reset.css spegne le animazioni) nel punto --y.
+ */
+
+.bg-deco {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  --bg-card-w: 60px;
+}
+
+/*
+ * Ogni carta parte sopra lo schermo e cade fino a sotto, girando piano
+ * e spostandosi un po' di lato. --delay negativo: all'apertura la cascata è già
+ * a metà. Le carte sono piene, non trasparenti: quelle grandi (vicine) coprono
+ * quelle piccole (lontane), che lo script mette prima nella pagina. La distanza si
+ * vede dalla luce: le lontane sono più scure (--shade).
+ */
+.bg-fall {
+  position: absolute;
+  top: 0;
+  left: var(--x);
+  width: var(--bg-card-w);
+  aspect-ratio: var(--card-ratio);
+  border-radius: 6px;
+  object-fit: cover;
+  filter: brightness(var(--shade, 0.8));
+  box-shadow: 0 6px 14px color-mix(in srgb, var(--ink) 28%, transparent);
+  transform: translate(-50%, var(--y)) rotate(var(--r0));
+  animation: bg-fall var(--dur) linear var(--delay) infinite;
+  will-change: transform;
+}
+
+@keyframes bg-fall {
+  from { transform: translate(-50%, -110%) rotate(var(--r0)); }
+  to { transform: translate(calc(-50% + var(--drift)), calc(100vh + 40px)) rotate(var(--r1)); }
+}
+
+/* Coppia Cavallo + Re che cade insieme, a ventaglio come in mano a chi canta */
+.bg-fall.bg-pair {
+  display: flex;
+  width: auto;
+  aspect-ratio: auto;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.bg-pair img {
+  width: var(--bg-card-w);
+  max-width: none;
+  aspect-ratio: var(--card-ratio);
+  border-radius: 6px;
+  object-fit: cover;
+  box-shadow: 0 6px 14px color-mix(in srgb, var(--ink) 28%, transparent);
+}
+
+.bg-pair img:first-child {
+  transform: rotate(-7deg);
+}
+
+.bg-pair img:last-child {
+  margin-left: calc(var(--bg-card-w) * -0.45);
+  transform: rotate(7deg) translateY(2px);
+}
+
+/* Tablet: carte un po' più grandi */
+@media (min-width: 640px) {
+  .bg-deco {
+    --bg-card-w: 84px;
+  }
+}
+
+/* Computer: carte più grandi */
+@media (min-width: 1024px) {
+  .bg-deco {
+    --bg-card-w: 104px;
+  }
+
+  .bg-pair img,
+  .bg-fall {
+    border-radius: 9px;
+  }
+}

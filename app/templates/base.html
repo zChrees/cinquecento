@@ -1,0 +1,66 @@
+<!doctype html>
+{#
+  Struttura comune di tutte le pagine (P19). Una pagina la estende e riempie:
+  - title: titolo della scheda (predefinito "Cinquecento");
+  - styles: i CSS della pagina e dei suoi componenti (<link rel="stylesheet">);
+  - page_script: UN SOLO <script type="module"> con il file della pagina in js/pages/;
+  - page_class: classi in più per <main> (es. "page--form" per i moduli);
+  - content: il contenuto.
+  - navbar: predefinito partials/navbar.html (P40); una pagina senza navbar lo svuota.
+  L'icona della scheda (P42) è in img/favicon.svg, con le copie PNG accanto.
+  Le risorse esterne (i font del testo da Google Fonts) si caricano SOLO qui e sono
+  solo quelle elencate in docs/prototipo/LEGGIMI.md. Il font delle icone è nel
+  progetto (D40): un'icona nuova va aggiunta a fonts/icone.txt e il font va
+  riscaricato (LEGGIMI.md, "Icone").
+  Gli attributi data-user-* del <body> e il meta csrf-token sono fissati dal
+  contratto (docs/CONTRATTO-SOCKET.md, 1.5): vuoti per chi non ha fatto il login.
+#}
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>{% block title %}Cinquecento{% endblock %}</title>
+
+  {# Icona della scheda (P42): SVG per i browser moderni, PNG per gli altri e per la schermata Home del telefono #}
+  <link rel="icon" href="{{ url_for('static', filename='img/favicon.svg') }}" type="image/svg+xml">
+  <link rel="icon" href="{{ url_for('static', filename='img/favicon-32.png') }}" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/apple-touch-icon.png') }}">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap">
+  {# Icone (D40): font nel progetto con solo le icone usate (fonts/icone.txt), chiesto subito #}
+  <link rel="preload" href="{{ url_for('static', filename='fonts/material-symbols-rounded.woff2') }}" as="font" type="font/woff2" crossorigin>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/base/reset.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/base/variables.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/base/typography.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/base/layout.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components/button.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components/form.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components/modal.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components/navbar.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components/stats-panel.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components/friends-panel.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components/chat.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components/banner.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components/rotate-notice.css') }}">
+  {% block styles %}{% endblock %}
+  {% block page_script %}{% endblock %}
+</head>
+{% if current_user.is_authenticated %}
+<body data-user-id="{{ current_user.get_id() }}" data-username="{{ current_user.username }}" data-avatar="{{ current_user.avatar or '' }}">
+{% else %}
+<body data-user-id="" data-username="" data-avatar="">
+{% endif %}
+  {% block navbar %}{% include "partials/navbar.html" %}{% endblock %}
+
+  <main class="page {% block page_class %}{% endblock %}" data-page="{% block page_name %}{% endblock %}">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% include "partials/flash.html" %}
+  {% include "partials/rotate_notice.html" %}
+</body>
+</html>

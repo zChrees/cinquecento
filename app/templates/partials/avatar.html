@@ -1,0 +1,19 @@
+{#
+  Avatar di un utente nei template (P43), gemello di js/components/Avatar.js:
+  l'immagine del set (app/static/img/avatars/<codice>.svg) o l'iniziale del nome.
+
+    {% from "partials/avatar.html" import avatar %}
+    {{ avatar(current_user.username, current_user.avatar) }}
+    {{ avatar(current_user.username, current_user.avatar, "avatar avatar--big") }}
+
+  Il codice salvato è sempre uno di app/services/avatars.py (il server rifiuta
+  gli altri, P17): qui basta sapere se c'è. Decorativo (aria-hidden): accanto
+  c'è sempre il nome.
+#}
+{% macro avatar(username, code, class="avatar") -%}
+{% if code -%}
+<span class="{{ class }} avatar--img" data-avatar="{{ code }}" aria-hidden="true"><img class="avatar__img" src="{{ url_for('static', filename='img/avatars/' ~ code ~ '.svg') }}" alt="" draggable="false" decoding="sync"></span>
+{%- else -%}
+<span class="{{ class }}" aria-hidden="true">{{ username[:1] | upper }}</span>
+{%- endif %}
+{%- endmacro %}

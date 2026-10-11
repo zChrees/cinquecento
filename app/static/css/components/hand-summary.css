@@ -1,0 +1,94 @@
+/*
+ * Riepilogo di fine mano (P57), creato da js/components/HandSummary.js.
+ * A inizio della mano nuova sta sopra il centro del tavolo (mai sopra la tua
+ * mano, che resta giocabile); a fine partita sta dentro il riquadro del risultato.
+ */
+
+.hand-summary {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+
+.hand-summary__title {
+  font-family: var(--font-title);
+  font-size: 1.1rem;
+  line-height: 1.2;
+}
+
+.hand-summary__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.hand-summary__table th,
+.hand-summary__table td {
+  padding: 3px 6px;
+  text-align: center;
+}
+
+.hand-summary__table thead th {
+  overflow: hidden;
+  max-width: 7em;
+  font-family: var(--font-title);
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.hand-summary__table tbody th {
+  color: var(--muted);
+  font-weight: 700;
+  text-align: left;
+}
+
+.hand-summary__mine {
+  color: var(--primary);
+}
+
+/* Totale della mano in evidenza; sotto, separato, il punteggio della partita */
+.hand-summary__hand td {
+  font-weight: 800;
+}
+
+.hand-summary__total th,
+.hand-summary__total td {
+  border-top: 1px solid var(--border);
+  font-family: var(--font-title);
+  font-weight: 700;
+}
+
+/* Sopra il centro del tavolo, all'inizio della mano nuova */
+.hand-summary--overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 5;
+  width: min(100%, 300px);
+  max-height: 100%;
+  padding: 12px 14px;
+  overflow: hidden;
+  transform: translate(-50%, -50%);
+  animation: hand-summary-in 0.25s ease-out;
+}
+
+.hand-summary__close {
+  min-width: 96px;
+}
+
+/* Dentro il riquadro di fine partita */
+.table__result .hand-summary {
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.table__result .hand-summary__title {
+  font-size: 1rem;
+}
+
+@keyframes hand-summary-in {
+  from { opacity: 0; transform: translate(-50%, -46%) scale(0.96); }
+}

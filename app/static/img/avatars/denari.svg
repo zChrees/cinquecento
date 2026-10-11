@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+<!-- Avatar Denari (P43): disegnato da Claude per Cinquecento, nessuna licenza di terzi -->
+<defs><clipPath id="c"><circle cx="32" cy="32" r="32"/></clipPath></defs>
+<circle cx="32" cy="32" r="32" fill="#e9a000"/>
+<g clip-path="url(#c)"><circle cx="32" cy="32" r="17.5" fill="#fff8ec"/><circle cx="32" cy="32" r="13.5" fill="none" stroke="#9a6400" stroke-width="2"/><ellipse cx="32" cy="32" rx="2.4" ry="9" fill="#9a6400" transform="rotate(0 32 32)"/><ellipse cx="32" cy="32" rx="2.4" ry="9" fill="#9a6400" transform="rotate(45 32 32)"/><ellipse cx="32" cy="32" rx="2.4" ry="9" fill="#9a6400" transform="rotate(90 32 32)"/><ellipse cx="32" cy="32" rx="2.4" ry="9" fill="#9a6400" transform="rotate(135 32 32)"/><circle cx="32" cy="32" r="2.6" fill="#fff8ec"/></g>
+<circle cx="32" cy="32" r="29" fill="none" stroke="#fff8ec" stroke-opacity=".4" stroke-width="1.5"/>
+</svg>

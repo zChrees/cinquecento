@@ -1,0 +1,61 @@
+/*
+ * Moduli (P19, campo .input dal prototipo P52).
+ * Struttura di un campo:
+ *   <div class="field">
+ *     <label class="field__label" for="...">Username</label>
+ *     <input class="input" id="..." ...>
+ *     <p class="field__hint">Da 3 a 20 caratteri: lettere, numeri e _</p>
+ *     <p class="field__error" role="alert">Messaggio del server</p>
+ *   </div>
+ * Un campo con errore ha la classe .field--error (bordo rosso) e aria-invalid="true".
+ */
+
+.form {
+  display: grid;
+  gap: 16px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.field__label {
+  font-weight: 700;
+}
+
+.field__hint {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.field__error {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--danger-strong);
+}
+
+.input {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+}
+
+.input:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+.field--error .input {
+  border-color: var(--danger);
+}
+
+.form__actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 4px;
+}

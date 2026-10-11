@@ -1,0 +1,121 @@
+/*
+ * Variabili del progetto (P19): palette "Carretto siciliano" del prototipo (P52),
+ * font, spazi e misure. È l'UNICO file CSS con colori scritti a mano: tutti gli
+ * altri usano var(--...). Così il tema scuro (P53) dovrà solo aggiungere qui i
+ * valori scuri. Per ora c'è solo il tema chiaro.
+ * I valori coincidono con il :root di docs/prototipo/prototipo.css (lo controlla
+ * tests/frontend/test_base.py); le variabili in più sono segnate "(P19)".
+ */
+
+:root {
+  --bg: #fff8ec;
+  --surface: #ffffff;
+  --surface-2: #fdefd6;
+  --border: #f1dfc2;
+  --text: #2b1b12;
+  --muted: #76604f;
+
+  --red: #d93636;
+  --red-strong: #b02525;
+  --green: #1b8a4f;
+  --yellow: #ffc21a;          /* giallo vivo per dettagli e contatori */
+  --yellow-card: #e9a000;     /* giallo più carico per la carta, sotto il testo bianco */
+  --blue: #1f6fe0;
+  --purple: #7b3fc4;          /* carta-pulsante 2v2 veloce: il verde si confondeva con il tavolo */
+  --card-face: #fffaf0;       /* carta color crema */
+  --card-edge: #e6d5b8;       /* bordo e spessore della carta */
+
+  /* Tavolo: panno verde, più chiaro sotto la lampada e scuro verso i bordi */
+  --felt: #1c6b43;
+  --felt-light: #33985f;
+  --felt-dark: #0d3f26;
+  --felt-edge: #072616;
+  --felt-fibers: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='f' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95 0.55' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  1.6 0 0 0 -0.95'/%3E%3C/filter%3E%3Cfilter id='g' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85 0.5' numOctaves='3' seed='23' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.8 0 0 0 -1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)' opacity='0.5'/%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.55'/%3E%3C/svg%3E");   /* fibre del feltro, riquadro di 220 px */
+  /* (P19) macchie ampie e irregolari del feltro, riquadro di 900 px */
+  --felt-stains: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900'%3E%3Cfilter id='m' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.006' numOctaves='3' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0.5 0 0 0 -0.2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23m)'/%3E%3C/svg%3E");
+  --felt-lamp: rgb(255 236 180 / 0.09);   /* (P19) luce calda della lampada sul centro del tavolo */
+
+  /* Navbar: completamente trasparente sul panno, scritte color crema */
+  --on-navbar: #fff8ec;
+
+  /*
+   * Scritte sul tavolo (avatar, amici, giocatori online, titoli): nessun fondo,
+   * come il nome "Cinquecento". Lettere crema con lo stesso leggero rilievo bruno
+   * a strati netti del logo, più un contorno scuro sottile e sfumato che le stacca
+   * dalle carte chiare della cascata quando passano dietro, e un'ombra corta.
+   */
+  --relief-text:
+    0 0.5px 0 #b39c6f,
+    0 1px 0 #9c8559,
+    0 1.5px 0 #836d45,
+    0 2px 0 rgb(0 0 0 / 0.35),
+    0 0 1.5px rgb(0 0 0 / 0.75),
+    0 0 3px rgb(0 0 0 / 0.5),
+    0 0 7px rgb(0 0 0 / 0.4),
+    0 5px 10px rgb(0 0 0 / 0.2);
+  --online-light: #5be08f;    /* puntino "online" più chiaro, leggibile sul panno */
+
+  /* (P40) Logo: nome in rilievo con bordi netti, "Cinque" con strati bruni e "cento" con strati ambra */
+  --relief-logo:
+    0 0.5px 0 #b39c6f,
+    0 1px 0 #9c8559,
+    0 1.5px 0 #836d45,
+    0 2px 0 rgb(0 0 0 / 0.35),
+    0 5px 10px rgb(0 0 0 / 0.2);
+  --relief-logo-accent:
+    0 0.5px 0 #c98600,
+    0 1px 0 #aa6f00,
+    0 1.5px 0 #8a5900,
+    0 2px 0 rgb(0 0 0 / 0.35),
+    0 5px 10px rgb(0 0 0 / 0.2);
+  --logo-card-shadow: 0 2px 0 rgb(0 0 0 / 0.25), 0 4px 10px rgb(0 0 0 / 0.45), inset 0 0 0 1px rgb(255 255 255 / 0.5);   /* (P40) carte del logo */
+  --halo: rgb(0 0 0 / 0.26);          /* (P40) alone scuro dietro le scritte sul panno */
+  --halo-logo: rgb(0 0 0 / 0.24);     /* (P40) alone scuro dietro il logo */
+  --avatar-glow: rgb(255 194 26 / 0.55);   /* (P40) anello dell'avatar illuminato al passaggio */
+  /*
+   * (P22) Luce e ombra delle carte-pulsante, della carta-modal e della cascata:
+   * i CSS le usano con color-mix (per esempio color-mix(in srgb, var(--ink) 35%,
+   * transparent) = nero al 35%), così non servono colori scritti a mano.
+   */
+  --glass: rgb(8 32 20 / 0.55);           /* (P87) vetro scuro di "Esci", tabellone e punti al tavolo */
+  --glass-hover: rgb(8 32 20 / 0.72);     /* (P87) lo stesso vetro al passaggio del mouse */
+  --glass-edge: rgb(255 248 236 / 0.22);  /* (P87) bordo sottile chiaro del vetro */
+  --on-tile: #ffffff;                 /* (P22) scritte, cornice e luce delle carte-pulsante */
+  --ink: #000000;                     /* (P22) ombre e tinte scure */
+
+  /* Ruoli usati dai componenti */
+  --primary: var(--red);
+  --primary-strong: var(--red-strong);
+  --on-primary: #ffffff;
+  --online: var(--green);
+  --success: var(--green);            /* (P19) messaggi di conferma */
+  --danger: var(--red);               /* (P19) azioni che non si annullano, errori */
+  --danger-strong: var(--red-strong); /* (P19) */
+  --backdrop: rgb(35 20 10 / 0.45);   /* (P19) sfondo scuro dietro le finestre */
+
+  --font-title: "Fredoka", "Nunito", system-ui, sans-serif;
+  --font-text: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --radius-s: 10px;
+  --radius-m: 16px;
+  --radius-l: 22px;
+  --radius-pill: 999px;
+  --shadow-1: 0 1px 2px rgb(60 30 10 / 0.06), 0 6px 16px rgb(60 30 10 / 0.08);
+  --shadow-2: 0 16px 40px rgb(60 30 10 / 0.2);
+  --navbar-h: 64px;
+  --content-max: 1180px;
+  --navbar-side: clamp(16px, 2vw, 32px);   /* su computer: spazio tra i bordi e avatar / amici */
+  --card-ratio: 0.61;         /* larghezza / altezza di una carta siciliana */
+  --gutter: 16px;             /* (P19) margine laterale delle pagine su telefono */
+}
+
+@media (min-width: 640px) {
+  :root {
+    --gutter: 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --navbar-h: 84px;         /* come nel prototipo: navbar più alta su computer */
+  }
+}

@@ -1,0 +1,302 @@
+/*
+ * Presa in corso, mazzo e briscola al centro del tavolo (P21), creati da
+ * js/components/Trick.js. Ogni carta della presa sta dal lato di chi l'ha
+ * giocata, un po' ruotata come su un tavolo vero. P57: la presa appena chiusa.
+ */
+
+.table__center {
+  --trick-card: 60px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+/*
+ * P76: le carte a croce senza coprirsi: in alto e in basso una sopra l'altra, nel
+ * 2v2 a sinistra e a destra nelle colonne accanto. --trick-gap tiene lo spazio tra
+ * le carte anche con la rotazione e con la carta che vince sollevata.
+ */
+.trick {
+  --trick-gap: 16px;
+  position: relative;
+  flex: none;
+  width: calc(var(--trick-card) * 3 + var(--trick-gap) * 2);
+  height: calc(var(--trick-card) / var(--card-ratio) * 2 + var(--trick-gap));
+}
+
+/* Nel 1v1 le carte sono solo in alto e in basso: la presa è una colonna */
+.table__board--1v1 .trick {
+  width: calc(var(--trick-card) * 1.4);
+}
+
+.trick__card {
+  position: absolute;
+}
+
+.trick__card .card {
+  --card-w: var(--trick-card);
+  box-shadow: var(--shadow-2);
+}
+
+.trick__card--bottom {
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%) rotate(-2deg);
+}
+
+.trick__card--top {
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%) rotate(3deg);
+}
+
+.trick__card--left {
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%) rotate(-5deg);
+}
+
+.trick__card--right {
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%) rotate(5deg);
+}
+
+/*
+ * Lancio (P70; P99 la tua carta, P107 quella degli altri): la carta parte da dove
+ * stava (la tua dal suo posto nella mano, quella di un avversario dal suo ventaglio,
+ * o dalle sue carte scoperte), si stacca verso il centro (ombra più grande), vola ad
+ * arco girando un po' e si posa con un piccolo assestamento. Da dove parte lo scrive
+ * pages/game.js (aimThrows: --from-x, --from-y, --from-scale, --from-tilt, --from-turn,
+ * --lift-x, --lift-y); senza, arriva dal suo lato (--throw-x, --throw-y). L'arco: in
+ * orizzontale la carta si sposta prima che in verticale. Durate: 0,4 s (THROW_MS di
+ * pages/game.js, uguale a THROW_SECONDS del server, P94) e 0,55 s per la tua
+ * (MY_THROW_MS). Il ritardo lo scrive Trick.js. Con "riduci movimento" niente lancio
+ * (reset.css).
+ */
+.trick__card--bottom { --throw-x: 0px; --throw-y: 150px; --throw-turn: -14deg; }
+.trick__card--top { --throw-x: 0px; --throw-y: -150px; --throw-turn: 14deg; }
+.trick__card--left { --throw-x: -150px; --throw-y: 0px; --throw-turn: 14deg; }
+.trick__card--right { --throw-x: 150px; --throw-y: 0px; --throw-turn: -14deg; }
+
+/* Mentre vola passa sopra il resto del tavolo (la tua carta sopra la mano, da cui parte) */
+.trick__card:has(> .card--thrown) {
+  z-index: 30;
+}
+
+.trick__card > .card--thrown {
+  --from-x: var(--throw-x);
+  --from-y: var(--throw-y);
+  --from-scale: 1.25;
+  --from-turn: var(--throw-turn);
+  --from-tilt: 0deg;
+  --lift-x: 0px;
+  --lift-y: 0px;
+  --arc-y: 0px;
+  animation: card-throw 0.4s linear both;
+}
+
+.trick__card--bottom > .card--thrown {
+  --lift-y: -16px;
+  --arc-y: -28px;
+  animation-duration: 0.55s;
+}
+
+/* P78: parte da trasparente: una carta in fila (ritardo positivo) non si vede finché non tocca a lei */
+@keyframes card-throw {
+  0% {
+    opacity: 0;
+    transform: translate(var(--from-x), var(--from-y)) scale(var(--from-scale)) rotate(var(--from-tilt));
+    box-shadow: var(--shadow-1);
+    animation-timing-function: ease-out;
+  }
+  3% {
+    opacity: 1;
+  }
+  18% {
+    transform: translate(calc(var(--from-x) + var(--lift-x)), calc(var(--from-y) + var(--lift-y))) scale(calc(var(--from-scale) * 1.06)) rotate(calc(var(--from-tilt) * 0.8 + var(--from-turn) * 0.15));
+    box-shadow: var(--shadow-2), var(--shadow-2);
+    animation-timing-function: cubic-bezier(0.35, 0.1, 0.6, 1);
+  }
+  55% {
+    transform: translate(calc(var(--from-x) * 0.3), calc(var(--from-y) * 0.5 + var(--arc-y))) scale(calc((var(--from-scale) + 1) / 2 * 1.06)) rotate(calc(var(--from-tilt) * 0.2 + var(--from-turn)));
+    box-shadow: var(--shadow-2), var(--shadow-2);
+    animation-timing-function: cubic-bezier(0.3, 0.6, 0.55, 1);
+  }
+  86% {
+    transform: translate(0, 2px) scale(0.97) rotate(calc(var(--from-turn) * -0.12));
+    animation-timing-function: ease-out;
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/*
+ * Presa appena chiusa (P57): la carta di chi ha preso è in risalto, al centro
+ * "Prende …"; alla fine le carte scivolano verso chi ha preso (--away-x/y).
+ * Il tempo lo decide pages/game.js (1,5 s): qui l'uscita comincia a 1,1 s.
+ */
+.trick--to-bottom { --away-x: 0; --away-y: 60px; }
+.trick--to-top { --away-x: 0; --away-y: -60px; }
+.trick--to-left { --away-x: -60px; --away-y: 0; }
+.trick--to-right { --away-x: 60px; --away-y: 0; }
+
+.trick--closed .trick__card,
+.trick__winner {
+  animation: trick-away 0.35s ease-in 1.1s forwards;
+}
+
+/*
+ * La carta che sta vincendo la presa (P76) o che l'ha presa (P57): bordo giallo e,
+ * perché non conti solo il colore, sollevata e un po' più grande.
+ */
+.trick__card--winner .card {
+  box-shadow: 0 0 0 3px var(--yellow), var(--shadow-2);
+  translate: 0 -5px;
+  scale: 1.05;
+}
+
+.trick__winner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 2;
+  overflow: hidden;
+  max-width: 70vw;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--text);
+  color: var(--bg);
+  font-size: 0.8rem;
+  font-weight: 800;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  transform: translate(-50%, -50%);
+}
+
+@keyframes trick-away {
+  to { opacity: 0; translate: var(--away-x) var(--away-y); }
+}
+
+/*
+ * Mazzo coperto con le carte rimaste (P108: la briscola sta solo nell'angolo, table.css). Sul telefono, nel 1v1, il mazzo sta sul bordo destro del tavolo.
+ */
+.deck {
+  position: relative;
+  flex: none;
+}
+
+.deck .card {
+  --card-w: 56px;
+}
+
+/*
+ * Mescolata a inizio mano (P70): due mezzi mazzi escono ai lati del mazzo e rientrano,
+ * due volte. La durata (1,3 s, D47: quanto il suono deck-riffle) è SHUFFLE_MS di pages/game.js; il ritardo lo scrive
+ * Trick.js. Con "riduci movimento" niente mescolata (reset.css).
+ */
+.deck__half {
+  position: absolute;
+  inset: 0;
+  animation: deck-riffle 1.3s ease-in-out both;
+}
+
+.deck__half--left { --riffle-x: -70%; --riffle-turn: -10deg; }
+.deck__half--right { --riffle-x: 70%; --riffle-turn: 10deg; }
+
+@keyframes deck-riffle {
+  0%, 50%, 100% { translate: 0 0; rotate: 0deg; }
+  25%, 75% { translate: var(--riffle-x) -6%; rotate: var(--riffle-turn); }
+}
+
+/* P77: mazzo finito, la carta coperta tiene solo il posto del mazzo; resta il seme */
+.deck__slot {
+  visibility: hidden;
+}
+
+.deck__count {
+  position: absolute;
+  right: -8px;
+  bottom: -6px;
+  min-width: 24px;
+  padding: 0 6px;
+  border-radius: var(--radius-pill);
+  background: var(--text);
+  color: var(--bg);
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 20px;
+  text-align: center;
+  text-shadow: none;
+}
+
+/*
+ * Telefono: la presa resta al centro e il mazzo va a destra. Nel 1v1 sul bordo
+ * destro, a metà del tavolo; nel 2v2 nell'angolo in alto a destra, libero accanto
+ * al compagno (a metà c'è il giocatore di destra).
+ */
+@media (max-width: 639px) {
+  .table__board--1v1 .table__center {
+    position: relative;
+    align-self: stretch;
+    justify-self: stretch;
+  }
+
+  .table__board--1v1 .deck {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    translate: 0 -50%;
+  }
+
+  /* P100: nel 1v1 il mazzo è un po' più grande (prima 56 px) */
+  .table__board--1v1 .deck .card {
+    --card-w: 64px;
+  }
+
+  .table__board--2v2 .deck {
+    position: absolute;
+    top: 0;
+    right: 8px;
+  }
+
+  /*
+   * P76: nel 2v2 la croce è larga tre carte e deve stare nella colonna centrale, tra
+   * i giocatori ai lati: le carte si misurano sulla colonna (100cqw), fino a 60 px.
+   * Circa 45 px a 360, 60 dai telefoni larghi 430 px.
+   */
+  .table__board--2v2 .table__center {
+    container-type: inline-size;
+    justify-self: stretch;
+    --trick-card: min(60px, (100cqw - 2 * 10px) / 3);
+  }
+
+  .table__board--2v2 .trick {
+    --trick-gap: 10px;
+  }
+}
+
+/* Tablet e computer: carte della presa più grandi, ma più piccole sugli schermi bassi */
+@media (min-width: 640px) {
+  .table__center {
+    --trick-card: clamp(48px, 10vh, 80px);
+    gap: 20px;
+  }
+
+  .deck .card {
+    --card-w: 60px;
+  }
+}
+
+/* P86: da computer il mazzo è più grande delle carte della presa (anche a mazzo finito, P77) */
+@media (min-width: 1024px) {
+  .deck .card {
+    --card-w: 88px;
+  }
+}
+

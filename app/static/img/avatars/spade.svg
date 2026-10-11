@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+<!-- Avatar Spade (P43): disegnato da Claude per Cinquecento, nessuna licenza di terzi -->
+<defs><clipPath id="c"><circle cx="32" cy="32" r="32"/></clipPath></defs>
+<circle cx="32" cy="32" r="32" fill="#1f6fe0"/>
+<g clip-path="url(#c)"><path fill="#fff8ec" d="M32 7l4.8 6.5V41h-9.6V13.5z"/><path fill="none" stroke="#154c9c" stroke-width="1.6" d="M32 15v24"/><rect x="18.5" y="40.5" width="27" height="5.5" rx="2.75" fill="#fff8ec"/><rect x="29.3" y="46" width="5.4" height="8.5" fill="#fff8ec"/><path fill="none" stroke="#154c9c" stroke-width="1.2" d="M29.3 49h5.4M29.3 52h5.4"/><circle cx="32" cy="57" r="3.6" fill="#fff8ec"/></g>
+<circle cx="32" cy="32" r="29" fill="none" stroke="#fff8ec" stroke-opacity=".4" stroke-width="1.5"/>
+</svg>

@@ -1,0 +1,87 @@
+/*
+ * Punteggio in alto al tavolo (P21), creato da js/components/Scoreboard.js:
+ * la tua squadra a sinistra (in giallo), l'altra a destra; sotto il punteggio
+ * per vincere e il numero della mano. Scritte sul panno come la navbar.
+ */
+
+.scoreboard {
+  color: var(--on-navbar);
+  text-align: center;
+  text-shadow: var(--relief-text);
+}
+
+.scoreboard__teams {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-title);
+  font-weight: 700;
+}
+
+.score {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.score__name {
+  overflow: hidden;
+  max-width: 7em;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.score__total {
+  font-size: 1.4rem;
+}
+
+.score--mine .score__total {
+  color: var(--yellow);
+}
+
+.scoreboard__info {
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* P90: sul telefono e sul tablet il tabellone non c'è (troppo poco spazio): il
+   punteggio della partita si legge nel riepilogo di fine mano */
+@media (max-width: 1023px) {
+  .scoreboard {
+    display: none;
+  }
+}
+
+/* P74: da computer nell'angolo in alto a destra, speculare a "Esci", un po' più grande
+   (P102: fisso è l'angolo che lo contiene, .table__corner di table.css, con la briscola) */
+@media (min-width: 1024px) {
+  .scoreboard {
+    padding: 6px 16px 8px;
+    border: 1px solid var(--glass-edge);
+    border-radius: var(--radius-m);
+    background: var(--glass);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    text-align: right;
+    text-shadow: none;   /* P87: vetro scuro come "Esci" e i punti della mano */
+  }
+
+  .scoreboard__teams {
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  .score__name {
+    font-size: 1rem;
+  }
+
+  .score__total {
+    font-size: 1.8rem;
+  }
+
+  .scoreboard__info {
+    font-size: 0.85rem;
+  }
+}

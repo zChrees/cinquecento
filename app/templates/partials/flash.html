@@ -1,0 +1,19 @@
+{#
+  Messaggi del server (P19): quelli mandati con flash("testo", "categoria").
+  Categorie: "success" (conferma), "error" (errore), "info" (tutto il resto, anche
+  quelli di Flask-Login). Il testo è sempre inserito come testo (Jinja lo protegge).
+  Stile in css/base/layout.css: compaiono in basso e spariscono da soli.
+#}
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="flash-list" data-flash>
+  {% for category, message in messages %}
+  {% set kind = category if category in ("success", "error") else "info" %}
+  <p class="flash flash--{{ kind }}" role="{{ 'alert' if kind == 'error' else 'status' }}" data-flash-kind="{{ kind }}">
+    <span class="icon" aria-hidden="true">{{ {"success": "check_circle", "error": "error", "info": "info"}[kind] }}</span>
+    <span>{{ message }}</span>
+  </p>
+  {% endfor %}
+</div>
+{% endif %}
+{% endwith %}

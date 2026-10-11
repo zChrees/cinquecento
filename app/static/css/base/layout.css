@@ -1,0 +1,134 @@
+/*
+ * Struttura comune delle pagine (P19): la pagina è alta quanto lo schermo e non
+ * scorre mai (DECISIONI.md, "La home non scorre mai"); in alto lo spazio della
+ * navbar (la riempie P40), sotto il contenuto. Mobile-first: le regole di base
+ * sono per il telefono (360 px), i @media allargano.
+ */
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;   /* niente "rimbalzo" della pagina su telefono */
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  /*
+   * Panno del tavolo, dall'alto in basso:
+   * - fibre del feltro (puntini chiari e scuri, fini e un po' allungati);
+   * - macchie ampie e irregolari appena più scure, come un tessuto vero;
+   * - la luce calda della lampada sopra il centro del tavolo;
+   * - il verde, più chiaro sotto la lampada e sempre più scuro verso i bordi.
+   */
+  background-color: var(--felt);
+  background-image:
+    var(--felt-fibers),
+    var(--felt-stains),
+    radial-gradient(ellipse 60% 50% at 50% 45%, var(--felt-lamp), transparent 75%),
+    radial-gradient(ellipse 105% 85% at 50% 45%, var(--felt-light) 0%, var(--felt) 45%, var(--felt-dark) 82%, var(--felt-edge) 100%);
+  background-size: 220px 220px, 900px 900px, auto, auto;
+  background-attachment: fixed;
+}
+
+/* Contenuto della pagina: prende lo spazio sotto la navbar */
+.page {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  padding: 16px var(--gutter) calc(16px + env(safe-area-inset-bottom));
+}
+
+/*
+ * Pagine con un modulo (accesso, registrazione, impostazioni): il contenuto sta al
+ * centro e, solo se non entra (telefono basso con la tastiera aperta), scorre
+ * DENTRO la pagina; la pagina intera resta ferma.
+ */
+.page--form {
+  align-items: center;
+  justify-content: safe center;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Riquadro chiaro sul panno, per moduli e testi */
+.panel {
+  width: 100%;
+  max-width: 420px;
+  padding: 24px 20px;
+  border-radius: var(--radius-l);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-2);
+}
+
+/*
+ * Messaggi del server (partials/flash.html): in basso, al centro, sopra tutto.
+ * Spariscono da soli dopo qualche secondo (anche con "riduci movimento", senza
+ * animazione).
+ */
+.flash-list {
+  position: fixed;
+  left: 50%;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  z-index: 60;
+  display: grid;
+  gap: 8px;
+  width: max-content;
+  max-width: calc(100% - 2 * var(--gutter));
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.flash {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border-radius: var(--radius-pill);
+  background: var(--text);
+  color: var(--bg);
+  font-weight: 700;
+  box-shadow: var(--shadow-2);
+  animation: flash-life 7s ease forwards;
+}
+
+.flash .icon {
+  font-size: 20px;
+}
+
+.flash--success .icon {
+  color: var(--online-light);
+}
+
+.flash--error {
+  background: var(--danger-strong);
+  color: var(--on-primary);
+}
+
+.flash--info .icon {
+  color: var(--yellow);
+}
+
+@keyframes flash-life {
+  0% { opacity: 0; transform: translateY(8px); }
+  5%, 90% { opacity: 1; transform: none; }
+  100% { opacity: 0; visibility: hidden; }
+}
+
+@keyframes flash-hide {
+  to { visibility: hidden; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Più specifica della regola di reset.css: il messaggio sparisce di colpo, senza movimento */
+  .flash {
+    animation: flash-hide 0s linear 7s forwards !important;
+  }
+}

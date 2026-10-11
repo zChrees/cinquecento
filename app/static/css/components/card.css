@@ -1,0 +1,76 @@
+/*
+ * Carta siciliana (P20, P35), creata da js/components/Card.js: la faccia è
+ * l'immagine della carta vera (img/cards/), il dorso il disegno a cubi.
+ * Proporzioni di una carta siciliana (--card-ratio); gli angoli arrotondati li
+ * fa il bordo della carta (le scansioni hanno gli angoli del fondo dello scanner,
+ * che così restano nascosti). La larghezza predefinita è --card-w; chi contiene
+ * la carta (la mano, il tavolo) può cambiarla.
+ */
+
+.card {
+  --card-w: 72px;
+  position: relative;
+  display: block;
+  flex: none;
+  width: var(--card-w);
+  aspect-ratio: var(--card-ratio);
+  padding: 0;
+  border: 1px solid var(--card-edge);
+  border-radius: 9% / 5.5%;   /* angoli uguali in orizzontale e in verticale (5,5% ≈ 9% × 0,61) */
+  background: var(--card-face);
+  box-shadow: var(--shadow-1);
+  overflow: hidden;
+  user-select: none;
+}
+
+/* Faccia e dorso riempiono la carta */
+.card__face,
+.card__back {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Carta giocabile (pulsante nella mano) */
+button.card {
+  font: inherit;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+/*
+ * P97: il sollevamento al passaggio solo dove c'è un puntatore vero. Sul telefono
+ * il browser lascia ":hover" sulla carta appena toccata, e il tavolo, che si
+ * ridisegna a ogni vista, la faceva abbassare e rialzare ("lampeggiare").
+ * Da computer la carta sotto il mouse, ridisegnata, nasce già sollevata
+ * (card--hover-kept, la mette pages/game.js) e non riparte dal basso.
+ */
+@media (hover: hover) {
+  button.card:not(:disabled):hover,
+  button.card:not(:disabled).card--hover-kept {
+    transform: translateY(-8%);
+    box-shadow: var(--shadow-2);
+  }
+}
+
+button.card:not(:disabled):focus-visible {
+  transform: translateY(-8%);
+  box-shadow: var(--shadow-2);
+}
+
+button.card:not(:disabled):active {
+  transform: translateY(-4%);
+}
+
+button.card:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: 2px;
+}
+
+/* Carta che adesso non si può giocare: resta visibile ma spenta */
+button.card:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  filter: saturate(0.4);
+}

@@ -1,0 +1,202 @@
+/*
+ * Pagina delle impostazioni (P17). Struttura:
+ *   <main class="page page--form">
+ *     <section class="panel settings">
+ *       <h1 class="settings__title">
+ *       <form class="form"> <fieldset class="settings__group"> con .avatar-grid di .avatar-choice </form>
+ *       <section class="settings__group settings__danger"> cancellazione dell'account </section>
+ *       <p class="settings__back"> link alla home </p>
+ *     </section>
+ *   </main>
+ * Ogni avatar è un riquadro con l'immagine (P43; "Iniziale": la lettera) e il nome.
+ * Colori solo dalle variabili di variables.css.
+ */
+
+.settings {
+  display: grid;
+  gap: 20px;
+  max-width: 520px;
+}
+
+.settings__title {
+  font-size: 1.7rem;
+  text-align: center;
+}
+
+.settings__group {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.settings__subtitle {
+  padding: 0;
+  font-family: var(--font-title);
+  font-size: 1.2rem;
+}
+
+.settings__text {
+  color: var(--muted);
+}
+
+.settings__danger {
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.settings__back {
+  text-align: center;
+}
+
+.avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.avatar-choice {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 76px;
+  padding: 8px 6px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-m);
+  background: var(--surface-2);
+  text-align: center;
+  cursor: pointer;
+}
+
+/* Il pallino del radio resta per la tastiera e i lettori di schermo, ma non si vede */
+.avatar-choice__input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.avatar-choice__face {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-family: var(--font-title);
+  font-weight: 600;
+}
+
+.avatar-choice__name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/*
+ * P129: gli effetti al passaggio del mouse solo dove c'è un puntatore vero
+ * (@media (hover: hover), come le carte in P97): sul telefono il browser lascia
+ * ":hover" sull'elemento appena toccato, e restava il cerchio o il colore.
+ */
+@media (hover: hover) {
+  .avatar-choice:hover {
+    border-color: var(--primary);
+  }
+}
+
+.avatar-choice:has(.avatar-choice__input:checked) {
+  border-color: var(--primary);
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+}
+
+.avatar-choice:has(.avatar-choice__input:focus-visible) {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/*
+ * P103: interruttore dei suoni. La casella vera (accessibile, role="switch") è
+ * invisibile sopra la riga; si vede la pista con il pallino, verde quando è accesa.
+ */
+.switch {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-m);
+  background: var(--surface-2);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* P129: solo con il mouse */
+@media (hover: hover) {
+  .switch:hover {
+    border-color: var(--primary);
+  }
+}
+
+.switch__input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.switch__track {
+  position: relative;
+  flex: none;
+  width: 48px;
+  height: 28px;
+  border-radius: var(--radius-pill);
+  background: var(--muted);
+  transition: background 0.15s ease;
+}
+
+.switch__track::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+  transition: translate 0.15s ease;
+}
+
+.switch__input:checked + .switch__track {
+  background: var(--green);
+}
+
+.switch__input:checked + .switch__track::after {
+  translate: 20px 0;
+}
+
+.switch:has(.switch__input:focus-visible) {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+
+@media (min-width: 640px) {
+  .settings {
+    padding: 32px 30px;
+  }
+
+  .avatar-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

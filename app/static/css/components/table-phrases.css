@@ -1,0 +1,278 @@
+/*
+ * Frasi del tavolo (P56), create da js/components/TablePhrases.js: il pulsante sopra
+ * la mano a destra (P71, nella riga .table__me di table.css), l'elenco che si apre
+ * verso l'alto e il fumetto accanto all'avatar di chi ha parlato (a destra per chi
+ * sta in alto; sopra per te e per chi sta ai lati, così non tocca il tuo nome, la
+ * tua mano e le carte del canto di P57).
+ */
+
+.phrases-button {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
+}
+
+/* Su telefono solo l'icona (l'etichetta accessibile resta "Frasi") */
+.phrases-button__text {
+  display: none;
+}
+
+/*
+ * L'elenco: sopra il pulsante, verso l'alto, sopra tutto il resto del tavolo ma mai
+ * sopra la mano; se lo schermo è basso l'elenco scorre al suo interno. Sta in
+ * .table__mine (P101), la cui prima riga è la tua: "sopra" vuol dire sopra la tua riga.
+ */
+.phrases-menu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  z-index: 20;
+  overflow-y: auto;
+  max-height: 60dvh;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  width: min(100%, 360px);
+  padding: 10px;
+  border-radius: var(--radius-l);
+  background: var(--surface);
+  box-shadow: var(--shadow-2);
+  animation: phrases-in 0.18s ease-out;
+}
+
+.phrase {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/*
+ * P129: gli effetti al passaggio del mouse solo dove c'è un puntatore vero
+ * (@media (hover: hover), come le carte in P97): sul telefono il browser lascia
+ * ":hover" sull'elemento appena toccato, e restava il cerchio o il colore.
+ */
+@media (hover: hover) {
+  .phrase:hover:not(:disabled) {
+    filter: brightness(0.96);
+  }
+}
+
+.phrase:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+/* Il fumetto, agganciato all'avatar */
+.phrase-bubble {
+  position: absolute;
+  z-index: 6;
+  width: max-content;
+  max-width: min(170px, 40vw);
+  padding: 4px 10px;
+  border-radius: var(--radius-m);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-text);
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: left;
+  text-shadow: none;
+  box-shadow: var(--shadow-2);
+  pointer-events: none;
+  animation: phrase-pop 0.2s ease-out;
+}
+
+.phrase-bubble::after {
+  content: "";
+  position: absolute;
+  border: 6px solid transparent;
+}
+
+/*
+ * In alto: a destra dell'avatar, con la punta verso di lui. L'avatar sta al centro
+ * dello schermo: il fumetto non va oltre la metà destra, meno avatar e margine.
+ */
+.phrase-bubble--top {
+  top: 50%;
+  left: calc(100% + 10px);
+  max-width: min(170px, calc(50vw - 70px - var(--gutter)));
+  translate: 0 -50%;
+}
+
+.phrase-bubble--top::after {
+  top: 50%;
+  right: 100%;
+  border-right-color: var(--surface);
+  translate: 0 -50%;
+}
+
+/* Tu e chi sta ai lati: sopra l'avatar, con la punta in basso */
+.phrase-bubble--bottom,
+.phrase-bubble--left,
+.phrase-bubble--right {
+  bottom: calc(100% + 10px);
+}
+
+.phrase-bubble--bottom,
+.phrase-bubble--left {
+  left: 0;
+}
+
+.phrase-bubble--right {
+  right: 0;
+}
+
+.phrase-bubble--bottom::after,
+.phrase-bubble--left::after,
+.phrase-bubble--right::after {
+  top: 100%;
+  border-top-color: var(--surface);
+}
+
+.phrase-bubble--bottom::after,
+.phrase-bubble--left::after {
+  left: 14px;
+}
+
+.phrase-bubble--right::after {
+  right: 14px;
+}
+
+@keyframes phrases-in {
+  from { opacity: 0; transform: translateY(6px); }
+}
+
+@keyframes phrase-pop {
+  from { opacity: 0; transform: scale(0.85); }
+}
+
+@media (min-width: 640px) {
+  .phrases-button__text {
+    display: inline;
+  }
+
+  /* P101: al bordo destro della tua riga (.table__me, larga al massimo 560 px e centrata), come prima */
+  .phrases-menu {
+    right: calc((100% - min(100%, 560px)) / 2);
+  }
+}
+
+/*
+ * P101: sul telefono l'elenco copre solo la zona delle tue carte, sotto la tua riga
+ * (canti, mano e riga di stato), così presa, mazzo e avversari restano visibili; la
+ * tua riga resta, con il pulsante per richiuderlo. Le frasi che non ci stanno scorrono.
+ * P112: su iPhone l'elenco compariva più in alto (sopra la tua riga) e poi scendeva.
+ * Ora non si appoggia più alla griglia di .table__mine: l'altezza da cui parte,
+ * --phrases-phone-top (fine della tua riga più lo spazio tra le righe), la misura
+ * pages/game.js prima che la pagina si disegni; e l'entrata è solo una dissolvenza,
+ * senza movimento.
+ */
+@media (max-width: 639px) {
+  .phrases-menu {
+    inset: var(--phrases-phone-top, 0) 0 0;
+    align-content: flex-start;
+    width: auto;
+    max-height: none;
+    animation-name: phrases-fade;
+  }
+}
+
+@keyframes phrases-fade {
+  from { opacity: 0; }
+}
+
+/*
+ * P74: da computer chi sta in alto ha il ventaglio subito a destra del nome: il
+ * fumetto scende sotto l'avatar, con la punta in alto, verso il centro del tavolo.
+ */
+@media (min-width: 1024px) {
+  .phrase-bubble--top {
+    top: calc(100% + 10px);
+    left: 0;
+    max-width: 220px;
+    translate: none;
+  }
+
+  .phrase-bubble--top::after {
+    top: auto;
+    right: auto;
+    bottom: 100%;
+    left: 20px;
+    border-right-color: transparent;
+    border-bottom-color: var(--surface);
+    translate: none;
+  }
+
+  /* Il tuo avatar sta a sinistra della mano: il fumetto si allarga verso sinistra */
+  .phrase-bubble--bottom {
+    left: auto;
+    right: 0;
+  }
+
+  .phrase-bubble--bottom::after {
+    left: auto;
+    right: 14px;
+  }
+
+  /* Ai lati (2v2): accanto all'avatar, verso il centro (sopra ci sono i punti della mano) */
+  .phrase-bubble--left,
+  .phrase-bubble--right {
+    top: 50%;
+    bottom: auto;
+    translate: 0 -50%;
+  }
+
+  .phrase-bubble--left { left: calc(100% + 10px); }
+  .phrase-bubble--right { right: calc(100% + 10px); }
+
+  .phrase-bubble--left::after,
+  .phrase-bubble--right::after {
+    top: 50%;
+    border-top-color: transparent;
+    translate: 0 -50%;
+  }
+
+  .phrase-bubble--left::after {
+    left: auto;
+    right: 100%;
+    border-right-color: var(--surface);
+  }
+
+  .phrase-bubble--right::after {
+    right: auto;
+    left: 100%;
+    border-left-color: var(--surface);
+  }
+
+  /*
+   * P80: l'elenco delle frasi è un pannello sul lato destro, dal tabellone (in alto a
+   * destra, P74) fino sopra la tua riga, così non copre presa, mazzo e mano; nel 2v2,
+   * mentre è aperto, copre l'avversario di destra (scelta di Christian). Sta in
+   * .table__mine (position: relative, table.css): 100% è l'altezza della tua riga, e
+   * sotto la riga restano circa 20 px di margine della pagina. La riga è centrata e
+   * sugli schermi larghi più stretta della pagina: il pannello va al bordo dello
+   * schermo, a 24 px come il tabellone.
+   */
+  .phrases-menu {
+    --phrases-top: 96px;   /* sotto il tabellone, che finisce a 78 px */
+    right: calc((100% - 100vw) / 2 + 24px);
+    align-content: flex-start;
+    justify-content: flex-start;
+    width: min(300px, 27vw);   /* a 1024 px non copre il numero delle carte del mazzo */
+    height: calc(100dvh - var(--phrases-top) - 100% - 8px - 24px);
+    max-height: none;
+    animation-name: phrases-side-in;
+  }
+}
+
+@keyframes phrases-side-in {
+  from { opacity: 0; transform: translateX(16px); }
+}
