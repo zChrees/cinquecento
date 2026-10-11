@@ -47,12 +47,13 @@ class RegisterForm(FlaskForm):
         DataRequired("Scegli uno username."),
         Length(USERNAME_MIN, USERNAME_MAX,
                f"Lo username deve avere da {USERNAME_MIN} a {USERNAME_MAX} caratteri."),
-        Regexp(r"^[A-Za-z0-9_]+$", message="Lo username può contenere solo lettere, numeri e _."),
+        # \Z e non $: in Python $ vale anche prima di un a-capo finale (P137)
+        Regexp(r"^[A-Za-z0-9_]+\Z", message="Lo username può contenere solo lettere, numeri e _."),
     ])
     email = EmailField("Email", validators=[
         DataRequired("Scrivi la tua email."),
         Length(max=EMAIL_MAX, message=f"L'email può avere al massimo {EMAIL_MAX} caratteri."),
-        Regexp(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", message="Scrivi un'email valida, per esempio nome@esempio.it."),
+        Regexp(r"^[^@\s]+@[^@\s]+\.[^@\s]+\Z", message="Scrivi un'email valida, per esempio nome@esempio.it."),
     ])
     password = PasswordField("Password", description=PASSWORD_HINT, validators=[
         DataRequired("Scegli una password."),

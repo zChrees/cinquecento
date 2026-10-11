@@ -120,7 +120,7 @@ Get-Content logs\backup.log -Tail 3
 Get-ChildItem backups
 ```
 
-**Copia i backup anche fuori dal PC** ogni tanto (chiavetta o disco): se si rompe il PC, `backups\` si perde con lui.
+**Copia i backup anche fuori dal PC** ogni tanto (chiavetta o disco): se si rompe il PC, `backups\` si perde con lui. I backup **contengono dati personali** (email e hash delle password degli utenti), non cifrati: tieni la copia in un posto tuo, non condiviso, e cancellala quando non serve più.
 
 ## 9. Ripristino di prova
 
