@@ -275,11 +275,12 @@ I test usano **solo** il database `cinquecento_test` e la porta 5099. Si rifiuta
 Il progetto è diviso tra **Giuseppe** (motore di gioco e tempo reale), **Antonio** (account, dati, amici) e **Christian** (interfaccia e documenti); il lavoro è stato fatto con l'aiuto di Claude Code.
 
 - Branch permanenti: `main` (produzione: la versione per la demo e la presentazione, con i soli file del sito) e `dev` (lavoro e integrazione del gruppo).
-- Il lavoro è diviso in **punti** (P1, P2, …), elencati nella scaletta. Per ogni punto si crea un **branch nuovo da `dev` aggiornato**, si modificano **solo i file indicati nel punto**, si testa e, **solo dopo l'ok** di chi lavora, si fanno commit, merge fast-forward in `dev` e push.
+- Il lavoro è diviso in **punti** (P1, P2, …), elencati nella scaletta (dall'11/10/2026 archiviata; i punti aperti sono in `REVIEW.md`). Per ogni punto si crea un **branch nuovo da `dev` aggiornato**, si modificano **solo i file indicati nel punto**, si testa e, **solo dopo l'ok** di chi lavora, si fanno commit, merge fast-forward in `dev` e push.
 - Finito un punto, ognuno scrive il riepilogo nel proprio file (`christian.md`, `giuseppe.md`, `antonio.md`); i documenti condivisi li aggiorna, a fine giornata, chi il gruppo sceglie.
 
 I documenti di lavoro stanno solo nel branch `dev`:
-- [SCALETTA.md](https://github.com/zChrees/cinquecento/blob/dev/SCALETTA.md): cosa fare, in che ordine, quali file tocca ogni punto, chi lo fa;
+- [REVIEW.md](https://github.com/zChrees/cinquecento/blob/dev/REVIEW.md): la code review finale e, in fondo, i punti ancora aperti (è il tracker attivo);
+- [docs/archivio/SCALETTA-2026-09.md](https://github.com/zChrees/cinquecento/blob/dev/docs/archivio/SCALETTA-2026-09.md): la scaletta del progetto, archiviata (cosa fare, in che ordine, quali file tocca ogni punto, chi lo fa);
 - [DECISIONI.md](https://github.com/zChrees/cinquecento/blob/dev/DECISIONI.md): cosa è già stato deciso e perché;
 - [DA-DECIDERE.md](https://github.com/zChrees/cinquecento/blob/dev/DA-DECIDERE.md): domande aperte;
 - [CLAUDE.md](https://github.com/zChrees/cinquecento/blob/dev/CLAUDE.md): regole di lavoro complete (git, test, convenzioni del codice).
