@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P137 (numero proposto) — Username ed email senza a-capo finale (R1 di REVIEW.md, 11/10/2026)
+
+- **Branch**: fix/p137-username-a-capo
+- **File**: modificati `app/blueprints/auth/forms.py` (file di P16, ora di Giuseppe: **con il suo ok**), `tests/api/test_auth.py`, questo file
+- **Cosa cambia**: nelle regole di username ed email del modulo di registrazione `\Z` al posto di `$`: in Python `$` vale anche prima di un a-capo finale, quindi con una richiesta scritta a mano "Mario\n" si registrava e nelle pagine si vedeva come "Mario". Il `CHECK` del database (`ck_utenti_nome`) ha lo stesso difetto ma non si tocca (servirebbe una migrazione nuova): tutte le registrazioni passano dal modulo
+- **Controlli**: riprodotto prima con due casi nuovi in `test_dati_non_validi_rifiutati_con_messaggio` ("Mario\n", "mario@esempio.it\n"), falliti con il modulo di prima (l'utente veniva registrato) [T]; suite `api` **302 PASS** (2 nuovi)
+- **Decisioni prese**: Christian: correggere R1 prima della consegna; Giuseppe d'accordo
+- **Domande nuove**: nessuna
+- **Punti delicati**: per i dati in ingresso, `\Z` o `fullmatch`, mai `$`
+- **Note per gli altri**: **chi è di turno sui documenti**: aprire e spuntare P137 (R1 in `REVIEW.md`)
+
 ### P36 — Code review indipendente (11/10/2026)
 
 - **Branch**: feature/p36-review

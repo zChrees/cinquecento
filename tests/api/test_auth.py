@@ -160,7 +160,11 @@ def test_email_duplicata_rifiutata_anche_con_maiuscole(app, client):
     ({"username": "a" * 21}, "da 3 a 20 caratteri"),
     ({"username": "mario rossi"}, "solo lettere, numeri e _"),
     ({"username": "màrio"}, "solo lettere, numeri e _"),
+    # P137 (R1 di REVIEW.md): in Python "$" vale anche prima di un a-capo finale, e
+    # "Mario\n" nelle pagine si vedrebbe come "Mario"
+    ({"username": "Mario\n"}, "solo lettere, numeri e _"),
     ({"email": "non-una-email"}, "email valida"),
+    ({"email": "mario@esempio.it\n"}, "email valida"),
     ({"password": "corta1"}, "almeno 8 caratteri"),
     ({"confirm": "Un-altra-password"}, "non coincidono"),
 ])
