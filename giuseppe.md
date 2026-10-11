@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### P38 — Demo installata a parte sul PC di Giuseppe, backup pianificato (11/10/2026)
+
+- **Branch**: fix/p38-demo
+- **File**: modificati `docs/DEMO.md` (passo 8: `BACKUP_RETENTION_DAYS` non più "provvisorio", D10 chiusa il 29/09; lo segnalava Christian in P140) e questo file. Il resto è fuori dal repository
+- **Fatto** (passi 1–9 di `DEMO.md`): clone di **`main`** ("Cinquecento v1.0.3", `fd0f10f`) in `C:\cinquecento-demo`, fuori da OneDrive, senza `tests/`; file `PRODUZIONE`; `.venv` con Python 3.14.4 e solo `requirements.txt`; database `cinquecento` con il `GRANT` del passo 5; `.env` della demo (`APP_ENV=demo`, `SECRET_KEY` nuova, `HOST=127.0.0.1` per ngrok, `DB_NAME=cinquecento`); `migrate.py` ha applicato `001_init.sql`
+- **Controlli** [T]: i tre "Fatto quando" di P38: `Test-Path PRODUZIONE` → `True`; l'attività "Cinquecento - backup della demo" (ogni giorno alle 3:00) lanciata a mano ha esito 0 e ha scritto `backups\cinquecento_2026-10-11_190313.sql.gz`; il ripristino di quel file in `cinquecento_test` è riuscito. In più il server della demo si avvia ("Cinquecento (demo): http://127.0.0.1:5000", debug spento), la home risponde 200 e `/?demo=rientro` 404. Suite `db` **89 PASS** (`test_guida_con_i_passi_della_demo` legge `DEMO.md`); le altre non lanciate: nel repository è cambiata solo una frase di `DEMO.md`
+- **Decisioni prese**: nessuna
+- **Domande nuove**: nessuna
+- **Punti delicati**: `main` su GitHub è già a **v1.0.3**, mentre `CLAUDE.md` e `REVIEW.md` dicono v1.0.1
+- **Note per gli altri**: **Chi è di turno sui documenti**: spuntare **P38** in fondo a `REVIEW.md` e aggiornare la versione di `main`. Resta **P39**: la prova generale dei passi 11 e 12 (ngrok, tre telefoni e un PC, una partita 2v2 completa), da fare prima della consegna
+
 ### P134 — CPU: niente carichi né briscole alte sprecati su prese povere (D51, 10/10/2026)
 
 - **Branch**: feature/p134-cpu-prese-povere

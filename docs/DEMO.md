@@ -110,7 +110,7 @@ powershell -ExecutionPolicy Bypass -File scripts\pianifica_backup.ps1
 # oppure a un'altra ora:  ... -File scripts\pianifica_backup.ps1 -Ora 21:30
 ```
 
-Crea l'attività di Windows **"Cinquecento - backup della demo"**: ogni giorno (alle 3:00 se non indichi un'ora) lancia `python scripts\backup.py`, che salva il database in `backups\` e cancella i backup più vecchi di 14 giorni (`BACKUP_RETENTION_DAYS`, provvisorio: D10). Se a quell'ora il PC è spento, il backup parte appena si riaccende. Lo script si rifiuta di partire senza il file `PRODUZIONE`.
+Crea l'attività di Windows **"Cinquecento - backup della demo"**: ogni giorno (alle 3:00 se non indichi un'ora) lancia `python scripts\backup.py`, che salva il database in `backups\` e cancella i backup più vecchi di 14 giorni (`BACKUP_RETENTION_DAYS`, deciso il 29/09: D10). Se a quell'ora il PC è spento, il backup parte appena si riaccende. Lo script si rifiuta di partire senza il file `PRODUZIONE`.
 
 Controllo **[T]** (secondo "Fatto quando" di P38): prova subito l'attività e guarda che il file ci sia.
 
