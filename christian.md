@@ -22,6 +22,19 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P36 — Code review indipendente (11/10/2026)
+
+- **Branch**: feature/p36-review
+- **File**: creato `REVIEW.md`; modificato questo file. Nessun file di codice toccato
+- **Come**: finding scritti prima di leggere `DECISIONI.md`, poi confrontati, come chiede lo spec di P36; ordine dello spec (regole, fughe di informazioni, concorrenza, sicurezza, dati, test, struttura)
+- **Risultato**: 16 finding, **nessun critico né alto**. Medi: **R1** username ed email accettano un a-capo finale [T] (`$` di Python e di MySQL vale anche prima di `\n`: "Mario\n" si registra con una richiesta fatta a mano e si vede come "Mario"); **R2** chi non arriva mai al tavolo non ha limite (rischio residuo: scelta del 28/09); **R3** suite vicine ai 240 s (proposta: dividerle). Bassi: stanze finite mai tolte dalla memoria (R4), `legal.lay_down` che dice qualcosa delle carte nascoste (R5, rischio residuo), salvataggio senza secondo tentativo (R6), corse tra coda, CPU e inviti (R7), cookie non `Secure` con ngrok (R8), sessione non revocabile (R9), blocco del login di un altro (R10, rischio residuo), niente limite sulle richieste HTTP degli amici (R11), Werkzeug nella demo (R12, rischio residuo), debugger in sviluppo (R13), backup sullo stesso PC (R14), due test mancanti (R15), piccole copie nel codice (R16)
+- **Prove fatte** [T]: le due espressioni regolari in Python; `REGEXP_LIKE` su MySQL (sola lettura, database dei test); un `POST /auth/register` con `"Revis\n"` con il client di prova di Flask: il modulo l'ha accettato ed è arrivato all'`INSERT` (fallito solo perché il database dei test era vuoto; nessun dato rimasto)
+- **Controlli**: nessuna suite lanciata (solo un documento nuovo, nessun codice cambiato)
+- **Decisioni prese**: nessuna
+- **Domande nuove**: nessuna; il prossimo passo (quali finding correggere prima della consegna) lo decide Christian. Consiglio di Claude: **R1** subito (due regole in `forms.py` e un test), il resto dopo o come limiti noti nella relazione
+- **Punti delicati**: in Python `re.match` con `$` accetta un `\n` finale; per i dati in ingresso serve `\Z` o `fullmatch`. Vale anche per il `CHECK` di MySQL (ICU)
+- **Note per gli altri**: **Chi è di turno sui documenti**: spuntare P36; da P36 il **tracker attivo è `REVIEW.md`** (riga 2 di "Prima di lavorare" in `CLAUDE.md`, come dice lo spec); `REVIEW.md` non va in `main` (DECISIONI, 29/09). **Giuseppe**: R2, R4, R6 e R7 riguardano i tuoi file (`room.py`, `room_manager.py`, `matchmaking.py`); nessuno blocca la demo
+
 ### P136 (numero proposto) — README e guida della demo senza i test in `main` (11/10/2026)
 
 - **Branch**: fix/p136-main-senza-test
