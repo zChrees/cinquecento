@@ -22,6 +22,16 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P140 (numero proposto) — Avvisi su debugger e backup (R13 e R14 di REVIEW.md, 11/10/2026)
+
+- **Branch**: docs/p140-avvisi-sviluppo-e-backup
+- **File**: modificati `README.md` (passo 5 dell'installazione), `.env.example` (commento di `HOST`), `docs/DEMO.md` (passo 8, file di Giuseppe), questo file. Solo testo: nessun codice
+- **Cosa cambia**: **R13**: README e `.env.example` dicono di usare `APP_ENV=demo`, mai `development`, quando il sito si apre da altri dispositivi (`HOST=0.0.0.0`): in sviluppo `socketio.run` chiama `app.run` con `debug=True` e Flask accende il debugger di Werkzeug (controllato nel codice di Flask-SocketIO [L]; in REVIEW.md era [D]). **R14**: il passo 8 di `DEMO.md` diceva già di copiare i backup fuori dal PC (nella review non l'avevo visto); ora dice anche che contengono dati personali non cifrati (email e hash delle password) e dove tenerli
+- **Controlli**: suite `db` **89 PASS** (`test_guida_con_i_passi_della_demo` legge `DEMO.md`); nessun altro test legge questi testi (`.env.example` è tra i file protetti del runner: rimasto intatto)
+- **Decisioni prese**: Christian: fare R13 e R14 prima della consegna
+- **Domande nuove**: nessuna
+- **Note per gli altri**: **Giuseppe**: una frase in più al passo 8 di `DEMO.md`. **Chi è di turno sui documenti**: in `REVIEW.md` R14 va corretto (la copia fuori dal PC era già nella guida); R1, R2, R3, R13 e R14 fatti (P137–P140). Fuori da questo punto: in `DEMO.md`, passo 8, `BACKUP_RETENTION_DAYS` è ancora detto "provvisorio: D10", ma D10 è chiusa dal 29/09
+
 ### P139 (numero proposto) — Suite `table4` e `frontend2` (R3 di REVIEW.md, 11/10/2026)
 
 - **Branch**: fix/p139-suite-piu-corte
