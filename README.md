@@ -52,7 +52,7 @@ Il regolamento completo è in [docs/REGOLE-GIOCO.md](docs/REGOLE-GIOCO.md).
 | Tempo reale | Flask-SocketIO (WebSocket: collegamento sempre aperto tra pagina e server) | versioni fissate in `requirements.txt` |
 | Account | Flask-Login, Flask-WTF | idem |
 | Database | MySQL, tramite Flask-SQLAlchemy e PyMySQL | MySQL **8.0** |
-| Test | pytest, con un runner che lancia tutte le suite in sicurezza | versioni fissate in `requirements-dev.txt` |
+| Test | pytest, con un runner che lancia tutte le suite in sicurezza | versioni fissate in `requirements-dev.txt` (solo nel branch `dev`) |
 
 Tutti i membri del gruppo usano **le stesse versioni** di Python e MySQL, installate a mano.
 
@@ -69,7 +69,7 @@ cinquecento/
 ├── .gitignore                 file che git non deve tracciare
 ├── .env.example               modello della configurazione (senza segreti)
 ├── requirements.txt           librerie Python del programma, a versione fissa
-├── requirements-dev.txt       librerie usate solo per sviluppo e test
+├── requirements-dev.txt       librerie usate solo per sviluppo e test (solo in dev)
 ├── run.py                     avvio del server
 ├── config.py                  configurazioni: sviluppo, test, demo
 │
@@ -175,7 +175,7 @@ cinquecento/
 │       │   ├── pages/         un file per pagina (è l'unico script caricato dalla pagina)
 │       │   ├── utils/         funzioni di utilità per il DOM
 │       │   └── vendor/        librerie esterne a versione fissa (client Socket.IO)
-│       ├── dev/               dati di esempio e pagina di prova delle carte (solo sviluppo e test)
+│       ├── dev/               dati di esempio e pagina di prova delle carte (solo in dev)
 │       ├── fonts/             font delle icone (solo le icone usate, elenco in icone.txt)
 │       ├── sounds/            suoni del tavolo e del menu, con la loro licenza
 │       └── img/
@@ -184,7 +184,7 @@ cinquecento/
 │           ├── avatars/       set di avatar predefiniti
 │           └── favicon.*      icona della scheda del browser
 │
-└── tests/
+└── tests/                     (solo in dev)
     ├── esegui_tutti.py        runner: lancia tutte le suite in sicurezza
     ├── conftest.py            impostazioni comuni dei test
     ├── browser.py             aiuti per i test che aprono le pagine in Chrome o Edge
@@ -200,7 +200,7 @@ cinquecento/
     └── table/  table2/  table3/   il tavolo di gioco nel browser: momenti, animazioni, grafica
 ```
 
-Nel branch `dev`, dove lavora il gruppo, ci sono anche i documenti di lavoro (scaletta, decisioni, domande aperte, riepiloghi): vedi "Come lavoriamo".
+Nel branch `dev`, dove lavora il gruppo, ci sono anche i test (`tests/`, `requirements-dev.txt`), i dati di esempio di `app/static/dev/` e i documenti di lavoro (scaletta, decisioni, domande aperte, riepiloghi): vedi "Come lavoriamo".
 
 ## Installazione (Windows)
 
@@ -208,7 +208,7 @@ Questi passi servono per installare il progetto sul proprio PC e farlo girare in
 
 **Cosa serve prima**
 - **Python 3.14.4**, **MySQL Server 8.0** e **Git**, installati a mano (passi 1–3).
-- Per i test: **Google Chrome** o **Microsoft Edge** (i test che aprono le pagine nel browser li usano senza finestra; se mancano, quei test si saltano) e, facoltativo, **Node.js** (un test confronta i nomi delle carte delle pagine con quelli del motore eseguendo `Card.js`; senza Node quel controllo si salta).
+- Per i test (solo nel branch `dev`): **Google Chrome** o **Microsoft Edge** (i test che aprono le pagine nel browser li usano senza finestra; se mancano, quei test si saltano) e, facoltativo, **Node.js** (un test confronta i nomi delle carte delle pagine con quelli del motore eseguendo `Card.js`; senza Node quel controllo si salta).
 - **Internet** la prima volta che lanci i test: i font di Google si scaricano una volta sola, in una cartella temporanea.
 
 I comandi qui sotto sono per **PowerShell**, lanciati dalla cartella del progetto.
@@ -225,8 +225,9 @@ I comandi qui sotto sono per **PowerShell**, lanciati dalla cartella del progett
    ```
    py -3.14 -m venv .venv
    .venv\Scripts\activate
-   pip install -r requirements.txt -r requirements-dev.txt
+   pip install -r requirements.txt
    ```
+   Se hai scaricato `dev`, installa anche le librerie dei test: `pip install -r requirements-dev.txt`.
    Se PowerShell rifiuta `activate` ("l'esecuzione di script è disabilitata"), lancia una volta `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` e riprova. Con l'ambiente attivo, all'inizio della riga compare `(.venv)`: da qui in poi tutti i comandi si lanciano così, anche dopo aver chiuso e riaperto il terminale (basta rifare `.venv\Scripts\activate`).
 5. **Configura**: copia il modello e genera la chiave segreta:
    ```
@@ -248,9 +249,11 @@ I comandi qui sotto sono per **PowerShell**, lanciati dalla cartella del progett
    python scripts/migrate.py
    ```
 7. **Avvia**: `python run.py`, poi apri `http://localhost:5000` e registra un account. All'avvio il programma controlla di avere Python 3.14 e MySQL 8.0, e se qualcosa manca lo scrive e si ferma: per esempio "errore MySQL 1045" vuol dire che `DB_USER` o `DB_PASSWORD` nel `.env` non sono giusti. Per spegnerlo: Ctrl+C nel terminale.
-8. **Controlla con i test** che sia tutto a posto (sezione qui sotto): devono risultare tutti PASS.
+8. Se hai scaricato `dev`, **controlla con i test** che sia tutto a posto (sezione qui sotto): devono risultare tutti PASS.
 
 ## Test
+
+I test stanno solo nel branch `dev`: in `main`, la versione di produzione, non ci sono.
 
 ```
 python tests/esegui_tutti.py            tutte le suite

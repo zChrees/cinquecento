@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P136 (numero proposto) — README e guida della demo senza i test in `main` (11/10/2026)
+
+- **Branch**: fix/p136-main-senza-test
+- **Perché**: preparando l'aggiornamento di `main` ho deciso quali file dubbi portarci (sotto). Senza i test, due rimandi si rompevano [L]: il comando di installazione del `README.md` (`pip install -r requirements.txt -r requirements-dev.txt`) e il controllo del passo 3 di `docs/DEMO.md` (`python tests\esegui_tutti.py`), che è il primo "Fatto quando" di P38
+- **File**: modificati `README.md` (mio, P9), `docs/DEMO.md` (di Giuseppe, P38/P39: **con il suo ok**), questo file
+- **Cosa cambia**: `README.md`: test, `requirements-dev.txt` e `app/static/dev/` sono indicati "solo in `dev`" (tabella, struttura delle cartelle, "Cosa serve prima", sezione "Test"); al passo 4 si installa solo `requirements.txt`, e `requirements-dev.txt` solo per chi ha scaricato `dev`; il passo 8 (i test) vale solo per `dev`. `docs/DEMO.md`, passo 3: il controllo diventa `Test-Path PRODUZIONE` (→ `True`), con la nota che in `main` il runner non c'è e che il file serve lo stesso (backup pianificato del passo 8, e rifiuto del runner se un giorno arrivano i test)
+- **Controlli**: suite `db` **89 PASS** (`test_guida_con_i_passi_della_demo` legge `DEMO.md`: le parole che cerca ci sono ancora). Nessun test legge il README. Giro completo non lanciato (solo documentazione)
+- **Decisioni prese** (Christian, 11/10, sulle domande di Claude): in `main` **non** vanno `tests/`, `requirements-dev.txt` e `app/static/dev/` (raccomandazione di Claude: portarli, per mostrare i test; scelto di no); **vanno** `docs/` (REGOLE-GIOCO, CONTRATTO-SOCKET, DEMO, prototipo) e `README.md`; i rimandi ai test si correggono in `dev` (questo punto) invece di portare i test. Per un clone di `main` avviato in sviluppo (`APP_ENV=development`) la home cerca i dati di esempio di `app/static/dev/` e riceve tre 404 nella console, ma funziona (`Promise.allSettled`); nella demo (`APP_ENV=demo`) non li cerca [L]. `docs/CONTRATTO-SOCKET.md` nomina i file di esempio: solo testo, lasciato così
+- **Domande nuove**: nessuna
+- **Punti delicati**: `README.md` è lo stesso file in `dev` e in `main`: ogni frase deve valere in tutti e due i branch
+- **Note per gli altri**: **Chi è di turno sui documenti**: aprire **P136** e spuntarlo; in `DECISIONI.md` (Processo) l'elenco dei file esclusi da `main` diventa anche `tests/`, `requirements-dev.txt`, `app/static/dev/`, con `docs/` e `README.md` inclusi; nel "Fatto quando" di P38 il primo controllo è ora `Test-Path PRODUZIONE`, non più il rifiuto del runner. **Giuseppe**: al passo 3 della demo il controllo è cambiato (`Test-Path PRODUZIONE`); `main` arriva dopo il merge di questo punto
+
 ### Documenti: registrati P128–P135 e P134, giro completo da 1872 PASS (11/10/2026)
 
 - **Branch**: docs/aggiornamento-11-10

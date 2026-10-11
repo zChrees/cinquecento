@@ -41,12 +41,14 @@ Il clone scarica `main`. Prima di installare, controlla che `main` sia stato agg
 New-Item -ItemType File PRODUZIONE
 ```
 
-Controllo **[T]** (è il primo "Fatto quando" di P38): il runner dei test deve rifiutarsi di partire e uscire con 2.
+Controllo **[T]** (è il primo "Fatto quando" di P38): il file deve esserci.
 
 ```powershell
-python tests\esegui_tutti.py
-# → "trovato il file PRODUZIONE: questa è un'installazione vera, i test non partono."
+Test-Path PRODUZIONE
+# → True
 ```
+
+In `main` i test non ci sono (stanno solo in `dev`), quindi qui il runner non si può provare. Il file serve lo stesso: il backup pianificato lo vuole (passo 8), e se un giorno nella cartella arrivano i test (per esempio con un `git switch dev`) il runner lo trova e si rifiuta di partire.
 
 `PRODUZIONE` è in `.gitignore`: non finisce mai su GitHub.
 
