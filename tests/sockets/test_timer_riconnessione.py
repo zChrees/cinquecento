@@ -106,14 +106,22 @@ class Seat:
         return self.client.call(event, data, timeout=WAIT)
 
 
-def sit(connect, room, names):
-    seats = [Seat(connect(name)) for name in names]
+def sit(connect, room, names, seats=None):
+    """Collega quei giocatori e li fa sedere; `seats` già collegati (P138: per sedersi
+    subito dopo aver creato la stanza, dentro un tempo per arrivare corto)."""
+    seats = seats if seats is not None else [Seat(connect(name)) for name in names]
     for seat in seats:
         assert seat.call("game:join", {"game_id": room.id}) == ok()
     version = room.version
     for seat in seats:
         seat.wait_for(lambda v, version=version: v["version"] >= version)
     return seats
+
+
+def shorten_reconnect(room, seconds):
+    """P138: il tempo per rientrare vale anche per arrivare al tavolo; i test che lo vogliono
+    corto lo accorciano dopo essersi seduti, così sedersi lentamente non fa abbandonare."""
+    room.run(setattr, room, "reconnect_seconds", seconds)
 
 
 def finished_by_abandon(view):
@@ -186,8 +194,9 @@ def test_il_timer_riparte_a_ogni_turno(connect, new_room):
 
 
 def test_scollegato_e_rientro_in_tempo(connect, new_room):
-    room = new_room(["Primo", "Secondo"], reconnect=1.0)
+    room = new_room(["Primo", "Secondo"])
     seats = sit(connect, room, ["Primo", "Secondo"])
+    shorten_reconnect(room, 1.0)
     before = room.version
     seats[1].client.disconnect()
 
@@ -210,8 +219,9 @@ def test_scollegato_e_rientro_in_tempo(connect, new_room):
 
 
 def test_non_rientrato_in_tempo_partita_persa_per_abbandono(connect, new_room, users):
-    room = new_room(["Primo", "Secondo"], reconnect=0.4)
+    room = new_room(["Primo", "Secondo"])
     seats = sit(connect, room, ["Primo", "Secondo"])
+    shorten_reconnect(room, 0.4)
     seats[1].client.disconnect()
 
     view = seats[0].wait_for(finished_by_abandon)
@@ -231,21 +241,33 @@ def test_non_rientrato_in_tempo_partita_persa_per_abbandono(connect, new_room, u
     assert answer["ok"] is False and answer["error"]["code"] == "not_allowed"
 
 
-def test_chi_non_arriva_al_tavolo_non_ha_limite(connect, new_room):
-    """Scelta (b) di Antonio: nessun conto alla rovescia, la mossa automatica gioca per lui."""
-    room = new_room(["Primo", "Secondo"], turn=0.2, reconnect=0.2)
-    seats = sit(connect, room, ["Primo"])
+def test_chi_non_arriva_al_tavolo_perde_per_abbandono(connect, new_room, users):
+    """P138 (R2 di REVIEW.md): chi non arriva mai al tavolo ha RECONNECT_SECONDS dall'inizio
+    della partita, come chi si scollega; prima non aveva limite (scelta di Antonio del 28/09)."""
+    ready = [Seat(connect("Primo"))]  # collegato prima: si siede appena la stanza c'è
+    room = new_room(["Primo", "Secondo"], reconnect=0.6)
+    seats = sit(connect, room, ["Primo"], seats=ready)
     first = seats[0].last
     assert first["players"][1]["connected"] is False
-    assert first["players"][1]["reconnect_seconds_left"] is None
+    assert 0 < first["players"][1]["reconnect_seconds_left"] <= 0.6
+    assert first["players"][0]["reconnect_seconds_left"] is None
 
-    def seat_1_played(v):
-        cards = v["trick"]["cards"] + (v["last_trick"]["cards"] if v["last_trick"] else [])
-        return any(c["seat"] == 1 for c in cards)
+    view = seats[0].wait_for(finished_by_abandon)
+    assert view["result"]["abandoned_seats"] == [1]
+    assert view["result"]["winner_team"] == 0
+    assert room._moves[-1].details == {"motivo": "tempo_scaduto"}
+    assert find_room_of_user(users["Primo"]) is None and find_room_of_user(users["Secondo"]) is None
 
-    view = seats[0].wait_for(seat_1_played)
-    assert view["status"] == "playing"
-    assert not any(finished_by_abandon(v) for v in seats[0].views)
+
+def test_chi_arriva_in_tempo_ferma_il_conto_alla_rovescia(connect, new_room):
+    ready = [Seat(connect("Primo")), Seat(connect("Secondo"))]
+    room = new_room(["Primo", "Secondo"], reconnect=0.6)
+    seats = sit(connect, room, ["Primo", "Secondo"], seats=ready)
+    view = seats[0].wait_for(lambda v: v["players"][1]["connected"])
+    assert all(p["reconnect_seconds_left"] is None for p in view["players"])
+    time.sleep(1.0)  # più del tempo per arrivare: non deve succedere niente
+    assert not room.finished
+    assert room.view_for(0)["status"] == "playing"
 
 
 def test_scheda_che_non_e_al_tavolo_non_scollega_il_posto(connect, new_room):
@@ -260,8 +282,9 @@ def test_scheda_che_non_e_al_tavolo_non_scollega_il_posto(connect, new_room):
 
 
 def test_scheda_sostituita_non_scollega_il_posto(connect, new_room):
-    room = new_room(["Primo", "Secondo"], reconnect=0.4)
+    room = new_room(["Primo", "Secondo"])
     seats = sit(connect, room, ["Primo", "Secondo"])
+    shorten_reconnect(room, 0.4)
     newer = Seat(connect("Primo"))
     assert newer.call("game:join", {"game_id": room.id}) == ok()
     seats[0].client.disconnect()  # la scheda vecchia, già sostituita (D14)
@@ -325,8 +348,9 @@ def test_esci_da_una_partita_che_non_esiste(connect):
 
 
 def test_a_partita_finita_i_timer_si_fermano(connect, new_room):
-    room = new_room(["Primo", "Secondo"], turn=0.2, reconnect=0.2)
+    room = new_room(["Primo", "Secondo"], turn=0.2)
     seats = sit(connect, room, ["Primo", "Secondo"])
+    shorten_reconnect(room, 0.2)
     seats[0].call("game:leave", {"game_id": room.id})
     seats[1].wait_for(finished_by_abandon)
     version = room.version

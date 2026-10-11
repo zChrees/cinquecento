@@ -15,8 +15,9 @@ P25:
   Il timer continua anche mentre il giocatore di turno è scollegato.
 - Scollegamento: quando la scheda al tavolo di un posto si scollega, il posto risulta
   scollegato e ha RECONNECT_SECONDS per rientrare con game:join; oltre, la partita è
-  persa per abbandono. Chi non è mai arrivato al tavolo non ha limite: la mossa
-  automatica gioca per lui (scelta di Antonio, 28/09/2026).
+  persa per abbandono. P138 (R2 di REVIEW.md, cambia la scelta di Antonio del
+  28/09/2026): anche chi non è ancora arrivato al tavolo ha RECONNECT_SECONDS, contati
+  dall'inizio della partita; intanto la mossa automatica gioca per lui.
 - Abbandono (game:leave, o rientro fuori tempo): la partita finisce subito; nel 2v2
   perde tutta la squadra di chi ha abbandonato (D13). Il motore non conosce
   l'abbandono: il risultato lo scrive la stanza nella vista (reason "abandon").
@@ -275,6 +276,9 @@ class Room:
             self._cpu_memory = {seat: CpuMemory() for seat in self.cpu_seats}
             self._cpu_rng = random.Random(self._rng.random())  # la CPU pensa fuori dal lock
             self._all_seated = False
+            for seat in range(len(self.players)):
+                if seat not in self.cpu_seats:
+                    self._wait_for(seat)  # P138: chi non arriva al tavolo perde per abbandono
             self._start_turn(first_deal_pause(len(self.players)))
             self._cpu_see()  # dopo il turno (la vista ne ha il tempo); la CPU gioca solo con il lock
 
@@ -514,19 +518,23 @@ class Room:
             del self.sids[seat]
             self.version += 1
             if not self.finished:
-                deadline = time.monotonic() + self.reconnect_seconds
-                timer = threading.Timer(self.reconnect_seconds, self._reconnect_expired, args=(seat, deadline))
-                timer.daemon = True
-                self._reconnect[seat] = (deadline, timer)
-                timer.start()
+                self._wait_for(seat)
             return seat
+
+    def _wait_for(self, seat):
+        """Conto alla rovescia per arrivare o rientrare al tavolo (sotto il lock); game:join lo ferma."""
+        deadline = time.monotonic() + self.reconnect_seconds
+        timer = threading.Timer(self.reconnect_seconds, self._reconnect_expired, args=(seat, deadline))
+        timer.daemon = True
+        self._reconnect[seat] = (deadline, timer)
+        timer.start()
 
     def _reconnect_expired(self, seat, deadline):
         with self.lock:
             waiting = self._reconnect.get(seat)
             if waiting is None or waiting[0] != deadline or self.finished:
-                return  # è rientrato in tempo, o la partita è già finita
-            log.info("Posto %s non rientrato in tempo nella stanza %s: abbandono", seat, self.id)
+                return  # è arrivato o rientrato in tempo, o la partita è già finita
+            log.info("Posto %s non arrivato o non rientrato in tempo nella stanza %s: abbandono", seat, self.id)
             if self.abandon(seat, "tempo_scaduto"):
                 self.broadcast_states()
 

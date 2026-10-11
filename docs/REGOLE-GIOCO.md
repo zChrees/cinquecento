@@ -37,7 +37,7 @@ Ogni mano vale 120 punti di carte, più i canti.
 ## Tempo per turno
 
 - Ogni giocatore ha **15 secondi** per il suo turno (erano 30 fino al 04/10/2026, P94). Il conto alla rovescia parte solo **dopo le pause del tavolo** (ultima presa e pescata dopo una presa; ultima presa, riepilogo, mescolata, distribuzione e carte calate a fine mano), così i 15 secondi sono tutti giocabili. Allo scadere il server gioca al suo posto la carta scelta così: 1) quella con **meno punti**; 2) a parità, una carta **non di briscola**, perché la briscola serve a vincere le prese; 3) a parità, la **più debole** nella presa (il 2 prima del 4, e così via); 4) se resta ancora una parità (per esempio il 4 di coppe e il 4 di spade, senza briscola tra i due), una delle due **a caso**. La mossa automatica **non canta mai**. Deciso il 28/09/2026 (D12).
-- Chi si disconnette ha **60 secondi** per rientrare; poi la partita è persa per abbandono.
+- Chi si disconnette ha **60 secondi** per rientrare; poi la partita è persa per abbandono. Lo stesso vale per chi **non arriva al tavolo**: ha 60 secondi dall'inizio della partita (deciso l'11/10/2026, P138); intanto la mossa automatica gioca per lui.
 - Nel **2v2**, se un giocatore abbandona, **perde tutta la squadra**, ma il **rating scende solo a chi ha abbandonato**. Deciso il 28/09/2026 (D13).
 
 ## Svolgimento di una mano

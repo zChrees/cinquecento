@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### P138 (numero proposto) — Chi non arriva al tavolo ha 60 secondi (R2 di REVIEW.md, 11/10/2026)
+
+- **Branch**: fix/p138-arrivo-al-tavolo
+- **File**: modificati `app/realtime/room.py` (di Giuseppe: **con il suo ok**), `tests/sockets/test_timer_riconnessione.py`, `docs/REGOLE-GIOCO.md`, questo file
+- **Cosa cambia** (opzione A, raccomandata da Claude e scelta da Christian; **cambia la scelta di Antonio del 28/09**, P25, riaperta da Christian con l'ok di Giuseppe): quando la partita parte, ogni giocatore vero ha `RECONNECT_SECONDS` (60 s) per arrivare al tavolo, lo stesso conto alla rovescia di chi si scollega (`_wait_for`, usata anche da `disconnect`); `game:join` lo ferma; se scade, abbandono con motivo `tempo_scaduto` (nel 2v2 perde la squadra, il rating scende solo a lui, D13). Intanto la mossa automatica gioca per lui. La pagina non cambia: mostra già "scollegato · N s". Effetto in più: una partita contro la CPU in cui il giocatore non arriva mai si chiude da sola dopo 60 s. Scartate: 30 s solo per arrivare (B) e partita annullata senza rating (C, cambiava contratto e pagina)
+- **Controlli**: `test_chi_non_arriva_al_tavolo_non_ha_limite` sostituito da `test_chi_non_arriva_al_tavolo_perde_per_abbandono` (fallisce con il `room.py` di prima [T]) e `test_chi_arriva_in_tempo_ferma_il_conto_alla_rovescia`. Quattro test del file creavano la stanza con un tempo di rientro di pochi decimi, che ora vale anche per sedersi: uno falliva a volte (`test_a_partita_finita_i_timer_si_fermano`); ora accorciano il tempo dopo essersi seduti (`shorten_reconnect`), e i due nuovi collegano i giocatori prima di creare la stanza (`sit(..., seats=...)`). File passato 3 volte su 3; suite `sockets` **322 PASS**, `e2e` 12, `services` 38
+- **Decisioni prese**: Christian, con l'ok di Giuseppe: opzione A
+- **Domande nuove**: nessuna
+- **Punti delicati**: un test che crea una stanza con `reconnect` corto deve far sedere i giocatori dentro quel tempo, o accorciarlo dopo (`shorten_reconnect`)
+- **Note per gli altri**: **chi è di turno sui documenti**: in `DECISIONI.md` (Gioco) la decisione del 28/09 "Chi non arriva mai al tavolo non ha limite di tempo" è sostituita da questa; nel punto delicato "Timer" di `CLAUDE.md` togliere "Chi non arriva mai al tavolo non ha limite di tempo"; in `docs/CONTRATTO-SOCKET.md` (3.3, `reconnect_seconds_left`) va scritto "per arrivare o rientrare" (non toccato: fuori dall'elenco del punto). **Giuseppe**: `room.py` cambiato come sopra
+
 ### P137 (numero proposto) — Username ed email senza a-capo finale (R1 di REVIEW.md, 11/10/2026)
 
 - **Branch**: fix/p137-username-a-capo
