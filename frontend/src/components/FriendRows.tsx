@@ -25,8 +25,8 @@ import { Avatar } from './Avatar';
 
 // PRESENCE_LABEL: la scritta sotto il nome di un amico, per ogni stato.
 // Record<Presence, string>: un testo per ogni valore di Presence (se ne manca uno,
-// TypeScript lo segnala)
-const PRESENCE_LABEL: Record<Presence, string> = {
+// TypeScript lo segnala). La usa anche ChatWindow.tsx, sotto il nome dell'amico
+export const PRESENCE_LABEL: Record<Presence, string> = {
   online: 'Online',
   in_game: 'In partita',
   offline: 'Offline',

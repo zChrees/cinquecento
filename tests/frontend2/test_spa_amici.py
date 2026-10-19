@@ -1,12 +1,14 @@
-"""Passo 5b della migrazione: il pannello amici in React (frontend/src/components/FriendsPanel.tsx).
+"""Passi 5b e 5c della migrazione: il pannello amici in React (frontend/src/components/FriendsPanel.tsx).
 
-Gli stessi controlli di test_pannello_amici.py (P46, P47), sulla pagina della SPA
-con il login (/prova-react, fino al passo 6):
+Gli stessi controlli di test_pannello_amici.py (P46, P47) e test_suoni_menu.py (P115),
+sulla pagina della SPA con il login (/prova-react, fino al passo 6):
 - il contatore sull'icona e la lista divisa in gruppi, con lo stesso HTML e gli
   stessi data-* del pannello di oggi; ogni pulsante con sola icona ha l'etichetta;
 - richiesta di amicizia (campo vuoto, errore del server, riuscita) con X-CSRFToken e
-  request_id; accetta, rimuovi con la conferma, "Chatta" che per ora avvisa (5c);
-- la lista si rilegge da sola con friends:changed e con un messaggio di un amico;
+  request_id; accetta, rimuovi con la conferma;
+- la lista si rilegge da sola con friends:changed e con un messaggio di un amico, e
+  suonano la richiesta ricevuta e il messaggio (non gli altri motivi né i propri
+  messaggi); l'elenco dei suoni di frontend/src/utils/sounds.ts è quello di sounds.js;
 - si chiude con "indietro", Esc, la X e un tocco fuori; dopo un ricaricamento non si
   riapre da solo e "indietro" lo chiude ancora (P34).
 
@@ -18,6 +20,7 @@ dei test. Senza Chrome o Edge, o senza il build della SPA, i controlli si saltan
 
 import json
 import re
+from pathlib import Path
 
 import pytest
 
@@ -28,10 +31,16 @@ from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_
 from tests.frontend2.test_pannello_amici import ME, FakeFriendsServer
 from tests.spa import needs_spa
 
+ROOT = Path(__file__).resolve().parents[2]
 # PAGE: l'unica pagina della SPA con il login, fino al passo 6
 PAGE = "/prova-react"
-# CHAT_LATER: l'avviso di "Chatta" finché la chat non è in React (lotto 5c)
-CHAT_LATER = "La chat arriva con il prossimo lotto della migrazione (5c)."
+SOUNDS_JS = (ROOT / "app" / "static" / "js" / "core" / "sounds.js").read_text(encoding="utf-8")
+SOUNDS_TS = (ROOT / "frontend" / "src" / "utils" / "sounds.ts").read_text(encoding="utf-8")
+# Come test_suoni_menu.py: registra i suoni partiti (anche quelli che il browser non fa sentire)
+RECORD_SOUNDS = (
+    "window.__sounds = [];"
+    "document.addEventListener('cinquecento:sound', (e) => window.__sounds.push(e.detail.name));"
+)
 PANEL_OPEN = "document.querySelector('[data-friends-panel]')?.open === true"
 LIST_READY = "document.querySelector('[data-friends-group=\"online\"]') !== null"
 CONNECTED = "document.querySelector('[data-spa-connection=\"connected\"]') !== null"
@@ -125,10 +134,6 @@ def test_contatore_lista_e_azioni(browser, server, friends):
         .filter((b) => !b.getAttribute('aria-label')).length""")
     assert unlabeled == 0
 
-    # "Chatta": per ora solo l'avviso (la chat arriva con il lotto 5c)
-    browser.click("[data-chat-open='44']")
-    browser.wait_js(f"{_notice(browser)} === {json.dumps(CHAT_LATER)}", "avviso della chat")
-
     # Richiesta di amicizia: campo vuoto, errore del server sotto il campo, riuscita
     browser.click("[data-add-friend] button[type=submit]")
     browser.wait_js("document.querySelector('[data-add-friend-error]').textContent === 'Scrivi uno username.'", "campo vuoto")
@@ -176,9 +181,31 @@ def test_contatore_lista_e_azioni(browser, server, friends):
     assert browser.js("window.__csp") == []
 
 
-def test_la_lista_si_aggiorna_da_sola(browser, server, friends, app):
+def _sound_lists(code):
+    # nome del suono → elenco dei file, dalle righe "  nome: ['file', ...],"
+    found = re.findall(r"^\s+(\w+): \[([^\]]*)\],", code, re.MULTILINE)
+    return {name: re.findall(r"'([^']+)'", files) for name, files in found}
+
+
+def test_suoni_uguali_a_sounds_js():
+    # Fino al passo 9 ci sono due copie dell'elenco: devono restare uguali
+    js = _sound_lists(SOUNDS_JS)
+    assert js and _sound_lists(SOUNDS_TS) == js
+    assert re.search(r"SOUNDS_KEY = '([^']+)'", SOUNDS_TS).group(1) == re.search(r"SOUNDS_KEY = '([^']+)'", SOUNDS_JS).group(1)
+
+
+def test_la_lista_si_aggiorna_da_sola_e_suona(browser, server, friends, app):
+    browser.send("Page.enable")
+    browser.send("Page.addScriptToEvaluateOnNewDocument", source=RECORD_SOUNDS)
     _open_page(browser, server)
     _open_panel(browser)
+
+    # Un altro motivo di friends:changed: si rilegge, ma niente suono
+    reads = len([c for c in friends.calls if c["method"] == "GET"])
+    with app.app_context():
+        socketio.emit("friends:changed", {"reason": "request_declined"}, to=user_channel(ME))
+    _wait_reads(browser, friends, reads)
+    assert browser.js("window.__sounds") == []
 
     # friends:changed (P47): una richiesta nuova compare senza ricaricare, e il contatore sale
     friends.data["requests_in"].insert(0, {"user_id": 77, "username": "Nuova", "avatar": None,
@@ -190,6 +217,12 @@ def test_la_lista_si_aggiorna_da_sola(browser, server, friends, app):
     browser.wait_js("[...document.querySelectorAll('[data-requests-in] .friend__name')].some((e) => e.textContent === 'Nuova')",
                     "richiesta nuova nella lista")
     browser.wait_js(f"document.querySelector('[data-friends-badge]').textContent === '{total}'", "contatore aggiornato")
+    assert browser.js("window.__sounds") == ["friend_request"]
+
+    # Un tuo messaggio mandato da un'altra scheda: niente suono
+    mine = {"id": 899, "from_user_id": ME, "to_user_id": 44, "text": "io", "sent_at": "2026-10-19T18:00:30.000Z"}
+    with app.app_context():
+        socketio.emit("chat:message", {"message": mine}, to=user_channel(ME))
 
     # Un messaggio di un amico (chat:message): si rilegge la lista per i non letti
     for friend in friends.data["friends"]:
@@ -202,6 +235,16 @@ def test_la_lista_si_aggiorna_da_sola(browser, server, friends, app):
     browser.wait_js("document.querySelector('[data-user-id=\"44\"] [data-unread]')?.dataset.unread === '3'",
                     "non letti aggiornati")
     assert len([c for c in friends.calls if c["method"] == "GET"]) > reads
+    assert browser.js("window.__sounds") == ["friend_request", "message"]
+
+
+def _wait_reads(browser, friends, before):
+    # Aspetta che la pagina abbia riletto la lista (una GET in più di `before`)
+    deadline = 50
+    while deadline and len([c for c in friends.calls if c["method"] == "GET"]) <= before:
+        browser.js("new Promise((r) => setTimeout(r, 100))")
+        deadline -= 1
+    assert len([c for c in friends.calls if c["method"] == "GET"]) > before, "lista non riletta"
 
 
 def test_si_chiude_con_indietro_esc_x_e_fuori(browser, server):

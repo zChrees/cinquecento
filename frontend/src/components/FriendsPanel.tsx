@@ -1,5 +1,5 @@
 /**
- * Il pannello amici (P46, passo 5b della migrazione): si apre da "Amici" nella
+ * Il pannello amici (P46, passi 5b e 5c della migrazione): si apre da "Amici" nella
  * navbar. Su telefono è a tutto schermo, su computer laterale (stile in
  * css/components/friends-panel.css). È la versione React di
  * app/static/js/components/FriendsPanel.js, con lo stesso HTML e gli stessi data-*.
@@ -12,8 +12,8 @@
  * ricevute (accetta, rifiuta); amici online, in partita e offline con i messaggi
  * non letti, "Chatta" e "Altro" (rimuovi, blocca, con conferma); richieste mandate
  * (annulla); bloccati (sblocca). Gli inviti a partita stanno solo nella home (P46).
- * La chat arriva con il lotto 5c: per ora "Chatta" scrive solo un avviso (scelta
- * di Christian, 19/10/2026); i suoni del menu (P115) arrivano anche loro con il 5c.
+ * "Chatta" apre la chat (ChatWindow.tsx, P48) al posto della lista. Suoni del menu
+ * (P115): una richiesta di amicizia ricevuta e un messaggio di un amico.
  *
  * La lista si aggiorna da sola (P47): con friends:presence, friends:changed e
  * chat:message si rilegge GET /friends/, e conta solo la risposta dell'ultima
@@ -22,7 +22,9 @@
  * Si chiude con la X, con Esc, toccando fuori e con "indietro" del browser o del
  * telefono. Per "indietro" il pannello aperto è un passo della cronologia: aprirlo
  * aggiunge un passo con lo stato { friendsPanel: 'list' } (React Router, navigate),
- * e il pannello è aperto finché l'indirizzo attuale ha quello stato.
+ * e il pannello è aperto finché l'indirizzo attuale ha quello stato. Aprire una chat
+ * aggiunge un altro passo ({ friendsPanel: 'chat' }): "indietro" dalla chat torna
+ * alla lista, e chiudere dalla chat torna indietro di due passi.
  *
  * DA DOVE ARRIVANO I DATI: la lista da GET /friends/ (api/friends.ts, contratto 2.2),
  * chi sei dalla sessione (useSession), gli avvisi dal tempo reale (socket/hooks.ts).
@@ -46,8 +48,11 @@ import { useSession } from '../session/SessionContext';
 import { useConnection, useSocketEvent } from '../socket/hooks';
 import type { Friend, FriendRequest, FriendsList } from '../types/api';
 import type { UserRef } from '../types/common';
-import type { ChatMessage } from '../types/events';
+import { send } from '../socket/client';
+import type { ChatHistory, ChatMessage, FriendsChanged } from '../types/events';
 import { newRequestId } from '../utils/requestId';
+import { playSound, preloadSounds } from '../utils/sounds';
+import { ChatWindow } from './ChatWindow';
 import { FriendsBody } from './FriendRows';
 import type { FriendsHandlers } from './FriendRows';
 import { Modal } from './Modal';
@@ -61,9 +66,9 @@ import { sheetControls } from './sheet';
 // pannello non si riapre da solo né rovina "indietro".
 const PAGE_ID: string = newRequestId();
 
-// PanelLayer: cosa mostra il pannello aperto. Per ora solo la lista; con il lotto
-// 5c anche 'chat' (dalla chat, "indietro" tornerà alla lista)
-export type PanelLayer = 'list';
+// PanelLayer: cosa mostra il pannello aperto, la lista o la chat
+// (la | vuol dire "uno di questi valori")
+export type PanelLayer = 'list' | 'chat';
 
 // PanelHistoryState: lo stato salvato nella cronologia quando il pannello è aperto
 interface PanelHistoryState {
@@ -88,9 +93,14 @@ interface ModalStep {
   friend: Friend;
 }
 
+// OpenChat: la chat aperta: l'amico e la prima pagina di messaggi (chat:history)
+interface OpenChat {
+  friend: Friend;
+  history: ChatHistory;
+}
+
 // I testi delle finestre e degli avvisi (gli stessi di FriendsPanel.js)
 const NOT_AVAILABLE = 'Amici non disponibili. Riprova tra poco.';
-const CHAT_LATER = 'La chat arriva con il prossimo lotto della migrazione (5c).';
 const NO_NOTICE: Notice = { text: '', kind: 'ok' };
 
 /**
@@ -118,6 +128,9 @@ function panelLayer(state: unknown): PanelLayer | null {
   }
   if (state.friendsPanel === 'list') {
     return 'list';
+  }
+  if (state.friendsPanel === 'chat') {
+    return 'chat';
   }
   return null;
 }
@@ -207,6 +220,47 @@ function scrollsInside(target: Element, dialog: HTMLDialogElement): boolean {
 }
 
 /**
+ * La lista con i messaggi di un amico segnati come letti (nel contatore e nella riga).
+ *
+ * @param {FriendsList} list la lista attuale
+ * @param {number} friendId l'amico di cui si è aperta la chat
+ * @returns {FriendsList} una lista nuova (React vuole un oggetto nuovo per ridisegnare)
+ *
+ * In parole semplici:
+ *   Aprire la chat segna come letti i messaggi ricevuti (lo fa il server con
+ *   chat:history): qui si aggiorna subito anche la pagina, senza rileggere la lista.
+ */
+function clearUnread(list: FriendsList, friendId: number): FriendsList {
+  let removed = 0;
+  const friends: Friend[] = [];
+  for (let i = 0; i < list.friends.length; i++) {
+    const friend = list.friends[i];
+    if (friend.user_id === friendId && friend.unread > 0) {
+      removed = friend.unread;
+      friends.push({
+        user_id: friend.user_id,
+        username: friend.username,
+        avatar: friend.avatar,
+        presence: friend.presence,
+        unread: 0,
+      });
+    } else {
+      friends.push(friend);
+    }
+  }
+  return {
+    friends: friends,
+    requests_in: list.requests_in,
+    requests_out: list.requests_out,
+    blocked: list.blocked,
+    counters: {
+      requests_in: list.counters.requests_in,
+      unread_messages: Math.max(0, list.counters.unread_messages - removed),
+    },
+  };
+}
+
+/**
  * Aggiunge un numero a un elenco, se non c'è già, in un elenco nuovo.
  *
  * In parole semplici:
@@ -287,6 +341,8 @@ export function FriendsPanel(props: FriendsPanelProps): JSX.Element {
   const [busy, setBusy] = useState<number[]>([]);
   // modal: la finestra aperta sopra il pannello (rimuovi o blocca), oppure null
   const [modal, setModal] = useState<ModalStep | null>(null);
+  // chat: la chat aperta, oppure null (allora si vede la lista)
+  const [chat, setChat] = useState<OpenChat | null>(null);
 
   // Le ref tengono un valore tra un disegno e l'altro senza far ridisegnare.
   // dialogRef: il <dialog> vero della pagina; inputRef: la casella dello username
@@ -299,6 +355,8 @@ export function FriendsPanel(props: FriendsPanelProps): JSX.Element {
   const addingNow: RefObject<boolean> = useRef<boolean>(false);
   // wasOnline: true dopo il primo collegamento; al ritorno della connessione si rilegge la lista
   const wasOnline: RefObject<boolean> = useRef<boolean>(false);
+  // openingChat: true mentre si aspetta chat:history (un doppio clic su "Chatta" non la apre due volte)
+  const openingChat: RefObject<boolean> = useRef<boolean>(false);
 
   const sheet = sheetControls(dialogRef);
   // layer: cosa mostra il pannello secondo la cronologia, oppure null se è chiuso
@@ -307,6 +365,12 @@ export function FriendsPanel(props: FriendsPanelProps): JSX.Element {
   let meId = 0;
   if (session.user !== null) {
     meId = session.user.user_id;
+  }
+  // chatShown: la chat si vede quando la cronologia dice 'chat' e la chat è arrivata
+  // (tornando "avanti" su un passo 'chat' senza la chat si vede la lista)
+  let chatShown = false;
+  if (layer === 'chat' && chat !== null) {
+    chatShown = true;
   }
 
   /**
@@ -342,8 +406,13 @@ export function FriendsPanel(props: FriendsPanelProps): JSX.Element {
     }
   }
 
-  /** Effetto all'apertura della pagina: la prima lettura, per il contatore. */
+  /**
+   * Effetto all'apertura della pagina: la prima lettura, per il contatore, e i
+   * suoni del menu (P115). Il contesto audio si crea subito, come al tavolo (P118):
+   * chi arriva da un clic di questo sito sente gli avvisi senza toccare la pagina.
+   */
   function loadAtStart(): void {
+    preloadSounds(true);
     load();
   }
 
@@ -380,6 +449,10 @@ export function FriendsPanel(props: FriendsPanelProps): JSX.Element {
       load();
     } else if (layer === null && dialog.open) {
       sheet.close();
+    }
+    // Fuori dalla chat (indietro alla lista, o pannello chiuso) la chat si toglie
+    if (layer !== 'chat' && chat !== null) {
+      setChat(null);
     }
   }
 
@@ -459,19 +532,33 @@ export function FriendsPanel(props: FriendsPanelProps): JSX.Element {
     load();
   }
 
-  /** Richieste, amicizie o blocchi cambiati (P47): si rilegge la lista. */
-  function handleFriendsChanged(): void {
+  /**
+   * Richieste, amicizie o blocchi cambiati (P47): si rilegge la lista. Una
+   * richiesta ricevuta ha il suo suono (P115); gli altri motivi no.
+   */
+  function handleFriendsChanged(data: FriendsChanged): void {
+    if (data.reason === 'request_received') {
+      playSound('friend_request', 0);
+    }
     load();
   }
 
   /**
-   * Arriva un messaggio della chat (P48): se è di un amico, cambia il numero dei
-   * non letti e si rilegge la lista. I tuoi (mandati da un'altra scheda) no.
+   * Arriva un messaggio della chat (P48). Se è di un amico suona (P115; i tuoi,
+   * mandati da un'altra scheda, no). Se la chat con lui è aperta ci pensa
+   * ChatWindow (lo aggiunge e lo segna come letto); altrimenti cambia il numero dei
+   * non letti e si rilegge la lista.
    */
   function handleChatMessage(data: { message: ChatMessage }): void {
-    if (data.message.from_user_id !== meId) {
-      load();
+    const message = data.message;
+    if (message.from_user_id === meId) {
+      return;
     }
+    playSound('message', 0);
+    if (chatShown && chat !== null && chat.friend.user_id === message.from_user_id) {
+      return;
+    }
+    load();
   }
 
   useSocketEvent('friends:presence', handlePresence);
@@ -483,7 +570,9 @@ export function FriendsPanel(props: FriendsPanelProps): JSX.Element {
    * passo (e followHistory lo chiude), altrimenti si chiude e basta.
    */
   function requestClose(): void {
-    if (layer !== null) {
+    if (layer === 'chat') {
+      navigate(-2);
+    } else if (layer === 'list') {
       navigate(-1);
     } else {
       sheet.close();
@@ -582,9 +671,49 @@ export function FriendsPanel(props: FriendsPanelProps): JSX.Element {
     act(user.user_id, send, `${user.username} non è più bloccato.`);
   }
 
-  /** "Chatta": la chat arriva con il lotto 5c, per ora solo un avviso. */
-  function handleChat(): void {
-    setNotice({ text: CHAT_LATER, kind: 'ok' });
+  /**
+   * "Chatta": chiede i messaggi (chat:history) e apre la chat al posto della lista,
+   * con un passo in più nella cronologia. Il server segna come letti i messaggi
+   * ricevuti: il contatore si aggiorna subito.
+   */
+  async function handleChat(friend: Friend): Promise<void> {
+    if (openingChat.current) {
+      return;
+    }
+    openingChat.current = true;
+    const answer = await send('chat:history', { user_id: friend.user_id, before_id: null });
+    openingChat.current = false;
+    if (!answer.ok) {
+      setNotice({ text: answer.error.message, kind: 'error' });
+      return;
+    }
+    setChat({ friend: friend, history: answer.data });
+    const state: PanelHistoryState = { friendsPanel: 'chat', page: PAGE_ID };
+    navigate(
+      { pathname: location.pathname, search: location.search, hash: location.hash },
+      { state: state, replace: false },
+    );
+
+    /** setOverview con una funzione: riceve la lista più recente. */
+    function markRead(current: FriendsList | null): FriendsList | null {
+      if (current === null) {
+        return null;
+      }
+      return clearUnread(current, friend.user_id);
+    }
+
+    if (friend.unread > 0) {
+      setOverview(markRead);
+    }
+  }
+
+  /** "Torna agli amici" dalla chat: un passo indietro nella cronologia. */
+  function handleChatBack(): void {
+    if (layer === 'chat') {
+      navigate(-1);
+    } else {
+      setChat(null);
+    }
   }
 
   /** "Altro": la finestra con Rimuovi amico e Blocca. */
@@ -731,6 +860,22 @@ export function FriendsPanel(props: FriendsPanelProps): JSX.Element {
     );
   }
 
+  // chatElement: la chat, solo quando si vede. key: cambia con l'amico, così per
+  // un'altra chat React crea una finestra nuova con lo stato da capo
+  let chatElement: JSX.Element | null = null;
+  if (chatShown && chat !== null) {
+    chatElement = (
+      <ChatWindow
+        key={chat.friend.user_id}
+        friend={chat.friend}
+        meId={meId}
+        history={chat.history}
+        onBack={handleChatBack}
+        onClose={handleCloseClick}
+      />
+    );
+  }
+
   // noticeHidden, addErrorHidden: l'avviso e l'errore si vedono solo con un testo
   let noticeHidden = true;
   if (notice.text !== '') {
@@ -755,7 +900,7 @@ export function FriendsPanel(props: FriendsPanelProps): JSX.Element {
         onClick={handleBackdropClick}
         onClose={handleClosed}
       >
-        <div className="drawer__view" data-view="list">
+        <div className="drawer__view" data-view="list" hidden={chatShown}>
           <div className="drawer__head">
             <h2 className="drawer__title" id="friends-title">Amici</h2>
             <button className="icon-btn" type="button" aria-label="Chiudi" onClick={handleCloseClick}>
@@ -792,6 +937,7 @@ export function FriendsPanel(props: FriendsPanelProps): JSX.Element {
             <FriendsBody overview={overview} loadError={loadError} busy={busy} handlers={handlers} />
           </div>
         </div>
+        {chatElement}
       </dialog>
       {modalElement}
     </>
