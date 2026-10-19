@@ -22,6 +22,16 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: aggiornamento della notte del 19/10 (19/10/2026)
+
+- **Branch**: docs/aggiornamento-19-10-notte
+- **File**: modificati `CLAUDE.md` (riga "Stato": migrazione fino al passo 6, 7a buttato, prossimo passo; punti delicati Navbar e pagine P40, Impostazioni P17, Pannello amici P46, Chat P48, Connessione P33, Suoni, SPA e migrazione; Testing), `REVIEW.md` (5b, 5c, 6 spuntati con i commit, passo 5 chiuso, pezzi di Giuseppe dei passi 5 e 6; passo 7: proposta da riconfermare e nota sul 7a buttato), `DECISIONI.md` (passi 5b, 5c, 6; CSS delle pagine nella SPA), `docs/CONTRATTO-SOCKET.md` (sezione nuova 2.4, `/api/profile/`), `docs/MIGRAZIONE-FRONTEND.md` (stato, passi 5 e 6), questo file
+- **Registrati**: `christian.md` fino a "Migrazione, passo 6" (5b, 5c, 6); `giuseppe.md` e `antonio.md` niente di nuovo
+- **Controlli**: nessuna suite lanciata (solo documenti)
+- **Decisioni prese**: nessuna nuova; registrate quelle di 5b, 5c e 6. Le scelte del passo 7 (lotti 7a–7d, `/prova-home`, solo dati veri) **non** sono registrate come decise: erano del lotto 7a buttato e vanno riconfermate (stanno in `REVIEW.md` come proposta)
+- **Domande nuove**: nessuna
+- **Cosa devono fare gli altri**: **Giuseppe**: dopo il pull `npm run build` in `frontend/`; leggere la riga "Stato" di `CLAUDE.md`, la sezione 2.4 del contratto e "Migrazione del frontend" in fondo a `REVIEW.md`
+
 ### Migrazione, passo 6 — Impostazioni in React, rotte `/api/profile/`, tolta `/prova-react` (19/10/2026)
 
 - **Branch**: feature/migrazione-passo6

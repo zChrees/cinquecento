@@ -209,16 +209,17 @@ Un passo per branch, nell'ordine del piano (sezione 4). **Christian** fa il fron
 - [x] **Passo 4** — accesso e registrazione in React, con la navbar di chi non ha fatto il login; si toglie `/prova-react` — *19/10 (commit `24a41ec`; `/prova-react` resta fino al passo 6: è l'unica pagina della SPA con il login)*
   - **Christian**: le pagine React e la loro rotta in `spa/routes.py`.
   - **Giuseppe**: rotte JSON di accesso e registrazione, **sotto `/api/`** (`/api/auth/...`; stesse regole e stessi messaggi dei moduli di oggi: `\Z` di P137, tentativi per account di P96, CSRF), e la rotta che dà il codice CSRF alla SPA. *Fatto da Claude con l'ok di Christian, che valeva anche per Giuseppe (19/10): `app/blueprints/auth/api.py`, con `GET /api/auth/session` (codice CSRF, utente, messaggi).*
-- [ ] **Passo 5** — la cornice delle pagine con il login: navbar, pannello statistiche, pannello amici e chat. Diviso in tre lotti (19/10):
+- [x] **Passo 5** — la cornice delle pagine con il login: navbar, pannello statistiche, pannello amici e chat. Diviso in tre lotti (19/10):
   - [x] **5a** — navbar con il login, pannello statistiche, avviso di connessione — Christian — *19/10 (commit `b2688b6`)*
-  - [ ] **5b** — pannello amici — Christian
-  - [ ] **5c** — chat — Christian
-  - **Christian**: i componenti React (il tasto "indietro" del pannello amici con il router, P46).
-  - **Giuseppe**: la rotta che dice chi è l'utente collegato (nome, avatar), sotto `/api/`, al posto di `current_user` letto da `base.html`. *In parte fatto con il passo 4: `user` di `GET /api/auth/session`; da vedere al 5b se basta.*
-- [ ] **Passo 6** — impostazioni del profilo; si toglie `/prova-react`
-  - **Christian**: la pagina React.
-  - **Giuseppe**: rotte JSON sotto `/api/` per avatar, suoni, password e cancellazione dell'account (da vedere a inizio passo).
+  - [x] **5b** — pannello amici (stesso HTML di `FriendsPanel.js`; "indietro" con React Router) — Christian — *19/10 (commit `7639e8c`)*
+  - [x] **5c** — chat e suoni del menu (`ChatWindow.tsx`, `utils/sounds.ts`) — Christian — *19/10 (commit `ddd6138`)*
+  - **Giuseppe**: la rotta che dice chi è l'utente collegato. *Non serve una rotta a parte (5b): basta `user` di `GET /api/auth/session` (`user_id`, nome, avatar).*
+- [x] **Passo 6** — impostazioni del profilo; si toglie `/prova-react` — *19/10 (commit `c3172ef`)*
+  - **Christian**: la pagina React (`SettingsPage.tsx`).
+  - **Giuseppe**: rotte JSON sotto `/api/`. *Fatte da Claude con l'ok di Christian, che valeva anche per Giuseppe (19/10): `app/blueprints/profile/api.py`, `GET /api/profile/avatars`, `POST /api/profile/avatar`, `POST /api/profile/delete` (contratto 2.4). Il cambio password non c'è: non esisteva, sarebbe una funzione nuova. I suoni non passano dal server.*
 - [ ] **Passo 7** — home (carte-pulsante, `ModeModal`, coda, inviti) — Christian (usa gli eventi Socket.IO di oggi, il contratto non cambia)
+  - *Proposta del 19/10, da riconfermare quando si riparte*: quattro lotti, **7a** base (carte-pulsante, sfondo, online, avviso di rientro), **7b** carta-modal, coda e CPU, **7c** inviti, **7d** `/` diventa la home React e si adattano i test; la home React su una pagina temporanea (`/prova-home`, solo sviluppo e test) fino al 7d; solo dati veri (rating di "In breve" da `/stats/me`, amici da `/friends/`), resta `?demo=rientro`. Un primo 7a è stato fatto e **buttato** su richiesta di Christian (19/10), che vuole rifarlo più avanti.
+  - Da ricordare (trovato nel 7a buttato): in React mettersi in ascolto di un evento (`useSocketEvent`) apre il collegamento; una pagina che si apre anche senza login deve mettere gli ascolti in un componente disegnato solo con il login.
 - [ ] **Passo 8** — tavolo, prima in parallelo (`/game/<id>?ui=react`), poi al posto del vecchio; da qui home e tavolo nella stessa SPA
   - **Christian**: il tavolo React.
   - **Giuseppe**: i test che confrontano le durate del tavolo tra `room.py` e il TypeScript nuovo (oggi le confrontano con `game.js`).

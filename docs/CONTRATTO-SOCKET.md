@@ -145,6 +145,20 @@ Rotte JSON delle pagine React `/auth/login` e `/auth/register` (passo 4 della mi
 - Errori: un campo non valido → `invalid_data` (400) con **`error.fields`**, i messaggi di ogni campo (`{"username": ["..."]}`; anche username o email già usati); un campo che non è un testo o un corpo che non è un oggetto → `invalid_data` senza `fields`; credenziali sbagliate o troppi tentativi → `not_allowed` (403); chi ha già il login riceve `{"redirect": "/"}` senza altri controlli.
 - `POST /auth/login` e `POST /auth/register` (i moduli di prima) rispondono 405; `POST /auth/logout` resta il modulo "Esci" con il campo `csrf_token`.
 
+### 2.4 Impostazioni della SPA (`/api/profile/`, dal 19/10/2026)
+
+Rotte JSON della pagina React `/profile/settings` (passo 6 della migrazione; `app/blueprints/profile/api.py`). Tutte richiedono il login: senza, `not_logged_in` (401) in JSON. Tipi in `frontend/src/types/api.ts`.
+
+| Richiesta | Corpo | Risposta (`data`) |
+|---|---|---|
+| `GET /api/profile/avatars` | — | `{"avatars": [{"code", "name"}]}`: gli avatar del set, nell'ordine di `avatars.py` (D29); "nessun avatar" (l'iniziale) non è nell'elenco |
+| `POST /api/profile/avatar` | `{"avatar"}` (`""` = l'iniziale) | `{"redirect": "/profile/settings"}`, con "Avatar salvato." tra i messaggi |
+| `POST /api/profile/delete` | `{"password"}` | `{"redirect": "/"}`: l'utente esce, con "Account cancellato..." tra i messaggi |
+
+- Stesse regole del servizio di prima (`auth_service.set_avatar`, `delete_account`: tentativi contati come al login, P96; prima di cancellare si chiudono le schede dell'utente, P32).
+- Errori: avatar fuori elenco, mancante o che non è un testo → `invalid_data` (400) con `error.fields.avatar`; password mancante, sbagliata o che non è un testo → `invalid_data` con `error.fields.password`; troppi tentativi o una partita in corso → `not_allowed` (403).
+- `POST /profile/avatar` e `POST /profile/delete` (i moduli della pagina Jinja di prima) non ci sono più.
+
 ---
 
 ## 3. Partita
