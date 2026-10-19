@@ -7,11 +7,10 @@
  *
  * Questo file non disegna niente da solo: ogni funzione costruisce degli elementi
  * HTML (come document.createElement) e li restituisce; è la pagina (game.js) che
- * li mette sul tavolo. Le funzioni sono quattro:
+ * li mette sul tavolo. Le funzioni sono tre (Hand, EdgeHand e RevealedHand):
  *
  *   Hand(view.hand, { playable: view.legal.play, onPlay: function (card) { ... } })
  *   Hand(cards)                      // sola lettura (es. pagina di prova)
- *   HiddenHand(3)                    // carte coperte (fila semplice)
  *   EdgeHand(3, 'top', drawn, dealt) // P70: carte coperte di un avversario, dal bordo
  *   RevealedHand(cards, 'top', seat) // P85: le carte di un altro giocatore scoperte, dentro il tavolo
  *   Hand(view.hand, { ..., advice: { card, name } }) // P93: la carta consigliata dal compagno, segnata
@@ -31,34 +30,9 @@
  * Stile in css/components/hand.css.
  */
 
-import { el } from '../utils/dom.js';
+// hasValue sta in utils/dom.js (D52): dice se un valore non è né null né undefined.
+import { el, hasValue } from '../utils/dom.js';
 import { Card, CardBack, cardName, sameCard } from './Card.js';
-
-/**
- * Dice se un valore "c'è", cioè se non è né null né undefined.
- *
- * In parole semplici:
- *   hasValue(x) restituisce true se x contiene qualcosa, false se è vuoto.
- *   In JavaScript una variabile può essere vuota in due modi: undefined (non è mai
- *   stata assegnata, per esempio una chiave che manca in un oggetto) e null (è stata
- *   svuotata apposta). È un po' come controllare in C che un puntatore non sia NULL.
- *
- *   hasValue(0)          → true  (0 è un numero, quindi "c'è")
- *   hasValue(null)       → false
- *   hasValue(obj.manca)  → false (la chiave non esiste: vale undefined)
- *
- * @param {*} value un valore qualsiasi
- * @returns {boolean}
- */
-function hasValue(value) {
-  if (value === null) {
-    return false;
-  }
-  if (value === undefined) {
-    return false;
-  }
-  return true;
-}
 
 /**
  * Le carte della tua mano, scoperte.
@@ -217,36 +191,6 @@ export function Hand(cards, options) {
     class: 'hand',
     data: { hand: '', count: cards.length },
     attrs: { role: 'group', 'aria-label': 'Le tue carte' },
-  }, items);
-}
-
-/**
- * Carte coperte, per esempio in mano a un avversario (cards_in_hand nella vista).
- *
- * @param {number} count quante carte
- * @returns {HTMLElement}
- *
- * In parole semplici:
- *   HiddenHand(count)
- *   Costruisce una fila di count dorsi di carta, tutti uguali.
- *
- *   count: un numero intero, quante carte coperte disegnare (per esempio 3).
- *
- *   Restituisce: il <div> con i dorsi.
- *
- *   Nota: oggi nessun file del progetto chiama questa funzione (al tavolo gli
- *   avversari usano EdgeHand, qui sotto).
- */
-export function HiddenHand(count) {
-  // items: un dorso (CardBack di Card.js) per ogni carta
-  const items = [];
-  for (let i = 0; i < count; i++) {
-    items.push(CardBack());
-  }
-  return el('div', {
-    class: 'hand hand--hidden',
-    data: { hand: '', count: count },
-    attrs: { role: 'group', 'aria-label': `${count} carte coperte` },
   }, items);
 }
 

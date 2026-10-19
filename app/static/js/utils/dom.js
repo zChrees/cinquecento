@@ -59,6 +59,33 @@ export function icon(name, className = '') {
   return el('span', { class: `icon ${className}`.trim(), text: name, attrs: { 'aria-hidden': 'true' } });
 }
 
+/**
+ * Dice se un valore "c'è", cioè se non è né null né undefined (D52: prima stava
+ * solo in components/Hand.js; da qui la importano tutti i file che ne hanno bisogno).
+ *
+ * In parole semplici:
+ *   hasValue(x) restituisce true se x contiene qualcosa, false se è vuoto.
+ *   In JavaScript una variabile può essere vuota in due modi: undefined (non è mai
+ *   stata assegnata, per esempio una chiave che manca in un oggetto) e null (è stata
+ *   svuotata apposta). È un po' come controllare in C che un puntatore non sia NULL.
+ *
+ *   hasValue(0)          → true  (0 è un numero, quindi "c'è")
+ *   hasValue(null)       → false
+ *   hasValue(obj.manca)  → false (la chiave non esiste: vale undefined)
+ *
+ * @param {*} value un valore qualsiasi
+ * @returns {boolean}
+ */
+export function hasValue(value) {
+  if (value === null) {
+    return false;
+  }
+  if (value === undefined) {
+    return false;
+  }
+  return true;
+}
+
 /** Toglie tutti i figli di un elemento. */
 export function clear(node) {
   node.replaceChildren();

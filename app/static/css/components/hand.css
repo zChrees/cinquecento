@@ -20,13 +20,6 @@
   min-width: 0;
 }
 
-/* Carte coperte di un avversario: più piccole, a ogni larghezza di schermo */
-.hand.hand--hidden {
-  --hand-card-max: 44px;
-  --hand-gap: 4px;
-  padding-top: 0;
-}
-
 @media (min-width: 640px) {
   .hand {
     --hand-gap: 10px;

@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### D52 e D53 — `hasValue` in `utils/dom.js`, `HiddenHand` tolta (19/10/2026)
+
+- **Branch**: refactor/d52-d53-hand
+- **File**: modificati `app/static/js/components/Hand.js`, `app/static/js/utils/dom.js`, `app/static/css/components/hand.css`, `app/static/dev/carte.js`, `app/static/dev/carte.html`, `regole-codice.md` (sezioni 5, 8 e 10: `hasValue` in `utils/dom.js`, `HiddenHand` tolta, prima di proporre di togliere codice si cerca anche nelle pagine di prova), questo file
+- **Cosa cambia**: **D52**: `hasValue` (con il suo commento "In parole semplici") passa da `Hand.js` a `utils/dom.js`, esportata; `Hand.js` la importa da lì. **D53**: tolta `HiddenHand` da `Hand.js` (e dal suo elenco in cima: le funzioni ora sono tre). D53 diceva che non la chiamava nessuno, ma la usava la pagina di prova delle carte di P20 [L]: con la scelta a) di Christian sono tolte anche la sezione "Carte coperte di un avversario" di `carte.html` e `carte.js` e la regola `.hand--hidden` di `hand.css`, che serviva solo a lei. Al tavolo non cambia niente (gli avversari usano `EdgeHand`)
+- **Controlli**: suite `frontend` **124 PASS** e `table` **45 PASS** (`test_carte.py` serve la pagina di prova, `test_carte_avversari.py` controlla che `.hand--hidden` non ci sia al tavolo); `node --check` sui tre file JS; nessun file Python toccato. Giro completo non lanciato
+- **Decisioni prese**: D53 con la a) (togliere anche la sezione della pagina di prova e la regola CSS)
+- **Domande nuove**: nessuna
+- **Punti delicati**: prima di dire che un pezzo di codice non lo usa nessuno, cercare anche in `app/static/dev/` (scritto in `regole-codice.md`, sezione 8)
+- **Cosa devono fare gli altri**: niente; chi scrive JS nuovo importa `hasValue` da `utils/dom.js`. Per la migrazione: React Router si installa al passo 1 (scelta di Christian)
+
 ### Documenti: D52–D54, P38, niente più demo (19/10/2026)
 
 - **Branch**: docs/aggiornamento-19-10

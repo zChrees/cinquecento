@@ -120,7 +120,7 @@ Si scrive tutto nella forma più esplicita, quella più vicina al C.
 | valori predefiniti nella firma `function f(a, b = 1, { c = [] } = {})` | parametri semplici `function f(a, b, options)`; dentro, un `if (b === undefined) { b = 1; }` per ciascuno |
 | `Boolean(x)` per trasformare in vero/falso | `let ok = false; if (x) { ok = true; }` |
 
-`hasValue(value)` restituisce `false` se il valore è `null` o `undefined`, `true` altrimenti (anche per `0` e `''`). Per ora sta in `Hand.js`: va deciso se spostarla in `utils/dom.js` per usarla da tutti i file (D52 in `DA-DECIDERE.md`).
+`hasValue(value)` restituisce `false` se il valore è `null` o `undefined`, `true` altrimenti (anche per `0` e `''`). Sta in `app/static/js/utils/dom.js` e si importa da lì (`import { hasValue } from '../utils/dom.js';`), senza ricopiarla (D52, 19/10/2026).
 
 ### Python
 
@@ -229,7 +229,7 @@ export function Hand(props: HandProps): JSX.Element {
 ## 8. Semplificazioni
 
 - Togliere lo zucchero si fa e basta. **Le semplificazioni di struttura** (unire o dividere funzioni, cambiare un algoritmo, togliere un pezzo) **si propongono prima**, spiegando perché, e si fanno solo dopo l'ok.
-- Il **codice che non usa nessuno** si segnala nel commento della funzione e si propone di toglierlo (per esempio `HiddenHand` in `Hand.js`).
+- Il **codice che non usa nessuno** si segnala nel commento della funzione e si propone di toglierlo (per esempio `HiddenHand` di `Hand.js`, tolta il 19/10/2026 con D53). Prima di proporlo si cerca in **tutto** `app/`, comprese le pagine di prova di `app/static/dev/`: `HiddenHand` sembrava inutilizzata, ma la usava la pagina di prova delle carte.
 
 ## 9. Come si lavora
 
@@ -246,5 +246,4 @@ export function Hand(props: HandProps): JSX.Element {
 Se ne incontra uno, ci si ferma e si chiede:
 
 - i **decoratori** di Python (`@app.route`, `@handler`, `@property`): servono a Flask e non si possono togliere, ma va deciso come spiegarli;
-- **classi**, `with` e `try/except` in Python, `async`/`await` e le `Promise` in JavaScript: sono costrutti veri, non zucchero, ma vanno spiegati bene;
-- dove mettere `hasValue` (vedi sezione 5, D52) e se togliere `HiddenHand` (D53): sono in `DA-DECIDERE.md`.
+- **classi**, `with` e `try/except` in Python, `async`/`await` e le `Promise` in JavaScript: sono costrutti veri, non zucchero, ma vanno spiegati bene.
