@@ -12,3 +12,7 @@ Il 29/09/2026 sono state chiuse D5, D8, D10, D20, D29, D40, D41 e D42; il 30/09/
 
 - [ ] **D52 — Dove mettere `hasValue`**: la funzione che dice se un valore non è né `null` né `undefined` (al posto di `x != null`, regole-codice.md sezione 5) oggi sta solo in `app/static/js/components/Hand.js`. Servirà in molti file JS: proposta di spostarla in `app/static/js/utils/dom.js` e importarla da lì, invece di ricopiarla in ogni file. Lasciata aperta da Christian il 19/10/2026.
 - [ ] **D53 — Togliere `HiddenHand`**: la funzione di `Hand.js` che disegna una fila di carte coperte non la chiama nessun file del progetto (al tavolo gli avversari usano `EdgeHand`); per ora è segnalata nel suo commento. Proposta: toglierla. Lasciata aperta da Christian il 19/10/2026.
+
+## Migrazione del frontend
+
+- [ ] **D54 — `app/static/dist/` nel repository?** Il frontend React, compilato con `npm run build`, finisce in `app/static/dist/` (`docs/MIGRAZIONE-FRONTEND.md`, sezione 6). Se la cartella va nel repository (e in `main`), la demo e il server non hanno bisogno di Node; se no, si compila dove si installa e serve Node anche lì. Per la demo conviene il primo modo, per il sito online di solito il secondo. Da decidere prima del passo 1 della migrazione. Aperta il 19/10/2026.
