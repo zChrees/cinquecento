@@ -4,6 +4,7 @@
  *
  * Cosa contiene:
  *   loadSession()              GET /api/auth/session, una volta sola per pagina
+ *   getJson(indirizzo)         una richiesta GET che risponde in JSON (per esempio /stats/me)
  *   postJson(indirizzo, dati)  una richiesta POST in JSON con il codice CSRF
  *
  * Per esempio:
@@ -145,6 +146,29 @@ export async function postJson<B, T>(url: string, body: B): Promise<Answer<T>> {
       },
       body: JSON.stringify(body),
     });
+    return await readAnswer<T>(response);
+  } catch {
+    return NO_CONNECTION;
+  }
+}
+
+/**
+ * Chiede dei dati al server con una richiesta GET.
+ *
+ * @param {string} url l'indirizzo, per esempio '/stats/me'
+ * @returns {Promise<Answer<T>>} la risposta
+ *
+ * In parole semplici:
+ *   const answer = await getJson<Stats>('/stats/me');
+ *   Senza rete risponde subito NO_CONNECTION, senza provarci (come fetchStats di
+ *   StatsPanel.js); T è il tipo dei dati della risposta, scelto da chi chiama.
+ */
+export async function getJson<T>(url: string): Promise<Answer<T>> {
+  if (!navigator.onLine) {
+    return NO_CONNECTION;
+  }
+  try {
+    const response = await fetch(url, { headers: { Accept: 'application/json' } });
     return await readAnswer<T>(response);
   } catch {
     return NO_CONNECTION;

@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Migrazione, passo 5a — Navbar con il login, pannello statistiche, avviso di connessione (19/10/2026)
+
+- **Branch**: feature/migrazione-passo5a. Il passo 5 è diviso in tre lotti: **5a** (questo), **5b** pannello amici, **5c** chat
+- **File**: creati `frontend/src/session/SessionContext.tsx`, `frontend/src/components/` `Avatar.tsx`, `StatsSheet.tsx`, `ConnectionBanner.tsx`, `sheet.ts`; modificati `frontend/src/main.tsx` (`SessionProvider` intorno al router), `components/Navbar.tsx` (versione con il login), `api/client.ts` (`getJson`), `socket/client.ts` (prima di `connect()` lo stato è "in collegamento"), `pages/TestPage.tsx` (la cornice), `tests/frontend/test_spa.py`, questo file. Nessun file del backend
+- **Cosa c'è**: `SessionProvider` chiede `/api/auth/session` una volta e passa a tutta la SPA chi è collegato (`useSession`): prende il posto di `current_user` nei template. La navbar con il login ha avatar e nome (aprono il pannello statistiche) e "Amici" (il pannello arriva con il 5b); finché la sessione non è arrivata i due pulsanti non si vedono (`visibility: hidden`), così chi ha il login non vede per un attimo "Accedi". Il pannello statistiche (`StatsSheet`) ha lo stesso HTML di `navbar.html` e rilegge `GET /stats/me` a ogni apertura (senza rete: "Sei offline…"); "Esci" resta un modulo POST con il codice CSRF della sessione. `sheet.ts` apre e chiude i `<dialog>` della navbar con l'animazione, come `closeDialog`/`wireDialog` di `layout.js`. `ConnectionBanner` è l'avviso di P33 con le stesse regole di `core/socket.js` (3 s al primo collegamento, "Connessione persa", "Sei stato scollegato" con "Ricarica", niente avviso lasciando la pagina, top layer con `popover`). Per ora la cornice si vede solo su `/prova-react`; diventa vera con le impostazioni (passo 6). Schermata del pannello controllata: uguale a quello di oggi
+- **Controlli** (solo i file toccati): `tests/frontend/test_spa.py` **8 PASS** (1 nuovo: navbar con nome e iniziale, pannello che si apre con i numeri e si chiude, "Esci" con il codice CSRF, avviso "Sei stato scollegato" dopo `disconnect_user`), `test_tipi.py` **8 PASS**; `tsc --noEmit`, build e `ruff check .` puliti. Nessuna suite intera
+- **Decisioni prese**: divisione del passo 5 in 5a, 5b, 5c (Claude, per tenere i lotti piccoli)
+- **Domande nuove**: nessuna
+- **Punti delicati**: l'avatar React (`Avatar.tsx`) mostra l'immagine per ogni codice non vuoto, come la macro `partials/avatar.html` (non controlla l'elenco, che il server già impone); `Avatar.js` invece lo controlla. Un `<dialog>` nuovo della navbar usa `sheetControls` di `sheet.ts`
+- **Da aggiornare nei documenti condivisi**: `REVIEW.md` (passo 5 diviso in 5a, 5b, 5c; 5a fatto); `CLAUDE.md`, punto delicato Connessione (P33): nella SPA l'avviso lo decide `ConnectionBanner.tsx`, non `core/socket.js`
+- **Cosa devono fare gli altri**: niente (dopo il pull, `npm run build` in `frontend/`)
+
 ### Migrazione, passo 4 — Accesso e registrazione in React, rotte `/api/auth/` (19/10/2026)
 
 - **Branch**: feature/migrazione-passo4

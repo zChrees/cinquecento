@@ -9,13 +9,15 @@
  *   1. il browser apre una pagina della SPA (per esempio /prova-react);
  *   2. index.html carica questo file (<script type="module" src="/src/main.tsx">);
  *   3. start() passa il router di routes.tsx a React, che guarda l'indirizzo e
- *      disegna la pagina giusta.
+ *      disegna la pagina giusta; intorno c'è SessionProvider, che chiede al server
+ *      chi è collegato (session/SessionContext.tsx).
  */
 
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { RouterProvider } from 'react-router';
 import { router } from './routes';
+import { SessionProvider } from './session/SessionContext';
 
 /**
  * Avvia React.
@@ -41,7 +43,9 @@ function start(): void {
   const root = createRoot(container);
   root.render(
     <StrictMode>
-      <RouterProvider router={router} />
+      <SessionProvider>
+        <RouterProvider router={router} />
+      </SessionProvider>
     </StrictMode>,
   );
 }

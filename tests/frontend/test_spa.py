@@ -12,25 +12,31 @@ Controlla:
   funziona e la CSP non blocca niente. Senza Node o senza `npm ci` questi si saltano;
 - passo 3 (frontend/src/socket/): senza login la connessione è rifiutata e il pulsante
   del tempo reale resta spento; con il login la pagina si collega, riceve home:status
-  (1 online) e manda queue:leave ricevendo "ok".
+  (1 online) e manda queue:leave ricevendo "ok";
+- passo 5a (la cornice con il login): la navbar ha nome e avatar, il pannello
+  statistiche si apre con i numeri e si chiude, "Esci" porta il codice CSRF; scollegati
+  dal server compare l'avviso "Sei stato scollegato" con "Ricarica".
 """
 
+import json
 import re
 import shutil
 import subprocess
 from pathlib import Path
 
 import pytest
-from flask import send_from_directory
 
 from app import create_app
 from app.blueprints.spa import routes
+from app.realtime.presence import disconnect_user
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
 
 ROOT = Path(__file__).resolve().parents[2]
 FRONTEND = ROOT / "frontend"
 VITE_CONFIG = FRONTEND / "vite.config.ts"
 NODE_MODULES = FRONTEND / "node_modules"
+STATS_EXAMPLE = {k: v for k, v in json.loads(
+    (ROOT / "app" / "static" / "dev" / "statistiche_esempio.json").read_text(encoding="utf-8")).items() if k != "_nota"}
 # Come test_csp.py: registra ogni risorsa bloccata dalla CSP
 RECORD = (
     "window.__csp = [];"
@@ -126,21 +132,27 @@ def test_typescript_e_build_senza_script_ne_stili_dentro(build):
 
 
 @pytest.fixture
-def spa_server(monkeypatch, build):
+def spa_app(monkeypatch, build):
+    # Il build di prova sta in una cartella temporanea: dist_dir() la indica sia per
+    # index.html sia per i file di /static/dist/ (rotta asset del blueprint spa)
     monkeypatch.setattr(routes, "dist_dir", lambda: build)
     app = create_app("testing")
-    # I file del build di prova stanno in una cartella temporanea: /static/dist/...
-    # si serve da lì, il resto di /static come sempre
-    static = app.view_functions["static"]
 
-    def static_with_build(filename):
-        if filename.startswith("dist/"):
-            return send_from_directory(build, filename.removeprefix("dist/"))
-        return static(filename=filename)
+    @app.before_request
+    def fake_stats():
+        # Passo 5a: le statistiche finte, così il test non ha bisogno del database
+        from flask import request
+        if request.path == "/stats/me":
+            return {"ok": True, "data": STATS_EXAMPLE}
+        return None
 
-    app.view_functions["static"] = static_with_build
+    return app
+
+
+@pytest.fixture
+def spa_server(spa_app):
     # Con il cookie di prova risulta collegato Mario; senza, nessun login
-    with running_server(app, FakeUser("Mario")) as url:
+    with running_server(spa_app, FakeUser("Mario")) as url:
         yield url
 
 
@@ -184,5 +196,47 @@ def test_nel_browser_tempo_reale_con_il_login(spa_server, tmp_path):
                         "risposta di queue:leave")
         assert browser.js("document.querySelector('[data-spa-send]').disabled") is False
         assert browser.js("window.__csp") == []
+    finally:
+        browser.close()
+
+
+# STATS_OPEN: il pannello statistiche è aperto e mostra le partite giocate
+STATS_OPEN = "document.getElementById('stats').open && document.querySelector('[data-stat=\"Partite\"] dd')?.textContent"
+
+
+def test_cornice_con_il_login(spa_server, spa_app, tmp_path):
+    browser = Browser(find_browser(), tmp_path)
+    try:
+        browser.send("Network.setCookie", name=TEST_COOKIE[0], value=TEST_COOKIE[1], url=spa_server)
+        browser.open(f"{spa_server}/prova-react", 390, 844,
+                     ready="document.querySelector('[data-spa-connection=\"connected\"]') !== null")
+        # Navbar con il login: nome e iniziale, niente "Accedi"
+        navbar = browser.js("""(() => { const b = document.querySelector('[data-open-stats]');
+          return { label: b.querySelector('.navbar__label').textContent, avatar: b.querySelector('.avatar').textContent,
+                   prompt: document.querySelectorAll('[data-login-prompt]').length,
+                   friends: document.querySelector('[data-friends-button]') !== null }; })()""")
+        assert navbar == {"label": "Mario", "avatar": "M", "prompt": 0, "friends": True}
+        assert browser.js("document.querySelector('[data-banner]')") is None
+
+        # Pannello statistiche: si apre, mostra i numeri, si chiude con la X
+        browser.click("[data-open-stats]")
+        browser.wait_js(f"{STATS_OPEN} === '{STATS_EXAMPLE['games']}'", "statistiche nel pannello")
+        assert browser.js("document.getElementById('stats-title').textContent") == "Mario"
+        assert browser.js("document.querySelector('[data-stat=\"Vittorie\"] dd').textContent") == "55%"
+        logout = browser.js("""(() => { const f = document.querySelector('.sheet__logout');
+          return { action: f.getAttribute('action'), method: f.method,
+                   token: f.querySelector('[name=csrf_token]').value.length > 0 }; })()""")
+        assert logout == {"action": "/auth/logout", "method": "post", "token": True}
+        browser.click("#stats [data-close]")
+        browser.wait_js("!document.getElementById('stats').open", "pannello chiuso")
+
+        # Scollegati dal server (come "Esci" da un'altra scheda, P32): avviso con "Ricarica"
+        with spa_app.app_context():
+            disconnect_user(7)
+        browser.wait_js("document.querySelector('[data-banner]')?.dataset.banner === 'error'", "avviso di scollegamento")
+        banner = browser.js("""(() => { const b = document.querySelector('[data-banner]');
+          return { role: b.role, text: b.querySelector('.banner__text').textContent,
+                   action: b.querySelector('[data-banner-action]').textContent }; })()""")
+        assert banner["role"] == "alert" and "ricarica la pagina" in banner["text"] and banner["action"] == "Ricarica"
     finally:
         browser.close()

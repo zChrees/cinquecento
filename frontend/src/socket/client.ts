@@ -178,8 +178,14 @@ export function connect(): Socket {
  *
  * In parole semplici:
  *   getStatus()  →  per esempio 'connected'
+ *   Prima di connect() dice 'connecting': chi chiede lo stato (useConnection) sta
+ *   per collegarsi, e "scollegato" farebbe comparire per un attimo l'avviso di
+ *   errore (ConnectionBanner).
  */
 export function getStatus(): ConnectionStatus {
+  if (socket === null) {
+    return 'connecting';
+  }
   return status;
 }
 

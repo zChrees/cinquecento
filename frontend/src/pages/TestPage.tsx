@@ -7,7 +7,8 @@
  * Cosa contiene:
  *   <TestPage />   un pulsante che conta i clic (passo 1); lo stato della
  *                  connessione, i giocatori online e un pulsante che manda un
- *                  evento al server (passo 3)
+ *                  evento al server (passo 3); la cornice delle pagine con il
+ *                  login, cioè navbar e avviso di connessione (passo 5)
  *
  * DA DOVE ARRIVANO I DATI: il numero di clic lo tiene React (useState); lo stato
  * della connessione e i giocatori online arrivano dal server (useConnection e
@@ -15,6 +16,8 @@
  */
 
 import { useState } from 'react';
+import { ConnectionBanner } from '../components/ConnectionBanner';
+import { Navbar } from '../components/Navbar';
 import type { JSX } from 'react';
 import { send } from '../socket/client';
 import type { ConnectionStatus } from '../socket/client';
@@ -111,9 +114,12 @@ export function TestPage(): JSX.Element {
     sendDisabled = true;
   }
 
-  // data-spa-*: attributi stabili per i test (come i data-* del frontend di oggi)
+  // data-spa-*: attributi stabili per i test (come i data-* del frontend di oggi).
+  // <> ... </>: un contenitore che non diventa un elemento della pagina
   return (
-    <main data-spa-test="">
+    <>
+    <Navbar />
+    <main className="page" data-spa-test="">
       <h1>Prova React</h1>
       <p data-spa-message="">{message}</p>
       <button type="button" onClick={handleClick} data-spa-button="">Premi</button>
@@ -134,5 +140,7 @@ export function TestPage(): JSX.Element {
         <a href="/">Torna alla home</a> (è una pagina Jinja: si ricarica)
       </p>
     </main>
+    <ConnectionBanner />
+    </>
   );
 }
