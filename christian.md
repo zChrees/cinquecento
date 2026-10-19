@@ -22,6 +22,16 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: passi della migrazione nel tracker (19/10/2026)
+
+- **Branch**: docs/migrazione-tracker
+- **File**: modificati `REVIEW.md` (sezione nuova "Migrazione del frontend" in fondo: passi 0–9, 0 e 1 spuntati, con chi fa cosa), `CLAUDE.md` (riga "Stato"), questo file
+- **Registrati**: `christian.md` fino a questo riepilogo (D52 e D53, passo 1); `giuseppe.md` e `antonio.md` niente di nuovo
+- **Controlli**: nessuna suite lanciata (solo documenti)
+- **Decisioni prese**: divisione del lavoro della migrazione: Christian il frontend e la rotta di ogni pagina della SPA, Giuseppe le rotte JSON e i test del backend scritti sotto ogni passo (Christian, 19/10)
+- **Domande nuove**: nessuna
+- **Cosa devono fare gli altri**: **Giuseppe**: leggere la sezione "Migrazione del frontend" in fondo a `REVIEW.md`; subito, installare Node 24.19.0 e lanciare `npm ci` e `npm run build` in `frontend/`
+
 ### Migrazione, passo 1 — SPA con React, TypeScript, Vite e React Router; proxy verso Flask (19/10/2026)
 
 - **Branch**: feature/migrazione-passo1

@@ -196,3 +196,29 @@ Si spunta solo dopo l'ok dell'utente, il commit e il merge in `dev`, come nella 
   - *Da quale branch*: **`main`** (D20), installata da "Cinquecento v1.0.3" (`fd0f10f`).
   - *Fatto*: sul PC di Giuseppe i passi 1–9 di `docs/DEMO.md`, con i tre "Fatto quando" provati [T]. La prova generale (passi 11 e 12) **non si fa più**: dal 19/10 non c'è più la demo, il PC di Giuseppe serve per lo sviluppo (`DECISIONI.md`, Progetto e tempi).
   - *Fatto quando*: nella cartella della demo c'è il file `PRODUZIONE` (`Test-Path PRODUZIONE` → `True`: da P136 in `main` non ci sono i test, quindi il rifiuto del runner non si prova lì); il backup pianificato produce un file; un ripristino di prova su `cinquecento_test` funziona.
+
+### Migrazione del frontend (`docs/MIGRAZIONE-FRONTEND.md`, dal 19/10/2026)
+
+Un passo per branch, nell'ordine del piano (sezione 4). **Christian** fa il frontend (`frontend/`) e la rotta di ogni pagina nuova in `app/blueprints/spa/routes.py`; **Giuseppe** fa le parti del backend scritte sotto ogni passo. Un passo con pezzi di tutti e due si chiude quando ci sono entrambi.
+
+- [x] **Passo 0** — piano, decisioni, regole del codice (sezione 6 di `regole-codice.md`) — Christian — *19/10 (commit `e5e50ce`, SPA e proxy in `2e772a2`)*
+- [x] **Passo 1** — `frontend/` con Vite, React, TypeScript e React Router; proxy verso Flask; build in `app/static/dist/`; blueprint `spa` con la pagina di prova `/prova-react` — Christian (backend con l'ok di Christian, che vale anche per Giuseppe) — *19/10 (commit `18dc627`)*
+  - **Giuseppe, subito**: installare Node 24.19.0, poi in `frontend/` `npm ci` e `npm run build` (README, passo 5); per lavorare al frontend `npm run dev` e `http://localhost:5173`.
+- [ ] **Passo 2** — i tipi del contratto in `frontend/src/types/`, controllati sugli esempi `app/static/dev/*.json` — Christian
+- [ ] **Passo 3** — `socket.js` in TypeScript (`frontend/src/socket/`, `socket.io-client` 4.8.1) e l'hook `useSocketEvent` — Christian
+- [ ] **Passo 4** — accesso e registrazione in React, con la navbar di chi non ha fatto il login; si toglie `/prova-react`
+  - **Christian**: le pagine React e la loro rotta in `spa/routes.py`.
+  - **Giuseppe**: rotte JSON di accesso e registrazione (stesse regole e stessi messaggi dei moduli di oggi: `\Z` di P137, tentativi per account di P96, CSRF), e la rotta che dà il codice CSRF alla SPA.
+- [ ] **Passo 5** — la cornice delle pagine con il login: navbar, pannello statistiche, pannello amici e chat
+  - **Christian**: i componenti React (il tasto "indietro" del pannello amici con il router, P46).
+  - **Giuseppe**: la rotta che dice chi è l'utente collegato (nome, avatar), al posto di `current_user` letto da `base.html`.
+- [ ] **Passo 6** — impostazioni del profilo
+  - **Christian**: la pagina React.
+  - **Giuseppe**: rotte JSON per avatar, suoni, password e cancellazione dell'account, se i moduli di oggi non bastano (da vedere a inizio passo).
+- [ ] **Passo 7** — home (carte-pulsante, `ModeModal`, coda, inviti) — Christian (usa gli eventi Socket.IO di oggi, il contratto non cambia)
+- [ ] **Passo 8** — tavolo, prima in parallelo (`/game/<id>?ui=react`), poi al posto del vecchio; da qui home e tavolo nella stessa SPA
+  - **Christian**: il tavolo React.
+  - **Giuseppe**: i test che confrontano le durate del tavolo tra `room.py` e il TypeScript nuovo (oggi le confrontano con `game.js`).
+- [ ] **Passo 9** — tolti i file JS vecchi e i loro test (rifatti sul codice nuovo)
+  - **Christian**: `app/static/js/`, i template delle pagine migrate, i test del frontend vecchio.
+  - **Giuseppe**: le rotte Jinja delle pagine migrate nei blueprint, giro completo delle suite.
