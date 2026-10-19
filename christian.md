@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Migrazione, passo 3 — Il tempo reale in TypeScript (`frontend/src/socket/`) (19/10/2026)
+
+- **Branch**: feature/migrazione-passo3
+- **File**: creati `frontend/src/socket/client.ts` e `frontend/src/socket/hooks.ts`; modificati `frontend/package.json` e `package-lock.json` (`socket.io-client` **4.8.1**, la stessa versione di `vendor/socket.io.min.js`), `frontend/src/pages/TestPage.tsx` (stato della connessione, online da `home:status`, pulsante che manda `queue:leave`), `tests/frontend/test_spa.py`, `tests/frontend/test_tipi.py`, questo file
+- **Cosa c'è**: `client.ts` è `core/socket.js` tradotto, con gli stessi comportamenti: una connessione per scheda (`connect`), quattro stati (`connecting`, `connected`, `disconnected`, `not_logged_in`), `send` che non fallisce mai (senza connessione risponde subito `no_connection`, senza risposta in 10 s lo stesso), `on` che restituisce la funzione per smettere. In più i tipi del passo 2: `on('game:state', f)` vuole `f(vista: GameView)`, `send('queue:join', dati)` vuole i dati giusti e restituisce la risposta giusta. `hooks.ts`: `useSocketEvent` (ascolta finché il componente c'è, poi smette da solo) e `useConnection` (lo stato, che ridisegna il componente quando cambia). **Non c'è** l'avviso in cima alla pagina di P33: è interfaccia, si rifà in React al passo 5 leggendo `useConnection`
+- **Punto delicato trovato**: `socket.io-client` non accetta i nostri elenchi di eventi con un nome generico (`E`): errore di TypeScript anche passandogli gli elenchi nella sua forma (provato [T]). I tipi stanno quindi nelle nostre `on` e `send`, e alla libreria il nome passa come testo (`const name: string = event`); spiegato in cima a `client.ts`
+- **Controlli**: `frontend` **139 PASS** (lanciata prima della richiesta di Christian di non lanciarla più senza dirlo): 4 nuovi; in `test_spa.py` la pagina di prova nel browser senza login (connessione rifiutata, pulsante spento) e con il login (collegata, "1 online" da `home:status`, `queue:leave` risponde ok, nessun blocco della CSP); in `test_tipi.py` `on` e `send` accettano gli eventi giusti e rifiutano un nome sbagliato, dati mancanti e una funzione del tipo sbagliato (tre errori di `tsc`). `tsc --noEmit`, build e `ruff check .` puliti. Giro completo non lanciato
+- **Decisioni prese**: Christian: da adesso la suite `frontend` non si lancia senza che lo dica lui, e si lanciano meno test possibile (solo i file toccati)
+- **Domande nuove**: nessuna
+- **Cosa devono fare gli altri**: **Giuseppe**: dopo il pull, in `frontend/` `npm ci` (è arrivato `socket.io-client`) e `npm run build`
+
 ### Migrazione, passo 2 — I tipi TypeScript del contratto (19/10/2026)
 
 - **Branch**: feature/migrazione-passo2

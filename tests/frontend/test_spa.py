@@ -9,7 +9,10 @@ Controlla:
 - con Node e frontend/node_modules: TypeScript non trova errori, il build vero
   (in una cartella temporanea, fuori dal progetto) non ha script né stili scritti
   dentro la pagina, e nel browser React disegna la pagina di prova, il pulsante
-  funziona e la CSP non blocca niente. Senza Node o senza `npm ci` questi si saltano.
+  funziona e la CSP non blocca niente. Senza Node o senza `npm ci` questi si saltano;
+- passo 3 (frontend/src/socket/): senza login la connessione è rifiutata e il pulsante
+  del tempo reale resta spento; con il login la pagina si collega, riceve home:status
+  (1 online) e manda queue:leave ricevendo "ok".
 """
 
 import re
@@ -22,7 +25,7 @@ from flask import send_from_directory
 
 from app import create_app
 from app.blueprints.spa import routes
-from tests.browser import Browser, find_browser, running_server
+from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
 
 ROOT = Path(__file__).resolve().parents[2]
 FRONTEND = ROOT / "frontend"
@@ -135,7 +138,8 @@ def spa_server(monkeypatch, build):
         return static(filename=filename)
 
     app.view_functions["static"] = static_with_build
-    with running_server(app) as url:
+    # Con il cookie di prova risulta collegato Mario; senza, nessun login
+    with running_server(app, FakeUser("Mario")) as url:
         yield url
 
 
@@ -153,6 +157,31 @@ def test_nel_browser_react_disegna_e_la_csp_non_blocca(spa_server, tmp_path):
             " === 'Hai premuto il pulsante una volta.'",
             "il clic aggiorna la frase",
         )
+        # Passo 3: senza login il server rifiuta la connessione (contratto 1.4)
+        browser.wait_js("document.querySelector('[data-spa-connection=\"not_logged_in\"]') !== null",
+                        "connessione rifiutata senza login")
+        assert browser.js("document.querySelector('[data-spa-send]').disabled") is True
+        assert browser.js("window.__csp") == []
+    finally:
+        browser.close()
+
+
+def test_nel_browser_tempo_reale_con_il_login(spa_server, tmp_path):
+    # Passo 3 (frontend/src/socket/): connessione, un evento del server (home:status)
+    # e un evento della pagina con la sua risposta (queue:leave)
+    browser = Browser(find_browser(), tmp_path)
+    try:
+        browser.send("Network.setCookie", name=TEST_COOKIE[0], value=TEST_COOKIE[1], url=spa_server)
+        browser.send("Page.enable")
+        browser.send("Page.addScriptToEvaluateOnNewDocument", source=RECORD)
+        browser.open(f"{spa_server}/prova-react", 390, 844,
+                     ready="document.querySelector('[data-spa-connection=\"connected\"]') !== null")
+        browser.wait_js("document.querySelector('[data-spa-online]').textContent === '1'",
+                        "home:status arrivato")
+        browser.click("[data-spa-send]")
+        browser.wait_js("document.querySelector('[data-spa-answer]').textContent === 'Il server ha risposto: ok'",
+                        "risposta di queue:leave")
+        assert browser.js("document.querySelector('[data-spa-send]').disabled") is False
         assert browser.js("window.__csp") == []
     finally:
         browser.close()

@@ -94,12 +94,17 @@ def _source(examples):
 
 def _tsc(tmp_path, examples):
     """Controlla gli esempi con tsc; restituisce (codice di uscita, messaggi)."""
+    shutil.copytree(TYPES, tmp_path / "types")
+    return _run_tsc(tmp_path, _source(examples))
+
+
+def _run_tsc(tmp_path, source):
+    """Scrive `source` in check.ts nella cartella temporanea e lo controlla con tsc."""
     if shutil.which("node") is None:
         pytest.skip("Node non installato: controllo dei tipi saltato")
     if not TSC.is_file():
         pytest.skip("frontend/node_modules manca (npm ci in frontend/): controllo dei tipi saltato")
-    shutil.copytree(TYPES, tmp_path / "types")
-    (tmp_path / "check.ts").write_text(_source(examples), encoding="utf-8")
+    (tmp_path / "check.ts").write_text(source, encoding="utf-8")
     result = subprocess.run(
         [shutil.which("node"), str(TSC), "--noEmit", "--strict", "--target", "ES2022", "--module", "ESNext",
          "--moduleResolution", "bundler", "--isolatedModules", "--skipLibCheck", "check.ts"],
@@ -138,6 +143,41 @@ def test_un_campo_mancante_o_in_piu_si_vede(tmp_path):
     })
     assert code != 0, output
     assert "version" in output and "streak" in output, output
+
+
+# --- Passo 3: on() e send() usano i tipi -------------------------------------------
+
+# client.ts si importa dal progetto con il percorso completo: così trova socket.io-client
+# in frontend/node_modules, mentre il file di prova resta nella cartella temporanea
+CLIENT = (ROOT / "frontend" / "src" / "socket" / "client").as_posix()
+
+
+def test_on_e_send_accettano_gli_eventi_giusti(tmp_path):
+    source = f"""\
+import {{ on, send }} from '{CLIENT}';
+import type {{ GameView }} from '{(TYPES / "view").as_posix()}';
+export function handleView(view: GameView): void {{ console.log(view.version); }}
+on('game:state', handleView);
+send('game:join', {{ game_id: 'a1b2c3d4' }});
+send('queue:leave', {{}});
+"""
+    code, output = _run_tsc(tmp_path, source)
+    assert code == 0, output
+
+
+def test_on_e_send_rifiutano_nomi_e_dati_sbagliati(tmp_path):
+    source = f"""\
+import {{ on, send }} from '{CLIENT}';
+export function handleNumber(value: number): void {{ console.log(value); }}
+send('game:joinn', {{ game_id: 'a1b2c3d4' }});
+send('game:join', {{}});
+on('game:state', handleNumber);
+"""
+    code, output = _run_tsc(tmp_path, source)
+    assert code != 0, output
+    # una riga di errore per ciascuna delle tre chiamate sbagliate (righe 3, 4 e 5)
+    for line in (3, 4, 5):
+        assert f"check.ts({line}," in output, output
 
 
 # --- Elenchi allineati ----------------------------------------------------------
