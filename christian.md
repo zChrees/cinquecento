@@ -22,6 +22,28 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: D52–D54, P38, niente più demo (19/10/2026)
+
+- **Branch**: docs/aggiornamento-19-10
+- **File**: modificati `CLAUDE.md`, `DECISIONI.md`, `DA-DECIDERE.md`, `REVIEW.md`, `docs/MIGRAZIONE-FRONTEND.md` (sezione 6 e rischio 6), questo file
+- **Registrati**: `giuseppe.md` fino a "P38 — Demo installata a parte sul PC di Giuseppe, backup pianificato"; `christian.md` fino a questo riepilogo (compreso quello della notte qui sotto); `antonio.md` niente di nuovo. **P38 spuntato** in fondo a `REVIEW.md` (commit `dece7b8`), con la versione giusta di `main` (v1.0.3, `fd0f10f`, non v1.0.1)
+- **`DECISIONI.md`**: Progetto e tempi, **niente più demo** (il PC di Giuseppe serve per lo sviluppo, la prova generale non si fa); Tecnologia, **D54**: `app/static/dist/` fuori dal repository, si compila dove gira il sito (scartati il compilato in tutti e due i branch e il compilato solo in `main`); Processo, **D52** (`hasValue` in `utils/dom.js`) e **D53** (`HiddenHand` tolta). Tolte da `DA-DECIDERE.md`, dove resta solo D21
+- **`CLAUDE.md`**: riga "Stato"; "Dove gira" senza la demo; il rimando a P38 nel tracker attivo
+- **Controlli**: nessuna suite lanciata (solo documenti); l'ultimo giro registrato resta quello dell'11/10 (1875 PASS in 16 suite)
+- **Decisioni prese**: D52 sì, D53 sì, D54 b), niente più demo; **SPA e proxy di Vite** al posto delle "isole", dal passo 1 della migrazione (Christian ha deciso SPA e proxy, Claude il quando). Piano aggiornato in `docs/MIGRAZIONE-FRONTEND.md` (sezioni 1, 3, 4, 5, 6 e rischi 8, 10, 11): passo 1 con React Router, proxy e Flask che serve `dist/index.html`; passo 4 con le rotte JSON di accesso; passo 5 la cornice delle pagine con il login prima delle impostazioni
+- **Domande nuove**: nessuna
+- **Cosa devono fare gli altri**: **Giuseppe**: la SPA vuole rotte JSON nuove nel backend (accesso, registrazione, utente collegato, codice CSRF) e una rotta che serve la SPA: da concordare chi le scrive (rischio 8 del piano). La demo in `C:\cinquecento-demo` non serve più (backup pianificato compreso: si può togliere l'attività "Cinquecento - backup della demo"); per la migrazione servirà Node sul tuo PC (versione da fissare al passo 1)
+
+### Dopo la consegna — `Hand.js` commentato, `regole-codice.md`, piano di migrazione del frontend (notte tra il 18 e il 19/10/2026)
+
+- **Branch**: refactor/codice-commentato, docs/da-decidere-codice-commentato, docs/regole-codice-fuori-da-main, docs/migrazione-frontend (già in `dev` e su GitHub)
+- **File**: modificati `app/static/js/components/Hand.js`, `CLAUDE.md`, `DECISIONI.md`, `DA-DECIDERE.md`; creati `regole-codice.md`, `docs/MIGRAZIONE-FRONTEND.md`
+- **Cosa cambia**: `Hand.js` commentato in italiano per principianti e riscritto senza zucchero sintattico (esempio delle regole); `regole-codice.md` con le regole per scrivere e commentare il codice, compresa la sezione 6 su React e TypeScript in "stile esplicito"; `docs/MIGRAZIONE-FRONTEND.md`, il piano per passare il frontend a React + TypeScript + Vite una pagina alla volta (passo 0 fatto). `regole-codice.md` e il piano non vanno in `main`
+- **Controlli**: non registrati (questo riepilogo è scritto dopo, il 19/10)
+- **Decisioni prese**: regole per commentare il codice; frontend verso React + TypeScript + Vite a passi; il JavaScript vecchio non si commenta più; Redis rimandato; React e TypeScript in stile esplicito (tutte in `DECISIONI.md`, 19/10)
+- **Domande nuove**: D52, D53, D54 (decise il 19/10, vedi sopra)
+- **Cosa devono fare gli altri**: leggere `regole-codice.md` e `docs/MIGRAZIONE-FRONTEND.md` prima di scrivere codice nuovo
+
 ### P37 — Chiusura e archiviazione della scaletta (sera dell'11/10/2026)
 
 - **Branch**: docs/aggiornamento-11-10-sera (insieme all'aggiornamento dei documenti qui sotto: le due cose toccano le stesse righe di `CLAUDE.md`)

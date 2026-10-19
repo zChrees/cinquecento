@@ -191,8 +191,8 @@ Si spunta solo dopo l'ok dell'utente, il commit e il merge in `dev`, come nella 
 
 ### Punti della scaletta non chiusi (copiati da `docs/archivio/SCALETTA-2026-09.md`, P37)
 
-- [ ] **P38** (Fase 5): installazione demo separata e backup pianificato — Giuseppe (punto di Antonio, passato a lui il 28/09)
+- [x] **P38** (Fase 5): installazione demo separata e backup pianificato — Giuseppe (punto di Antonio, passato a lui il 28/09) — *11/10 (commit `dece7b8`)*
   - *File*: `docs/DEMO.md` e `scripts/pianifica_backup.ps1` (con `tests/db/test_demo.py`), già in `dev` e in `main`; il resto (cartella della demo, `.env`, `PRODUZIONE`, firewall, ngrok) è fuori dal repository.
-  - *Da quale branch*: **`main`** (D20), oggi "Cinquecento v1.0.1".
-  - *Cosa resta*: sul PC di Giuseppe i passi 1–9 di `docs/DEMO.md`, poi la prova generale con il QR code dal telefono (passi 11 e 12, P39).
+  - *Da quale branch*: **`main`** (D20), installata da "Cinquecento v1.0.3" (`fd0f10f`).
+  - *Fatto*: sul PC di Giuseppe i passi 1–9 di `docs/DEMO.md`, con i tre "Fatto quando" provati [T]. La prova generale (passi 11 e 12) **non si fa più**: dal 19/10 non c'è più la demo, il PC di Giuseppe serve per lo sviluppo (`DECISIONI.md`, Progetto e tempi).
   - *Fatto quando*: nella cartella della demo c'è il file `PRODUZIONE` (`Test-Path PRODUZIONE` → `True`: da P136 in `main` non ci sono i test, quindi il rifiuto del runner non si prova lì); il backup pianificato produce un file; un ripristino di prova su `cinquecento_test` funziona.

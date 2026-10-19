@@ -1,15 +1,17 @@
 # Migrazione del frontend a React + TypeScript + Vite
 
-Analisi del 19/10/2026, prima di toccare il codice. Decisione e motivo in `DECISIONI.md` (19/10/2026).
+Analisi del 19/10/2026, prima di toccare il codice. Decisione e motivo in `DECISIONI.md` (19/10/2026). **Aggiornato lo stesso giorno**: il frontend nuovo è una **SPA** con il **proxy di Vite** in sviluppo, non più "isole" dentro le pagine Jinja (sezioni 4, 5 e 6).
 
-**In breve**: il frontend di oggi è già ordinato (un solo modulo per Socket.IO, componenti come funzioni, attributi `data-*` stabili, niente `innerHTML`). Il problema vero è uno: **il tavolo si ridisegna tutto a ogni vista**, e per non far lampeggiare immagini e animazioni `game.js` ha accumulato molti accorgimenti e una quarantina di variabili di stato. React risolve proprio questo. Il resto si migra per avere un solo stile e i tipi, non perché sia rotto. Si va **una pagina alla volta**, con React montato dentro le pagine Flask di adesso, e il tavolo per ultimo.
+**In breve**: il frontend di oggi è già ordinato (un solo modulo per Socket.IO, componenti come funzioni, attributi `data-*` stabili, niente `innerHTML`). Il problema vero è uno: **il tavolo si ridisegna tutto a ogni vista**, e per non far lampeggiare immagini e animazioni `game.js` ha accumulato molti accorgimenti e una quarantina di variabili di stato. React risolve proprio questo. Il resto si migra per avere un solo stile e i tipi, non perché sia rotto. Si va **una pagina alla volta**: le pagine già migrate fanno parte della SPA, le altre restano pagine Jinja finché non tocca a loro; il tavolo per ultimo.
 
 Termini usati qui sotto:
 
 - **React**: una libreria in cui si descrive *come deve essere* la pagina dato uno stato; è lei a cambiare solo i pezzi del DOM che cambiano davvero.
 - **TypeScript**: JavaScript con i tipi (come in C: `Card[]`, `number`), controllati prima di eseguire.
 - **Vite**: il programma che trasforma TypeScript e React in JavaScript normale per il browser (il "compilatore" del frontend), e durante lo sviluppo ricarica la pagina da solo.
-- **Isola React**: una pagina fatta da Flask (Jinja, come oggi) con dentro un `<div>` che React riempie. Il contrario di una SPA, dove tutto il sito è una sola pagina JavaScript.
+- **SPA** (single-page application): il sito è **una sola pagina HTML**; React decide cosa mostrare (home, tavolo, impostazioni) e cambia il contenuto senza ricaricare. Flask risponde solo con dati (JSON) e Socket.IO.
+- **Proxy di Vite**: in sviluppo si apre il server di Vite (`localhost:5173`), che serve la SPA e gira a Flask (`localhost:5000`) tutto il resto: dati, Socket.IO e le pagine Jinja non ancora migrate. Il browser vede un solo indirizzo.
+- **Isola React** (scartata il 19/10): una pagina fatta da Flask con dentro un `<div>` che React riempie.
 
 ## 1. Stato attuale
 
@@ -58,7 +60,7 @@ Non sono problemi: dipendenze circolari (non ce ne sono), ascolti Socket.IO spar
 
 - **Tutto il backend**: Flask, Socket.IO, servizi, repository, modelli, MySQL, e soprattutto il **motore di gioco** in Python. Il server resta l'unico che decide (regole, mosse valide, punti, rating).
 - **Il contratto** `docs/CONTRATTO-SOCKET.md`: stessi eventi, stessi dati. I tipi TypeScript si scrivono **copiandolo**, non cambiandolo.
-- **Le pagine Jinja e il login di Flask**: React entra come isola dentro di loro (sezione 6). Restano CSRF, sessione, redirect e pagine di errore.
+- **Il login di Flask**: restano Flask-Login (la sessione nel cookie), il CSRF di Flask-WTF e le pagine di errore. Cambia il modo di parlarci: le pagine React mandano JSON, con il codice CSRF in un'intestazione (sezione 6). Le pagine Jinja restano finché la loro pagina non è migrata.
 - **`core/socket.js` come idea**: va solo tradotto in TypeScript con i tipi degli eventi; il comportamento (una connessione, `send` che non fallisce, avviso di connessione) resta uguale.
 - **Il CSS** (`base/`, `components/`, `pages/`) e le **variabili** di `variables.css`: i componenti React usano le stesse classi.
 - **Gli attributi `data-*`** e la struttura dell'HTML prodotto: i test nel browser li usano (sezione 7).
@@ -66,20 +68,20 @@ Non sono problemi: dipendenze circolari (non ce ne sono), ascolti Socket.IO spar
 
 ## 4. Piano di migrazione
 
-Passi piccoli, ciascuno su un branch suo e reversibile. La vecchia interfaccia resta finché la nuova non la sostituisce del tutto, una pagina per volta.
+Passi piccoli, ciascuno su un branch suo e reversibile. La vecchia interfaccia resta finché la nuova non la sostituisce del tutto, una pagina per volta. **La SPA e il proxy partono dal passo 1** (deciso il 19/10): così nessuna pagina si migra due volte (prima come isola, poi dentro la SPA) e non si scrive codice per le isole che poi andrebbe tolto. Tra una pagina della SPA e una pagina Jinja non ancora migrata si passa con un normale link, che ricarica la pagina.
 
 | Passo | Cosa | Pronto quando |
 |---|---|---|
 | **0** | Questo documento; decisione in `DECISIONI.md`; sezione "React e TypeScript" in `regole-codice.md` | il gruppo è d'accordo |
-| **1** | Cartella `frontend/` con Vite, React, TypeScript; un componente di prova montato in una pagina di sviluppo; `npm run build` che scrive in `app/static/dist/`; Flask che legge il manifest di Vite (sezione 6) | la pagina di prova si vede, i test di adesso passano |
+| **1** | Cartella `frontend/` con Vite, React, TypeScript e React Router; la SPA con una sola pagina di prova; il **proxy** di Vite verso Flask (anche Socket.IO e le pagine Jinja); `npm run build` che scrive in `app/static/dist/`; Flask che serve `dist/index.html` per gli indirizzi della SPA (sezione 6) | da `localhost:5173` si vedono la pagina di prova e le pagine di adesso, con il login; dopo il build la pagina di prova la serve anche Flask; i test di adesso passano |
 | **2** | `types/`: i tipi del contratto (Card, Suit, GameView, PlayerView, eventi dal server e verso il server) presi da `CONTRATTO-SOCKET.md` e controllati sugli esempi `app/static/dev/*.json` | gli esempi JSON passano il controllo dei tipi |
 | **3** | `socket/`: `socket.js` tradotto in TypeScript con eventi tipizzati, più un hook React (`useSocketEvent`) che si iscrive e si toglie da solo | test unitari del modulo |
-| **4** | Accesso e registrazione (la pagina più piccola) in React | i test di `api/` e `frontend/` su quelle pagine passano |
-| **5** | Impostazioni del profilo | come sopra |
-| **6** | Pannello statistiche, poi pannello amici e chat | test di `frontend2/` |
+| **4** | Accesso e registrazione (la pagina più piccola) e la navbar di chi non ha fatto il login; rotte JSON per accesso e registrazione e il codice CSRF letto da una rotta | i test di `api/` e `frontend/` su quelle pagine passano |
+| **5** | La cornice delle pagine con il login: navbar, pannello statistiche, pannello amici e chat (servono a tutte le pagine dopo); la rotta che dice chi è l'utente collegato | test di `frontend2/` |
+| **6** | Impostazioni del profilo | i test di quella pagina passano |
 | **7** | Home (carte-pulsante, `ModeModal`, coda, inviti) | `test_pagina_home.py`, prove nel browser |
-| **8** | Tavolo, prima **in parallelo** (per esempio su `/game/<id>?ui=react`), poi al posto di quello vecchio | tutte le suite `table*`, `sockets`, `e2e`, prova a mano su telefono |
-| **9** | Tolti i file JS vecchi e i test che leggevano il loro testo (rifatti sul codice nuovo) | giro completo delle suite |
+| **8** | Tavolo, prima **in parallelo** (per esempio su `/game/<id>?ui=react`), poi al posto di quello vecchio. Da qui home e tavolo stanno nella stessa SPA: entrando in partita la pagina non si ricarica (stesso collegamento Socket.IO, stesso audio, pannello amici e chat restano aperti) | tutte le suite `table*`, `sockets`, `e2e`, prova a mano su telefono |
+| **9** | Tolti i file JS vecchi, i template Jinja delle pagine migrate e i test che leggevano il loro testo (rifatti sul codice nuovo) | giro completo delle suite |
 
 Il tavolo è per ultimo perché è il più delicato (animazioni, tempi uguali al server, iPhone). Si può anticipare **una piccola prova isolata** (per esempio solo la mano e la presa con una vista finta di `app/static/dev/`), senza sostituire niente.
 
@@ -88,11 +90,13 @@ Il tavolo è per ultimo perché è il più delicato (animazioni, tempi uguali al
 ```
 frontend/
 ├── package.json         dipendenze a versione fissa (come requirements.txt)
-├── vite.config.ts       una "entrata" per pagina, uscita in ../app/static/dist/
+├── index.html           l'unica pagina HTML della SPA
+├── vite.config.ts       proxy verso Flask in sviluppo, uscita in ../app/static/dist/
 ├── tsconfig.json        TypeScript in modalità rigorosa
 └── src/
-    ├── entries/         un file per pagina Flask: monta React nel <div> della pagina
-    │   ├── auth.tsx, profile.tsx, home.tsx, game.tsx, layout.tsx
+    ├── main.tsx         avvia React e il router
+    ├── routes.tsx       indirizzo → pagina (React Router); gli indirizzi non ancora migrati sono link normali
+    ├── layout/          la cornice: navbar, pannello statistiche, pannello amici, avviso di connessione
     ├── types/           i tipi del contratto: card.ts, view.ts, events.ts, api.ts
     ├── socket/          client.ts (la connessione), events.ts (i nomi), hooks.ts (useSocketEvent, useConnection)
     ├── api/             le poche richieste HTTP (amici, statistiche), tipizzate
@@ -112,21 +116,21 @@ Regole:
 - **Stato del server e stato dell'interfaccia separati**: la vista ricevuta (`GameView`) non si modifica mai; quello che è solo della pagina (pannello aperto, carta sotto il dito, animazione in corso, momento mostrato) sta a parte.
 - **Niente Redux né altre librerie di stato per cominciare**: bastano `useState`, `useReducer` e `Context`. Per il tavolo un reducer basta, perché lo stato oggi è già tutto in un posto (`game.js`). Una libreria piccola (Zustand) solo se servirà davvero.
 - **Niente Next.js, Tailwind, librerie di componenti**: Flask fa già il server, il CSS c'è già.
+- **Un collegamento Socket.IO per tutta la SPA**, aperto una volta: cambiando pagina dentro la SPA non si chiude.
 
 ## 6. Strategia Flask + Vite
 
-**In produzione** (e sul PC della demo): `npm run build` crea i file in `app/static/dist/` più un `manifest.json` (l'elenco "pagina → file con nome e codice di versione", per esempio `home-3f9a1c.js`). Una piccola funzione di Flask, usata nei template, legge il manifest e scrive il `<script>` giusto. Flask serve quei file come ogni altro file statico. Così:
+**In produzione** (sul server online, e su ogni PC dove si prova il sito come in produzione): `npm run build` crea in `app/static/dist/` l'`index.html` della SPA e i suoi file, con un codice di versione nel nome (per esempio `index-3f9a1c.js`). Flask serve `index.html` per ogni indirizzo della SPA (un elenco in un posto solo, che cresce a ogni pagina migrata) e i suoi file come ogni altro file statico; gli altri indirizzi restano le rotte di adesso. Così:
 
-- non serve Node sul server, se il build si fa prima;
+- nel repository c'è solo il sorgente: il build si fa dove si installa, quindi Node serve anche lì (D54);
 - la CSP resta `script-src 'self'`, come oggi;
 - il nome con la versione evita che il browser usi una copia vecchia dopo un aggiornamento.
 
-**In sviluppo**, due modi:
+**In sviluppo**, con il **proxy** (deciso il 19/10): si accendono Flask (`python run.py`, porta 5000) e Vite (`npm run dev`, porta 5173), e si apre `http://localhost:5173`. Vite serve la SPA e la aggiorna a ogni salvataggio **senza ricaricare e senza perdere lo stato** (comodo sul tavolo: si cambia un'animazione senza rigiocare la partita); tutto il resto (rotte JSON, `/socket.io` anche come WebSocket, pagine Jinja, `/static`) lo gira a Flask. Il browser vede un solo indirizzo, quindi il cookie del login e il CSRF funzionano come in produzione. La CSP di Flask non vale per le pagine servite da Vite in sviluppo: si controlla sul build (`test_csp.py`).
 
-1. **`vite build --watch`** (consigliato all'inizio): Vite ricompila i file in `app/static/dist/` a ogni salvataggio, Flask li serve come in produzione. Niente CSP da cambiare, un solo indirizzo, si ricarica la pagina a mano.
-2. **Server di sviluppo di Vite** (più avanti, se serve): ricarica istantanea dei componenti, ma la pagina di Flask deve caricare gli script da `http://localhost:5173` e la CSP di sviluppo deve permetterlo (solo con `APP_ENV=development`).
+**Login e CSRF nella SPA**: le pagine React mandano JSON alle rotte di Flask con il cookie della sessione (stesso indirizzo) e il codice CSRF nell'intestazione `X-CSRFToken`, che Flask-WTF accetta già; il codice si legge da una rotta (passo 4).
 
-**Da decidere** (D54 in `DA-DECIDERE.md`): se `app/static/dist/` va nel repository (e quindi in `main`, così la demo non ha bisogno di Node) o se si compila dove si installa (la demo vuole Node). Per una demo semplice conviene il primo; per il sito online di solito il secondo.
+**Deciso** (D54, 19/10/2026, in `DECISIONI.md`): `app/static/dist/` **non** va nel repository, né in `dev` né in `main` (la esclude già la regola `dist/` di `.gitignore`); si compila con `npm run build` su ogni PC o server dove gira il sito.
 
 Il client Socket.IO oggi è il file `vendor/socket.io.min.js` (versione 4.8.1); nel frontend nuovo si usa il pacchetto npm `socket.io-client` **alla stessa versione**.
 
@@ -137,10 +141,12 @@ Il client Socket.IO oggi è il file `vendor/socket.io.min.js` (versione 4.8.1); 
 3. **Animazioni e tempi del tavolo**: le durate devono restare uguali a quelle del server (`room.py`) e dei CSS. Con React alcuni accorgimenti spariscono, ma i momenti del tavolo (P57, P58, P69, P85, P93) vanno riportati uno per uno. In sviluppo React esegue due volte certi pezzi apposta (StrictMode): i timer vanno scritti in modo che si possano fermare.
 4. **Telefono e iPhone**: zoom, doppio tocco, rotazione (P98, P104, P116, P133) vanno riprovati sul telefono vero a ogni pagina.
 5. **CSP**: niente stili scritti nell'HTML (`style="..."`); React con `style={{...}}` imposta le proprietà dal JS (`element.style.x`), che la CSP permette, ma va controllato con `test_csp.py`.
-6. **Node e npm** servono sul PC di tutti e tre (qui c'è Node 24.19 con npm 11.17) e, se `dist/` non va nel repository, anche dove si installa la demo.
+6. **Node e npm** servono sul PC di tutti e tre (qui c'è Node 24.19 con npm 11.17) e, dato che `dist/` non va nel repository (D54), anche su ogni server dove si installa il sito.
 7. **Regole del codice**: React e TypeScript si scrivono con forme che `regole-codice.md` oggi toglie (JSX, `.map` nelle liste, `useState` che restituisce due valori). Serve una sezione apposta prima del passo 1.
-8. **File di altri**: Flask + Vite tocca `app/__init__.py` e la funzione per i template (backend), e i template; la decisione su chi tocca cosa va presa con Giuseppe e Antonio.
+8. **File di altri**: Flask + Vite tocca `app/__init__.py`, le rotte che servono la SPA e le rotte JSON nuove (accesso, registrazione, utente collegato, codice CSRF), cioè il backend; la decisione su chi tocca cosa va presa con Giuseppe (Antonio è assente).
 9. **Due interfacce insieme** per un po': ogni correzione fatta nella vecchia va rifatta nella nuova, finché quella pagina non è migrata. Conviene migrare una pagina per volta fino in fondo.
+10. **Test nel browser sulle pagine della SPA**: il server dei test (porta 5099) serve la SPA da `app/static/dist/`, che non è nel repository (D54): prima dei test serve `npm run build`. Il runner deve farlo da sé o rifiutarsi di partire se manca (da decidere al passo 1).
+11. **Tasto "indietro" e indirizzi**: nella SPA li gestisce React Router; il pannello amici oggi usa `history.pushState` per chiudersi con "indietro" (P46) e va rifatto con il router.
 
 ## 8. Per dopo: partite in memoria e Redis
 
