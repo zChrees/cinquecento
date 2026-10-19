@@ -22,6 +22,15 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: rotte JSON sotto `/api/`, i blueprint a migrazione finita (19/10/2026)
+
+- **Branch**: docs/api-prefisso
+- **File**: modificati `DECISIONI.md` (Processo), `docs/MIGRAZIONE-FRONTEND.md` (passi 4 e 9, sezione 6), `REVIEW.md` (passi 4, 5, 6 e 9 della migrazione), questo file
+- **Controlli**: nessuna suite lanciata (solo documenti)
+- **Decisioni prese**: ogni rotta JSON sotto `/api/`: le nuove dal passo 4, quelle di oggi al passo 9 con il contratto; a migrazione finita tutto quello che non è `/api`, `/static` o `/socket.io` è la SPA; i blueprint restano solo come API (`game` sparisce). Per il contratto basta l'ok di Christian (detto da Christian)
+- **Domande nuove**: nessuna
+- **Cosa devono fare gli altri**: **Giuseppe**: le rotte JSON che scriverai (passi 4, 5, 6) cominciano con `/api/`
+
 ### Documenti: passi della migrazione nel tracker (19/10/2026)
 
 - **Branch**: docs/migrazione-tracker

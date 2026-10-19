@@ -208,17 +208,18 @@ Un passo per branch, nell'ordine del piano (sezione 4). **Christian** fa il fron
 - [ ] **Passo 3** — `socket.js` in TypeScript (`frontend/src/socket/`, `socket.io-client` 4.8.1) e l'hook `useSocketEvent` — Christian
 - [ ] **Passo 4** — accesso e registrazione in React, con la navbar di chi non ha fatto il login; si toglie `/prova-react`
   - **Christian**: le pagine React e la loro rotta in `spa/routes.py`.
-  - **Giuseppe**: rotte JSON di accesso e registrazione (stesse regole e stessi messaggi dei moduli di oggi: `\Z` di P137, tentativi per account di P96, CSRF), e la rotta che dà il codice CSRF alla SPA.
+  - **Giuseppe**: rotte JSON di accesso e registrazione, **sotto `/api/`** (`/api/auth/...`; stesse regole e stessi messaggi dei moduli di oggi: `\Z` di P137, tentativi per account di P96, CSRF), e la rotta che dà il codice CSRF alla SPA.
 - [ ] **Passo 5** — la cornice delle pagine con il login: navbar, pannello statistiche, pannello amici e chat
   - **Christian**: i componenti React (il tasto "indietro" del pannello amici con il router, P46).
-  - **Giuseppe**: la rotta che dice chi è l'utente collegato (nome, avatar), al posto di `current_user` letto da `base.html`.
+  - **Giuseppe**: la rotta che dice chi è l'utente collegato (nome, avatar), sotto `/api/`, al posto di `current_user` letto da `base.html`.
 - [ ] **Passo 6** — impostazioni del profilo
   - **Christian**: la pagina React.
-  - **Giuseppe**: rotte JSON per avatar, suoni, password e cancellazione dell'account, se i moduli di oggi non bastano (da vedere a inizio passo).
+  - **Giuseppe**: rotte JSON sotto `/api/` per avatar, suoni, password e cancellazione dell'account (da vedere a inizio passo).
 - [ ] **Passo 7** — home (carte-pulsante, `ModeModal`, coda, inviti) — Christian (usa gli eventi Socket.IO di oggi, il contratto non cambia)
 - [ ] **Passo 8** — tavolo, prima in parallelo (`/game/<id>?ui=react`), poi al posto del vecchio; da qui home e tavolo nella stessa SPA
   - **Christian**: il tavolo React.
   - **Giuseppe**: i test che confrontano le durate del tavolo tra `room.py` e il TypeScript nuovo (oggi le confrontano con `game.js`).
 - [ ] **Passo 9** — tolti i file JS vecchi e i loro test (rifatti sul codice nuovo)
   - **Christian**: `app/static/js/`, i template delle pagine migrate, i test del frontend vecchio.
-  - **Giuseppe**: le rotte Jinja delle pagine migrate nei blueprint, giro completo delle suite.
+  - **Giuseppe**: le rotte Jinja delle pagine migrate nei blueprint (sparisce `game`); le rotte JSON di oggi (`/friends/...`, `/stats/me`, `/online`) spostate sotto `/api/`, con il contratto (sezione 5); giro completo delle suite.
+  - **Christian**: le chiamate delle pagine ai nuovi indirizzi `/api/`; la SPA presa da una regola sola (tutto quello che non è `/api`, `/static`, `/socket.io`) al posto di `SPA_PATHS`.
