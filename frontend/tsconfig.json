@@ -1,0 +1,31 @@
+// Impostazioni di TypeScript per il frontend (docs/MIGRAZIONE-FRONTEND.md, passo 1).
+//
+// In parole semplici: dice a tsc (il controllore dei tipi) quali file guardare e
+// quanto essere severo. tsc qui NON produce file: controlla soltanto
+// ("noEmit"); a trasformare TypeScript in JavaScript ci pensa Vite.
+// Si lancia con: npm run typecheck (oppure npx tsc --noEmit).
+{
+  "compilerOptions": {
+    // JavaScript moderno: i browser di oggi lo capiscono senza traduzioni
+    "target": "ES2022",
+    // le funzioni che esistono nel programma: quelle del linguaggio (ES2022)
+    // e quelle della pagina web (DOM: document, window, ...)
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    // i file si importano con import/export, e li trova Vite ("bundler")
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    // JSX (le righe <div>...</div> nei file .tsx) secondo le regole di React 19
+    "jsx": "react-jsx",
+    // modalità rigorosa: per esempio un valore che può essere null va
+    // controllato prima di usarlo (come un puntatore in C)
+    "strict": true,
+    // ogni file si deve poter tradurre da solo: Vite traduce un file alla volta
+    "isolatedModules": true,
+    // solo controllo dei tipi, nessun file prodotto
+    "noEmit": true,
+    // non ricontrolla i file dei tipi delle librerie (node_modules): più veloce
+    "skipLibCheck": true
+  },
+  // i file controllati: il codice in src/ e la configurazione di Vite
+  "include": ["src", "vite.config.ts"]
+}

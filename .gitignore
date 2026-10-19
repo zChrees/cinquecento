@@ -241,3 +241,6 @@ desktop.ini
 # Editor
 .vscode/
 .idea/
+
+# Frontend (Node): dipendenze installate con npm ci
+node_modules/

@@ -48,6 +48,7 @@ Il regolamento completo è in [docs/REGOLE-GIOCO.md](docs/REGOLE-GIOCO.md).
 | Parte | Tecnologia | Versione |
 |---|---|---|
 | Pagine | HTML, CSS, JavaScript "vanilla" (senza framework, con i moduli nativi `import`/`export`) | — |
+| Pagine nuove (in arrivo) | React + TypeScript, compilati con Vite, come SPA (una sola pagina HTML): si passa una pagina alla volta ([piano](docs/MIGRAZIONE-FRONTEND.md)) | Node **24.19.0**; librerie fissate in `frontend/package.json` |
 | Server | Python + Flask | Python **3.14** (3.14.4) |
 | Tempo reale | Flask-SocketIO (WebSocket: collegamento sempre aperto tra pagina e server) | versioni fissate in `requirements.txt` |
 | Account | Flask-Login, Flask-WTF | idem |
@@ -72,6 +73,12 @@ cinquecento/
 ├── requirements-dev.txt       librerie usate solo per sviluppo e test (solo in dev)
 ├── run.py                     avvio del server
 ├── config.py                  configurazioni: sviluppo, test, demo
+│
+├── frontend/                  il frontend nuovo (React + TypeScript + Vite)
+│   ├── package.json           librerie JavaScript, a versione fissa
+│   ├── vite.config.ts         server di sviluppo con il proxy verso Flask, build in app/static/dist/
+│   ├── index.html             l'unica pagina HTML della SPA
+│   └── src/                   main.tsx (avvio), routes.tsx (indirizzi), pages/ (le pagine)
 │
 ├── docs/
 │   ├── REGOLE-GIOCO.md        regolamento del gioco (riferimento unico)
@@ -135,7 +142,8 @@ cinquecento/
 │   │   ├── profile/           impostazioni: avatar, suoni e cancellazione dell'account
 │   │   ├── game/              tavolo di gioco
 │   │   ├── stats/             dati del pannello statistiche
-│   │   └── friends/           richieste di amicizia e lista amici
+│   │   ├── friends/           richieste di amicizia e lista amici
+│   │   └── spa/               pagine del frontend nuovo (index.html del build)
 │   │
 │   ├── services/              logica applicativa
 │   │   ├── auth_service.py
@@ -207,14 +215,14 @@ Nel branch `dev`, dove lavora il gruppo, ci sono anche i test (`tests/`, `requir
 Questi passi servono per installare il progetto sul proprio PC e farlo girare in `localhost`. L'installazione della **demo**, con dati veri e raggiungibile dagli altri, ha una guida a parte: [docs/DEMO.md](docs/DEMO.md).
 
 **Cosa serve prima**
-- **Python 3.14.4**, **MySQL Server 8.0** e **Git**, installati a mano (passi 1–3).
-- Per i test (solo nel branch `dev`): **Google Chrome** o **Microsoft Edge** (i test che aprono le pagine nel browser li usano senza finestra; se mancano, quei test si saltano) e, facoltativo, **Node.js** (un test confronta i nomi delle carte delle pagine con quelli del motore eseguendo `Card.js`; senza Node quel controllo si salta).
+- **Python 3.14.4**, **MySQL Server 8.0**, **Node.js 24.19.0** e **Git**, installati a mano (passi 1–3 e 5). Node serve a compilare il frontend nuovo (`frontend/`).
+- Per i test (solo nel branch `dev`): **Google Chrome** o **Microsoft Edge** (i test che aprono le pagine nel browser li usano senza finestra; se mancano, quei test si saltano). Senza Node, o senza `npm ci` in `frontend/`, i test che lo usano si saltano.
 - **Internet** la prima volta che lanci i test: i font di Google si scaricano una volta sola, in una cartella temporanea.
 
 I comandi qui sotto sono per **PowerShell**, lanciati dalla cartella del progetto.
 
 1. **Installa Python 3.14.4** da [python.org](https://www.python.org/downloads/). Durante l'installazione spunta "Add python.exe to PATH". Controlla con `py -3.14 --version`, che deve rispondere `Python 3.14.4`.
-2. **Installa MySQL Server 8.0** da [dev.mysql.com](https://dev.mysql.com/downloads/installer/) e annota la password dell'utente `root`. Lascia la cartella proposta (`C:\Program Files\MySQL\MySQL Server 8.0`): il comando del passo 6, i backup e i test cercano lì i programmi di MySQL.
+2. **Installa MySQL Server 8.0** da [dev.mysql.com](https://dev.mysql.com/downloads/installer/) e annota la password dell'utente `root`. Lascia la cartella proposta (`C:\Program Files\MySQL\MySQL Server 8.0`): il comando del passo 7, i backup e i test cercano lì i programmi di MySQL.
 3. **Scarica il progetto** ed entra nella cartella:
    ```
    git clone https://github.com/zChrees/cinquecento.git
@@ -229,13 +237,21 @@ I comandi qui sotto sono per **PowerShell**, lanciati dalla cartella del progett
    ```
    Se hai scaricato `dev`, installa anche le librerie dei test: `pip install -r requirements-dev.txt`.
    Se PowerShell rifiuta `activate` ("l'esecuzione di script è disabilitata"), lancia una volta `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` e riprova. Con l'ambiente attivo, all'inizio della riga compare `(.venv)`: da qui in poi tutti i comandi si lanciano così, anche dopo aver chiuso e riaperto il terminale (basta rifare `.venv\Scripts\activate`).
-5. **Configura**: copia il modello e genera la chiave segreta:
+5. **Installa Node.js 24.19.0** da [nodejs.org](https://nodejs.org/) (controlla con `node --version`, che deve rispondere `v24.19.0`), poi installa le librerie del frontend e compilalo:
+   ```
+   cd frontend
+   npm ci
+   npm run build
+   cd ..
+   ```
+   `npm ci` installa le versioni esatte di `package-lock.json` nella cartella `frontend/node_modules` (come `pip install` nella `.venv`); `npm run build` controlla i tipi e scrive le pagine compilate in `app/static/dist/`. Tutte e due le cartelle non vanno su git. Va rifatto `npm run build` dopo ogni `git pull` che cambia `frontend/`; senza, le pagine nuove rispondono "Frontend non compilato".
+6. **Configura**: copia il modello e genera la chiave segreta:
    ```
    copy .env.example .env
    python -c "import secrets; print(secrets.token_hex(32))"
    ```
-   Apri `.env` con un editor di testo e incolla dopo `SECRET_KEY=` la riga stampata dal secondo comando. Gli altri valori vanno bene così; la password del database arriva al passo 6. Con `HOST=127.0.0.1` il sito si apre solo da questo PC: per aprirlo da altri dispositivi (`HOST=0.0.0.0`) usa `APP_ENV=demo`, mai `development`, che accende il debugger di Werkzeug (dalla rete permetterebbe di eseguire comandi sul PC, protetto solo da un PIN); per la demo vera c'è [docs/DEMO.md](docs/DEMO.md). Il file `.env` contiene segreti: non va mai su git (è già in `.gitignore`), e conviene tenerne una copia fuori dal progetto.
-6. **Prepara il database** (una volta sola). Il comando chiede la password di `root`:
+   Apri `.env` con un editor di testo e incolla dopo `SECRET_KEY=` la riga stampata dal secondo comando. Gli altri valori vanno bene così; la password del database arriva al passo 7. Con `HOST=127.0.0.1` il sito si apre solo da questo PC: per aprirlo da altri dispositivi (`HOST=0.0.0.0`) usa `APP_ENV=demo`, mai `development`, che accende il debugger di Werkzeug (dalla rete permetterebbe di eseguire comandi sul PC, protetto solo da un PIN); per la demo vera c'è [docs/DEMO.md](docs/DEMO.md). Il file `.env` contiene segreti: non va mai su git (è già in `.gitignore`), e conviene tenerne una copia fuori dal progetto.
+7. **Prepara il database** (una volta sola). Il comando chiede la password di `root`:
    ```
    & "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p --table -e "source scripts/setup_db.sql"
    ```
@@ -248,8 +264,9 @@ I comandi qui sotto sono per **PowerShell**, lanciati dalla cartella del progett
    ```
    python scripts/migrate.py
    ```
-7. **Avvia**: `python run.py`, poi apri `http://localhost:5000` e registra un account. All'avvio il programma controlla di avere Python 3.14 e MySQL 8.0, e se qualcosa manca lo scrive e si ferma: per esempio "errore MySQL 1045" vuol dire che `DB_USER` o `DB_PASSWORD` nel `.env` non sono giusti. Per spegnerlo: Ctrl+C nel terminale.
-8. Se hai scaricato `dev`, **controlla con i test** che sia tutto a posto (sezione qui sotto): devono risultare tutti PASS.
+8. **Avvia**: `python run.py`, poi apri `http://localhost:5000` e registra un account. All'avvio il programma controlla di avere Python 3.14 e MySQL 8.0, e se qualcosa manca lo scrive e si ferma: per esempio "errore MySQL 1045" vuol dire che `DB_USER` o `DB_PASSWORD` nel `.env` non sono giusti. Per spegnerlo: Ctrl+C nel terminale.
+   **Per lavorare al frontend nuovo** accendi anche Vite, in un secondo terminale: `cd frontend`, poi `npm run dev`, e apri `http://localhost:5173` invece della 5000. Vite serve le pagine React e le aggiorna a ogni salvataggio senza ricaricare; tutto il resto (pagine di adesso, login, tempo reale) lo gira a Flask sulla 5000, che deve restare acceso. La pagina di prova è `http://localhost:5173/prova-react`.
+9. Se hai scaricato `dev`, **controlla con i test** che sia tutto a posto (sezione qui sotto): devono risultare tutti PASS.
 
 ## Test
 

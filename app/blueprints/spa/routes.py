@@ -1,0 +1,92 @@
+"""Rotte della SPA (passo 1 della migrazione, docs/MIGRAZIONE-FRONTEND.md, sezione 6).
+
+Il frontend React è una sola pagina HTML, app/static/dist/index.html, scritta da
+`npm run build` in frontend/ (la cartella dist/ non è nel repository, D54). Per
+ogni indirizzo della SPA Flask restituisce sempre quella pagina; poi è React
+Router, nel browser, a scegliere cosa disegnare. I file JavaScript della SPA
+(/static/dist/assets/...) li serve Flask come ogni altro file statico.
+
+Cosa contiene:
+    dist_dir()     la cartella del build
+    spa_page()     la risposta con index.html (o l'errore se il build manca)
+    test_page()    GET /prova-react, la pagina di prova (solo sviluppo e test)
+
+DA DOVE ARRIVANO I DATI: il browser chiede un indirizzo della SPA (per esempio
+/prova-react); Flask chiama la funzione della rotta, che legge il file scritto
+dal build.
+"""
+
+import logging
+from pathlib import Path
+
+from flask import abort, current_app, send_file
+
+from app.blueprints.spa import bp
+
+log = logging.getLogger(__name__)
+
+# SPA_PATHS: gli indirizzi che sono pagine della SPA. Deve restare uguale a
+# SPA_PATHS di frontend/vite.config.ts (lo controlla tests/frontend/test_spa.py):
+# una pagina nuova della SPA si aggiunge in tutti e due i posti, più la sua rotta qui.
+SPA_PATHS = ("/prova-react",)
+
+# TEST_PAGE_ENVS: gli ambienti (APP_ENV) in cui c'è la pagina di prova, come i
+# dati finti della home (DEMO_ENVS di app/blueprints/main/routes.py)
+TEST_PAGE_ENVS = {"development", "testing"}
+
+# NOT_BUILT: il messaggio quando manca il build, invece di una pagina bianca
+NOT_BUILT = "Frontend non compilato: lancia npm run build in frontend/."
+
+
+def dist_dir():
+    """Restituisce la cartella del build del frontend (app/static/dist).
+
+    In parole semplici:
+        dist_dir()
+        È una funzione, non una costante, perché la cartella static la conosce
+        solo l'app di Flask attiva (current_app); i test la sostituiscono con
+        una cartella finta.
+
+        Restituisce: un Path, per esempio C:/.../app/static/dist
+    """
+    return Path(current_app.static_folder) / "dist"
+
+
+def spa_page():
+    """Risponde con la pagina della SPA (index.html del build).
+
+    In parole semplici:
+        spa_page()
+        Se il build c'è, manda index.html. Il browser deve richiederla ogni
+        volta (max_age=0, cioè "Cache-Control: no-cache"): dopo un build nuovo
+        index.html punta a file con un nome nuovo (index-3f9a1c.js), e una copia
+        vecchia caricherebbe i file di prima.
+        Se il build manca, risponde 503 ("servizio non disponibile") con un
+        messaggio che dice cosa fare, e lo scrive nel log come anomalia.
+
+        Restituisce: la risposta di Flask.
+    """
+    # index: il file scritto da npm run build
+    index = dist_dir() / "index.html"
+    if not index.is_file():
+        log.warning("SPA: manca il build del frontend (%s)", index)
+        return NOT_BUILT, 503, {"Content-Type": "text/plain; charset=utf-8"}
+    return send_file(index, mimetype="text/html", max_age=0)
+
+
+@bp.get("/prova-react")
+def test_page():
+    """GET /prova-react: la pagina di prova della SPA (frontend/src/pages/TestPage.tsx).
+
+    In parole semplici:
+        test_page()
+        Fuori da sviluppo e test (per esempio con APP_ENV=demo) risponde 404,
+        come se la pagina non esistesse; altrimenti manda la pagina della SPA.
+        Si toglie con la prima pagina vera (passo 4 del piano).
+
+        @bp.get(...) è un decoratore: dice a Flask "quando arriva GET
+        /prova-react, chiama questa funzione".
+    """
+    if current_app.config["ENV_NAME"] not in TEST_PAGE_ENVS:
+        abort(404)
+    return spa_page()

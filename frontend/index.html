@@ -1,0 +1,19 @@
+<!doctype html>
+<!--
+  L'unica pagina HTML della SPA (docs/MIGRAZIONE-FRONTEND.md).
+  React disegna tutto dentro <div id="root"> (src/main.tsx).
+  In sviluppo la serve Vite (npm run dev); dopo npm run build la copia tradotta
+  sta in app/static/dist/index.html e la serve Flask (app/blueprints/spa/).
+  Niente script né stili scritti qui dentro: la CSP di Flask li bloccherebbe.
+-->
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Cinquecento</title>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+</html>
