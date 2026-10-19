@@ -204,15 +204,18 @@ Un passo per branch, nell'ordine del piano (sezione 4). **Christian** fa il fron
 - [x] **Passo 0** — piano, decisioni, regole del codice (sezione 6 di `regole-codice.md`) — Christian — *19/10 (commit `e5e50ce`, SPA e proxy in `2e772a2`)*
 - [x] **Passo 1** — `frontend/` con Vite, React, TypeScript e React Router; proxy verso Flask; build in `app/static/dist/`; blueprint `spa` con la pagina di prova `/prova-react` — Christian (backend con l'ok di Christian, che vale anche per Giuseppe) — *19/10 (commit `18dc627`)*
   - **Giuseppe, subito**: installare Node 24.19.0, poi in `frontend/` `npm ci` e `npm run build` (README, passo 5); per lavorare al frontend `npm run dev` e `http://localhost:5173`.
-- [ ] **Passo 2** — i tipi del contratto in `frontend/src/types/`, controllati sugli esempi `app/static/dev/*.json` — Christian
-- [ ] **Passo 3** — `socket.js` in TypeScript (`frontend/src/socket/`, `socket.io-client` 4.8.1) e l'hook `useSocketEvent` — Christian
-- [ ] **Passo 4** — accesso e registrazione in React, con la navbar di chi non ha fatto il login; si toglie `/prova-react`
+- [x] **Passo 2** — i tipi del contratto in `frontend/src/types/`, controllati sugli esempi `app/static/dev/*.json` — Christian — *19/10 (commit `97ab28c`; `cannot_write` aggiunto all'esempio degli amici)*
+- [x] **Passo 3** — `socket.js` in TypeScript (`frontend/src/socket/`, `socket.io-client` 4.8.1) e l'hook `useSocketEvent` — Christian — *19/10 (commit `7f0ac17`; l'avviso di connessione è passato al 5a)*
+- [x] **Passo 4** — accesso e registrazione in React, con la navbar di chi non ha fatto il login; si toglie `/prova-react` — *19/10 (commit `24a41ec`; `/prova-react` resta fino al passo 6: è l'unica pagina della SPA con il login)*
   - **Christian**: le pagine React e la loro rotta in `spa/routes.py`.
-  - **Giuseppe**: rotte JSON di accesso e registrazione, **sotto `/api/`** (`/api/auth/...`; stesse regole e stessi messaggi dei moduli di oggi: `\Z` di P137, tentativi per account di P96, CSRF), e la rotta che dà il codice CSRF alla SPA.
-- [ ] **Passo 5** — la cornice delle pagine con il login: navbar, pannello statistiche, pannello amici e chat
+  - **Giuseppe**: rotte JSON di accesso e registrazione, **sotto `/api/`** (`/api/auth/...`; stesse regole e stessi messaggi dei moduli di oggi: `\Z` di P137, tentativi per account di P96, CSRF), e la rotta che dà il codice CSRF alla SPA. *Fatto da Claude con l'ok di Christian, che valeva anche per Giuseppe (19/10): `app/blueprints/auth/api.py`, con `GET /api/auth/session` (codice CSRF, utente, messaggi).*
+- [ ] **Passo 5** — la cornice delle pagine con il login: navbar, pannello statistiche, pannello amici e chat. Diviso in tre lotti (19/10):
+  - [x] **5a** — navbar con il login, pannello statistiche, avviso di connessione — Christian — *19/10 (commit `b2688b6`)*
+  - [ ] **5b** — pannello amici — Christian
+  - [ ] **5c** — chat — Christian
   - **Christian**: i componenti React (il tasto "indietro" del pannello amici con il router, P46).
-  - **Giuseppe**: la rotta che dice chi è l'utente collegato (nome, avatar), sotto `/api/`, al posto di `current_user` letto da `base.html`.
-- [ ] **Passo 6** — impostazioni del profilo
+  - **Giuseppe**: la rotta che dice chi è l'utente collegato (nome, avatar), sotto `/api/`, al posto di `current_user` letto da `base.html`. *In parte fatto con il passo 4: `user` di `GET /api/auth/session`; da vedere al 5b se basta.*
+- [ ] **Passo 6** — impostazioni del profilo; si toglie `/prova-react`
   - **Christian**: la pagina React.
   - **Giuseppe**: rotte JSON sotto `/api/` per avatar, suoni, password e cancellazione dell'account (da vedere a inizio passo).
 - [ ] **Passo 7** — home (carte-pulsante, `ModeModal`, coda, inviti) — Christian (usa gli eventi Socket.IO di oggi, il contratto non cambia)

@@ -68,6 +68,8 @@ Non sono problemi: dipendenze circolari (non ce ne sono), ascolti Socket.IO spar
 
 ## 4. Piano di migrazione
 
+**Stato (19/10/2026)**: fatti i passi 0, 1, 2, 3, 4 e il lotto 5a (avanzamento e commit in `REVIEW.md`, "Migrazione del frontend").
+
 Passi piccoli, ciascuno su un branch suo e reversibile. La vecchia interfaccia resta finché la nuova non la sostituisce del tutto, una pagina per volta. **La SPA e il proxy partono dal passo 1** (deciso il 19/10): così nessuna pagina si migra due volte (prima come isola, poi dentro la SPA) e non si scrive codice per le isole che poi andrebbe tolto. Tra una pagina della SPA e una pagina Jinja non ancora migrata si passa con un normale link, che ricarica la pagina.
 
 | Passo | Cosa | Pronto quando |
@@ -77,8 +79,8 @@ Passi piccoli, ciascuno su un branch suo e reversibile. La vecchia interfaccia r
 | **2** | `types/`: i tipi del contratto (Card, Suit, GameView, PlayerView, eventi dal server e verso il server) presi da `CONTRATTO-SOCKET.md` e controllati sugli esempi `app/static/dev/*.json` | gli esempi JSON passano il controllo dei tipi |
 | **3** | `socket/`: `socket.js` tradotto in TypeScript con eventi tipizzati, più un hook React (`useSocketEvent`) che si iscrive e si toglie da solo | test unitari del modulo |
 | **4** | Accesso e registrazione (la pagina più piccola) e la navbar di chi non ha fatto il login; rotte JSON per accesso e registrazione e il codice CSRF letto da una rotta, **già sotto `/api/`** | i test di `api/` e `frontend/` su quelle pagine passano |
-| **5** | La cornice delle pagine con il login: navbar, pannello statistiche, pannello amici e chat (servono a tutte le pagine dopo); la rotta che dice chi è l'utente collegato | test di `frontend2/` |
-| **6** | Impostazioni del profilo | i test di quella pagina passano |
+| **5** | La cornice delle pagine con il login: navbar, pannello statistiche, pannello amici e chat (servono a tutte le pagine dopo); la rotta che dice chi è l'utente collegato. In tre lotti: **5a** navbar, statistiche e avviso di connessione; **5b** pannello amici; **5c** chat. Fino al passo 6 la cornice si vede solo su `/prova-react` | test di `frontend2/` |
+| **6** | Impostazioni del profilo; si toglie `/prova-react` (doveva sparire al passo 4, ma è l'unica pagina della SPA con il login) | i test di quella pagina passano |
 | **7** | Home (carte-pulsante, `ModeModal`, coda, inviti) | `test_pagina_home.py`, prove nel browser |
 | **8** | Tavolo, prima **in parallelo** (per esempio su `/game/<id>?ui=react`), poi al posto di quello vecchio. Da qui home e tavolo stanno nella stessa SPA: entrando in partita la pagina non si ricarica (stesso collegamento Socket.IO, stesso audio, pannello amici e chat restano aperti) | tutte le suite `table*`, `sockets`, `e2e`, prova a mano su telefono |
 | **9** | Tolti i file JS vecchi, i template Jinja delle pagine migrate e i test che leggevano il loro testo (rifatti sul codice nuovo); le rotte JSON di oggi spostate sotto `/api/` (contratto, sezione 5); la SPA presa da una regola sola invece dell'elenco `SPA_PATHS` (sezione 6) | giro completo delle suite |

@@ -82,7 +82,9 @@ Le mosse di gioco non lo usano: le protegge `version` (vedi 3.2).
 
 ### 1.5 Dati scritti nella pagina dal server
 
-Chi è l'utente la pagina lo sa **senza chiederlo**: `base.html` scrive nel `<body>` gli attributi `data-user-id`, `data-username` e `data-avatar` (vuoti per chi non ha fatto il login), e nell'`<head>` il tag `<meta name="csrf-token" content="...">`. Le richieste HTTP che modificano qualcosa (`POST`, `DELETE`) mandano quel valore nell'intestazione `X-CSRFToken` (protezione CSRF di Flask-WTF).
+**Pagine della SPA** (dal 19/10/2026, passo 4 della migrazione a React): la pagina è un file statico e non ha questi attributi. Utente collegato, codice CSRF e messaggi da mostrare li chiede con `GET /api/auth/session` (2.3); le richieste che modificano qualcosa mandano lo stesso codice nell'intestazione `X-CSRFToken`.
+
+Pagine Jinja: chi è l'utente la pagina lo sa **senza chiederlo**: `base.html` scrive nel `<body>` gli attributi `data-user-id`, `data-username` e `data-avatar` (vuoti per chi non ha fatto il login), e nell'`<head>` il tag `<meta name="csrf-token" content="...">`. Le richieste HTTP che modificano qualcosa (`POST`, `DELETE`) mandano quel valore nell'intestazione `X-CSRFToken` (protezione CSRF di Flask-WTF).
 
 ---
 
@@ -126,8 +128,22 @@ Nella lista, `presence` di un amico è `"online"`, `"in_game"` oppure `"offline"
 - `counters.unread_messages` conta tutti i messaggi non letti ricevuti, anche da chi non è più amico (la conversazione resta visibile, D24).
 - `POST /friends/requests` risponde con `data` = la richiesta mandata (`{"user_id", "username", "avatar", "sent_at"}`), come un elemento di `requests_out`.
 - Errori: richiesta o blocco verso sé stessi → `invalid_data`; già amici o richiesta già mandata → `already_exists`; l'altro ti ha già mandato una richiesta → `request_from_them`; più di 100 amici (tuoi o suoi) → `limit_reached`; username di un utente che hai bloccato → `blocked`; accettare una richiesta che non c'è → `not_found`. Bloccare di nuovo lo stesso utente risponde `ok`, senza doppioni.
-- Senza login ogni richiesta risponde `not_logged_in` (401) in JSON, non con il rimando alla pagina di accesso. Una richiesta senza il codice CSRF riceve il 400 di Flask-WTF in HTML: per la pagina basta il codice 400.
+- Senza login ogni richiesta risponde `not_logged_in` (401) in JSON, non con il rimando alla pagina di accesso. Una richiesta senza il codice CSRF riceve il 400 di Flask-WTF in HTML: per la pagina basta il codice 400. Le rotte sotto `/api/` (2.3) invece rispondono in JSON: `invalid_data` (400), "La pagina è scaduta: ricaricala e riprova.".
 - `request_id` (1.3): il server ricorda la risposta per 10 minuti, per utente e per azione.
+
+### 2.3 Accesso e registrazione della SPA (`/api/auth/`, dal 19/10/2026)
+
+Rotte JSON delle pagine React `/auth/login` e `/auth/register` (passo 4 della migrazione; DECISIONI.md: ogni rotta di dati nuova sta sotto `/api/`). Non richiedono il login. Tipi in `frontend/src/types/api.ts`.
+
+| Richiesta | Corpo | Risposta (`data`) |
+|---|---|---|
+| `GET /api/auth/session` | — | `{"csrf_token", "user", "flashes"}`: il codice CSRF, l'utente collegato (`{"user_id", "username", "avatar"}`) o `null`, i messaggi lasciati da un'altra pagina (`{"kind", "message"}`, `kind` `"success"`, `"error"` o `"info"`), che si leggono una volta sola; `Cache-Control: no-store` |
+| `POST /api/auth/login` | `{"username", "password", "next"}` | `{"redirect"}`: la pagina chiesta prima (`next`) se è di questo sito, altrimenti `"/"` |
+| `POST /api/auth/register` | `{"username", "email", "password", "confirm"}` | `{"redirect"}` (la home, con "Benvenuto, ...!" tra i messaggi) |
+
+- Stesse regole e stessi messaggi delle pagine Jinja di prima (moduli di `app/blueprints/auth/forms.py`, tentativi contati per account). `username` del login è il nome utente o l'email.
+- Errori: un campo non valido → `invalid_data` (400) con **`error.fields`**, i messaggi di ogni campo (`{"username": ["..."]}`; anche username o email già usati); un campo che non è un testo o un corpo che non è un oggetto → `invalid_data` senza `fields`; credenziali sbagliate o troppi tentativi → `not_allowed` (403); chi ha già il login riceve `{"redirect": "/"}` senza altri controlli.
+- `POST /auth/login` e `POST /auth/register` (i moduli di prima) rispondono 405; `POST /auth/logout` resta il modulo "Esci" con il campo `csrf_token`.
 
 ---
 

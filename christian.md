@@ -22,6 +22,16 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: aggiornamento della sera del 19/10 (19/10/2026)
+
+- **Branch**: docs/aggiornamento-19-10-sera
+- **File**: modificati `CLAUDE.md` (riga "Stato"; `main` con `frontend/`; punti delicati Accesso P16, Navbar e pagine P40, Test end-to-end P31, Connessione P33 e uno nuovo "SPA e migrazione"; Testing; Comandi utili con `npm`), `REVIEW.md` (passi 2, 3, 4 e 5a spuntati con i commit; passo 5 diviso in 5a, 5b, 5c; i pezzi di Giuseppe dei passi 4 e 5), `DECISIONI.md` (React Router, build della SPA nei test, `frontend/` in `main`, scelte del passo 4, meno test durante il lavoro, passo 5 in tre lotti), `docs/CONTRATTO-SOCKET.md` (1.5 per le pagine della SPA; 2.2 CSRF sulle rotte `/api/`; sezione nuova 2.3 con `/api/auth/`), `docs/MIGRAZIONE-FRONTEND.md` (stato, passi 5 e 6), questo file
+- **Registrati**: `christian.md` fino a "Migrazione, passo 5a" (compresi i passi 1–4 e i documenti del pomeriggio); `giuseppe.md` e `antonio.md` niente di nuovo
+- **Controlli**: nessuna suite lanciata (solo documenti)
+- **Decisioni prese**: nessuna nuova; registrate quelle della giornata
+- **Domande nuove**: nessuna
+- **Cosa devono fare gli altri**: **Giuseppe**: leggere la riga "Stato" di `CLAUDE.md`, la sezione 2.3 del contratto e "Migrazione del frontend" in fondo a `REVIEW.md`; dopo il pull `npm ci` e `npm run build` in `frontend/`
+
 ### Migrazione, passo 5a — Navbar con il login, pannello statistiche, avviso di connessione (19/10/2026)
 
 - **Branch**: feature/migrazione-passo5a. Il passo 5 è diviso in tre lotti: **5a** (questo), **5b** pannello amici, **5c** chat
