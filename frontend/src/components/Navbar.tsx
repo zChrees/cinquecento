@@ -5,7 +5,7 @@
  * - Senza login: icona generica e "Accedi", il logo, "Amici"; avatar e amici aprono
  *   la finestra "Accedi o registrati per giocare" (passo 4).
  * - Con il login: avatar e nome, che aprono il pannello statistiche (StatsSheet);
- *   il logo; "Amici" con il contatore, che dal passo 5b aprirà il pannello amici.
+ *   il logo; "Amici" con il contatore, che apre il pannello amici (FriendsPanel, passo 5b).
  * - Finché non si sa chi è collegato (la sessione non è ancora arrivata) i due
  *   pulsanti ci sono ma non si vedono: così chi ha il login non vede per un attimo "Accedi".
  *
@@ -13,7 +13,8 @@
  *   <Navbar />
  *
  * DA DOVE ARRIVANO I DATI: l'utente dalla sessione (useSession); le statistiche
- * da GET /stats/me, a ogni apertura del pannello (fetchStats di StatsSheet.tsx).
+ * da GET /stats/me, a ogni apertura del pannello (fetchStats di StatsSheet.tsx); il
+ * contatore degli amici da FriendsPanel.tsx (GET /friends/).
  */
 
 import { useRef, useState } from 'react';
@@ -21,6 +22,7 @@ import type { CSSProperties, JSX, RefObject } from 'react';
 import { useSession } from '../session/SessionContext';
 import type { Stats } from '../types/api';
 import { Avatar } from './Avatar';
+import { FriendsPanel, useOpenFriendsPanel } from './FriendsPanel';
 import { LoginPrompt } from './LoginPrompt';
 import { Logo } from './Logo';
 import { sheetControls } from './sheet';
@@ -57,6 +59,11 @@ export function Navbar(): JSX.Element {
   // statsRef: il <dialog> del pannello statistiche, disegnato da StatsSheet
   const statsRef: RefObject<HTMLDialogElement | null> = useRef<HTMLDialogElement>(null);
   const statsSheet = sheetControls(statsRef);
+  // friendsBadge: il numero sul contatore degli amici (richieste ricevute + messaggi
+  // non letti); lo manda FriendsPanel a ogni lista nuova
+  const [friendsBadge, setFriendsBadge] = useState<number>(0);
+  // openFriends: la funzione che apre il pannello amici
+  const openFriends = useOpenFriendsPanel();
 
   /** Clic su avatar o amici senza login: apre la finestra. */
   function handleOpenPrompt(): void {
@@ -87,6 +94,11 @@ export function Navbar(): JSX.Element {
     loadingStats.current = false;
   }
 
+  /** Clic su "Amici" con il login: apre il pannello amici. */
+  function handleOpenFriends(): void {
+    openFriends();
+  }
+
   // buttonStyle: i pulsanti non si vedono finché la sessione non è arrivata
   let buttonStyle: CSSProperties | undefined = undefined;
   if (!session.loaded) {
@@ -99,6 +111,15 @@ export function Navbar(): JSX.Element {
   let friends: JSX.Element;
   let extra: JSX.Element | null = null;
   if (session.user !== null) {
+    // friendsLabel, badgeText, badgeHidden: il contatore, solo se c'è qualche novità
+    let friendsLabel = 'Amici';
+    let badgeText = '';
+    let badgeHidden = true;
+    if (friendsBadge > 0) {
+      friendsLabel = `Amici: ${friendsBadge} novità (richieste e messaggi)`;
+      badgeText = String(friendsBadge);
+      badgeHidden = false;
+    }
     account = (
       <button
         className="navbar__account felt-text"
@@ -118,25 +139,29 @@ export function Navbar(): JSX.Element {
         className="navbar__friends felt-text"
         type="button"
         data-friends-button=""
-        aria-label="Amici"
+        aria-label={friendsLabel}
         aria-haspopup="dialog"
         aria-controls="friends"
         data-friends-url="/friends/"
+        onClick={handleOpenFriends}
       >
         <span className="icon" aria-hidden="true">group</span>
         <span className="navbar__label" aria-hidden="true">Amici</span>
-        <span className="badge" aria-hidden="true" data-friends-badge="" hidden></span>
+        <span className="badge" aria-hidden="true" data-friends-badge="" hidden={badgeHidden}>{badgeText}</span>
       </button>
     );
     extra = (
-      <StatsSheet
-        user={session.user}
-        csrfToken={session.csrfToken}
-        dialogRef={statsRef}
-        sheet={statsSheet}
-        stats={stats}
-        message={statsMessage}
-      />
+      <>
+        <StatsSheet
+          user={session.user}
+          csrfToken={session.csrfToken}
+          dialogRef={statsRef}
+          sheet={statsSheet}
+          stats={stats}
+          message={statsMessage}
+        />
+        <FriendsPanel onBadge={setFriendsBadge} />
+      </>
     );
   } else {
     account = (

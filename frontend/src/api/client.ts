@@ -6,6 +6,7 @@
  *   loadSession()              GET /api/auth/session, una volta sola per pagina
  *   getJson(indirizzo)         una richiesta GET che risponde in JSON (per esempio /stats/me)
  *   postJson(indirizzo, dati)  una richiesta POST in JSON con il codice CSRF
+ *   deleteJson(indirizzo)      una richiesta DELETE con il codice CSRF (passo 5b)
  *
  * Per esempio:
  *   const answer = await postJson<LoginBody, AuthDone>('/api/auth/login', body);
@@ -132,20 +133,60 @@ export function loadSession(): Promise<Answer<Session>> {
  *   dati della risposta; li sceglie chi chiama.
  */
 export async function postJson<B, T>(url: string, body: B): Promise<Answer<T>> {
+  return sendWithCsrf<T>('POST', url, JSON.stringify(body));
+}
+
+/**
+ * Manda una richiesta DELETE (senza dati) con il codice CSRF.
+ *
+ * @param {string} url l'indirizzo, per esempio '/friends/31'
+ * @returns {Promise<Answer<T>>} la risposta
+ *
+ * In parole semplici:
+ *   const answer = await deleteJson<null>('/friends/31');
+ *   Come postJson, ma per togliere qualcosa (un amico, una richiesta, un blocco:
+ *   pannello amici, passo 5b).
+ */
+export async function deleteJson<T>(url: string): Promise<Answer<T>> {
+  return sendWithCsrf<T>('DELETE', url, null);
+}
+
+/**
+ * La richiesta vera di postJson e deleteJson.
+ *
+ * @param {'POST' | 'DELETE'} method il tipo di richiesta (la | vuol dire "uno di questi valori")
+ * @param {string} url l'indirizzo
+ * @param {string | null} body i dati già scritti in JSON, oppure null per nessun dato
+ * @returns {Promise<Answer<T>>} la risposta
+ *
+ * In parole semplici:
+ *   sendWithCsrf<T>('DELETE', '/friends/31', null)
+ *   Prende il codice CSRF dalla sessione e manda la richiesta; senza rete
+ *   restituisce NO_CONNECTION.
+ */
+async function sendWithCsrf<T>(method: 'POST' | 'DELETE', url: string, body: string | null): Promise<Answer<T>> {
   const session = await loadSession();
   if (!session.ok) {
     return session;
   }
+
+  // headers: le intestazioni; Content-Type solo se si mandano dei dati
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+    'X-CSRFToken': session.data.csrf_token,
+  };
+  if (body !== null) {
+    headers['Content-Type'] = 'application/json';
+  }
+
+  // init: le opzioni di fetch; il corpo solo se c'è
+  const init: RequestInit = { method: method, headers: headers };
+  if (body !== null) {
+    init.body = body;
+  }
+
   try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-        'X-CSRFToken': session.data.csrf_token,
-      },
-      body: JSON.stringify(body),
-    });
+    const response = await fetch(url, init);
     return await readAnswer<T>(response);
   } catch {
     return NO_CONNECTION;
