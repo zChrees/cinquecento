@@ -120,7 +120,7 @@ Si scrive tutto nella forma più esplicita, quella più vicina al C.
 | valori predefiniti nella firma `function f(a, b = 1, { c = [] } = {})` | parametri semplici `function f(a, b, options)`; dentro, un `if (b === undefined) { b = 1; }` per ciascuno |
 | `Boolean(x)` per trasformare in vero/falso | `let ok = false; if (x) { ok = true; }` |
 
-`hasValue(value)` restituisce `false` se il valore è `null` o `undefined`, `true` altrimenti (anche per `0` e `''`). Per ora sta in `Hand.js`: va deciso se spostarla in `utils/dom.js` per usarla da tutti i file.
+`hasValue(value)` restituisce `false` se il valore è `null` o `undefined`, `true` altrimenti (anche per `0` e `''`). Per ora sta in `Hand.js`: va deciso se spostarla in `utils/dom.js` per usarla da tutti i file (D52 in `DA-DECIDERE.md`).
 
 ### Python
 
@@ -164,4 +164,4 @@ Se ne incontra uno, ci si ferma e si chiede:
 
 - i **decoratori** di Python (`@app.route`, `@handler`, `@property`): servono a Flask e non si possono togliere, ma va deciso come spiegarli;
 - **classi**, `with` e `try/except` in Python, `async`/`await` e le `Promise` in JavaScript: sono costrutti veri, non zucchero, ma vanno spiegati bene;
-- dove mettere `hasValue` (vedi sezione 5).
+- dove mettere `hasValue` (vedi sezione 5, D52) e se togliere `HiddenHand` (D53): sono in `DA-DECIDERE.md`.

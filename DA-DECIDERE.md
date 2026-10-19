@@ -7,3 +7,8 @@ Il 29/09/2026 sono state chiuse D5, D8, D10, D20, D29, D40, D41 e D42; il 30/09/
 ## Messa in servizio
 
 - [ ] **D21 — Dopo la consegna**: VPS o hosting gestito (Render o Railway), come spiegato il 26/09/2026. Lasciata aperta da Christian il 29/09/2026: è per un futuro lontano.
+
+## Codice commentato (regole-codice.md)
+
+- [ ] **D52 — Dove mettere `hasValue`**: la funzione che dice se un valore non è né `null` né `undefined` (al posto di `x != null`, regole-codice.md sezione 5) oggi sta solo in `app/static/js/components/Hand.js`. Servirà in molti file JS: proposta di spostarla in `app/static/js/utils/dom.js` e importarla da lì, invece di ricopiarla in ogni file. Lasciata aperta da Christian il 19/10/2026.
+- [ ] **D53 — Togliere `HiddenHand`**: la funzione di `Hand.js` che disegna una fila di carte coperte non la chiama nessun file del progetto (al tavolo gli avversari usano `EdgeHand`); per ora è segnalata nel suo commento. Proposta: toglierla. Lasciata aperta da Christian il 19/10/2026.
