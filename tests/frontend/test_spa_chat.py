@@ -1,7 +1,7 @@
 """Passo 5c della migrazione: la chat in React (frontend/src/components/ChatWindow.tsx).
 
 Gli stessi controlli di test_chat_pannello.py (P46, P48, P81, P128), sulla pagina
-della SPA con il login (/prova-react, fino al passo 6): aprire la chat azzera i non
+della SPA con il login (/profile/settings, dal passo 6): aprire la chat azzera i non
 letti; a 360×640 la casella si vede, accetta al massimo 1000 caratteri (come
 CHAT_MAX_LENGTH di config.py) e un messaggio di soli spazi si rifiuta; dopo "Invia" la
 casella tiene il fuoco e un doppio clic manda un solo messaggio; un messaggio
@@ -39,10 +39,10 @@ ROOT = Path(__file__).resolve().parents[2]
 CHAT_TSX = (ROOT / "frontend" / "src" / "components" / "ChatWindow.tsx").read_text(encoding="utf-8")
 PASSWORD = "Password-di-prova-1"
 UNREAD = 3
-PAGE = "/prova-react"
+PAGE = "/profile/settings"
 CHAT = "document.querySelector('[data-view=\"chat\"]')"
 PANEL_OPEN = "document.querySelector('[data-friends-panel]')?.open === true"
-CONNECTED = "document.querySelector('[data-spa-connection=\"connected\"]') !== null"
+CONNECTED = "document.querySelector('[data-friends-panel]')?.dataset.connection === 'connected'"
 BADGE = ("Number(document.querySelector('[data-friends-badge]').hidden ? 0"
          " : document.querySelector('[data-friends-badge]').textContent)")
 SEND = "[data-chat-form] button[type=submit]"

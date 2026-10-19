@@ -19,6 +19,7 @@ from pathlib import Path
 
 import pytest
 from flask import render_template
+from flask_login import login_user
 
 from app import create_app
 from app.services.avatars import AVATARS
@@ -148,15 +149,16 @@ def test_senza_avatar_resta_l_iniziale(app):
     assert "img/avatars/" not in html
 
 
-def test_impostazioni_con_un_immagine_per_scelta(app):
-    html = _render(app, "profile/settings.html", "coppe", avatars=AVATARS)
-    for code, name in AVATARS.items():
-        choice = re.search(rf'<label class="avatar-choice" data-avatar="{code}">.*?</label>', html, flags=re.DOTALL)
-        assert choice, code
-        assert f'src="/static/img/avatars/{code}.svg"' in choice.group(0)
-        assert f'<span class="avatar-choice__name">{name}</span>' in choice.group(0)
-    initial = re.search(r'<label class="avatar-choice" data-avatar="">.*?</label>', html, flags=re.DOTALL).group(0)
-    assert '<span class="avatar-choice__face" aria-hidden="true">M</span>' in initial
+def test_impostazioni_ricevono_tutti_gli_avatar(app):
+    # Dal passo 6 della migrazione la pagina è della SPA: l'elenco lo dà GET /api/profile/avatars
+    # (un'immagine per scelta la controlla tests/frontend2/test_spa_impostazioni.py nel browser)
+    with app.test_request_context("/api/profile/avatars"):
+        login_user(BrowserUser("Mario"))
+        body = app.view_functions["profile_api.avatars"]()
+    assert body["ok"] is True
+    assert body["data"]["avatars"] == [{"code": code, "name": name} for code, name in AVATARS.items()]
+    for code in AVATARS:
+        assert (AVATAR_DIR / f"{code}.svg").is_file(), code
 
 
 # --- Nel browser: il tavolo di prova ------------------------------------------

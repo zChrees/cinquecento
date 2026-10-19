@@ -79,6 +79,7 @@ export function LoginPrompt(props: LoginPromptProps): JSX.Element {
       title="Accedi o registrati per giocare"
       message="Per giocare, vedere le tue statistiche e i tuoi amici serve un account."
       actions={ACTIONS}
+      content={null}
       footer={<Credits />}
       onDone={handleDone}
     />

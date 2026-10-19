@@ -74,9 +74,10 @@ def _register_blueprints(app):
     from app.blueprints.friends import bp as friends_bp
     from app.blueprints.game import bp as game_bp
     from app.blueprints.main import bp as main_bp
+    from app.blueprints.profile import api_bp as profile_api_bp
     from app.blueprints.profile import bp as profile_bp
     from app.blueprints.spa import bp as spa_bp
     from app.blueprints.stats import bp as stats_bp
 
-    for bp in (main_bp, auth_bp, auth_api_bp, profile_bp, game_bp, stats_bp, friends_bp, spa_bp):
+    for bp in (main_bp, auth_bp, auth_api_bp, profile_bp, profile_api_bp, game_bp, stats_bp, friends_bp, spa_bp):
         app.register_blueprint(bp)

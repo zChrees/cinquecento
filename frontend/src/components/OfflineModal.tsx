@@ -39,6 +39,7 @@ export function OfflineModal(props: OfflineModalProps): JSX.Element {
       title="Nessuna connessione"
       message="Controlla la connessione a internet e riprova."
       actions={ACTIONS}
+      content={null}
       footer={null}
       onDone={handleDone}
     />

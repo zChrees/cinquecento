@@ -31,7 +31,6 @@ from tests import accounts
 WAIT = 5
 PASSWORD = "Password-di-prova-1"  # la stessa di conftest.py
 CSRF_META = re.compile(r'<meta name="csrf-token" content="([^"]+)">')
-CSRF_FIELD = re.compile(r'name="csrf_token" (?:type="hidden" )?value="([^"]+)"')
 
 EVENTS = (
     "queue:join", "queue:leave",
@@ -190,10 +189,10 @@ def test_esci_scollega_tutte_le_schede_ed_esce_dalla_coda(server, new_user):
 
 
 def _delete_account(session, url):
-    page = session.get(f"{url}/profile/settings", timeout=WAIT).text
-    tokens = CSRF_FIELD.findall(page)
-    return session.post(f"{url}/profile/delete", data={"csrf_token": tokens[-1], "password": PASSWORD},
-                        allow_redirects=False, timeout=WAIT)
+    # Dal passo 6 della migrazione: la rotta JSON della SPA, con il codice CSRF della sessione
+    token = session.get(f"{url}/api/auth/session", timeout=WAIT).json()["data"]["csrf_token"]
+    return session.post(f"{url}/api/profile/delete", json={"password": PASSWORD},
+                        headers={"X-CSRFToken": token}, timeout=WAIT)
 
 
 def test_cancellazione_toglie_dalla_coda_e_scollega(server, new_user):
@@ -203,7 +202,7 @@ def test_cancellazione_toglie_dalla_coda_e_scollega(server, new_user):
     try:
         assert tab.call("queue:join", {"request_id": uuid.uuid4().hex, "mode": "2v2", "target_score": 500})["ok"]
         assert matchmaker.queue.status(user_id) is not None
-        assert _delete_account(session, server["url"]).status_code == 302
+        assert accounts.ok(_delete_account(session, server["url"]))
         assert tab.gone.wait(WAIT)
         assert matchmaker.queue.status(user_id) is None
         with server["app"].app_context():
@@ -228,7 +227,7 @@ def test_cancellazione_annulla_gli_inviti(server, connect, new_user):
                                         "mode": "1v1", "target_score": 150})
         assert sent["ok"] is True, sent
         invite_id = sent["data"]["invite_id"]
-        assert _delete_account(session, server["url"]).status_code == 302
+        assert accounts.ok(_delete_account(session, server["url"]))
         assert tab.gone.wait(WAIT)
         _wait_until(lambda: {"invite_id": invite_id, "status": "cancelled"} in updates, "invito annullato")
     finally:

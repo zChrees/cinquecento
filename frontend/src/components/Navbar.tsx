@@ -6,6 +6,8 @@
  *   la finestra "Accedi o registrati per giocare" (passo 4).
  * - Con il login: avatar e nome, che aprono il pannello statistiche (StatsSheet);
  *   il logo; "Amici" con il contatore, che apre il pannello amici (FriendsPanel, passo 5b).
+ *   Solo con il login la pagina si collega al tempo reale: per questo anche l'avviso
+ *   di connessione (ConnectionBanner, P33) sta qui (dal passo 6; prima nella pagina di prova).
  * - Finché non si sa chi è collegato (la sessione non è ancora arrivata) i due
  *   pulsanti ci sono ma non si vedono: così chi ha il login non vede per un attimo "Accedi".
  *
@@ -22,6 +24,7 @@ import type { CSSProperties, JSX, RefObject } from 'react';
 import { useSession } from '../session/SessionContext';
 import type { Stats } from '../types/api';
 import { Avatar } from './Avatar';
+import { ConnectionBanner } from './ConnectionBanner';
 import { FriendsPanel, useOpenFriendsPanel } from './FriendsPanel';
 import { LoginPrompt } from './LoginPrompt';
 import { Logo } from './Logo';
@@ -161,6 +164,7 @@ export function Navbar(): JSX.Element {
           message={statsMessage}
         />
         <FriendsPanel onBadge={setFriendsBadge} />
+        <ConnectionBanner />
       </>
     );
   } else {

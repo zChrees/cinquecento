@@ -25,6 +25,9 @@ PAGES = [
     ("/", "document.querySelector('[data-online-count]')?.textContent === '1'"),  # home:status arrivato
     ("/game/prova?demo=1v1", "document.querySelector('[data-table]') !== null"),
     ("/auth/register", "document.querySelector('form') !== null"),
+    # Passo 6: le impostazioni della SPA, collegate e con l'elenco degli avatar arrivato
+    ("/profile/settings", ("document.querySelector('[data-friends-panel]')?.dataset.connection === 'connected'"
+                           " && document.querySelector('[data-avatar=\"coppe\"]') !== null")),
 ]
 
 

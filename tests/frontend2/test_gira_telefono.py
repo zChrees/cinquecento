@@ -54,6 +54,9 @@ def browser(server, tmp_path):
 
 # Stesso modulo della pagina (un import dinamico dello stesso indirizzo non ne crea un altro)
 CONNECTED = "import('/static/js/core/socket.js').then((m) => m.isConnected())"
+# Nelle pagine della SPA (passo 6: le impostazioni) lo dice il pannello amici di React
+SPA_CONNECTED = "document.querySelector('[data-friends-panel]')?.dataset.connection === 'connected'"
+SPA_PAGES = ("/profile/settings",)
 
 
 def _open(browser, server, path, logged, size):
@@ -63,7 +66,10 @@ def _open(browser, server, path, logged, size):
     if logged and path != "/game/prova?demo=1v1":  # la prova del tavolo non si collega
         # Con il login la pagina si collega al tempo reale: prima di cambiarla o di chiudere il
         # browser si aspetta il collegamento, altrimenti blocca il server del file dopo (P58, P62)
-        browser.wait_js(CONNECTED, f"collegamento al tempo reale ({path})")
+        connected = CONNECTED
+        if path in SPA_PAGES:
+            connected = SPA_CONNECTED
+        browser.wait_js(connected, f"collegamento al tempo reale ({path})")
 
 
 @pytest.mark.parametrize(("path", "logged"), PAGES)

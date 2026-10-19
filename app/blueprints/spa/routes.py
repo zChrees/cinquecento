@@ -12,17 +12,16 @@ Cosa contiene:
                    usano anche le rotte di altri blueprint che sono pagine della
                    SPA (per esempio /auth/login in app/blueprints/auth/routes.py)
     asset(...)     GET /static/dist/<file>, i file JavaScript della SPA
-    test_page()    GET /prova-react, la pagina di prova (solo sviluppo e test)
 
 DA DOVE ARRIVANO I DATI: il browser chiede un indirizzo della SPA (per esempio
-/prova-react); Flask chiama la funzione della rotta, che legge il file scritto
+/auth/login); Flask chiama la funzione della rotta, che legge il file scritto
 dal build.
 """
 
 import logging
 from pathlib import Path
 
-from flask import abort, current_app, send_file, send_from_directory
+from flask import current_app, send_file, send_from_directory
 
 from app.blueprints.spa import bp
 
@@ -32,11 +31,7 @@ log = logging.getLogger(__name__)
 # SPA_PATHS di frontend/vite.config.ts (lo controlla tests/frontend/test_spa.py):
 # una pagina nuova della SPA si aggiunge in tutti e due i posti, più la sua rotta
 # (qui, o nel blueprint del suo argomento con spa_page(), come /auth/login).
-SPA_PATHS = ("/prova-react", "/auth/login", "/auth/register")
-
-# TEST_PAGE_ENVS: gli ambienti (APP_ENV) in cui c'è la pagina di prova, come i
-# dati finti della home (DEMO_ENVS di app/blueprints/main/routes.py)
-TEST_PAGE_ENVS = {"development", "testing"}
+SPA_PATHS = ("/auth/login", "/auth/register", "/profile/settings")
 
 # NOT_BUILT: il messaggio quando manca il build, invece di una pagina bianca
 NOT_BUILT = "Frontend non compilato: lancia npm run build in frontend/."
@@ -97,20 +92,3 @@ def asset(filename):
     """
     return send_from_directory(dist_dir(), filename)
 
-
-@bp.get("/prova-react")
-def test_page():
-    """GET /prova-react: la pagina di prova della SPA (frontend/src/pages/TestPage.tsx).
-
-    In parole semplici:
-        test_page()
-        Fuori da sviluppo e test (per esempio con APP_ENV=demo) risponde 404,
-        come se la pagina non esistesse; altrimenti manda la pagina della SPA.
-        Si toglie con la prima pagina vera (passo 4 del piano).
-
-        @bp.get(...) è un decoratore: dice a Flask "quando arriva GET
-        /prova-react, chiama questa funzione".
-    """
-    if current_app.config["ENV_NAME"] not in TEST_PAGE_ENVS:
-        abort(404)
-    return spa_page()

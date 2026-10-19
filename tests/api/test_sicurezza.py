@@ -63,8 +63,6 @@ def test_nessuno_script_scritto_nella_pagina(client, path):
 
 @pytest.mark.parametrize(("method", "path", "body"), [
     ("post", "/auth/logout", {}),
-    ("post", "/profile/delete", {"password": "Password-di-prova-1"}),
-    ("post", "/profile/avatar", {"avatar": "coppe"}),
 ])
 def test_moduli_senza_csrf_rifiutati(client, method, path, body):
     response = getattr(client, method)(path, data=body)
@@ -79,6 +77,8 @@ def test_moduli_senza_csrf_rifiutati(client, method, path, body):
     ("post", "/friends/requests/1/accept", None),
     ("delete", "/friends/1", None),
     ("post", "/friends/blocks", {"request_id": "abc", "user_id": 1}),
+    ("post", "/api/profile/delete", {"password": "Password-di-prova-1"}),
+    ("post", "/api/profile/avatar", {"avatar": "coppe"}),
 ])
 def test_richieste_json_senza_csrf_rifiutate(client, method, path, body):
     response = getattr(client, method)(path, json=body)

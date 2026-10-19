@@ -43,6 +43,10 @@ interface ModalProps {
   title: string;
   // il testo sotto il titolo; '' per niente
   message: string;
+  // un pezzo in più sotto il testo (per esempio il campo della password per
+  // cancellare l'account, passo 6), oppure null. Se un suo elemento ha
+  // data-autofocus, all'apertura il fuoco va lì invece che sul primo pulsante
+  content: JSX.Element | null;
   // i pulsanti, nell'ordine in cui compaiono (il principale per ultimo); il primo
   // riceve il fuoco della tastiera
   actions: ModalAction[];
@@ -90,6 +94,12 @@ export function Modal(props: ModalProps): JSX.Element {
     const dialog = dialogRef.current;
     if (dialog !== null && !dialog.open) {
       dialog.showModal();
+      // Il fuoco su un elemento del contenuto con data-autofocus (dopo showModal,
+      // che altrimenti lo porterebbe sul primo pulsante)
+      const target = dialog.querySelector('[data-autofocus]');
+      if (target instanceof HTMLElement) {
+        target.focus();
+      }
     }
 
     function closeDialog(): void {
@@ -234,6 +244,7 @@ export function Modal(props: ModalProps): JSX.Element {
         </button>
       </div>
       {body}
+      {props.content}
       <div className="dialog__actions">{buttons}</div>
       {props.footer}
     </dialog>

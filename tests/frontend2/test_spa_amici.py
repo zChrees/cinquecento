@@ -1,7 +1,7 @@
 """Passi 5b e 5c della migrazione: il pannello amici in React (frontend/src/components/FriendsPanel.tsx).
 
 Gli stessi controlli di test_pannello_amici.py (P46, P47) e test_suoni_menu.py (P115),
-sulla pagina della SPA con il login (/prova-react, fino al passo 6):
+sulla pagina della SPA con il login (/profile/settings, dal passo 6):
 - il contatore sull'icona e la lista divisa in gruppi, con lo stesso HTML e gli
   stessi data-* del pannello di oggi; ogni pulsante con sola icona ha l'etichetta;
 - richiesta di amicizia (campo vuoto, errore del server, riuscita) con X-CSRFToken e
@@ -32,8 +32,8 @@ from tests.frontend2.test_pannello_amici import ME, FakeFriendsServer
 from tests.spa import needs_spa
 
 ROOT = Path(__file__).resolve().parents[2]
-# PAGE: l'unica pagina della SPA con il login, fino al passo 6
-PAGE = "/prova-react"
+# PAGE: una pagina della SPA con il login (le impostazioni, dal passo 6)
+PAGE = "/profile/settings"
 SOUNDS_JS = (ROOT / "app" / "static" / "js" / "core" / "sounds.js").read_text(encoding="utf-8")
 SOUNDS_TS = (ROOT / "frontend" / "src" / "utils" / "sounds.ts").read_text(encoding="utf-8")
 # Come test_suoni_menu.py: registra i suoni partiti (anche quelli che il browser non fa sentire)
@@ -43,7 +43,7 @@ RECORD_SOUNDS = (
 )
 PANEL_OPEN = "document.querySelector('[data-friends-panel]')?.open === true"
 LIST_READY = "document.querySelector('[data-friends-group=\"online\"]') !== null"
-CONNECTED = "document.querySelector('[data-spa-connection=\"connected\"]') !== null"
+CONNECTED = "document.querySelector('[data-friends-panel]')?.dataset.connection === 'connected'"
 UUID4 = r"[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
 # Come test_csp.py: registra ogni risorsa bloccata dalla CSP
 RECORD = (

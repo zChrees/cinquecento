@@ -28,12 +28,12 @@ const FLASK = 'http://localhost:5000';
 // SPA_PATHS: gli indirizzi che sono pagine della SPA. Deve restare uguale a
 // SPA_PATHS di app/blueprints/spa/routes.py (lo controlla tests/frontend/test_spa.py):
 // una pagina nuova della SPA si aggiunge in tutti e due i posti.
-const SPA_PATHS: string[] = ['/prova-react', '/auth/login', '/auth/register'];
+const SPA_PATHS: string[] = ['/auth/login', '/auth/register', '/profile/settings'];
 
 /**
  * Costruisce l'espressione regolare degli indirizzi da girare a Flask.
  *
- * @returns {string} l'espressione, per esempio '^/(?!@|src/|node_modules/|prova-react(?:[/?]|$))'
+ * @returns {string} l'espressione, per esempio '^/(?!@|src/|node_modules/|auth/login(?:[/?]|$)|...)'
  *
  * In parole semplici:
  *   flaskPattern()
@@ -41,9 +41,9 @@ const SPA_PATHS: string[] = ['/prova-react', '/auth/login', '/auth/register'];
  *   (/@vite/client, /@react-refresh, /src/..., /node_modules/...) e tranne le
  *   pagine della SPA. Gli indirizzi che restano fuori li serve Vite.
  *
- *   (?!...) vuol dire "qui NON deve esserci...": per esempio /prova-react non
+ *   (?!...) vuol dire "qui NON deve esserci...": per esempio /auth/login non
  *   va a Flask, /api/auth/login sì. Dopo il nome di una pagina può venire solo /, ?
- *   o la fine dell'indirizzo ([/?]|$), così /prova-reactx andrebbe a Flask.
+ *   o la fine dell'indirizzo ([/?]|$), così /auth/loginx andrebbe a Flask.
  *
  *   Restituisce: il testo dell'espressione; Vite la riconosce come espressione
  *   regolare perché comincia con ^.
@@ -52,7 +52,7 @@ function flaskPattern(): string {
   // excluded: i pezzi esclusi, uniti dopo con | (che vuol dire "oppure")
   const excluded: string[] = ['@', 'src/', 'node_modules/'];
   for (let i = 0; i < SPA_PATHS.length; i++) {
-    // la pagina senza la / iniziale, per esempio 'prova-react'
+    // la pagina senza la / iniziale, per esempio 'auth/login'
     const name = SPA_PATHS[i].slice(1);
     excluded.push(`${name}(?:[/?]|$)`);
   }

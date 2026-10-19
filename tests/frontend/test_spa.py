@@ -4,15 +4,15 @@ Controlla:
 - gli indirizzi della SPA sono gli stessi in Flask (app/blueprints/spa/routes.py) e
   in Vite (frontend/vite.config.ts), e ognuno ha la sua rotta;
 - Flask manda index.html del build, da richiedere ogni volta (no-cache), con la CSP;
-  senza build risponde 503 con un messaggio chiaro; la pagina di prova non c'è con
-  APP_ENV=demo;
+  senza build risponde 503 con un messaggio chiaro; la pagina di prova /prova-react
+  non c'è più (tolta con il passo 6);
 - con Node e frontend/node_modules: TypeScript non trova errori, il build vero
   (in una cartella temporanea, fuori dal progetto) non ha script né stili scritti
-  dentro la pagina, e nel browser React disegna la pagina di prova, il pulsante
-  funziona e la CSP non blocca niente. Senza Node o senza `npm ci` questi si saltano;
-- passo 3 (frontend/src/socket/): senza login la connessione è rifiutata e il pulsante
-  del tempo reale resta spento; con il login la pagina si collega, riceve home:status
-  (1 online) e manda queue:leave ricevendo "ok";
+  dentro la pagina, e nel browser React disegna la pagina di accesso e la CSP non
+  blocca niente. Senza Node o senza `npm ci` questi si saltano;
+- passo 3 (frontend/src/socket/): senza login la pagina non si collega al tempo
+  reale; con il login (le impostazioni, dal passo 6) si collega. I controlli su
+  home:status e queue:leave della pagina di prova tornano con la home (passo 7);
 - passo 5a (la cornice con il login): la navbar ha nome e avatar, il pannello
   statistiche si apre con i numeri e si chiude, "Esci" porta il codice CSRF; scollegati
   dal server compare l'avviso "Sei stato scollegato" con "Ricarica".
@@ -72,9 +72,9 @@ def test_stessi_indirizzi_in_flask_e_in_vite(app):
 # --- Flask -------------------------------------------------------------------
 
 
-def test_pagina_di_prova_dal_build(app, fake_dist):
+def test_pagina_dal_build(app, fake_dist):
     (fake_dist / "index.html").write_text("<!doctype html><div id=\"root\"></div>", encoding="utf-8")
-    response = app.test_client().get("/prova-react")
+    response = app.test_client().get("/auth/login")
     assert response.status_code == 200
     assert response.mimetype == "text/html"
     assert "no-cache" in response.headers["Cache-Control"]
@@ -84,15 +84,17 @@ def test_pagina_di_prova_dal_build(app, fake_dist):
 
 
 def test_senza_build_errore_chiaro(app, fake_dist):
-    response = app.test_client().get("/prova-react")
+    response = app.test_client().get("/auth/login")
     assert response.status_code == 503
     assert response.get_data(as_text=True) == routes.NOT_BUILT
 
 
-def test_pagina_di_prova_solo_in_sviluppo_e_nei_test(app, fake_dist):
+def test_pagina_di_prova_tolta(app, fake_dist):
+    # Passo 6: /prova-react serviva finché non c'era una pagina vera con il login
     (fake_dist / "index.html").write_text("<!doctype html>", encoding="utf-8")
-    app.config["ENV_NAME"] = "demo"
     assert app.test_client().get("/prova-react").status_code == 404
+    assert "/prova-react" not in routes.SPA_PATHS
+    assert not (FRONTEND / "src" / "pages" / "TestPage.tsx").exists()
 
 
 # --- Build vero (con Node) ---------------------------------------------------
@@ -161,45 +163,33 @@ def test_nel_browser_react_disegna_e_la_csp_non_blocca(spa_server, tmp_path):
     try:
         browser.send("Page.enable")  # senza, lo script qui sotto non parte con le pagine nuove
         browser.send("Page.addScriptToEvaluateOnNewDocument", source=RECORD)
-        browser.open(f"{spa_server}/prova-react", 390, 844,
-                     ready="document.querySelector('[data-spa-message]') !== null")
-        assert browser.js("document.querySelector('h1').textContent") == "Prova React"
-        browser.click("[data-spa-button]")
-        browser.wait_js(
-            "document.querySelector('[data-spa-message]').textContent"
-            " === 'Hai premuto il pulsante una volta.'",
-            "il clic aggiorna la frase",
-        )
-        # Passo 3: senza login il server rifiuta la connessione (contratto 1.4)
-        browser.wait_js("document.querySelector('[data-spa-connection=\"not_logged_in\"]') !== null",
-                        "connessione rifiutata senza login")
-        assert browser.js("document.querySelector('[data-spa-send]').disabled") is True
+        browser.open(f"{spa_server}/auth/login", 390, 844, ready="document.querySelector('h1') !== null")
+        assert browser.js("document.querySelector('h1').textContent") == "Accedi"
         assert browser.js("window.__csp") == []
+        # Passo 3: senza login la pagina non apre il collegamento al tempo reale
+        browser.js("new Promise((r) => setTimeout(r, 500))")
+        requests = browser.js("performance.getEntriesByType('resource').map((e) => e.name)")
+        assert not [name for name in requests if "/socket.io/" in name], requests
     finally:
         browser.close()
 
 
 def test_nel_browser_tempo_reale_con_il_login(spa_server, tmp_path):
-    # Passo 3 (frontend/src/socket/): connessione, un evento del server (home:status)
-    # e un evento della pagina con la sua risposta (queue:leave)
+    # Passo 3 (frontend/src/socket/), dal passo 6 sulle impostazioni: con il login la pagina si collega
     browser = Browser(find_browser(), tmp_path)
     try:
         browser.send("Network.setCookie", name=TEST_COOKIE[0], value=TEST_COOKIE[1], url=spa_server)
         browser.send("Page.enable")
         browser.send("Page.addScriptToEvaluateOnNewDocument", source=RECORD)
-        browser.open(f"{spa_server}/prova-react", 390, 844,
-                     ready="document.querySelector('[data-spa-connection=\"connected\"]') !== null")
-        browser.wait_js("document.querySelector('[data-spa-online]').textContent === '1'",
-                        "home:status arrivato")
-        browser.click("[data-spa-send]")
-        browser.wait_js("document.querySelector('[data-spa-answer]').textContent === 'Il server ha risposto: ok'",
-                        "risposta di queue:leave")
-        assert browser.js("document.querySelector('[data-spa-send]').disabled") is False
+        browser.open(f"{spa_server}/profile/settings", 390, 844, ready=CONNECTED)
+        assert browser.js("document.querySelector('h1').textContent") == "Impostazioni"
         assert browser.js("window.__csp") == []
     finally:
         browser.close()
 
 
+# CONNECTED: la pagina è collegata al tempo reale (lo dice il pannello amici, dal passo 6)
+CONNECTED = "document.querySelector('[data-friends-panel]')?.dataset.connection === 'connected'"
 # STATS_OPEN: il pannello statistiche è aperto e mostra le partite giocate
 STATS_OPEN = "document.getElementById('stats').open && document.querySelector('[data-stat=\"Partite\"] dd')?.textContent"
 
@@ -208,8 +198,7 @@ def test_cornice_con_il_login(spa_server, spa_app, tmp_path):
     browser = Browser(find_browser(), tmp_path)
     try:
         browser.send("Network.setCookie", name=TEST_COOKIE[0], value=TEST_COOKIE[1], url=spa_server)
-        browser.open(f"{spa_server}/prova-react", 390, 844,
-                     ready="document.querySelector('[data-spa-connection=\"connected\"]') !== null")
+        browser.open(f"{spa_server}/profile/settings", 390, 844, ready=CONNECTED)
         # Navbar con il login: nome e iniziale, niente "Accedi"
         navbar = browser.js("""(() => { const b = document.querySelector('[data-open-stats]');
           return { label: b.querySelector('.navbar__label').textContent, avatar: b.querySelector('.avatar').textContent,

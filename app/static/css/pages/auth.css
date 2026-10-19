@@ -42,11 +42,12 @@
  * Schermi bassi (P126): il riquadro deve entrare sempre sotto la navbar, senza
  * scorrere. Si stringono solo gli spazi, e solo dove serve: dove c'è posto la
  * pagina resta com'è. Caselle e pulsante restano alti almeno 44 px.
- * (.page--form qui vale solo per accesso e registrazione: questo file lo caricano
- * solo loro.)
+ * (Dal passo 6 della migrazione questo file lo carica tutta la SPA, e .page--form
+ * c'è anche nelle impostazioni: la regola vale solo per una .page--form che
+ * contiene il riquadro .auth, cioè accesso e registrazione.)
  */
 @media (max-height: 800px) {
-  .page--form {
+  .page--form:has(> .auth) {
     padding-top: 8px;
     padding-bottom: calc(8px + env(safe-area-inset-bottom));
   }

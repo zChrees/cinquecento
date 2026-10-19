@@ -10,6 +10,8 @@
  *   Online                        GET /online
  *   Session, LoginBody,           le rotte /api/auth/ della SPA (passo 4 della migrazione)
  *   RegisterBody, AuthDone
+ *   AvatarList, AvatarBody,       le rotte /api/profile/ delle impostazioni (passo 6)
+ *   DeleteAccountBody
  *
  * DA DOVE ARRIVANO I DATI: le rotte dei blueprint stats, friends e main di Flask.
  * Ogni risposta ha la forma di common.ts: OkWithData<Stats> | ErrorResponse.
@@ -145,8 +147,36 @@ export interface RegisterBody {
   confirm: string;
 }
 
-// AuthDone: la risposta di login e registrazione riusciti
+// AuthDone: la risposta di login e registrazione riusciti, e (passo 6) di
+// "Salva l'avatar" e della cancellazione dell'account
 export interface AuthDone {
   // dove andare adesso, per esempio '/' (la home)
   redirect: string;
+}
+
+// --- Impostazioni (/api/profile/, passo 6 della migrazione) ------------------
+
+// AvatarChoice: un avatar che si può scegliere
+export interface AvatarChoice {
+  // il codice salvato nel database, per esempio 're_coppe'
+  code: string;
+  // il nome da mostrare, per esempio 'Re di coppe'
+  name: string;
+}
+
+// AvatarList: i dati di GET /api/profile/avatars, nell'ordine di avatars.py (D29)
+export interface AvatarList {
+  avatars: AvatarChoice[];
+}
+
+// AvatarBody: il corpo di POST /api/profile/avatar
+export interface AvatarBody {
+  // il codice scelto; '' per nessun avatar (l'iniziale del nome)
+  avatar: string;
+}
+
+// DeleteAccountBody: il corpo di POST /api/profile/delete
+export interface DeleteAccountBody {
+  // la password, per confermare
+  password: string;
 }

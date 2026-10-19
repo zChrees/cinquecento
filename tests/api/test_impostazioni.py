@@ -1,5 +1,8 @@
 """P17: impostazioni: avatar e cancellazione dell'account.
 
+Dal passo 6 della migrazione la pagina /profile/settings la disegna la SPA e i dati
+passano dalle rotte JSON /api/profile/ (app/blueprints/profile/api.py).
+
 Serve MySQL con scripts/setup_db.sql già lanciato: si usa SOLO il database dei
 test, che all'inizio viene svuotato e ricreato con migrate.py; prima di ogni prova
 le tabelle si svuotano. Comando: python tests/esegui_tutti.py api
@@ -25,6 +28,7 @@ from app.services.auth_service import (
     LoginLimiter,
 )
 from tests import accounts
+from tests.spa import needs_spa
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 PASSWORD = "Password-di-prova-17"
@@ -119,7 +123,7 @@ def test_is_valid_rifiuta_i_valori_fuori_elenco(value):
     assert not avatars.is_valid(value)
 
 
-# Pagina
+# Pagina (dal passo 6 della migrazione la disegna la SPA)
 
 
 def test_pagina_solo_con_il_login(client):
@@ -128,85 +132,94 @@ def test_pagina_solo_con_il_login(client):
     assert response.location.startswith("/auth/login")
 
 
-def test_pagina_mostra_tutti_gli_avatar_e_la_cancellazione(client):
+def test_pagina_della_spa_con_il_login(client):
+    needs_spa()
     register(client)
-    page = client.get("/profile/settings").get_data(as_text=True)
-    for code, name in avatars.AVATARS.items():
-        assert f'data-avatar="{code}"' in page
-        assert name in page
-    assert 'data-avatar=""' in page and "Iniziale" in page
-    assert re.search(r'value=""\s+checked', page), "senza avatar è scelta l'iniziale"
-    assert "data-delete-form" in page and "data-delete-open" in page
-    assert page.count("js/pages/profile.js") == 1
+    response = client.get("/profile/settings")
+    assert response.status_code == 200
+    page = response.get_data(as_text=True)
+    assert '<div id="root">' in page  # la SPA: la pagina la disegna React
+    assert "profile.js" not in page
+    assert not (BASE_DIR / "app" / "templates" / "profile" / "settings.html").exists()
+    assert not (BASE_DIR / "app" / "static" / "js" / "pages" / "profile.js").exists()
 
 
-def test_template_estende_base_senza_stile_ne_script_scritti_dentro():
-    source = (BASE_DIR / "app" / "templates" / "profile" / "settings.html").read_text(encoding="utf-8")
-    assert source.lstrip().startswith('{% extends "base.html" %}')
-    assert "<style" not in source
-    assert re.findall(r"<script[^>]*>", source) == [
-        '<script type="module" src="{{ url_for(\'static\', filename=\'js/pages/profile.js\') }}">'
-    ]
-
-
-def test_script_della_pagina_avvia_la_navbar_e_usa_la_finestra_nella_pagina():
-    source = (BASE_DIR / "app" / "static" / "js" / "pages" / "profile.js").read_text(encoding="utf-8")
-    assert "initLayout()" in source
-    assert "openModal" in source
-    for forbidden in ("alert(", "confirm(", "prompt(", "innerHTML"):
-        assert forbidden not in source
+def test_elenco_degli_avatar(client):
+    register(client)
+    body = client.get("/api/profile/avatars").get_json()
+    assert body["ok"] is True
+    assert body["data"]["avatars"] == [{"code": code, "name": name} for code, name in avatars.AVATARS.items()]
 
 
 # Avatar
 
 
+def save_avatar(client, value, raw=None):
+    """POST /api/profile/avatar con {"avatar": value} (o il corpo `raw`, se c'è)."""
+    return client.post("/api/profile/avatar", json={"avatar": value} if raw is None else raw)
+
+
 def test_avatar_scelto_viene_salvato(app, client):
     register(client)
-    response = client.post("/profile/avatar", data={"avatar": "re_denari"})
-    assert response.status_code == 302 and response.location == "/profile/settings"
+    response = save_avatar(client, "re_denari")
+    assert accounts.ok(response) and response.get_json()["data"] == {"redirect": "/profile/settings"}
     assert flashes(client) == ["Avatar salvato."]
     assert scalar(app, "SELECT avatar FROM utenti WHERE nome_utente = 'Mario'") == "re_denari"
-    page = client.get("/profile/settings").get_data(as_text=True)
-    assert re.search(r'value="re_denari"\s+checked', page)
+    session = client.get("/api/auth/session").get_json()["data"]
+    assert session["user"]["avatar"] == "re_denari"  # la navbar della SPA lo legge da qui
     assert 'data-avatar="re_denari"' in client.get("/").get_data(as_text=True)  # <body data-avatar>
 
 
 def test_iniziale_toglie_l_avatar(app, client):
     register(client)
-    client.post("/profile/avatar", data={"avatar": "coppe"})
-    client.post("/profile/avatar", data={"avatar": ""})
+    save_avatar(client, "coppe")
+    save_avatar(client, "")
     assert scalar(app, "SELECT avatar FROM utenti WHERE nome_utente = 'Mario'") is None
 
 
-@pytest.mark.parametrize("value", ["drago", "Coppe", "coppe ", "x" * 40, "<b>coppe</b>"])
+@pytest.mark.parametrize("value", ["drago", "Coppe", "coppe ", "x" * 40, "<b>coppe</b>", 3, None, ["coppe"]])
 def test_avatar_fuori_elenco_rifiutato(app, client, value):
     register(client)
-    client.post("/profile/avatar", data={"avatar": "spade"})
-    client.get("/profile/settings")  # consuma il messaggio "Avatar salvato"
-    response = client.post("/profile/avatar", data={"avatar": value})
-    assert response.status_code == 302
-    assert flashes(client) == [AVATAR_INVALID]
+    save_avatar(client, "spade")
+    client.get("/api/auth/session")  # consuma il messaggio "Avatar salvato"
+    response = save_avatar(client, value)
+    assert response.status_code == 400
+    error = response.get_json()["error"]
+    assert error["code"] == "invalid_data" and error["message"] == AVATAR_INVALID
+    assert error["fields"] == {"avatar": [AVATAR_INVALID]}
+    assert flashes(client) == []
     assert scalar(app, "SELECT avatar FROM utenti WHERE nome_utente = 'Mario'") == "spade"
 
 
-def test_avatar_mancante_rifiutato(app, client):
+@pytest.mark.parametrize("raw", [{}, [], "coppe"])
+def test_avatar_mancante_o_corpo_sbagliato_rifiutato(app, client, raw):
     register(client)
-    client.post("/profile/avatar", data={})
-    assert AVATAR_INVALID in flashes(client)
+    response = save_avatar(client, None, raw=raw)
+    assert response.status_code == 400 and response.get_json()["error"]["message"] == AVATAR_INVALID
     assert scalar(app, "SELECT avatar FROM utenti WHERE nome_utente = 'Mario'") is None
 
 
-def test_avatar_solo_con_il_login(app, client):
-    response = client.post("/profile/avatar", data={"avatar": "coppe"})
-    assert response.status_code == 302 and response.location.startswith("/auth/login")
+def test_rotte_solo_con_il_login(client):
+    for method, path, body in (("get", "/api/profile/avatars", None),
+                               ("post", "/api/profile/avatar", {"avatar": "coppe"}),
+                               ("post", "/api/profile/delete", {"password": PASSWORD})):
+        response = getattr(client, method)(path, json=body)
+        assert response.status_code == 401, path
+        assert response.get_json()["error"]["code"] == "not_logged_in", path
 
 
-def test_moduli_senza_codice_csrf_rifiutati(app):
+def test_rotte_vecchie_tolte(client):
+    register(client)
+    assert client.post("/profile/avatar", data={"avatar": "coppe"}).status_code in (404, 405)
+    assert client.post("/profile/delete", data={"password": PASSWORD}).status_code in (404, 405)
+
+
+def test_senza_codice_csrf_rifiutate(app):
     app.config["WTF_CSRF_ENABLED"] = True
     try:
         client = app.test_client()
-        assert client.post("/profile/avatar", data={"avatar": "coppe"}).status_code == 400
-        assert client.post("/profile/delete", data={"password": PASSWORD}).status_code == 400
+        assert client.post("/api/profile/avatar", json={"avatar": "coppe"}).status_code == 400
+        assert client.post("/api/profile/delete", json={"password": PASSWORD}).status_code == 400
     finally:
         app.config["WTF_CSRF_ENABLED"] = False
 
@@ -243,14 +256,19 @@ def _game_and_friends(app):
     return mario, nina
 
 
+def delete(client, password):
+    """POST /api/profile/delete con {"password": password} (senza il campo se None)."""
+    return client.post("/api/profile/delete", json={} if password is None else {"password": password})
+
+
 def test_cancellazione_con_la_password_giusta(app, client):
     other = app.test_client()
     register(other, "Nina")
     register(client)
     mario, nina = _game_and_friends(app)
 
-    response = client.post("/profile/delete", data={"password": PASSWORD})
-    assert response.status_code == 302 and response.location == "/"
+    response = delete(client, PASSWORD)
+    assert accounts.ok(response) and response.get_json()["data"] == {"redirect": "/"}
     assert not logged_in(client)
     assert any("Account cancellato" in message for message in flashes(client))
 
@@ -278,23 +296,31 @@ def test_cancellazione_con_la_password_giusta(app, client):
 ])
 def test_senza_la_password_giusta_l_account_resta(app, client, password, message):
     register(client)
-    data = {} if password is None else {"password": password}
-    response = client.post("/profile/delete", data=data)
-    assert response.status_code == 302 and response.location == "/profile/settings"
-    assert message in flashes(client)
+    response = delete(client, password)
+    assert response.status_code == 400
+    error = response.get_json()["error"]
+    assert error["code"] == "invalid_data" and error["message"] == message
+    assert error["fields"] == {"password": [message]}
     assert user_id(app, "Mario") is not None
     assert logged_in(client)
+
+
+def test_password_che_non_e_un_testo_rifiutata(app, client):
+    register(client)
+    response = delete(client, 12345)
+    assert response.status_code == 400 and response.get_json()["error"]["message"] == DELETE_NO_PASSWORD
+    assert user_id(app, "Mario") is not None
 
 
 def test_troppe_password_sbagliate_bloccano(app, client):
     register(client)
     attempts = app.config["LOGIN_MAX_ATTEMPTS"]
-    for _ in range(attempts):
-        client.post("/profile/delete", data={"password": "Password-sbagliata"})
-    assert LOGIN_LOCKED in flashes(client)
-    client.get("/profile/settings")  # consuma i messaggi precedenti
-    client.post("/profile/delete", data={"password": PASSWORD})
-    assert flashes(client) == [LOGIN_LOCKED]
+    answers = [delete(client, "Password-sbagliata") for _ in range(attempts)]
+    assert answers[-1].status_code == 403
+    assert answers[-1].get_json()["error"] == {"code": "not_allowed", "message": LOGIN_LOCKED}
+    # Bloccato: anche con la password giusta non si cancella
+    response = delete(client, PASSWORD)
+    assert response.status_code == 403 and response.get_json()["error"]["message"] == LOGIN_LOCKED
     assert user_id(app, "Mario") is not None
 
 
@@ -302,23 +328,23 @@ def test_con_una_partita_in_corso_non_si_cancella(app, client, monkeypatch):
     register(client)
     mario = user_id(app, "Mario")
     monkeypatch.setattr(auth_service, "find_room_of_user", lambda uid: object() if uid == mario else None)
-    client.post("/profile/delete", data={"password": PASSWORD})
-    assert flashes(client) == [DELETE_IN_GAME]
+    response = delete(client, PASSWORD)
+    assert response.status_code == 403
+    assert response.get_json()["error"] == {"code": "not_allowed", "message": DELETE_IN_GAME}
     assert user_id(app, "Mario") == mario
     assert logged_in(client)
 
 
-def test_cancellazione_solo_con_post_e_con_il_login(client):
-    assert client.post("/profile/delete", data={"password": PASSWORD}).location.startswith("/auth/login")
+def test_cancellazione_solo_con_post(client):
     register(client)
-    assert client.get("/profile/delete").status_code == 405
+    assert client.get("/api/profile/delete").status_code == 405
 
 
 def test_password_mai_nei_log(client, caplog):
     caplog.set_level("DEBUG")
     register(client)
-    client.post("/profile/delete", data={"password": "Password-sbagliata"})
-    client.post("/profile/delete", data={"password": PASSWORD})
+    delete(client, "Password-sbagliata")
+    delete(client, PASSWORD)
     assert "Account cancellato" in caplog.text
     for secret in (PASSWORD, "Password-sbagliata", "Mario", "mario@esempio.it"):
         assert secret not in caplog.text

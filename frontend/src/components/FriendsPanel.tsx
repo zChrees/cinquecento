@@ -854,6 +854,7 @@ export function FriendsPanel(props: FriendsPanelProps): JSX.Element {
         title={title}
         message={message}
         actions={actions}
+        content={null}
         footer={null}
         onDone={handleModalDone}
       />
@@ -886,7 +887,10 @@ export function FriendsPanel(props: FriendsPanelProps): JSX.Element {
     addErrorHidden = false;
   }
 
-  // <> ... </>: un contenitore che non diventa un elemento della pagina
+  // <> ... </>: un contenitore che non diventa un elemento della pagina.
+  // data-connection: lo stato della connessione al tempo reale, per i test (dal
+  // passo 6, al posto della pagina di prova): il pannello c'è in ogni pagina della
+  // SPA con il login, quindi un test può aspettare data-connection="connected"
   return (
     <>
       <dialog
@@ -895,6 +899,7 @@ export function FriendsPanel(props: FriendsPanelProps): JSX.Element {
         aria-labelledby="friends-title"
         data-animated=""
         data-friends-panel=""
+        data-connection={status}
         ref={dialogRef}
         onCancel={handleCancel}
         onClick={handleBackdropClick}

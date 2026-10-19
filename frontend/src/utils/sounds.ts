@@ -8,6 +8,7 @@
  *   preloadSounds(true)        scarica i file e crea subito il contesto audio (una volta per pagina)
  *   playSound('message', 0)    suona subito; playSound('draw', 500) tra 500 ms
  *   soundsEnabled()            true se i suoni sono accesi
+ *   setSoundsEnabled(false)    li spegne (l'interruttore delle impostazioni, passo 6)
  *   SOUNDS                     nome del suono → file (lo stesso elenco di sounds.js:
  *                              lo confronta tests/frontend2/test_spa_amici.py)
  *
@@ -98,6 +99,27 @@ export function soundsEnabled(): boolean {
     return localStorage.getItem(SOUNDS_KEY) !== 'off';
   } catch {
     return true;
+  }
+}
+
+/**
+ * Accende o spegne i suoni (l'interruttore "Suoni" delle impostazioni).
+ *
+ * @param {boolean} on true per accenderli
+ *
+ * In parole semplici:
+ *   setSoundsEnabled(false)
+ *   Salva la scelta nel browser; se il browser non lo permette resta quella di prima.
+ */
+export function setSoundsEnabled(on: boolean): void {
+  let value = 'off';
+  if (on) {
+    value = 'on';
+  }
+  try {
+    localStorage.setItem(SOUNDS_KEY, value);
+  } catch {
+    // Scelta non salvata (memoria del browser bloccata): resta quella di prima
   }
 }
 

@@ -265,7 +265,7 @@ I comandi qui sotto sono per **PowerShell**, lanciati dalla cartella del progett
    python scripts/migrate.py
    ```
 8. **Avvia**: `python run.py`, poi apri `http://localhost:5000` e registra un account. All'avvio il programma controlla di avere Python 3.14 e MySQL 8.0, e se qualcosa manca lo scrive e si ferma: per esempio "errore MySQL 1045" vuol dire che `DB_USER` o `DB_PASSWORD` nel `.env` non sono giusti. Per spegnerlo: Ctrl+C nel terminale.
-   **Per lavorare al frontend nuovo** accendi anche Vite, in un secondo terminale: `cd frontend`, poi `npm run dev`, e apri `http://localhost:5173` invece della 5000. Vite serve le pagine React e le aggiorna a ogni salvataggio senza ricaricare; tutto il resto (pagine di adesso, login, tempo reale) lo gira a Flask sulla 5000, che deve restare acceso. La pagina di prova è `http://localhost:5173/prova-react`.
+   **Per lavorare al frontend nuovo** accendi anche Vite, in un secondo terminale: `cd frontend`, poi `npm run dev`, e apri `http://localhost:5173` invece della 5000. Vite serve le pagine React e le aggiorna a ogni salvataggio senza ricaricare; tutto il resto (pagine di adesso, login, tempo reale) lo gira a Flask sulla 5000, che deve restare acceso. Le pagine React sono accesso, registrazione e impostazioni (per esempio `http://localhost:5173/profile/settings`).
 9. Se hai scaricato `dev`, **controlla con i test** che sia tutto a posto (sezione qui sotto): devono risultare tutti PASS.
 
 ## Test
