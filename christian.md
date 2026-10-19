@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Migrazione, passo 2 — I tipi TypeScript del contratto (19/10/2026)
+
+- **Branch**: feature/migrazione-passo2
+- **File**: creati `frontend/src/types/` (`card.ts`, `common.ts`, `view.ts`, `api.ts`, `events.ts`) e `tests/frontend/test_tipi.py`; modificati `app/static/dev/amici_esempio.json` (`cannot_write: null` nella risposta di `chat:history`) e `docs/CONTRATTO-SOCKET.md` (5.4: l'esempio ora lo ha), con l'ok di Christian; questo file
+- **Cosa c'è**: i tipi copiati da `docs/CONTRATTO-SOCKET.md`, con gli stessi nomi dei campi e un commento su ognuno: `Card` (seme e valore come elenchi chiusi), le risposte (`OkEmpty`, `OkWithData<T>`, `ErrorResponse` con i 17 codici), la vista di gioco come `GameView1v1 | GameView2v2` (i campi `partner_hand` e `advice` esistono solo nel 2v2, come nel contratto), le richieste HTTP (statistiche, amici, `/online`) e tre elenchi per Socket.IO: `ServerEvents`, `ClientEvents` e `ClientAnswers` (nome dell'evento → dati e risposta), che userà il passo 3. Le risposte vere le ho lette nel server [L]: `ok()` di `events.py` toglie `data` quando è `None` (per questo `invite:start` è `OkWithData<QueueStatus> | OkEmpty`); `trick` è sempre un oggetto, è `winning_seat` a essere `null` senza carte
+- **Controlli**: `frontend` **136 PASS** (6 nuovi in `test_tipi.py`: i 20 esempi di `app/static/dev/*.json` rispettano i tipi, controllati con `tsc` in una cartella temporanea; un seme "cuori" e un campo mancante o in più vengono segnalati; ogni chiave degli esempi ha il suo tipo; i nomi degli eventi sono quelli di `core/events.js`; i codici di errore quelli di `ERRORS` del server; ogni evento della pagina ha la sua risposta); dopo il cambio dell'esempio anche `api` **302 PASS** e `frontend2` **38 PASS**, che lo leggono; `npx tsc --noEmit` pulito; `ruff check .` pulito. Giro completo non lanciato
+- **Decisioni prese**: `cannot_write` di `chat:history` è obbligatorio nel tipo, come lo manda il server; aggiunto all'esempio, che non lo aveva (Christian)
+- **Domande nuove**: nessuna
+- **Punti delicati**: se cambia il contratto vanno cambiati anche i tipi, ed è `test_tipi.py` a dirlo (sugli esempi). Un esempio nuovo in `app/static/dev/` va aggiunto a `EXAMPLES` di `test_tipi.py`, altrimenti il test fallisce. Per leggere `partner_hand` o `advice` si controlla prima `view.mode === '2v2'`
+- **Cosa devono fare gli altri**: **Giuseppe**: se cambi un dato mandato dal server, aggiorna anche il tipo in `frontend/src/types/` (oltre al contratto e all'esempio)
+
 ### Documenti: rotte JSON sotto `/api/`, i blueprint a migrazione finita (19/10/2026)
 
 - **Branch**: docs/api-prefisso

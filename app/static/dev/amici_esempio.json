@@ -113,7 +113,8 @@
       }
     ],
     "has_more": false,
-    "can_write": true
+    "can_write": true,
+    "cannot_write": null
   },
   "chat:message": {
     "message": {
