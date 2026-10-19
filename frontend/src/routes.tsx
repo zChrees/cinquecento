@@ -15,12 +15,16 @@
 
 import { createBrowserRouter } from 'react-router';
 import type { DataRouter, RouteObject } from 'react-router';
+import { LoginPage } from './pages/LoginPage';
+import { RegisterPage } from './pages/RegisterPage';
 import { TestPage } from './pages/TestPage';
 
 // routes: l'elenco delle pagine. path è l'indirizzo, element il componente da
 // disegnare (<TestPage /> vuol dire "il componente TestPage, senza dati").
 const routes: RouteObject[] = [
   { path: '/prova-react', element: <TestPage /> },
+  { path: '/auth/login', element: <LoginPage /> },
+  { path: '/auth/register', element: <RegisterPage /> },
 ];
 
 // router: chi segue la barra degli indirizzi e cambia pagina senza ricaricare

@@ -12,7 +12,6 @@ Se né Chrome né Edge sono installati i controlli nel browser si saltano.
 """
 
 import importlib.util
-import re
 import threading
 import time
 import uuid
@@ -31,6 +30,7 @@ from app.realtime.presence import presence
 from app.realtime.room_manager import find_room_of_user, rooms
 from app.repositories import friend_repo
 from app.services import auth_service, friend_service
+from tests import accounts
 from tests.browser import (
     TEST_COOKIE,
     Browser,
@@ -92,16 +92,12 @@ def server(app, users):
 
 
 class Friend:
-    """Un amico collegato come client Socket.IO, con il login vero (modulo con CSRF)."""
+    """Un amico collegato come client Socket.IO, con il login vero (/api/auth/login con CSRF)."""
 
     def __init__(self, url, name):
         session = requests.Session()
-        page = session.get(f"{url}/auth/login", timeout=WAIT).text
-        token = re.search(r'name="csrf_token" type="hidden" value="([^"]+)"', page)[1]
-        answer = session.post(f"{url}/auth/login", data={"csrf_token": token, "username": name,
-                                                          "password": PASSWORD},
-                              allow_redirects=False, timeout=WAIT)
-        assert answer.status_code == 302, "login di prova non riuscito"
+        answer = accounts.login_http(session, url, name, PASSWORD)
+        assert accounts.ok(answer), "login di prova non riuscito"
         cookie = "; ".join(f"{k}={v}" for k, v in session.cookies.items())
         self.received, self.starts, self.updates = [], [], []
         self._cond = threading.Condition()

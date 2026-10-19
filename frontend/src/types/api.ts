@@ -8,6 +8,8 @@
  *   FriendsList, Friend, ...      GET /friends/
  *   SentRequestBody, BlockBody    i corpi di POST /friends/requests e /friends/blocks
  *   Online                        GET /online
+ *   Session, LoginBody,           le rotte /api/auth/ della SPA (passo 4 della migrazione)
+ *   RegisterBody, AuthDone
  *
  * DA DOVE ARRIVANO I DATI: le rotte dei blueprint stats, friends e main di Flask.
  * Ogni risposta ha la forma di common.ts: OkWithData<Stats> | ErrorResponse.
@@ -99,4 +101,52 @@ export interface BlockBody {
 export interface Online {
   // quanti utenti sono collegati adesso
   online_count: number;
+}
+
+// --- Accesso e registrazione (/api/auth/, passo 4 della migrazione) --------
+
+// FlashKind: il tipo di un messaggio lasciato dal server con flash()
+export type FlashKind = 'success' | 'error' | 'info';
+
+// Flash: un messaggio da mostrare in basso (come partials/flash.html), per
+// esempio { kind: 'success', message: 'Account cancellato.' }
+export interface Flash {
+  kind: FlashKind;
+  // il testo, da mostrare come testo (mai come HTML)
+  message: string;
+}
+
+// Session: i dati di GET /api/auth/session, chiesti appena si apre una pagina della SPA
+export interface Session {
+  // il codice CSRF da mandare con ogni POST nell'intestazione X-CSRFToken
+  csrf_token: string;
+  // l'utente collegato, oppure null senza login
+  user: UserRef | null;
+  // i messaggi lasciati da un'altra pagina, da mostrare una volta
+  flashes: Flash[];
+}
+
+// LoginBody: il corpo di POST /api/auth/login
+export interface LoginBody {
+  // nome utente oppure email (con una @ è un'email, P96)
+  username: string;
+  password: string;
+  // la pagina dove tornare dopo l'accesso (?next= dell'indirizzo), '' se non c'è;
+  // il server la usa solo se è di questo sito
+  next: string;
+}
+
+// RegisterBody: il corpo di POST /api/auth/register
+export interface RegisterBody {
+  username: string;
+  email: string;
+  password: string;
+  // la password ripetuta
+  confirm: string;
+}
+
+// AuthDone: la risposta di login e registrazione riusciti
+export interface AuthDone {
+  // dove andare adesso, per esempio '/' (la home)
+  redirect: string;
 }

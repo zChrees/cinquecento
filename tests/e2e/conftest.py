@@ -74,7 +74,7 @@ def _wait_until_ready(process, url, output):
             pytest.exit(f"Il server dei test si è fermato all'avvio:\n{output.read_text(encoding='utf-8')}",
                         returncode=1)
         try:
-            if requests.get(f"{url}/auth/login", timeout=1).status_code == 200:
+            if requests.get(f"{url}/online", timeout=1).status_code == 200:
                 return
         except requests.ConnectionError:
             pass

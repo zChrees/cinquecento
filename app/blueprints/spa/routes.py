@@ -8,7 +8,10 @@ Router, nel browser, a scegliere cosa disegnare. I file JavaScript della SPA
 
 Cosa contiene:
     dist_dir()     la cartella del build
-    spa_page()     la risposta con index.html (o l'errore se il build manca)
+    spa_page()     la risposta con index.html (o l'errore se il build manca); la
+                   usano anche le rotte di altri blueprint che sono pagine della
+                   SPA (per esempio /auth/login in app/blueprints/auth/routes.py)
+    asset(...)     GET /static/dist/<file>, i file JavaScript della SPA
     test_page()    GET /prova-react, la pagina di prova (solo sviluppo e test)
 
 DA DOVE ARRIVANO I DATI: il browser chiede un indirizzo della SPA (per esempio
@@ -19,7 +22,7 @@ dal build.
 import logging
 from pathlib import Path
 
-from flask import abort, current_app, send_file
+from flask import abort, current_app, send_file, send_from_directory
 
 from app.blueprints.spa import bp
 
@@ -27,8 +30,9 @@ log = logging.getLogger(__name__)
 
 # SPA_PATHS: gli indirizzi che sono pagine della SPA. Deve restare uguale a
 # SPA_PATHS di frontend/vite.config.ts (lo controlla tests/frontend/test_spa.py):
-# una pagina nuova della SPA si aggiunge in tutti e due i posti, più la sua rotta qui.
-SPA_PATHS = ("/prova-react",)
+# una pagina nuova della SPA si aggiunge in tutti e due i posti, più la sua rotta
+# (qui, o nel blueprint del suo argomento con spa_page(), come /auth/login).
+SPA_PATHS = ("/prova-react", "/auth/login", "/auth/register")
 
 # TEST_PAGE_ENVS: gli ambienti (APP_ENV) in cui c'è la pagina di prova, come i
 # dati finti della home (DEMO_ENVS di app/blueprints/main/routes.py)
@@ -44,11 +48,16 @@ def dist_dir():
     In parole semplici:
         dist_dir()
         È una funzione, non una costante, perché la cartella static la conosce
-        solo l'app di Flask attiva (current_app); i test la sostituiscono con
-        una cartella finta.
+        solo l'app di Flask attiva (current_app). Nei test la cartella è un'altra,
+        fuori dal progetto: SPA_DIST_DIR (config.py, solo con APP_ENV=testing),
+        dove tests/conftest.py compila il frontend; alcuni test la sostituiscono
+        con una cartella finta.
 
         Restituisce: un Path, per esempio C:/.../app/static/dist
     """
+    configured = current_app.config.get("SPA_DIST_DIR")
+    if configured:
+        return Path(configured)
     return Path(current_app.static_folder) / "dist"
 
 
@@ -72,6 +81,21 @@ def spa_page():
         log.warning("SPA: manca il build del frontend (%s)", index)
         return NOT_BUILT, 503, {"Content-Type": "text/plain; charset=utf-8"}
     return send_file(index, mimetype="text/html", max_age=0)
+
+
+@bp.get("/static/dist/<path:filename>")
+def asset(filename):
+    """GET /static/dist/<file>: un file del build (per esempio assets/index-3f9a1c.js).
+
+    In parole semplici:
+        asset("assets/index-3f9a1c.js")
+        Lo prende da dist_dir(). Con il build in app/static/dist farebbe lo stesso
+        la rotta static di Flask; questa serve quando il build sta altrove (i test).
+        Questa rotta vince su quella static perché il suo indirizzo ha un pezzo
+        fisso in più (/static/dist/), e Flask sceglie la rotta più precisa.
+        send_from_directory non esce mai dalla cartella (niente ../).
+    """
+    return send_from_directory(dist_dir(), filename)
 
 
 @bp.get("/prova-react")

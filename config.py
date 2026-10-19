@@ -95,6 +95,11 @@ class BaseConfig:
     BACKUP_DIR = BASE_DIR / "backups"
     BACKUP_RETENTION_DAYS = 14
 
+    # Frontend React compilato (passo 1 della migrazione): None = app/static/dist.
+    # Solo nei test si legge da SPA_DIST_DIR, la cartella fuori dal progetto dove
+    # tests/conftest.py compila il frontend (app/blueprints/spa/routes.py, dist_dir).
+    SPA_DIST_DIR = None
+
 
 class DevelopmentConfig(BaseConfig):
     ENV_NAME = "development"
@@ -130,6 +135,7 @@ def load_config(name=None, environ=None):
         config.SECRET_KEY = "chiave-dei-test-non-segreta"
         config.HOST = "127.0.0.1"
         config.PORT = 5099
+        config.SPA_DIST_DIR = env.get("SPA_DIST_DIR") or None
         db_name = env.get("DB_NAME_TEST") or "cinquecento_test"
         if not db_name.endswith("_test"):
             raise ConfigError(

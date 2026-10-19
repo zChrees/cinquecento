@@ -25,6 +25,7 @@ from app.extensions import db
 from app.services import auth_service, match_service, stats_service
 from app.services.auth_service import LoginLimiter
 from app.services.match_service import MatchRecord, PlayerRecord
+from tests import accounts
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
 
 BASE_DIR = Path(__file__).resolve().parents[2]
@@ -83,11 +84,8 @@ class Player:
     def __init__(self, app, username):
         self.username = username
         self.client = app.test_client()
-        response = self.client.post("/auth/register", data={
-            "username": username, "email": f"{username.lower()}@esempio.it",
-            "password": PASSWORD, "confirm": PASSWORD,
-        })
-        assert response.status_code == 302, "registrazione non riuscita"
+        response = accounts.register(self.client, username, password=PASSWORD)
+        assert accounts.ok(response), "registrazione non riuscita"
         with app.app_context():
             self.id = db.session.execute(
                 sa.text("SELECT id FROM utenti WHERE nome_utente = :u"), {"u": username}

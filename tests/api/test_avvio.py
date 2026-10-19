@@ -26,7 +26,7 @@ def test_home_mostra_ok(app):
 
 
 def test_blueprint_registrati(app):
-    assert set(app.blueprints) == {"main", "auth", "profile", "game", "stats", "friends", "spa"}
+    assert set(app.blueprints) == {"main", "auth", "auth_api", "profile", "game", "stats", "friends", "spa"}
 
 
 def test_socketio_in_modalita_threading(app):

@@ -12,9 +12,10 @@ import requests
 import socketio as sio_client
 import websocket
 
+from tests import accounts
+
 PASSWORD = "Password-di-prova-1"
 WAIT = 5  # secondi massimi per aspettare un evento (si aspetta l'evento, non un tempo fisso)
-CSRF_FIELD = re.compile(r'name="csrf_token" type="hidden" value="([^"]+)"')
 CSRF_META = re.compile(r'<meta name="csrf-token" content="([^"]+)">')
 USER_ID = re.compile(r'<body data-user-id="(\d+)"')
 
@@ -102,18 +103,14 @@ class Tab:
 
 
 class User:
-    """Un utente vero: si registra dal modulo come farebbe il browser, e resta con il login."""
+    """Un utente vero: si registra come la SPA (/api/auth/register), e resta con il login."""
 
     def __init__(self, url, username):
         self.url = url
         self.username = username
         self.session = requests.Session()
-        page = self.session.get(f"{url}/auth/register", timeout=WAIT).text
-        response = self.session.post(f"{url}/auth/register", data={
-            "csrf_token": CSRF_FIELD.search(page)[1], "username": username,
-            "email": f"{username.lower()}@esempio.it", "password": PASSWORD, "confirm": PASSWORD,
-        }, allow_redirects=False, timeout=WAIT)
-        assert response.status_code == 302, f"registrazione di {username} non riuscita"
+        response = accounts.register_http(self.session, url, username, password=PASSWORD)
+        assert accounts.ok(response), f"registrazione di {username} non riuscita"
         home = self.session.get(f"{url}/", timeout=WAIT).text  # dopo la registrazione si entra subito
         self.id = int(USER_ID.search(home)[1])
         self._csrf = CSRF_META.search(home)[1]

@@ -29,6 +29,7 @@ from app.logging_config import (
 from app.services import auth_service
 from app.services.auth_service import LoginLimiter
 from config import TestingConfig
+from tests import accounts
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 TEMPLATES = BASE_DIR / "app" / "templates" / "errors"
@@ -263,12 +264,11 @@ def test_password_ed_email_mai_nel_file_di_log(app, client, log_dir, monkeypatch
         except sa.exc.OperationalError:
             pytest.fail(f"Non riesco a usare il database {url.database}: MySQL è acceso?", pytrace=False)
 
-    data = {"username": "ProvaLog", "email": EMAIL, "password": PASSWORD, "confirm": PASSWORD}
-    assert client.post("/auth/register", data=data).status_code == 302
+    assert accounts.ok(accounts.register(client, "ProvaLog", EMAIL, PASSWORD))
     client.post("/auth/logout")
     for _ in range(6):
-        client.post("/auth/login", data={"username": "ProvaLog", "password": PASSWORD + "-sbagliata"})
-    client.post("/auth/login", data={"username": "ProvaLog", "password": PASSWORD})
+        accounts.login(client, "ProvaLog", PASSWORD + "-sbagliata")
+    accounts.login(client, "ProvaLog", PASSWORD)
 
     text = log_text(log_dir)
     assert "Nuovo utente registrato" in text and "Login bloccato" in text

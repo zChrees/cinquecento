@@ -16,8 +16,7 @@ import re
 import pytest
 
 from app import SECURITY_HEADERS, create_app
-
-CSRF_FIELD = re.compile(r'name="csrf_token" type="hidden" value="([^"]+)"')
+from tests import accounts
 
 
 @pytest.fixture(scope="module")
@@ -28,7 +27,9 @@ def client():
 
 
 @pytest.mark.parametrize("path", [
-    "/auth/login",                   # pagina
+    "/auth/login",                   # pagina della SPA
+    "/",                             # pagina Jinja
+    "/api/auth/session",             # JSON della SPA
     "/static/css/base/variables.css",  # file statico
     "/pagina-che-non-esiste",        # errore 404
     "/friends/",                     # JSON senza login (401)
@@ -61,9 +62,6 @@ def test_nessuno_script_scritto_nella_pagina(client, path):
 
 
 @pytest.mark.parametrize(("method", "path", "body"), [
-    ("post", "/auth/login", {"username": "Mario", "password": "Password-di-prova-1"}),
-    ("post", "/auth/register", {"username": "Mario", "email": "mario@esempio.it",
-                                "password": "Password-di-prova-1", "confirm": "Password-di-prova-1"}),
     ("post", "/auth/logout", {}),
     ("post", "/profile/delete", {"password": "Password-di-prova-1"}),
     ("post", "/profile/avatar", {"avatar": "coppe"}),
@@ -74,6 +72,9 @@ def test_moduli_senza_csrf_rifiutati(client, method, path, body):
 
 
 @pytest.mark.parametrize(("method", "path", "body"), [
+    ("post", "/api/auth/login", {"username": "Mario", "password": "Password-di-prova-1", "next": ""}),
+    ("post", "/api/auth/register", {"username": "Mario", "email": "mario@esempio.it",
+                                    "password": "Password-di-prova-1", "confirm": "Password-di-prova-1"}),
     ("post", "/friends/requests", {"request_id": "abc", "username": "Mario"}),
     ("post", "/friends/requests/1/accept", None),
     ("delete", "/friends/1", None),
@@ -86,7 +87,7 @@ def test_richieste_json_senza_csrf_rifiutate(client, method, path, body):
 
 def test_cookie_di_sessione_httponly_e_samesite(client):
     fresh = client.application.test_client()  # senza cookie: la risposta crea la sessione
-    response = fresh.get("/auth/login")  # il codice CSRF finisce nella sessione
+    response = fresh.get("/api/auth/session")  # il codice CSRF finisce nella sessione
     cookies = response.headers.getlist("Set-Cookie")
     session = next(c for c in cookies if c.startswith("session="))
     assert "HttpOnly" in session
@@ -95,10 +96,7 @@ def test_cookie_di_sessione_httponly_e_samesite(client):
 
 @pytest.mark.parametrize("username", ["<script>", "<b>Mario</b>", "Mario\"onmouseover=\"x"])
 def test_username_con_html_rifiutato(client, username):
-    page = client.get("/auth/register").get_data(as_text=True)
-    response = client.post("/auth/register", data={
-        "csrf_token": CSRF_FIELD.search(page)[1], "username": username, "email": "html@esempio.it",
-        "password": "Password-di-prova-1", "confirm": "Password-di-prova-1",
-    })
-    assert response.status_code == 200  # il modulo torna con l'errore, nessun rimando alla home
-    assert username not in response.get_data(as_text=True)  # se torna nel campo, torna con l'escape
+    response = accounts.register(client, username, "html@esempio.it")
+    assert response.status_code == 400  # rifiutato con l'errore del campo, nessun account
+    assert "solo lettere, numeri e _" in response.get_json()["error"]["fields"]["username"][0]
+    # Il testo degli utenti la SPA lo mostra sempre come testo (React fa l'escape da sé)

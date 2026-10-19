@@ -9,7 +9,6 @@
 """
 
 import importlib.util
-import re
 import threading
 import time
 from pathlib import Path
@@ -29,6 +28,7 @@ from app.realtime import room as room_module
 from app.realtime.events import EventError, handler, user_channel
 from app.realtime.room_manager import rooms
 from app.services import auth_service
+from tests import accounts
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 PASSWORD = "Password-di-prova-1"
@@ -182,16 +182,10 @@ def server():
 
 
 def login_cookie(base_url, username, password=PASSWORD):
-    """Fa il login come farebbe il browser (con il codice CSRF) e restituisce il cookie di sessione."""
+    """Fa il login come la SPA (/api/auth/login, con il codice CSRF) e restituisce il cookie di sessione."""
     session = requests.Session()
-    page = session.get(f"{base_url}/auth/login", timeout=WAIT).text
-    token = re.search(r'name="csrf_token" type="hidden" value="([^"]+)"', page)[1]
-    response = session.post(
-        f"{base_url}/auth/login",
-        data={"csrf_token": token, "username": username, "password": password},
-        allow_redirects=False, timeout=WAIT,
-    )
-    assert response.status_code == 302, "login di prova non riuscito"
+    response = accounts.login_http(session, base_url, username, password)
+    assert accounts.ok(response), "login di prova non riuscito"
     return "; ".join(f"{k}={v}" for k, v in session.cookies.items())
 
 

@@ -1,12 +1,16 @@
 """P16: registrazione, login e logout.
 
+Dal passo 4 della migrazione le pagine /auth/login e /auth/register sono della SPA e i
+dati vanno alle rotte JSON /api/auth/ (app/blueprints/auth/api.py): i controlli sono
+quelli di prima, sulle risposte JSON. L'aspetto delle pagine lo controlla
+tests/frontend/test_pagine_accesso.py.
+
 Serve MySQL con scripts/setup_db.sql già lanciato: si usa SOLO il database dei
 test, che all'inizio viene svuotato e ricreato con migrate.py; prima di ogni prova
 la tabella utenti si svuota. Comando: python tests/esegui_tutti.py api
 """
 
 import importlib.util
-import re
 from pathlib import Path
 
 import pytest
@@ -24,6 +28,7 @@ from app.services.auth_service import (
     USERNAME_TAKEN,
     LoginLimiter,
 )
+from tests import accounts
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 PASSWORD = "Password-di-prova-1"
@@ -85,15 +90,17 @@ def client(app, monkeypatch):
 
 
 def register(client, username="Mario", email="mario@esempio.it", password=PASSWORD, confirm=None):
-    return client.post("/auth/register", data={
-        "username": username, "email": email, "password": password,
-        "confirm": password if confirm is None else confirm,
-    })
+    return accounts.register(client, username, email, password, confirm)
 
 
-def login(client, username="Mario", password=PASSWORD, next_url=None):
-    url = "/auth/login" + (f"?next={next_url}" if next_url else "")
-    return client.post(url, data={"username": username, "password": password})
+def login(client, username="Mario", password=PASSWORD, next_url=""):
+    return accounts.login(client, username, password, next_url)
+
+
+def redirect_of(response):
+    """Dove manda la risposta di un login o di una registrazione riusciti."""
+    assert accounts.ok(response), response.get_json()
+    return response.get_json()["data"]["redirect"]
 
 
 def logged_in(client):
@@ -107,7 +114,8 @@ def users(app):
 
 
 def page_text(response):
-    return response.get_data(as_text=True)
+    """I messaggi di errore della risposta JSON (error.message e quelli dei campi)."""
+    return accounts.messages(response)
 
 
 # --- Registrazione ---
@@ -115,10 +123,9 @@ def page_text(response):
 
 def test_registrazione_ok_entra_e_torna_alla_home(app, client):
     response = register(client)
-    assert response.status_code == 302
-    assert response.location == "/"
+    assert redirect_of(response) == "/"
     assert logged_in(client)
-    assert "Benvenuto, Mario!" in page_text(client.get("/"))
+    assert "Benvenuto, Mario!" in client.get("/").get_data(as_text=True)
     [user] = users(app)
     assert (user.username, user.email) == ("Mario", "mario@esempio.it")
 
@@ -135,15 +142,15 @@ def test_username_duplicato_rifiutato(app, client):
     register(client)
     client.post("/auth/logout")
     response = register(client, email="altro@esempio.it")
-    assert response.status_code == 200
-    assert USERNAME_TAKEN in page_text(response)
+    assert response.status_code == 400
+    assert response.get_json()["error"]["fields"] == {"username": [USERNAME_TAKEN]}
     assert len(users(app)) == 1
 
 
 def test_username_con_maiuscole_diverse_accettato(app, client):
     register(client)
     client.post("/auth/logout")
-    assert register(client, username="mario", email="altro@esempio.it").status_code == 302
+    assert accounts.ok(register(client, username="mario", email="altro@esempio.it"))
     assert sorted(u.username for u in users(app)) == ["Mario", "mario"]
 
 
@@ -151,7 +158,7 @@ def test_email_duplicata_rifiutata_anche_con_maiuscole(app, client):
     register(client)
     client.post("/auth/logout")
     response = register(client, username="Luigi", email="Mario@Esempio.it")
-    assert EMAIL_TAKEN in page_text(response)
+    assert response.get_json()["error"]["fields"] == {"email": [EMAIL_TAKEN]}
     assert len(users(app)) == 1
 
 
@@ -170,7 +177,8 @@ def test_email_duplicata_rifiutata_anche_con_maiuscole(app, client):
 ])
 def test_dati_non_validi_rifiutati_con_messaggio(app, client, fields, message):
     response = register(client, **fields)
-    assert response.status_code == 200
+    assert response.status_code == 400
+    assert response.get_json()["error"]["code"] == "invalid_data"
     assert message in page_text(response)
     assert users(app) == []
     assert not logged_in(client)
@@ -216,19 +224,8 @@ def test_password_corta_senza_regole_dice_tutto_quello_che_manca(app, client):
 ])
 def test_password_con_tutte_le_regole_accettata(app, client, password):
     response = register(client, password=password)
-    assert response.status_code == 302
+    assert accounts.ok(response)
     assert len(users(app)) == 1
-
-
-def test_le_regole_si_leggono_prima_dell_invio(client):
-    page = page_text(client.get("/auth/register"))
-    hint = re.search(r'<p class="field__hint" id="password-hint" data-field-hint="password">([^<]*)</p>', page)
-    assert hint, "manca la riga con le regole della password"
-    for words in ("Almeno 8 caratteri", "maiuscola", "numero", "simbolo"):
-        assert words in hint[1]
-    assert 'aria-describedby="password-hint"' in page
-    # Solo la password ha le regole scritte sotto
-    assert page.count("field__hint") == 1
 
 
 def test_account_con_una_password_vecchia_entra_ancora(app, client):
@@ -236,7 +233,7 @@ def test_account_con_una_password_vecchia_entra_ancora(app, client):
     with app.app_context():
         auth_service.register("Vecchio", "vecchio@esempio.it", "semplice")
     response = login(client, username="Vecchio", password="semplice")
-    assert response.status_code == 302
+    assert accounts.ok(response)
     assert logged_in(client)
 
 
@@ -248,15 +245,16 @@ def test_login_ok(client):
     client.post("/auth/logout")
     assert not logged_in(client)
     response = login(client)
-    assert response.status_code == 302
-    assert response.location == "/"
+    assert redirect_of(response) == "/"
     assert logged_in(client)
 
 
 def test_password_sbagliata_e_utente_inesistente_stesso_messaggio(client):
     register(client)
     client.post("/auth/logout")
-    wrong_password = page_text(login(client, password="Sbagliata-123"))
+    response = login(client, password="Sbagliata-123")
+    assert response.status_code == 403 and response.get_json()["error"]["code"] == "not_allowed"
+    wrong_password = page_text(response)
     unknown_user = page_text(login(client, username="Nessuno"))
     assert LOGIN_FAILED in wrong_password
     assert LOGIN_FAILED in unknown_user
@@ -271,7 +269,7 @@ def test_username_con_maiuscole_diverse_non_entra(client):
 
 def test_dopo_il_logout_le_pagine_protette_rimandano_al_login(client):
     register(client)
-    assert page_text(client.get("/_prova/protetta")) == "pagina protetta"
+    assert client.get("/_prova/protetta").get_data(as_text=True) == "pagina protetta"
     response = client.post("/auth/logout")
     assert response.status_code == 302
     response = client.get("/_prova/protetta")
@@ -282,14 +280,14 @@ def test_dopo_il_logout_le_pagine_protette_rimandano_al_login(client):
 def test_dopo_il_login_si_torna_alla_pagina_chiesta(client):
     register(client)
     client.post("/auth/logout")
-    assert login(client, next_url="/_prova/protetta").location == "/_prova/protetta"
+    assert redirect_of(login(client, next_url="/_prova/protetta")) == "/_prova/protetta"
 
 
 @pytest.mark.parametrize("target", ["//sito-esterno.it", "https://sito-esterno.it", "/\\sito-esterno.it"])
 def test_dopo_il_login_mai_verso_un_altro_sito(client, target):
     register(client)
     client.post("/auth/logout")
-    assert login(client, next_url=target).location == "/"
+    assert redirect_of(login(client, next_url=target)) == "/"
 
 
 def test_logout_solo_con_post(client):
@@ -326,7 +324,7 @@ def test_dopo_5_errori_si_aspetta_anche_con_la_password_giusta(app, client, monk
     assert not logged_in(client)
 
     now[0] += app.config["LOGIN_LOCK_SECONDS"]
-    assert login(client).status_code == 302
+    assert accounts.ok(login(client))
     assert logged_in(client)
 
 
@@ -336,7 +334,7 @@ def test_login_riuscito_azzera_gli_errori(app, client):
     attempts = app.config["LOGIN_MAX_ATTEMPTS"]
     for _ in range(attempts - 1):
         login(client, password="Sbagliata-123")
-    assert login(client).status_code == 302
+    assert accounts.ok(login(client))
     client.post("/auth/logout")
     for _ in range(attempts - 1):
         assert LOGIN_FAILED in page_text(login(client, password="Sbagliata-123"))
@@ -347,7 +345,7 @@ def test_il_blocco_vale_solo_per_quello_username(client):
     client.post("/auth/logout")
     for _ in range(10):
         login(client, username="Altro", password="Sbagliata-123")
-    assert login(client).status_code == 302
+    assert accounts.ok(login(client))
 
 
 def test_errori_vecchi_dimenticati():
@@ -376,7 +374,7 @@ def test_username_inventati_non_restano_in_memoria():
 def test_si_entra_con_l_email(client):
     register(client)
     client.post("/auth/logout")
-    assert login(client, username="mario@esempio.it").status_code == 302
+    assert accounts.ok(login(client, username="mario@esempio.it"))
     assert logged_in(client)
 
 
@@ -384,7 +382,7 @@ def test_l_email_non_distingue_le_maiuscole(client):
     # Come alla registrazione (D7): "Mario@Esempio.it" è la stessa email di "mario@esempio.it"
     register(client)
     client.post("/auth/logout")
-    assert login(client, username="Mario@Esempio.IT").status_code == 302
+    assert accounts.ok(login(client, username="Mario@Esempio.IT"))
 
 
 def test_email_sbagliata_o_inesistente_stesso_messaggio(client):
@@ -395,10 +393,10 @@ def test_email_sbagliata_o_inesistente_stesso_messaggio(client):
     assert not logged_in(client)
 
 
-def test_la_pagina_chiede_nome_utente_o_email(client):
-    text = page_text(client.get("/auth/login"))
-    assert "Nome utente o email" in text
-    assert "Scrivi il tuo nome utente o la tua email." in page_text(login(client, username=""))
+def test_campo_vuoto_chiede_nome_utente_o_email(client):
+    # La scritta "Nome utente o email" della pagina la controlla test_pagine_accesso.py
+    response = login(client, username="")
+    assert response.get_json()["error"]["fields"]["username"] == ["Scrivi il tuo nome utente o la tua email."]
 
 
 def test_il_blocco_vale_per_l_account_con_username_e_con_email(app, client, monkeypatch):
@@ -415,7 +413,7 @@ def test_il_blocco_vale_per_l_account_con_username_e_con_email(app, client, monk
     assert LOGIN_LOCKED in page_text(login(client))  # bloccato anche con lo username e la password giusta
     assert LOGIN_LOCKED in page_text(login(client, username="mario@esempio.it"))
     now[0] += app.config["LOGIN_LOCK_SECONDS"]
-    assert login(client, username="mario@esempio.it").status_code == 302
+    assert accounts.ok(login(client, username="mario@esempio.it"))
 
 
 def test_campo_troppo_lungo_rifiutato(client):
@@ -425,12 +423,72 @@ def test_campo_troppo_lungo_rifiutato(client):
 # --- CSRF e log ---
 
 
-def test_moduli_senza_codice_csrf_rifiutati():
+def test_richieste_senza_codice_csrf_rifiutate():
     client = _make_app(csrf=True).test_client()
-    page = page_text(client.get("/auth/login"))
-    assert re.search(r'name="csrf_token" type="hidden" value="[^"]+"', page)
-    for url in ("/auth/login", "/auth/register", "/auth/logout"):
-        assert client.post(url, data={"username": "Mario", "password": PASSWORD}).status_code == 400
+    assert client.get("/api/auth/session").get_json()["data"]["csrf_token"]
+    for url in ("/api/auth/login", "/api/auth/register"):
+        response = client.post(url, json={"username": "Mario", "password": PASSWORD})
+        assert response.status_code == 400, url
+        assert response.get_json()["error"]["code"] == "invalid_data", url  # in JSON, per la SPA
+    assert client.post("/auth/logout", data={}).status_code == 400  # il modulo "Esci" di sempre
+    # Con il codice nell'intestazione passa (e qui risponde con l'errore delle credenziali)
+    assert login(client).status_code == 403
+
+
+# --- Rotte JSON della SPA (passo 4 della migrazione) ---
+
+
+def test_le_pagine_di_prima_non_accettano_piu_moduli(client):
+    assert client.post("/auth/login", data={"username": "Mario", "password": PASSWORD}).status_code == 405
+    assert client.post("/auth/register", data={"username": "Mario"}).status_code == 405
+
+
+def test_le_pagine_sono_quelle_della_spa(client):
+    for url in ("/auth/login", "/auth/register"):
+        response = client.get(url)
+        assert response.status_code == 200, url
+        assert '<div id="root">' in response.get_data(as_text=True), url
+        response.close()
+
+
+@pytest.mark.parametrize("body", [
+    {"username": 5, "password": PASSWORD},
+    {"username": ["Mario"], "password": PASSWORD},
+    {"username": "Mario", "password": None},
+    ["Mario", PASSWORD],
+])
+def test_dati_del_tipo_sbagliato_rifiutati(client, body):
+    response = client.post("/api/auth/login", json=body)
+    assert response.status_code == 400
+    assert response.get_json()["error"]["code"] == "invalid_data"
+    assert not logged_in(client)
+
+
+def test_sessione_dice_chi_e_collegato_e_consuma_i_messaggi(client):
+    data = client.get("/api/auth/session").get_json()["data"]
+    assert data["user"] is None and data["flashes"] == []
+    register(client)
+    data = client.get("/api/auth/session").get_json()["data"]
+    assert data["user"]["username"] == "Mario" and data["user"]["avatar"] is None
+    assert data["flashes"] == [{"kind": "success", "message": "Benvenuto, Mario!"}]
+    # Letti una volta: la seconda richiesta non li ha più
+    assert client.get("/api/auth/session").get_json()["data"]["flashes"] == []
+    assert client.get("/api/auth/session").headers["Cache-Control"] == "no-store"
+
+
+def test_il_messaggio_di_flask_login_arriva_alla_spa(client):
+    # Una pagina protetta rimanda all'accesso con "Accedi per continuare." (app/extensions.py):
+    # la pagina React lo legge dalla sessione e lo mostra in basso
+    assert client.get("/_prova/protetta").location.startswith("/auth/login?next=")
+    flashes = client.get("/api/auth/session").get_json()["data"]["flashes"]
+    assert flashes == [{"kind": "info", "message": "Accedi per continuare."}]
+
+
+def test_chi_ha_gia_il_login_e_rimandato_alla_home(client):
+    register(client)
+    assert redirect_of(login(client, username="Altro", password="qualunque")) == "/"
+    assert redirect_of(register(client, username="Luigi", email="luigi@esempio.it")) == "/"
+    assert len(users(client.application)) == 1
 
 
 def test_password_mai_nei_log(client, caplog):

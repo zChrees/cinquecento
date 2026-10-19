@@ -69,6 +69,7 @@ def _security_headers(response):
 
 
 def _register_blueprints(app):
+    from app.blueprints.auth import api_bp as auth_api_bp
     from app.blueprints.auth import bp as auth_bp
     from app.blueprints.friends import bp as friends_bp
     from app.blueprints.game import bp as game_bp
@@ -77,5 +78,5 @@ def _register_blueprints(app):
     from app.blueprints.spa import bp as spa_bp
     from app.blueprints.stats import bp as stats_bp
 
-    for bp in (main_bp, auth_bp, profile_bp, game_bp, stats_bp, friends_bp, spa_bp):
+    for bp in (main_bp, auth_bp, auth_api_bp, profile_bp, game_bp, stats_bp, friends_bp, spa_bp):
         app.register_blueprint(bp)

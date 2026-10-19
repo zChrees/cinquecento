@@ -19,6 +19,7 @@ from app import create_app
 from app.extensions import db
 from app.services import auth_service, friend_service
 from app.services.auth_service import LoginLimiter
+from tests import accounts
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 EXAMPLE = json.loads((BASE_DIR / "app" / "static" / "dev" / "amici_esempio.json").read_text(encoding="utf-8"))
@@ -80,11 +81,8 @@ class Player:
         self.app = app
         self.username = username
         self.client = app.test_client()
-        response = self.client.post("/auth/register", data={
-            "username": username, "email": f"{username.lower()}@esempio.it",
-            "password": PASSWORD, "confirm": PASSWORD,
-        })
-        assert response.status_code == 302, "registrazione non riuscita"
+        response = accounts.register(self.client, username, password=PASSWORD)
+        assert accounts.ok(response), "registrazione non riuscita"
         with app.app_context():
             self.id = db.session.execute(
                 sa.text("SELECT id FROM utenti WHERE nome_utente = :u"), {"u": username}

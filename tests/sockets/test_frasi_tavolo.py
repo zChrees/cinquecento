@@ -21,6 +21,7 @@ from app.realtime.events import ok
 from app.realtime.room import Player
 from app.realtime.room_manager import create_room, rooms
 from config import load_config
+from tests import accounts
 
 WAIT = 5
 PASSWORD = "Password-di-prova-1"  # la stessa degli utenti di conftest.py
@@ -35,14 +36,8 @@ def users(server):
         with engine.connect() as conn:
             quarto = conn.execute(sa.text("SELECT id FROM utenti WHERE nome_utente = 'Quarto'")).scalar()
         if quarto is None:
-            session = requests.Session()
-            page = session.get(f"{server['url']}/auth/register", timeout=WAIT).text
-            token = re.search(r'name="csrf_token" type="hidden" value="([^"]+)"', page)[1]
-            response = session.post(f"{server['url']}/auth/register", data={
-                "csrf_token": token, "username": "Quarto", "email": "quarto@esempio.it",
-                "password": PASSWORD, "confirm": PASSWORD,
-            }, allow_redirects=False, timeout=WAIT)
-            assert response.status_code == 302
+            response = accounts.register_http(requests.Session(), server["url"], "Quarto", password=PASSWORD)
+            assert accounts.ok(response)
             with engine.connect() as conn:
                 quarto = conn.execute(sa.text("SELECT id FROM utenti WHERE nome_utente = 'Quarto'")).scalar()
     finally:

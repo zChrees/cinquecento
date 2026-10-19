@@ -33,6 +33,7 @@
 
 import { io } from 'socket.io-client';
 import type { Socket } from 'socket.io-client';
+import type { NoConnection } from '../types/common';
 import type { ClientAnswers, ClientEvents, ServerEvents } from '../types/events';
 
 // ConnectionStatus: lo stato della connessione.
@@ -42,18 +43,8 @@ import type { ClientAnswers, ClientEvents, ServerEvents } from '../types/events'
 //   'not_logged_in'  il server l'ha rifiutata perché manca il login (contratto 1.4)
 export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'not_logged_in';
 
-// NoConnection: la risposta che send dà da solo, senza chiedere al server,
-// quando la connessione manca o il server non risponde in tempo. Il codice
-// 'no_connection' non è tra quelli del server (ErrorCode di common.ts): lo usa
-// solo la pagina.
-export interface NoConnection {
-  ok: false;
-  error: {
-    code: 'no_connection';
-    // il testo da mostrare all'utente
-    message: string;
-  };
-}
+// NoConnection (types/common.ts): la risposta che send dà da solo, senza chiedere
+// al server, quando la connessione manca o il server non risponde in tempo.
 
 // ANSWER_TIMEOUT_MS: quanto aspettare la risposta del server (10 secondi, come core/socket.js)
 const ANSWER_TIMEOUT_MS = 10000;

@@ -5,15 +5,57 @@
   In sviluppo la serve Vite (npm run dev); dopo npm run build la copia tradotta
   sta in app/static/dist/index.html e la serve Flask (app/blueprints/spa/).
   Niente script né stili scritti qui dentro: la CSP di Flask li bloccherebbe.
+
+  La parte <head> copia quella di app/templates/base.html (P19, P42, D40): icona
+  della scheda, font del testo da Google Fonts (le sole risorse esterne, elencate in
+  docs/prototipo/LEGGIMI.md e permesse dalla CSP), font delle icone del progetto e
+  gli stessi CSS, presi da /static/ così come sono (Vite non li tocca). Se cambia
+  base.html va cambiato anche qui, finché tutte le pagine non sono nella SPA.
+  I CSS delle pagine (css/pages/) per ora sono solo quello di accesso e
+  registrazione: auth.css tocca anche .page--form, quindi va rivisto quando entra
+  nella SPA un'altra pagina con quella classe (le impostazioni, passo 6).
 -->
 <html lang="it">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Cinquecento</title>
+
+  <link rel="icon" href="/static/img/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/static/img/favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="/static/img/apple-touch-icon.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap">
+  <link rel="preload" href="/static/fonts/material-symbols-rounded.woff2" as="font" type="font/woff2" crossorigin>
+
+  <link rel="stylesheet" href="/static/css/base/reset.css">
+  <link rel="stylesheet" href="/static/css/base/variables.css">
+  <link rel="stylesheet" href="/static/css/base/typography.css">
+  <link rel="stylesheet" href="/static/css/base/layout.css">
+  <link rel="stylesheet" href="/static/css/components/button.css">
+  <link rel="stylesheet" href="/static/css/components/form.css">
+  <link rel="stylesheet" href="/static/css/components/modal.css">
+  <link rel="stylesheet" href="/static/css/components/navbar.css">
+  <link rel="stylesheet" href="/static/css/components/stats-panel.css">
+  <link rel="stylesheet" href="/static/css/components/friends-panel.css">
+  <link rel="stylesheet" href="/static/css/components/chat.css">
+  <link rel="stylesheet" href="/static/css/components/banner.css">
+  <link rel="stylesheet" href="/static/css/components/rotate-notice.css">
+  <link rel="stylesheet" href="/static/css/pages/auth.css">
 </head>
 <body>
   <div id="root"></div>
+
+  <!-- P116: avviso "Gira il telefono in verticale" (come partials/rotate_notice.html):
+       quando si vede lo decide css/components/rotate-notice.css -->
+  <div class="rotate-notice" data-rotate-notice>
+    <span class="icon rotate-notice__icon" aria-hidden="true">screen_rotation</span>
+    <p class="rotate-notice__title">Gira il telefono in verticale</p>
+    <p class="rotate-notice__text">Cinquecento si gioca con il telefono in verticale.</p>
+  </div>
+
   <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>

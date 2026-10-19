@@ -2,7 +2,8 @@
 
 - 404 e 500: pagina in italiano basata su base.html, senza navbar (le pagine di errore
   non hanno uno script di pagina, e senza la navbar non si apre). Le richieste JSON
-  (/stats/..., /friends/...) ricevono invece la risposta del contratto (1.2):
+  (/stats/..., /friends/..., e dal passo 4 della migrazione /api/...) ricevono invece
+  la risposta del contratto (1.2):
   {"ok": false, "error": {"code": "not_found" o "server_error", "message"}}.
 - 500: nessun dettaglio tecnico nella risposta. L'errore con il traceback va nel log
   (ERROR): lo scrive Flask stesso prima di chiamare il gestore (Flask.log_exception).
@@ -16,6 +17,7 @@
 import logging
 
 from flask import render_template, request
+from flask_wtf.csrf import CSRFError
 
 from app.extensions import db, socketio
 from app.realtime.events import error
@@ -23,7 +25,7 @@ from app.realtime.events import error
 log = logging.getLogger(__name__)
 
 # Indirizzi delle richieste HTTP in JSON (contratto, sezione 2)
-JSON_PREFIXES = ("/stats/", "/friends/")
+JSON_PREFIXES = ("/stats/", "/friends/", "/api/")
 
 MINIMAL_500 = (
     '<!doctype html><html lang="it"><head><meta charset="utf-8">'
@@ -37,6 +39,7 @@ def register_error_handlers(app):
     """Chiamata da create_app(): pagine 404 e 500 ed errori degli eventi socket."""
     app.register_error_handler(404, _not_found)
     app.register_error_handler(500, _server_error)
+    app.register_error_handler(CSRFError, _csrf_error)
     socketio.on_error_default(_socket_error)
 
 
@@ -48,6 +51,14 @@ def _not_found(_exc):
     if _wants_json():
         return error("not_found"), 404
     return render_template("errors/404.html"), 404
+
+
+def _csrf_error(exc):
+    """Codice CSRF mancante o scaduto: le rotte /api/ rispondono in JSON (la SPA lo
+    mostra), le altre con il 400 di Flask-WTF di sempre (contratto 2.2)."""
+    if request.path.startswith("/api/"):
+        return error("invalid_data", "La pagina è scaduta: ricaricala e riprova."), 400
+    return exc
 
 
 def _server_error(_exc):

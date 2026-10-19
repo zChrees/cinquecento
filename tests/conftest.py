@@ -4,6 +4,8 @@
   né con un database dei test che non finisce con _test.
 - I test girano sempre con la configurazione "testing" (APP_ENV).
 - La cartella del progetto è nel percorso di import: `pytest tests/...` trova app e config.
+- Il frontend React si compila in una cartella temporanea per le pagine della SPA
+  (tests/spa.py, dal passo 4 della migrazione).
 """
 
 import os
@@ -20,6 +22,7 @@ if str(BASE_DIR) not in sys.path:
 os.environ["APP_ENV"] = "testing"
 
 from config import ConfigError, load_config
+from tests.spa import prepare_spa
 
 
 def pytest_configure(config):
@@ -32,3 +35,6 @@ def pytest_configure(config):
         load_config("testing")
     except ConfigError as exc:
         pytest.exit(f"Test non avviati: {exc}", returncode=2)
+    # Passo 4 della migrazione: le pagine della SPA si servono da un build fuori dal
+    # progetto, fatto qui una volta (tests/spa.py)
+    prepare_spa()

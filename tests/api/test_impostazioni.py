@@ -24,6 +24,7 @@ from app.services.auth_service import (
     LOGIN_LOCKED,
     LoginLimiter,
 )
+from tests import accounts
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 PASSWORD = "Password-di-prova-17"
@@ -77,10 +78,8 @@ def client(app, monkeypatch):
 
 def register(client, username="Mario", email=None):
     email = email or f"{username.lower()}@esempio.it"
-    response = client.post("/auth/register", data={
-        "username": username, "email": email, "password": PASSWORD, "confirm": PASSWORD,
-    })
-    assert response.status_code == 302, "registrazione non riuscita"
+    response = accounts.register(client, username, email, PASSWORD)
+    assert accounts.ok(response), "registrazione non riuscita"
     client.get("/")  # mostra (e così consuma) il messaggio "Benvenuto"
 
 
@@ -257,8 +256,8 @@ def test_cancellazione_con_la_password_giusta(app, client):
 
     # L'utente non esiste più e il login fallisce
     assert user_id(app, "Mario") is None
-    login = client.post("/auth/login", data={"username": "Mario", "password": PASSWORD})
-    assert login.status_code == 200 and LOGIN_FAILED in login.get_data(as_text=True)
+    login = accounts.login(client, "Mario", PASSWORD)
+    assert login.status_code == 403 and LOGIN_FAILED in accounts.messages(login)
 
     # D6: la partita resta, con "utente eliminato"; rating, amicizie, blocchi e messaggi spariscono
     assert scalar(app, "SELECT COUNT(*) FROM partite") == 1

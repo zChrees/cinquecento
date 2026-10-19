@@ -26,6 +26,7 @@ from app.realtime.matchmaking import matchmaker
 from app.realtime.presence import presence
 from app.repositories import user_repo
 from app.services import auth_service, friend_service
+from tests import accounts
 
 WAIT = 5
 PASSWORD = "Password-di-prova-1"  # la stessa di conftest.py
@@ -122,13 +123,10 @@ def test_limite_di_frequenza_per_scheda(server, connect, monkeypatch):
 
 
 def _session(url, username):
-    """Login dal modulo, come il browser: la sessione HTTP e il suo cookie."""
+    """Login come la SPA (/api/auth/login): la sessione HTTP e il suo cookie."""
     session = requests.Session()
-    page = session.get(f"{url}/auth/login", timeout=WAIT).text
-    response = session.post(f"{url}/auth/login", data={
-        "csrf_token": CSRF_FIELD.search(page)[1], "username": username, "password": PASSWORD,
-    }, allow_redirects=False, timeout=WAIT)
-    assert response.status_code == 302, "login di prova non riuscito"
+    response = accounts.login_http(session, url, username, PASSWORD)
+    assert accounts.ok(response), "login di prova non riuscito"
     return session, "; ".join(f"{k}={v}" for k, v in session.cookies.items())
 
 

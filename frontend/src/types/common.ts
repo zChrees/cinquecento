@@ -63,6 +63,11 @@ export interface ErrorInfo {
   // solo con 'too_fast': i secondi da aspettare prima di riprovare. Il ? vuol
   // dire "può mancare": con gli altri codici il campo non c'è (vale undefined)
   retry_after?: number;
+  // solo nelle rotte /api/auth/ con un modulo (passo 4): gli errori di ogni campo,
+  // per esempio { username: ['Lo username deve avere da 3 a 20 caratteri.'] }.
+  // Record<string, string[]> è "un oggetto con chiavi di testo e, per ogni
+  // chiave, un elenco di testi"
+  fields?: Record<string, string[]>;
 }
 
 // OkEmpty: risposta "fatto", senza dati (per esempio a game:play_card)
@@ -85,4 +90,16 @@ export interface ErrorResponse {
   ok: false;
   // perché è stata rifiutata
   error: ErrorInfo;
+}
+
+// NoConnection: la risposta che la pagina si dà da sola, senza il server,
+// quando la connessione manca o il server non risponde (socket/client.ts e
+// api/client.ts). Il codice 'no_connection' non è tra quelli del server.
+export interface NoConnection {
+  ok: false;
+  error: {
+    code: 'no_connection';
+    // il testo da mostrare all'utente
+    message: string;
+  };
 }

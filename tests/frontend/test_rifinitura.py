@@ -46,7 +46,8 @@ def _login(browser, server):
 def test_un_solo_titolo_principale(browser, server, path, logged):
     if logged:
         _login(browser, server)
-    browser.open(server + path, *PHONE)
+    # Le pagine della SPA (accesso, registrazione) le disegna React dopo il caricamento
+    browser.open(server + path, *PHONE, "document.querySelector('h1') !== null")
     assert browser.js("location.pathname") == path.split("?")[0]
     assert browser.js("[...document.querySelectorAll('h1')].map((h) => h.textContent.trim().length > 0)") == [True]
 

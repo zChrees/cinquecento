@@ -58,7 +58,8 @@ def test_stessi_indirizzi_in_flask_e_in_vite(app):
     found = re.search(r"const SPA_PATHS: string\[\] = \[(.*?)\];", code, flags=re.DOTALL)
     assert found, "SPA_PATHS non trovato in vite.config.ts"
     assert tuple(re.findall(r"'([^']+)'", found.group(1))) == routes.SPA_PATHS
-    rules = {rule.rule for rule in app.url_map.iter_rules() if rule.endpoint.startswith("spa.")}
+    # Ogni indirizzo ha una rotta GET (nel blueprint spa o in quello del suo argomento)
+    rules = {rule.rule for rule in app.url_map.iter_rules() if "GET" in rule.methods}
     assert set(routes.SPA_PATHS) <= rules
 
 

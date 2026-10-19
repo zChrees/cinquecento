@@ -34,6 +34,15 @@ body {
   background-attachment: fixed;
 }
 
+/*
+ * Pagine della SPA (frontend/index.html, migrazione a React): React disegna dentro
+ * <div id="root">. "display: contents" fa sparire il div dal disegno, così navbar,
+ * <main> e messaggi restano come figli di <body> per le regole qui sopra.
+ */
+#root {
+  display: contents;
+}
+
 /* Contenuto della pagina: prende lo spazio sotto la navbar */
 .page {
   position: relative;
