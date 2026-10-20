@@ -199,7 +199,7 @@ Si spunta solo dopo l'ok dell'utente, il commit e il merge in `dev`, come nella 
 
 ### Migrazione del frontend (`docs/MIGRAZIONE-FRONTEND.md`, dal 19/10/2026)
 
-Un passo per branch, nell'ordine del piano (sezione 4). **Christian** fa il frontend (`frontend/`) e la rotta di ogni pagina nuova in `app/blueprints/spa/routes.py`; **Giuseppe** fa le parti del backend scritte sotto ogni passo. Un passo con pezzi di tutti e due si chiude quando ci sono entrambi.
+Un passo per branch, nell'ordine del piano (sezione 4). **Christian** fa il frontend (`frontend/`) e la rotta di ogni pagina nuova in `app/blueprints/spa/routes.py`; **Giuseppe** fa le parti del backend scritte sotto ogni passo. Un passo con pezzi di tutti e due si chiude quando ci sono entrambi. **Dal 20/10 Giuseppe può fare anche i pezzi di Christian** (scelta di Christian), prima dei suoi punti.
 
 - [x] **Passo 0** — piano, decisioni, regole del codice (sezione 6 di `regole-codice.md`) — Christian — *19/10 (commit `e5e50ce`, SPA e proxy in `2e772a2`)*
 - [x] **Passo 1** — `frontend/` con Vite, React, TypeScript e React Router; proxy verso Flask; build in `app/static/dist/`; blueprint `spa` con la pagina di prova `/prova-react` — Christian (backend con l'ok di Christian, che vale anche per Giuseppe) — *19/10 (commit `18dc627`)*

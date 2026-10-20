@@ -22,6 +22,15 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: Giuseppe può continuare i punti di Christian (20/10/2026)
+
+- **Branch**: docs/giuseppe-punti-christian
+- **File**: modificati `CLAUDE.md` (punto 7 di "Prima di lavorare" e riga "Stato"), `REVIEW.md` (migrazione: chi fa i pezzi), `DECISIONI.md` (Processo, 20/10), questo file
+- **Controlli**: nessuno (solo documenti)
+- **Decisioni prese**: **Giuseppe ha il permesso di continuare i punti di Christian**; se ha anche punti suoi, Christian consiglia che faccia prima quelli di Christian
+- **Domande nuove**: nessuna
+- **Cosa devono fare gli altri**: **Giuseppe**: puoi riprendere la migrazione dal passo 8 (piano in `docs/MIGRAZIONE-FRONTEND.md`, "Piano del passo 8"), prima dei tuoi punti
+
 ### Documenti: aggiornamento del 20/10 (20/10/2026)
 
 - **Branch**: docs/aggiornamento-20-10
