@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### Migrazione, passo 8 (pezzo di Giuseppe) — Le durate del tavolo uguali tra server, game.js e animations.ts (20/10/2026)
+
+- **Branch**: feature/migrazione-durate-tavolo
+- **File**: creato `tests/sockets/test_durate_tavolo.py`; modificato questo file. Nessun file del programma
+- **Cosa controlla** (i file letti come testo: niente server, MySQL né Node): (1) le 7 pause di `room.py` (presa chiusa, riepilogo, lancio, pescata, mescolata, distribuzione, carte calate) uguali, in millisecondi, sia in `game.js` sia in `animations.ts`; (2) `PHRASE_PAUSE_MS` uguale al limite delle frasi del server (`table_phrases.MIN_INTERVAL_SECONDS`) nei due file; (3) `animations.ts` ha **esattamente** le durate di `game.js` (`*_MS` e `TICK_SECONDS`, più `AWAY_DELAY_MS` di `Trick.js`), con gli stessi nomi e valori, nessuna in più o in meno; (4) ogni riga di `animations.ts` che non è un commento è `export const NOME_MS: number = 1500;` (nome e forma concordati nel piano: li decide Giuseppe); (5) `TRICK_AWAY_MS` = `AWAY_DELAY_MS`
+- **Controlli**: `test_durate_tavolo.py` **18 PASS** (nuovi); con `THROW_MS` messo apposta a 450 in `animations.ts` falliscono 2 controlli (la pausa del server e il confronto con `game.js`) [T], poi rimesso a 400. `ruff check` pulito
+- **Decisioni prese**: nome del file e forma delle righe come proposti nel piano; i confronti con `game.js` già sparsi (`test_turno.py`, `table6/test_calata.py`, `table5/test_frasi_pagina.py`) restano dove sono fino al passo 9
+- **Domande nuove**: nessuna
+- **Punti delicati**: una durata nuova del tavolo va scritta in **tutti e due** i file della pagina (finché c'è `game.js`) e, se è una pausa del server, anche in `room.py` e in `PAUSES` del test. Al passo 9, quando `game.js` sparisce, da questo file si tolgono il confronto con `game.js` e `Trick.js`; quelli sparsi negli altri tre file vanno spostati qui
+- **Note per gli altri**: **Chi è di turno sui documenti**: in `REVIEW.md`, passo 8, il pezzo di Giuseppe è fatto; nel punto delicato "Timer (P25)" di `CLAUDE.md`, le durate della pagina sono in `game.js` e in `animations.ts`, controllate da `tests/sockets/test_durate_tavolo.py`
+
 ### Migrazione, passo 8a — Il tavolo React raggiungibile e disegnato da una vista (20/10/2026)
 
 - **Branch**: feature/migrazione-passo8a. Punto di Christian fatto da Giuseppe (permesso di Christian del 20/10)
