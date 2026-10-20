@@ -8,7 +8,7 @@ Controlla:
 - senza login: il numero degli online da GET /online, nessun collegamento al tempo
   reale, una carta-pulsante apre "Accedi o registrati", la CSP non blocca niente;
 - con il login: il numero da home:status ("1 giocatore online", al singolare), una
-  carta-pulsante mostra l'avviso provvisorio del 7a (ogni volta), e con ?demo=rientro
+  carta "Gioca con un amico" mostra l'avviso provvisorio fino al 7c (ogni volta), e con ?demo=rientro
   l'avviso di rientro prende il posto di "giocatori online".
 Il login è quello finto di running_server (FakeUser): la pagina non scrive nel database.
 Senza browser, o senza il build della SPA, i controlli nel browser si saltano.
@@ -56,7 +56,7 @@ SIGNATURE = """((selector, skip) => {
   return out;
 })"""
 FLASHES = "[...document.querySelectorAll('[data-flash] .flash')].map((f) => [f.dataset.flashKind, f.textContent.trim()])"
-PREVIEW = "La scelta della modalità arriva con il prossimo lotto della migrazione (7b)."
+PREVIEW = "Gli inviti arrivano con il prossimo lotto della migrazione (7c)."
 
 
 @pytest.fixture(scope="module")
@@ -149,8 +149,9 @@ def test_con_il_login(browser, server):
     # home:status: io solo, al singolare (P120)
     assert browser.js("document.querySelector('[data-online-label]').textContent") == "giocatore online"
     assert browser.js("document.querySelector('[data-open-stats] .navbar__label').textContent") == "Mario"
-    # Le carte-pulsante, per ora, mostrano l'avviso provvisorio (la carta-modal arriva con il 7b)
-    browser.click("[data-tile][data-kind='veloce'][data-mode='1v1']")
+    # Le carte "Gioca con un amico", per ora, mostrano l'avviso provvisorio (gli inviti arrivano
+    # con il 7c; la Partita Veloce apre la carta-modal, test_spa_home_coda.py)
+    browser.click("[data-tile][data-kind='amico'][data-mode='2v2']")
     browser.wait_js("document.querySelector('[data-flash] .flash') !== null", "avviso provvisorio")
     assert browser.js(FLASHES) == [["info", f"info{PREVIEW}"]]
     assert browser.js("document.querySelector('dialog.dialog[open]')") is None
