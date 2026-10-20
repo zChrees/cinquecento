@@ -28,7 +28,7 @@ def client():
 
 @pytest.mark.parametrize("path", [
     "/auth/login",                   # pagina della SPA
-    "/",                             # pagina Jinja
+    "/vecchia-home",                 # pagina Jinja (dal passo 7d / è della SPA)
     "/api/auth/session",             # JSON della SPA
     "/static/css/base/variables.css",  # file statico
     "/pagina-che-non-esiste",        # errore 404
@@ -53,7 +53,7 @@ def test_csp_senza_eccezioni_pericolose():
     assert external == {"https://fonts.googleapis.com", "https://fonts.gstatic.com"}
 
 
-@pytest.mark.parametrize("path", ["/", "/auth/login", "/auth/register"])
+@pytest.mark.parametrize("path", ["/", "/vecchia-home", "/auth/login", "/auth/register"])
 def test_nessuno_script_scritto_nella_pagina(client, path):
     page = client.get(path).get_data(as_text=True)
     scripts = re.findall(r"<script\b([^>]*)>", page)

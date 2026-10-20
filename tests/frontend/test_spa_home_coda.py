@@ -1,4 +1,5 @@
-"""Passo 7b della migrazione: carta-modal, coda e CPU nella home React (/prova-home).
+"""Passo 7b della migrazione: carta-modal, coda e CPU nella home React (dal passo 7d su /;
+prima /prova-home). La home Jinja di confronto è su /vecchia-home.
 
 Nel browser (Chrome o Edge senza finestra), con il server vero e il database dei test,
 svuotato e ricreato qui con migrate.py (come test_chat_pannello.py: la suite frontend
@@ -46,7 +47,8 @@ from tests.browser import (
 from tests.frontend.test_chat_pannello import _migrate
 from tests.spa import needs_spa
 
-PAGE = "/prova-home"
+PAGE = "/"  # dal passo 7d (fino al 7c era /prova-home)
+OLD_PAGE = "/vecchia-home"  # la home Jinja di prima, solo in sviluppo e nei test
 PASSWORD = "Password-di-prova-7b"
 SOCKET_ROUTE = "*/socket.io/*"
 # Come test_csp.py: registra ogni risorsa bloccata dalla CSP
@@ -176,7 +178,7 @@ def _join(browser, mode="1v1", target=150):
 @pytest.mark.parametrize("mode", ["1v1", "2v2"])
 def test_carta_modal_uguale_a_quella_della_home_jinja(browser, server, mode):
     signatures = []
-    for url, ready in ((f"{server}/", READY_OLD), (f"{server}{PAGE}", READY)):
+    for url, ready in ((f"{server}{OLD_PAGE}", READY_OLD), (f"{server}{PAGE}", READY)):
         browser.open(url, 390, 844, ready, timeout=60)
         _open_modal(browser, mode)
         player = browser.js(SIGNATURE)
@@ -193,7 +195,7 @@ def test_carta_modal_uguale_a_quella_della_home_jinja(browser, server, mode):
 def test_carta_modal_con_un_amico_uguale_a_quella_della_home_jinja(browser, server, mode):
     # 7c: "Gioca con un amico" (Mario non ha amici: "Nessun amico online in questo momento.")
     signatures = []
-    for url, ready in ((f"{server}/", READY_OLD), (f"{server}{PAGE}", READY)):
+    for url, ready in ((f"{server}{OLD_PAGE}", READY_OLD), (f"{server}{PAGE}", READY)):
         browser.open(url, 390, 844, ready, timeout=60)
         _click(browser, f'[data-tile][data-kind="amico"][data-mode="{mode}"]')
         browser.wait_js(f"{MODAL_OPEN} && document.querySelector('.invite__empty') !== null", "carta-modal con un amico")

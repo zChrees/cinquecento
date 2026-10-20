@@ -238,7 +238,8 @@ def test_pannello_a_360_px_con_i_dati_veri(app, players, tmp_path):
         browser = Browser(find_browser(), tmp_path / "chrome")
         try:
             browser.send("Network.setCookie", name=TEST_COOKIE[0], value=TEST_COOKIE[1], url=url)
-            browser.open(f"{url}/", 360, 640, "document.querySelector('[data-open-stats]') !== null")
+            browser.open(f"{url}/vecchia-home", 360, 640,  # dal passo 7d la home Jinja (StatsPanel.js) è qui
+                          "document.querySelector('[data-open-stats]') !== null")
             browser.click("[data-open-stats]")
             browser.wait_js("document.querySelector('[data-stats-body] .stats-grid') !== null", "statistiche")
             shown = browser.js("""Object.fromEntries([...document.querySelectorAll('[data-stats-body] [data-stat]')]

@@ -79,7 +79,8 @@ def test_una_carta_giocata_con_la_tastiera(browser, server):
 
 def test_indietro_chiude_il_pannello_dopo_un_ricaricamento(browser, server):
     _login(browser, server)
-    browser.open(f"{server}/", *PHONE, "document.querySelector('[data-friends-button]') !== null")
+    # Pannello amici del JS vecchio (FriendsPanel.js): dal passo 7d sta sulla home Jinja, /vecchia-home
+    browser.open(f"{server}/vecchia-home", *PHONE, "document.querySelector('[data-friends-button]') !== null")
     # Come dopo un ricaricamento con la chat aperta: la cronologia ricorda ancora il pannello
     browser.js("history.replaceState({ friendsPanel: 'chat' }, '')")
     browser.send("Page.reload")

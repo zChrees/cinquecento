@@ -9,6 +9,7 @@ tutti e quattro vanno al tavolo; con due il gruppo entra in coda e la schermata 
 coda mostra compagno e avversari; nel 1v1 resta un invito alla volta.
 P65: un amico bloccato, sbloccato e di nuovo amico torna nella carta senza ricaricare.
 Se né Chrome né Edge sono installati i controlli nel browser si saltano.
+Dal passo 7d della migrazione / è la home React: la home Jinja (con il JS vecchio) è su /vecchia-home.
 """
 
 import importlib.util
@@ -180,7 +181,7 @@ def _open_modal(browser, server, users, mode):
     con i tre amici veri. In sviluppo e nei test la pagina parte con gli amici finti di
     app/static/dev/ finché non arriva GET /friends/, e la carta disegna la lista che c'è
     quando si apre: se è ancora quella finta, si chiude e si riapre."""
-    browser.open(f"{server}/", 390, 844, "document.querySelector('[data-online-count]')?.textContent === '4'",
+    browser.open(f"{server}/vecchia-home", 390, 844, "document.querySelector('[data-online-count]')?.textContent === '4'",
                  timeout=60)
     _open_card(browser, users, mode)
 
@@ -342,7 +343,7 @@ def test_invitato_che_perde_la_connessione_non_resta_ad_aspettare(browser, serve
     schede), ma "cancelled" non può arrivargli: la finestra lo dice da sola e, tornata la
     connessione, non resta su "aspettiamo che Giulia avvii la partita"."""
     dialog = "document.querySelector('[data-invite-dialog]')"
-    browser.open(f"{server}/", 390, 844, "document.querySelector('[data-online-count]')?.textContent === '4'",
+    browser.open(f"{server}/vecchia-home", 390, 844, "document.querySelector('[data-online-count]')?.textContent === '4'",
                  timeout=60)
     answer = friends["Giulia"].client.call("invite:send", {
         "request_id": uuid.uuid4().hex, "user_id": users["Mario"], "mode": "2v2", "target_score": 300,

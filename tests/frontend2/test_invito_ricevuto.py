@@ -7,6 +7,7 @@ farebbe invite:send di un amico. Controlla: chi invita, modalità e punti (il no
 entra come testo, mai come HTML), il conto alla rovescia, "Accetta" e l'attesa di chi
 ha invitato, l'annullamento, l'errore del server mostrato nella finestra, Esc.
 Se né Chrome né Edge sono installati i controlli nel browser si saltano.
+Dal passo 7d della migrazione / è la home React: la home Jinja (con il JS vecchio) è su /vecchia-home.
 """
 
 import re
@@ -42,7 +43,7 @@ def browser(server, tmp_path_factory):
 @pytest.fixture
 def home(browser, server):
     """La home aperta e collegata al tempo reale (è arrivato home:status vero: 1 online)."""
-    browser.open(f"{server}/", 390, 844,
+    browser.open(f"{server}/vecchia-home", 390, 844,
                  "document.querySelector('[data-online-count]')?.textContent === '1'", timeout=60)
     yield browser
     invites.cancel_all_of(ME)

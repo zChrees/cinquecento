@@ -34,7 +34,8 @@ def app():
 
 
 def _home(app):
-    response = app.test_client().get("/")
+    # Dal passo 7d / è della SPA: la home Jinja (base.html e navbar Jinja) è su /vecchia-home
+    response = app.test_client().get("/vecchia-home")
     html = response.get_data(as_text=True)
     response.close()
     return html

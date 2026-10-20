@@ -12,6 +12,7 @@ La home si apre in Chrome o Edge senza finestra (tests/browser.py) con l'utente 
 collegato al tempo reale; gli avvisi li manda il server vero (socketio.emit sul canale
 dell'utente), come farebbero friend_service, chat e inviti. Non serve MySQL. Se né Chrome
 né Edge sono installati i controlli nel browser si saltano.
+Dal passo 7d della migrazione / è la home React: la home Jinja (con il JS vecchio) è su /vecchia-home.
 """
 
 import json
@@ -66,9 +67,9 @@ def browser(server, tmp_path_factory):
 
 def _home(browser, server, sounds="on"):
     """La home aperta e collegata al tempo reale (home:status vero: 1 online)."""
-    browser.open(f"{server}/", 390, 844, "document.querySelector('[data-online-count]') !== null")
+    browser.open(f"{server}/vecchia-home", 390, 844, "document.querySelector('[data-online-count]') !== null")
     browser.js(f"localStorage.setItem('cinquecento.sounds', {json.dumps(sounds)})")
-    browser.open(f"{server}/", 390, 844, "document.querySelector('[data-online-count]')?.textContent === '1'")
+    browser.open(f"{server}/vecchia-home", 390, 844, "document.querySelector('[data-online-count]')?.textContent === '1'")
     return browser
 
 

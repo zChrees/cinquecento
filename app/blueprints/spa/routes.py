@@ -10,9 +10,8 @@ Cosa contiene:
     dist_dir()     la cartella del build
     spa_page()     la risposta con index.html (o l'errore se il build manca); la
                    usano anche le rotte di altri blueprint che sono pagine della
-                   SPA (per esempio /auth/login in app/blueprints/auth/routes.py)
-    home_preview() GET /prova-home, la home React finché non prende il posto di /
-                   (passo 7 della migrazione), solo in sviluppo e nei test
+                   SPA (per esempio /auth/login in app/blueprints/auth/routes.py e la home /
+                   in app/blueprints/main/routes.py, dal passo 7d)
     asset(...)     GET /static/dist/<file>, i file JavaScript della SPA
 
 DA DOVE ARRIVANO I DATI: il browser chiede un indirizzo della SPA (per esempio
@@ -23,9 +22,8 @@ dal build.
 import logging
 from pathlib import Path
 
-from flask import abort, current_app, request, send_file, send_from_directory
+from flask import current_app, send_file, send_from_directory
 
-from app.blueprints.main.routes import DEMO_ENVS, DEMO_STATES
 from app.blueprints.spa import bp
 
 log = logging.getLogger(__name__)
@@ -34,7 +32,7 @@ log = logging.getLogger(__name__)
 # SPA_PATHS di frontend/vite.config.ts (lo controlla tests/frontend/test_spa.py):
 # una pagina nuova della SPA si aggiunge in tutti e due i posti, più la sua rotta
 # (qui, o nel blueprint del suo argomento con spa_page(), come /auth/login).
-SPA_PATHS = ("/auth/login", "/auth/register", "/profile/settings", "/prova-home")
+SPA_PATHS = ("/", "/auth/login", "/auth/register", "/profile/settings")
 
 # NOT_BUILT: il messaggio quando manca il build, invece di una pagina bianca
 NOT_BUILT = "Frontend non compilato: lancia npm run build in frontend/."
@@ -79,31 +77,6 @@ def spa_page():
         log.warning("SPA: manca il build del frontend (%s)", index)
         return NOT_BUILT, 503, {"Content-Type": "text/plain; charset=utf-8"}
     return send_file(index, mimetype="text/html", max_age=0)
-
-
-@bp.get("/prova-home")
-def home_preview():
-    """GET /prova-home: la home React, mentre si costruisce (passo 7 della migrazione).
-
-    In parole semplici:
-        home_preview()
-        Fino al lotto 7d la home vera resta quella Jinja su /; quella React si
-        prova qui. C'è solo in sviluppo e nei test (DEMO_ENVS di
-        app/blueprints/main/routes.py, le stesse regole di ?demo= della home):
-        altrove risponde 404, come se non esistesse. Non serve il login: la home
-        si apre anche senza.
-        Come /, accetta solo ?demo=rientro (l'avviso "Hai una partita in corso"
-        con i dati finti); un altro valore di demo risponde 404.
-
-        Restituisce: la pagina della SPA (spa_page), oppure 404.
-    """
-    if current_app.config["ENV_NAME"] not in DEMO_ENVS:
-        abort(404)
-    # demo: il valore di ?demo= nell'indirizzo, None se manca
-    demo = request.args.get("demo")
-    if demo is not None and demo not in DEMO_STATES:
-        abort(404)
-    return spa_page()
 
 
 @bp.get("/static/dist/<path:filename>")

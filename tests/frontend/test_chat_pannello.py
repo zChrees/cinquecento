@@ -8,6 +8,7 @@ pannello. Nel browser (Chrome o Edge senza finestra, tests/browser.py), con il s
 vero e il database dei test, svuotato e ricreato qui con migrate.py come in
 test_chat_vera.py: Mario e Giulia sono amici, Giulia ha mandato 3 messaggi non letti.
 Se né Chrome né Edge sono installati i controlli nel browser si saltano.
+Dal passo 7d della migrazione / è la home React: la home Jinja (con il JS vecchio) è su /vecchia-home.
 """
 
 import importlib.util
@@ -87,7 +88,7 @@ def browser(server, tmp_path):
 
 
 def _open_chat(browser, server, friend_id, width, height):
-    browser.open(f"{server}/", width, height, "document.querySelector('[data-online-count]')?.textContent === '1'",
+    browser.open(f"{server}/vecchia-home", width, height, "document.querySelector('[data-online-count]')?.textContent === '1'",
                  timeout=60)
     browser.click("[data-friends-button]")
     browser.wait_js(f"document.querySelector(\"[data-chat-open='{friend_id}']\") !== null", "lista degli amici")
@@ -97,7 +98,7 @@ def _open_chat(browser, server, friend_id, width, height):
 
 def test_aprire_la_chat_azzera_i_non_letti(browser, server, users):
     # Anche collegati al tempo reale (1 online): senza, chat:history non parte e la chat non si apre
-    browser.open(f"{server}/", 390, 844,
+    browser.open(f"{server}/vecchia-home", 390, 844,
                  f"{BADGE} === {UNREAD} && document.querySelector('[data-online-count]')?.textContent === '1'",
                  timeout=60)
     browser.click("[data-friends-button]")

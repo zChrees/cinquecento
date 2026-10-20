@@ -7,6 +7,7 @@ Mario e Giulia sono amici e hanno 55 messaggi. Controlla: gli ultimi 50 in ordin
 messaggio arrivato mentre la chat è aperta compare da solo, e dopo un blocco la chat
 dice "Bloccato" e chiude la scrittura (scelta di Giuseppe).
 Se né Chrome né Edge sono installati i controlli nel browser si saltano.
+Dal passo 7d della migrazione / è la home React: la home Jinja (con il JS vecchio) è su /vecchia-home.
 """
 
 import importlib.util
@@ -82,7 +83,7 @@ def browser(server, tmp_path_factory):
 
 
 def _open_chat(browser, server, friend_id):
-    browser.open(f"{server}/", 390, 844, "document.querySelector('[data-online-count]')?.textContent === '1'",
+    browser.open(f"{server}/vecchia-home", 390, 844, "document.querySelector('[data-online-count]')?.textContent === '1'",
                  timeout=60)
     browser.click("[data-friends-button]")
     browser.wait_js(f"document.querySelector(\"[data-chat-open='{friend_id}']\") !== null", "lista degli amici")

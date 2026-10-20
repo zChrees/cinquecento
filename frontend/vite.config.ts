@@ -28,7 +28,7 @@ const FLASK = 'http://localhost:5000';
 // SPA_PATHS: gli indirizzi che sono pagine della SPA. Deve restare uguale a
 // SPA_PATHS di app/blueprints/spa/routes.py (lo controlla tests/frontend/test_spa.py):
 // una pagina nuova della SPA si aggiunge in tutti e due i posti.
-const SPA_PATHS: string[] = ['/auth/login', '/auth/register', '/profile/settings', '/prova-home'];
+const SPA_PATHS: string[] = ['/', '/auth/login', '/auth/register', '/profile/settings'];
 
 /**
  * Costruisce l'espressione regolare degli indirizzi da girare a Flask.
@@ -52,7 +52,9 @@ function flaskPattern(): string {
   // excluded: i pezzi esclusi, uniti dopo con | (che vuol dire "oppure")
   const excluded: string[] = ['@', 'src/', 'node_modules/'];
   for (let i = 0; i < SPA_PATHS.length; i++) {
-    // la pagina senza la / iniziale, per esempio 'auth/login'
+    // la pagina senza la / iniziale, per esempio 'auth/login'; per la home '/'
+    // resta '' e l'espressione diventa (?:[/?]|$): solo "/" e "/?demo=..." vanno a
+    // Vite, non /online o /static/... (dopo la / viene un'altra lettera)
     const name = SPA_PATHS[i].slice(1);
     excluded.push(`${name}(?:[/?]|$)`);
   }

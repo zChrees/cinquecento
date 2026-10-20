@@ -84,7 +84,7 @@ def register(client, username="Mario", email=None):
     email = email or f"{username.lower()}@esempio.it"
     response = accounts.register(client, username, email, PASSWORD)
     assert accounts.ok(response), "registrazione non riuscita"
-    client.get("/")  # mostra (e così consuma) il messaggio "Benvenuto"
+    client.get("/vecchia-home")  # mostra (e così consuma) il messaggio "Benvenuto"; dal passo 7d la home Jinja è qui
 
 
 def logged_in(client):
@@ -167,7 +167,7 @@ def test_avatar_scelto_viene_salvato(app, client):
     assert scalar(app, "SELECT avatar FROM utenti WHERE nome_utente = 'Mario'") == "re_denari"
     session = client.get("/api/auth/session").get_json()["data"]
     assert session["user"]["avatar"] == "re_denari"  # la navbar della SPA lo legge da qui
-    assert 'data-avatar="re_denari"' in client.get("/").get_data(as_text=True)  # <body data-avatar>
+    assert 'data-avatar="re_denari"' in client.get("/vecchia-home").get_data(as_text=True)  # <body data-avatar> (home Jinja, dal passo 7d)
 
 
 def test_iniziale_toglie_l_avatar(app, client):

@@ -1,7 +1,8 @@
-"""Passo 7c della migrazione: gli inviti a partita nella home React (/prova-home).
+"""Passo 7c della migrazione: gli inviti a partita nella home React (dal passo 7d su /;
+prima /prova-home).
 
 Gli stessi casi di test_invito_ricevuto.py (P47) e test_inviti_2v2.py (P59, P65, P83),
-che provano la home Jinja (/), sulla home React: stesso HTML, stesse classi e stessi
+che provano la home Jinja (dal passo 7d su /vecchia-home), sulla home React: stesso HTML, stesse classi e stessi
 data-* di ModeModal.js (carta "Gioca con un amico") e InviteDialog.js (invito ricevuto).
 
 Nel browser (Chrome o Edge senza finestra, tests/browser.py), con il server vero e il
@@ -61,7 +62,7 @@ from tests.browser import (
 from tests.spa import needs_spa
 
 ROOT = Path(__file__).resolve().parents[2]
-PAGE = "/prova-home"
+PAGE = "/"  # dal passo 7d (fino al 7c era /prova-home)
 PASSWORD = "Password-di-prova-7c"
 FRIENDS = ("Giulia", "Salvo", "Rosa")
 WAIT = 10

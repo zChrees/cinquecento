@@ -45,7 +45,8 @@ def app():
 
 @pytest.fixture
 def guest_home(app):
-    response = app.test_client().get("/")
+    # Dal passo 7d / è della SPA: la home Jinja (navbar Jinja) è su /vecchia-home
+    response = app.test_client().get("/vecchia-home")
     assert response.status_code == 200
     return response.get_data(as_text=True)
 

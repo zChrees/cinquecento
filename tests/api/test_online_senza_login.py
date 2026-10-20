@@ -10,6 +10,7 @@
 Non serve MySQL: chi è online lo sa presence.py, in memoria; i test aggiungono e
 tolgono schede finte (utenti 9001 e 9002, che non esistono).
 Se né Chrome né Edge sono installati i controlli nel browser si saltano.
+Dal passo 7d della migrazione la home Jinja (home.js) è su /vecchia-home: si prova lì.
 """
 
 import json
@@ -103,7 +104,7 @@ def browser(server, tmp_path_factory):
 
 
 def _open(browser, server):
-    browser.open(f"{server}/", 390, 844, f"{SHOWN} && {COUNT} === '{presence.count()}'", timeout=100)
+    browser.open(f"{server}/vecchia-home", 390, 844, f"{SHOWN} && {COUNT} === '{presence.count()}'", timeout=100)
     assert browser.js("document.body.dataset.userId") == ""
 
 

@@ -1,8 +1,9 @@
-"""Passo 7a della migrazione: la home React (frontend/src/pages/HomePage.tsx) su /prova-home.
+"""Passo 7a della migrazione: la home React (frontend/src/pages/HomePage.tsx), dal passo 7d su /.
 
 Controlla:
-- /prova-home c'è solo in sviluppo e nei test (altrove 404) e accetta solo ?demo=rientro;
-- nel browser, la stessa pagina della home Jinja (/): stessi elementi, classi, data-* e
+- / c'è ovunque e accetta solo ?demo=rientro, che vale solo in sviluppo e nei test
+  (altrove 404, come la home Jinja di prima, /vecchia-home); /prova-home non c'è più;
+- nel browser, la stessa pagina della home Jinja (/vecchia-home): stessi elementi, classi, data-* e
   testi in <main>, e la stessa cascata di carte dello sfondo, a 390×844 e 1280×720,
   anche con ?demo=rientro (l'avviso "Hai una partita in corso");
 - senza login: il numero degli online da GET /online, nessun collegamento al tempo
@@ -23,7 +24,8 @@ from app.realtime.presence import presence
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
 from tests.spa import needs_spa
 
-PAGE = "/prova-home"
+PAGE = "/"  # dal passo 7d (fino al 7c era /prova-home)
+OLD_PAGE = "/vecchia-home"  # la home Jinja di prima, solo in sviluppo e nei test
 # Come test_csp.py: registra ogni risorsa bloccata dalla CSP
 RECORD = (
     "window.__csp = [];"
@@ -91,15 +93,18 @@ def _login(browser, server):
 # --- Flask -------------------------------------------------------------------
 
 
-def test_solo_in_sviluppo_e_nei_test(app, server, monkeypatch):
+def test_rientro_finto_e_home_jinja_solo_in_sviluppo_e_nei_test(app, server, monkeypatch):
     client = app.test_client()
     assert client.get(PAGE).status_code == 200
     assert client.get(f"{PAGE}?demo=rientro").status_code == 200
     assert client.get(f"{PAGE}?demo=altro").status_code == 404
-    # Nella demo e in produzione la pagina non c'è
+    assert client.get(OLD_PAGE).status_code == 200
+    assert client.get("/prova-home").status_code == 404
+    # Nella demo e in produzione la home c'è, ma senza ?demo= e senza la home Jinja
     monkeypatch.setitem(app.config, "ENV_NAME", "demo")
-    assert client.get(PAGE).status_code == 404
+    assert client.get(PAGE).status_code == 200
     assert client.get(f"{PAGE}?demo=rientro").status_code == 404
+    assert client.get(OLD_PAGE).status_code == 404
 
 
 # --- Nel browser ---------------------------------------------------------------
@@ -109,7 +114,7 @@ def test_solo_in_sviluppo_e_nei_test(app, server, monkeypatch):
 @pytest.mark.parametrize("query", ["", "?demo=rientro"])
 def test_stessa_pagina_della_home_jinja(browser, server, size, query):
     width, height = size
-    browser.open(f"{server}/{query}", width, height, READY)
+    browser.open(f"{server}{OLD_PAGE}{query}", width, height, READY)
     old_main = _signature(browser, "main", "[data-bg-cards]")
     old_background = _signature(browser, "[data-bg-cards]")
     browser.open(f"{server}{PAGE}{query}", width, height, READY)

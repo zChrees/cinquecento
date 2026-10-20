@@ -3,7 +3,6 @@
 Si importano con `from tests.e2e.helpers import ...` (come tests/browser.py).
 """
 
-import re
 import threading
 import time
 import uuid
@@ -16,8 +15,6 @@ from tests import accounts
 
 PASSWORD = "Password-di-prova-1"
 WAIT = 5  # secondi massimi per aspettare un evento (si aspetta l'evento, non un tempo fisso)
-CSRF_META = re.compile(r'<meta name="csrf-token" content="([^"]+)">')
-USER_ID = re.compile(r'<body data-user-id="(\d+)"')
 
 # Come nella suite sockets: il server di sviluppo (Werkzeug) non risponde alla chiusura
 # ordinata del websocket, e websocket-client la aspetterebbe fino a 3 secondi per client.
@@ -111,9 +108,11 @@ class User:
         self.session = requests.Session()
         response = accounts.register_http(self.session, url, username, password=PASSWORD)
         assert accounts.ok(response), f"registrazione di {username} non riuscita"
-        home = self.session.get(f"{url}/", timeout=WAIT).text  # dopo la registrazione si entra subito
-        self.id = int(USER_ID.search(home)[1])
-        self._csrf = CSRF_META.search(home)[1]
+        # Dopo la registrazione si entra subito. Id e codice CSRF li dà GET /api/auth/session,
+        # come alla SPA (fino al passo 7d si leggevano dalla home Jinja, che ora è della SPA)
+        session = self.session.get(f"{url}/api/auth/session", timeout=WAIT).json()["data"]
+        self.id = session["user"]["user_id"]
+        self._csrf = session["csrf_token"]
         self.tabs = []
 
     @property

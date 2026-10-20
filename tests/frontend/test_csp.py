@@ -22,14 +22,14 @@ RECORD = (
 )
 PAGES = [
     # (indirizzo, condizione JS di pagina pronta)
+    # Dal passo 7d / è la home React; la home Jinja di prima è su /vecchia-home (fino al passo 9)
     ("/", "document.querySelector('[data-online-count]')?.textContent === '1'"),  # home:status arrivato
+    ("/vecchia-home", "document.querySelector('[data-online-count]')?.textContent === '1'"),
     ("/game/prova?demo=1v1", "document.querySelector('[data-table]') !== null"),
     ("/auth/register", "document.querySelector('form') !== null"),
     # Passo 6: le impostazioni della SPA, collegate e con l'elenco degli avatar arrivato
     ("/profile/settings", ("document.querySelector('[data-friends-panel]')?.dataset.connection === 'connected'"
                            " && document.querySelector('[data-avatar=\"coppe\"]') !== null")),
-    # Passo 7a: la home React, con home:status arrivato
-    ("/prova-home", "document.querySelector('[data-online-count]')?.textContent === '1'"),
 ]
 
 

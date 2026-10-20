@@ -9,6 +9,7 @@ finestra, tests/browser.py) le richieste HTTP del contratto 2.2 le intercetta il
 test e risponde con i dati di app/static/dev/amici_esempio.json, così non serve
 MySQL; il test controlla anche il codice CSRF e request_id delle richieste.
 Se né Chrome né Edge sono installati i controlli nel browser si saltano.
+Dal passo 7d della migrazione / è la home React: la home Jinja (con il JS vecchio) è su /vecchia-home.
 """
 
 import copy
@@ -156,7 +157,7 @@ def _click_dialog_button(browser, label):
 
 
 def test_contatore_e_lista_dal_server(browser, server, friends):
-    browser.open(f"{server}/", 390, 844, "document.querySelector('[data-friends-badge]:not([hidden])') !== null")
+    browser.open(f"{server}/vecchia-home", 390, 844, "document.querySelector('[data-friends-badge]:not([hidden])') !== null")
     counters = friends.data["counters"]
     assert browser.js("document.querySelector('[data-friends-badge]').textContent") == str(counters["requests_in"] + counters["unread_messages"])
     _open_panel(browser)
@@ -176,7 +177,7 @@ def test_contatore_e_lista_dal_server(browser, server, friends):
 
 
 def test_richiesta_di_amicizia_con_csrf_e_request_id(browser, server, friends):
-    browser.open(f"{server}/", 390, 844)
+    browser.open(f"{server}/vecchia-home", 390, 844)
     _open_panel(browser)
     browser.click("[data-add-friend] button[type=submit]")
     assert browser.js("document.querySelector('[data-add-friend-error]').textContent") == "Scrivi uno username."
@@ -202,7 +203,7 @@ def test_richiesta_di_amicizia_con_csrf_e_request_id(browser, server, friends):
 
 
 def test_accetta_e_rimuovi_con_conferma(browser, server, friends):
-    browser.open(f"{server}/", 390, 844)
+    browser.open(f"{server}/vecchia-home", 390, 844)
     _open_panel(browser)
     browser.click("[data-accept='52']")
     browser.wait_js("document.querySelector('[data-friends-notice]').textContent === 'Ora tu e Toto siete amici.'",
@@ -225,7 +226,7 @@ def test_accetta_e_rimuovi_con_conferma(browser, server, friends):
 
 def test_indietro_ed_esc_chiudono(browser, server):
     # La chat si apre solo con il server vero (P48): "indietro" dalla chat lo prova test_chat_pannello.py
-    browser.open(f"{server}/", 1440, 900)
+    browser.open(f"{server}/vecchia-home", 1440, 900)
     _open_panel(browser)
     browser.js("history.back()")
     browser.wait_js("document.querySelector('[data-friends-panel]').open === false", "chiusura con indietro")
@@ -243,7 +244,7 @@ def test_niente_pannello_al_tavolo_ne_senza_login(browser, server):
     browser.open(f"{server}/game/prova?demo=1v1", 390, 844, "document.querySelector('[data-mode]') !== null")
     assert browser.js("document.querySelector('[data-friends-panel]')") is None
     browser.send("Network.deleteCookies", name=TEST_COOKIE[0], url=server)
-    browser.open(f"{server}/", 390, 844)
+    browser.open(f"{server}/vecchia-home", 390, 844)
     assert browser.js("document.querySelector('[data-friends-panel]')") is None
     browser.click("[data-login-prompt][aria-label^='Amici']")
     browser.wait_js("document.querySelector('dialog.dialog[open]') !== null", "finestra di accesso")

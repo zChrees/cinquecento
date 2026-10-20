@@ -8,8 +8,8 @@
  * in SPA_PATHS di app/blueprints/spa/routes.py (lo controlla test_spa.py).
  * Le pagine non ancora migrate (home, tavolo, ...) restano pagine Jinja di
  * Flask: dalla SPA ci si arriva con un normale <a href>, che ricarica la pagina.
- * La home React, finché non è finita, sta su /prova-home (passo 7: solo in
- * sviluppo e nei test, lo decide Flask); al lotto 7d prende il posto di /.
+ * Dal passo 7d la home (/) è HomePage; la home Jinja di prima resta su
+ * /vecchia-home (solo sviluppo e test) fino al passo 9.
  *
  * DA DOVE ARRIVANO I DATI: React Router legge l'indirizzo della barra del
  * browser (window.location) e sceglie la voce di routes con lo stesso path.
@@ -25,10 +25,10 @@ import { SettingsPage } from './pages/SettingsPage';
 // routes: l'elenco delle pagine. path è l'indirizzo, element il componente da
 // disegnare (<LoginPage /> vuol dire "il componente LoginPage, senza dati").
 const routes: RouteObject[] = [
+  { path: '/', element: <HomePage /> },
   { path: '/auth/login', element: <LoginPage /> },
   { path: '/auth/register', element: <RegisterPage /> },
   { path: '/profile/settings', element: <SettingsPage /> },
-  { path: '/prova-home', element: <HomePage /> },
 ];
 
 // router: chi segue la barra degli indirizzi e cambia pagina senza ricaricare

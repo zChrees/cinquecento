@@ -106,7 +106,7 @@ def test_nessuna_icona_in_piu():
 def test_base_precarica_il_font_senza_google():
     app = create_app("testing")
     client = app.test_client()
-    html = client.get("/").get_data(as_text=True)
+    html = client.get("/vecchia-home").get_data(as_text=True)  # dal passo 7d la home Jinja (base.html) è qui
     assert "Material+Symbols" not in html
     assert re.search(rf'<link rel="preload" href="{re.escape(FONT_URL)}" as="font" type="font/woff2" crossorigin>', html)
     response = client.get(FONT_URL)
@@ -131,8 +131,9 @@ def browser(tmp_path):
 def test_icone_disegnate_nel_browser(browser):
     b, url = browser
     # Si aspetta anche il collegamento al tempo reale (1 online), come negli altri test della
-    # home: chiudere a collegamento a metà blocca a volte il server del file dopo
-    b.open(f"{url}/", 390, 844, "document.querySelector('[data-friends-button] .icon') !== null"
+    # home: chiudere a collegamento a metà blocca a volte il server del file dopo. Dal passo 7d
+    # la home Jinja (navbar e pannelli in JS vecchio) è su /vecchia-home
+    b.open(f"{url}/vecchia-home", 390, 844, "document.querySelector('[data-friends-button] .icon') !== null"
            " && document.querySelector('[data-online-count]')?.textContent === '1'", timeout=60)
     assert b.js("document.fonts.check('24px \"Material Symbols Rounded\"')") is True
     icons = b.js("""[...document.querySelectorAll('.icon')].filter((e) => e.offsetWidth > 0)

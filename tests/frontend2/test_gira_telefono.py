@@ -56,7 +56,7 @@ def browser(server, tmp_path):
 CONNECTED = "import('/static/js/core/socket.js').then((m) => m.isConnected())"
 # Nelle pagine della SPA (passo 6: le impostazioni) lo dice il pannello amici di React
 SPA_CONNECTED = "document.querySelector('[data-friends-panel]')?.dataset.connection === 'connected'"
-SPA_PAGES = ("/profile/settings",)
+SPA_PAGES = ("/", "/profile/settings")  # dal passo 7d anche la home (/) è della SPA
 
 
 def _open(browser, server, path, logged, size):

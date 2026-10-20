@@ -20,13 +20,13 @@ def app():
 
 
 def test_home_mostra_ok(app):
-    response = app.test_client().get("/")
+    response = app.test_client().get("/vecchia-home")  # dal passo 7d la home Jinja (data-stato) è su /vecchia-home
     assert response.status_code == 200
     assert b'data-stato="ok"' in response.data
 
 
 def test_blueprint_registrati(app):
-    assert set(app.blueprints) == {"main", "auth", "auth_api", "profile", "game", "stats", "friends", "spa"}
+    assert set(app.blueprints) == {"main", "auth", "auth_api", "profile", "profile_api", "game", "stats", "friends", "spa"}
 
 
 def test_socketio_in_modalita_threading(app):

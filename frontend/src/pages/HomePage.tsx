@@ -2,8 +2,8 @@
  * La home (P22), passo 7 della migrazione: la versione React di
  * app/templates/main/index.html e js/pages/home.js, con lo stesso HTML, le stesse
  * classi e gli stessi data-* (stile in css/pages/home.css e
- * css/components/card-background.css). Finché non è finita sta su /prova-home
- * (solo sviluppo e test); al lotto 7d prende il posto di /.
+ * css/components/card-background.css). Dal lotto 7d è la home vera, su /; la home
+ * Jinja di prima resta su /vecchia-home (solo sviluppo e test) fino al passo 9.
  *
  * Lotto 7a: la parte "ferma" della home.
  * - Le quattro carte-pulsante (Partita Veloce e Gioca con un amico, 1v1 e 2v2),
@@ -45,7 +45,7 @@
  *   rimasto aperto si annulla con invite:cancel e la lista degli amici si rilegge.
  *
  * Cosa contiene:
- *   <HomePage />   (routes.tsx, indirizzo /prova-home)
+ *   <HomePage />   (routes.tsx, indirizzo /)
  *
  * DA DOVE ARRIVANO I DATI: chi è collegato da useSession (GET /api/auth/session);
  * home:status, la coda, gli inviti e game:start dal tempo reale (socket/, solo con

@@ -1,5 +1,8 @@
 """P22: home con dati finti (carte-pulsante, carta-modal, coda, rientro, online, sfondo).
 
+Dal passo 7d della migrazione / è la home React: la home Jinja provata qui è su
+/vecchia-home (solo sviluppo e test).
+
 Controlla il "Fatto quando" di SCALETTA.md (P22):
 - risposte del server: la pagina ha le quattro carte-pulsante e i marcatori data-*;
   i dati finti ci sono solo in sviluppo e nei test (?demo=rientro per l'avviso di
@@ -64,7 +67,7 @@ def _text(response):
 
 
 def test_home_con_le_quattro_carte_pulsante(client):
-    html = _text(client.get("/"))
+    html = _text(client.get("/vecchia-home"))
     assert 'data-page="home"' in html and 'class="page home"' in html
     for kind, mode in TILES:
         assert re.search(rf'<button class="mode-tile [^"]+" type="button" data-tile data-kind="{kind}" data-mode="{mode}"', html), (kind, mode)
@@ -76,7 +79,7 @@ def test_home_con_le_quattro_carte_pulsante(client):
 
 
 def test_dati_finti_in_sviluppo_e_nei_test(client):
-    html = _text(client.get("/"))
+    html = _text(client.get("/vecchia-home"))
     urls = dict(re.findall(r'data-demo-(home|friends|stats)-url="([^"]+)"', html))
     assert urls == {
         "home": "/static/dev/home_esempio.json",
@@ -105,21 +108,22 @@ def test_forma_dei_dati_finti_usati_dalla_home():
 
 
 def test_avviso_di_rientro_con_demo_rientro(client):
-    html = _text(client.get("/?demo=rientro"))
+    html = _text(client.get("/vecchia-home?demo=rientro"))
     assert 'data-demo-state="rientro"' in html
 
 
-@pytest.mark.parametrize("path", ["/?demo=coda", "/?demo=", "/?demo=RIENTRO"])
+@pytest.mark.parametrize("path", ["/vecchia-home?demo=coda", "/vecchia-home?demo=", "/vecchia-home?demo=RIENTRO"])
 def test_stati_finti_non_validi(client, path):
     assert client.get(path).status_code == 404
 
 
 def test_niente_dati_finti_nella_demo_vera(app):
+    # Dal passo 7d nella demo la home Jinja (/vecchia-home) non c'è proprio, e ?demo= dà 404
+    # anche sulla home React (/)
     app.config["ENV_NAME"] = "demo"
     client = app.test_client()
-    html = _text(client.get("/"))
-    assert "data-demo-" not in html
-    assert "data-tile" in html
+    assert client.get("/vecchia-home").status_code == 404
+    assert client.get("/vecchia-home?demo=rientro").status_code == 404
     assert client.get("/?demo=rientro").status_code == 404
 
 
@@ -132,7 +136,7 @@ def test_index_solo_markup():
 
 
 def test_css_e_js_della_home_esistono(client):
-    html = _text(client.get("/"))
+    html = _text(client.get("/vecchia-home"))
     for name in PAGE_CSS:
         path = f"/static/css/{name}.css"
         assert f'href="{path}"' in html, name
@@ -194,7 +198,7 @@ def server():
 def browser(server, tmp_path_factory):
     b = HomeBrowser(find_browser(), tmp_path_factory.mktemp("chrome"))
     # Prima apertura: la prima volta si scaricano font e icone (poi restano in FONT_CACHE)
-    b.open(f"{server}/", 390, 844, timeout=100)
+    b.open(f"{server}/vecchia-home", 390, 844, timeout=100)
     yield b
     b.close()
 
@@ -266,7 +270,7 @@ def _close_modal(browser):
 @pytest.mark.parametrize("size", NO_SCROLL_SIZES, ids=lambda s: f"{s[0]}x{s[1]}")
 def test_la_home_non_scorre(logged_in, server, size):
     width, height = size
-    logged_in.open(f"{server}/", width, height)
+    logged_in.open(f"{server}/vecchia-home", width, height)
     m = logged_in.js(MEASURE_HOME)
     assert m["scrollW"] <= m["vw"] and m["scrollH"] <= m["vh"], m
     assert m["mainScroll"] <= m["mainClient"] + 1, "il contenuto della home esce dalla pagina"
@@ -281,7 +285,7 @@ def test_la_home_non_scorre(logged_in, server, size):
 
 
 def test_sfondo_dietro_a_titoli_e_carte(logged_in, server):
-    logged_in.open(f"{server}/", 1440, 900)
+    logged_in.open(f"{server}/vecchia-home", 1440, 900)
     result = logged_in.js("""(() => {
       const deco = document.querySelector('[data-bg-cards]');
       const hit = (e) => { const r = e.getBoundingClientRect();
@@ -300,7 +304,7 @@ def test_sfondo_dietro_a_titoli_e_carte(logged_in, server):
 @pytest.mark.parametrize("size", MODAL_SIZES, ids=lambda s: f"{s[0]}x{s[1]}")
 def test_la_carta_modal_contiene_tutto(logged_in, server, size):
     width, height = size
-    logged_in.open(f"{server}/", width, height)
+    logged_in.open(f"{server}/vecchia-home", width, height)
     for kind, mode in TILES:
         _open_modal(logged_in, kind, mode)
         m = logged_in.js(MEASURE_MODAL)
@@ -329,7 +333,7 @@ def test_la_carta_modal_contiene_tutto(logged_in, server, size):
 
 
 def test_partita_veloce_apre_e_annulla_la_coda(logged_in, server):
-    logged_in.open(f"{server}/", 1440, 900)
+    logged_in.open(f"{server}/vecchia-home", 1440, 900)
     _open_modal(logged_in, "veloce", "1v1")
     facts = logged_in.js("document.querySelector('.facts').textContent")
     assert "Conta per il tuo rating 1v1 (1540)" in facts
@@ -354,7 +358,7 @@ def test_intervallo_allargato_senza_riaprire_la_schermata(logged_in, server, mon
     # P105: un queue:status nuovo della stessa coda non riapre la schermata (faceva un
     # lampo): cambiano solo i numeri, che scorrono fino ai valori nuovi
     monkeypatch.setattr(matchmaking, "RANGE_STEP_SECONDS", 1)
-    logged_in.open(f"{server}/", 1440, 900)
+    logged_in.open(f"{server}/vecchia-home", 1440, 900)
     _open_modal(logged_in, "veloce", "1v1")
     _click(logged_in, 'input[name="target"][value="150"]')
     _click(logged_in, "[data-play]")
@@ -416,7 +420,7 @@ LEGEND = "document.querySelector('fieldset[data-opponent] legend').textContent" 
 def test_scelta_dell_avversario_solo_nella_partita_veloce(logged_in, server):
     # P73 (D43): "Avversario: Giocatore · CPU" nella Partita Veloce 1v1; P123: "Gioca con:
     # Giocatori · CPU" nella Partita Veloce 2v2; con un amico niente; parte sempre da Giocatore
-    logged_in.open(f"{server}/", 1440, 900)
+    logged_in.open(f"{server}/vecchia-home", 1440, 900)
     for kind, mode in TILES:
         _open_modal(logged_in, kind, mode)
         state = logged_in.js(OPPONENT)
@@ -443,7 +447,7 @@ def test_contro_la_cpu_nel_2v2(logged_in, server):
     # server di P122 (tests/sockets): qui si controlla solo cosa manda la pagina.
     from app.realtime.room_manager import rooms
 
-    logged_in.open(f"{server}/", 1440, 900)
+    logged_in.open(f"{server}/vecchia-home", 1440, 900)
     logged_in.wait_js("import('/static/js/core/socket.js').then((m) => m.isConnected())", "collegamento al tempo reale")
     assert logged_in.js(RECORD_CPU_START) is True
     _open_modal(logged_in, "veloce", "2v2")
@@ -475,7 +479,7 @@ def test_contro_la_cpu_si_va_subito_al_tavolo(logged_in, server):
     # punti, e "Gioca" manda cpu:start (contratto 4.1): niente coda, si va al tavolo
     from app.realtime.room_manager import rooms
 
-    logged_in.open(f"{server}/", 1440, 900)
+    logged_in.open(f"{server}/vecchia-home", 1440, 900)
     logged_in.wait_js("import('/static/js/core/socket.js').then((m) => m.isConnected())", "collegamento al tempo reale")
     assert logged_in.js(RECORD_CPU_START) is True
     _open_modal(logged_in, "veloce", "1v1")
@@ -504,7 +508,7 @@ def test_contro_la_cpu_si_va_subito_al_tavolo(logged_in, server):
 
 
 def test_senza_login_la_carta_apre_la_finestra_di_accesso(browser, server):
-    browser.open(f"{server}/", 390, 844)
+    browser.open(f"{server}/vecchia-home", 390, 844)
     assert browser.js("document.body.dataset.userId") == ""
     _click(browser, '[data-tile][data-kind="veloce"][data-mode="1v1"]')
     browser.wait_js("document.querySelector('dialog.dialog[open]') !== null", "finestra di accesso")
@@ -513,7 +517,7 @@ def test_senza_login_la_carta_apre_la_finestra_di_accesso(browser, server):
 
 
 def test_avviso_di_rientro_solo_se_previsto(logged_in, server):
-    logged_in.open(f"{server}/", 1440, 900)
+    logged_in.open(f"{server}/vecchia-home", 1440, 900)
     assert logged_in.js("document.querySelector('[data-resume]')") is None
     # Da P44 il numero degli online è quello vero (solo l'utente del test: 1); da P82 quello
     # finto non compare più, ma quello vero arriva con home:status, quindi si aspetta
@@ -521,7 +525,7 @@ def test_avviso_di_rientro_solo_se_previsto(logged_in, server):
     assert logged_in.js("document.querySelector('[data-online-label]').textContent") == "giocatore online"  # P120
 
     for width, height in [(1440, 900), (360, 640), (768, 1024)]:
-        logged_in.open(f"{server}/?demo=rientro", width, height)
+        logged_in.open(f"{server}/vecchia-home?demo=rientro", width, height)
         banner = logged_in.js("""(() => { const b = document.querySelector('[data-resume]');
           return b && {text: b.textContent, href: b.querySelector('[data-resume-link]').getAttribute('href'),
                        online: document.querySelector('[data-online]').hidden}; })()""")
@@ -547,7 +551,7 @@ def test_un_giocatore_online_al_singolare(browser, server):
     try:
         for count, (user_id, sid) in enumerate(tabs, start=before + 1):
             presence.add(user_id, sid)
-            browser.open(f"{server}/", 390, 844)  # HOME_READY aspetta la risposta di GET /online
+            browser.open(f"{server}/vecchia-home", 390, 844)  # HOME_READY aspetta la risposta di GET /online
             browser.wait_js(f"{ONLINE_TEXT}.startsWith('{count} ')", f"{count} online")
             expected = "1 giocatore online" if count == 1 else f"{count} giocatori online"
             assert browser.js(ONLINE_TEXT) == expected
