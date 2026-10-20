@@ -10,7 +10,8 @@ quello React (&ui=react), in Chrome o Edge senza finestra (tests/browser.py):
 - le stesse risposte della prova quando si tocca una carta, un canto o una carta
   del compagno (riga di stato, carta consigliata);
 - le stesse posizioni delle parti del tavolo sul telefono e da computer;
-- senza ?demo= il tavolo React aspetta la partita; la CSP non blocca niente.
+- senza ?demo=, per una partita che non c'è, il messaggio del server (dal lotto 8b,
+  che si collega); la CSP non blocca niente.
 Le differenze ammesse, che il confronto toglie: il ritardo delle animazioni (il
 tempo da quando la pagina è aperta), l'indirizzo delle immagini scritto per intero o
 no, data-cards-ready (le immagini precaricate, P79: nel tavolo React dal lotto 8b).
@@ -250,13 +251,18 @@ def test_stesse_posizioni(browser, server, mode, size):
     assert boxes[0]["[data-trick]"] is not None and boxes[0][".table__mine .hand"] is not None
 
 
-def test_senza_demo_aspetta_la_partita(browser, server):
-    browser.open(f"{server}/game/a1b2c3d4?ui=react", 390, 844, "document.querySelector('[data-table-message]') !== null")
+def test_senza_demo_partita_che_non_esiste(browser, server):
+    # Dal lotto 8b la pagina si collega e manda game:join: per una partita che non c'è
+    # il messaggio "In attesa della partita…" lascia il posto alla risposta del
+    # server, come nel tavolo Jinja (join di game.js)
+    message = "Questa partita non esiste o è già finita."
+    browser.open(f"{server}/game/a1b2c3d4?ui=react", 390, 844,
+                 f"document.querySelector('[data-table-message]')?.textContent === {json.dumps(message)}")
     page = browser.js("""(() => { const t = document.querySelector('[data-table]');
-      return { id: t.dataset.gameId, demo: t.dataset.demoUrl ?? null, text: t.textContent,
+      return { id: t.dataset.gameId, demo: t.dataset.demoUrl ?? null,
                title: document.title, navbar: document.querySelector('.navbar') !== null,
                main: document.querySelector('main').className }; })()""")
-    assert page == {"id": "a1b2c3d4", "demo": None, "text": "In attesa della partita…", "title": "Partita · Cinquecento",
+    assert page == {"id": "a1b2c3d4", "demo": None, "title": "Partita · Cinquecento",
                     "navbar": False, "main": "page page--game"}
     assert browser.js("document.getElementById('root') !== null") is True
     assert browser.js("window.__csp") == []

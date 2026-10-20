@@ -10,7 +10,8 @@ che misura le etichette dei giocatori con il rating dentro.
 
 Il tavolo si apre nella prova (/game/prova?demo=1v1 o 2v2) in Chrome o Edge senza
 finestra (tests/browser.py), con le viste di app/static/dev/ mandate con l'evento
-del browser "demo:state". Non serve MySQL.
+del browser "demo:state". Non serve MySQL. Passo 8b: con TABLE_UI=react gli stessi
+controlli valgono per il tavolo React (tests/table_ui.py).
 """
 
 import copy
@@ -21,6 +22,7 @@ import pytest
 
 from app import create_app
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
+from tests.table_ui import table_path
 
 ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"
@@ -55,7 +57,7 @@ def browser(server, tmp_path):
 
 
 def _open(browser, server, mode, size):
-    browser.open(f"{server}/game/prova?demo={mode}", *size, "document.querySelector('[data-mode]') !== null")
+    browser.open(f"{server}{table_path('prova', demo=mode)}", *size, "document.querySelector('[data-mode]') !== null")
 
 
 def _dispatch(browser, view):

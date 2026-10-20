@@ -11,6 +11,7 @@ il tavolo ha le carte pronte, ogni carta che compare ha già la sua immagine, su
 Il tavolo si apre nella prova (/game/prova?demo=1v1) in Chrome o Edge senza finestra
 (tests/browser.py); le viste arrivano con l'evento del browser "demo:state". Non
 serve MySQL. Se né Chrome né Edge sono installati i controlli si saltano.
+Passo 8b: con TABLE_UI=react gli stessi controlli valgono per il tavolo React (tests/table_ui.py).
 """
 
 import copy
@@ -21,6 +22,7 @@ import pytest
 
 from app import create_app
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
+from tests.table_ui import table_path
 
 ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"
@@ -64,7 +66,7 @@ def _open_slow(browser, server):
     browser.send("Network.enable")
     browser.send("Network.emulateNetworkConditions", offline=False, latency=LATENCY_MS,
                  downloadThroughput=-1, uploadThroughput=-1)
-    browser.open(f"{server}/game/prova?demo=1v1", *PHONE, "document.querySelector('[data-mode]') !== null", 60)
+    browser.open(f"{server}{table_path('prova', demo='1v1')}", *PHONE, "document.querySelector('[data-mode]') !== null", 60)
     browser.wait_js("document.querySelector('[data-table]').dataset.cardsReady === '1'", "carte pronte", 60)
 
 
@@ -113,5 +115,5 @@ def test_briscola_e_canto_mai_bianchi_con_la_rete_lenta(browser, server):
 
 def test_le_carte_pronte_non_aspettano_la_rete(browser, server):
     """Senza rete lenta il segnale arriva comunque (le immagini sono quelle di P35)."""
-    browser.open(f"{server}/game/prova?demo=1v1", *PHONE, "document.querySelector('[data-mode]') !== null")
+    browser.open(f"{server}{table_path('prova', demo='1v1')}", *PHONE, "document.querySelector('[data-mode]') !== null")
     browser.wait_js("document.querySelector('[data-table]').dataset.cardsReady === '1'", "carte pronte", 15)

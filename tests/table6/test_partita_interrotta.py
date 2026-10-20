@@ -13,6 +13,7 @@ chiude il collegamento della pagina come un calo di rete (P33): la pagina si ric
 e trova la partita sparita. Rating e avvisi agli amici non leggono il database (non
 serve MySQL).
 Chrome o Edge senza finestra (tests/browser.py); senza browser il test si salta.
+Passo 8b: con TABLE_UI=react lo stesso controllo vale per il tavolo React (tests/table_ui.py).
 """
 
 import time
@@ -26,6 +27,7 @@ from app.realtime.presence import presence
 from app.realtime.room import CPU_PLAYER, Player
 from app.sockets import friends_events
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
+from tests.table_ui import table_path
 
 USER_ID = 12
 GONE = "document.querySelector('[data-game-gone]')"
@@ -75,7 +77,7 @@ def _restart(room):
 
 
 def test_riquadro_e_ritorno_alla_home(browser, server, room):
-    browser.open(f"{server}/game/{room.id}", 390, 844, "document.querySelector('[data-mode]') !== null", timeout=30)
+    browser.open(f"{server}{table_path(room.id)}", 390, 844, "document.querySelector('[data-mode]') !== null", timeout=30)
     _restart(room)
     browser.wait_js(f"{GONE} !== null", "riquadro della partita interrotta", 20)
     gone = browser.js(f"({{ title: {GONE}.querySelector('h2').textContent, text: {GONE}.querySelector('p').textContent,"

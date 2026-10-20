@@ -11,6 +11,7 @@
  *   sameCard(a, b)                true se sono la stessa carta
  *   throwKey({ suit: 'coppe', rank: 10 })   'coppe-10'
  *   faceUrl(card), BACK_URL, FIGURE_BASE    gli indirizzi delle immagini
+ *   preloadCardImages()           scarica subito tutte le immagini del tavolo (P79, dal lotto 8b)
  *
  * DA DOVE ARRIVANO I DATI: le carte arrivano dal server dentro la vista di gioco
  * (types/view.ts); i componenti di frontend/src/game/ chiamano queste funzioni
@@ -109,6 +110,72 @@ export function sameCard(a: Card, b: Card): boolean {
  */
 export function throwKey(card: Card): string {
   return `${card.suit}-${card.rank}`;
+}
+
+// Preloaded: le immagini scaricate all'apertura del tavolo e la promessa che dice
+// quando sono pronte. Variabile del modulo: si scaricano una volta sola per scheda
+interface Preloaded {
+  // le immagini; restano qui così il browser non le butta via
+  images: HTMLImageElement[];
+  // true quando sono tutte pronte, false se una non è arrivata
+  ready: Promise<boolean>;
+}
+let preloaded: Preloaded | null = null;
+
+/**
+ * Scarica subito tutte le immagini che il tavolo può mostrare (P79).
+ *
+ * @returns {Promise<boolean>} true quando sono tutte pronte, false se una non è arrivata
+ *
+ * In parole semplici:
+ *   preloadCardImages().then(markReady)
+ *   Le 40 facce, il dorso, i quattro Assi "figura" dei canti e Cavallo e Re di ogni
+ *   seme per la briscola (P108), come preloadCardImages di Card.js. Senza, con una
+ *   rete lenta una carta mai vista restava bianca per qualche secondo quando
+ *   compariva. Chiamata più volte, scarica una volta sola. "Promise" è una risposta
+ *   che arriverà più tardi: decode() finisce quando l'immagine è pronta da disegnare.
+ */
+export function preloadCardImages(): Promise<boolean> {
+  if (preloaded !== null) {
+    return preloaded.ready;
+  }
+  const urls: string[] = [BACK_URL];
+  for (let i = 0; i < SUITS.length; i++) {
+    const suit = SUITS[i];
+    urls.push(`${FIGURE_BASE}asso-${suit}-figura.webp`);
+    urls.push(`${FIGURE_BASE}cavallo-${suit}.webp`, `${FIGURE_BASE}re-${suit}.webp`);
+    for (let rank = 1; rank <= 10; rank++) {
+      urls.push(`${FACE_BASE}${suit}-${rank}.webp`);
+    }
+  }
+
+  // images e decoding: un'immagine e la sua "promessa" di essere pronta, per ogni indirizzo
+  const images: HTMLImageElement[] = [];
+  const decoding: Promise<boolean>[] = [];
+  function decoded(): boolean {
+    return true;
+  }
+  function failed(): boolean {
+    return false;
+  }
+  for (let i = 0; i < urls.length; i++) {
+    const img = new Image();
+    img.src = urls[i];
+    images.push(img);
+    decoding.push(img.decode().then(decoded, failed));
+  }
+  // allReady: true solo se ogni immagine è pronta
+  function allReady(results: boolean[]): boolean {
+    for (let i = 0; i < results.length; i++) {
+      if (!results[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+  const ready = Promise.all(decoding).then(allReady);
+  preloaded = { images: images, ready: ready };
+  return ready;
 }
 
 /**
