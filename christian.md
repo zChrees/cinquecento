@@ -22,6 +22,16 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: aggiornamento del 20/10 (20/10/2026)
+
+- **Branch**: docs/aggiornamento-20-10
+- **File**: modificati `CLAUDE.md` (riga "Stato": passo 7 fatto, `/vecchia-home`, prossimo passo 8; punti delicati "Home (P22)", "Online senza login (P82)", "SPA e migrazione"; Testing), `REVIEW.md` (passo 7 spuntato con 7a–7d e i commit; passo 8 con il piano, le scelte fatte e quelle da fare), `DECISIONI.md` (Processo, 20/10: passo 7 in quattro lotti, `/vecchia-home` fino al passo 9, prime scelte del passo 8), `docs/MIGRAZIONE-FRONTEND.md` (stato; righe dei passi 7, 8 e 9; sezione nuova "Piano del passo 8"), questo file
+- **Registrati**: `christian.md` fino a "Migrazione, passo 7d"; `giuseppe.md` e `antonio.md` niente di nuovo
+- **Controlli**: nessuna suite lanciata (solo documenti)
+- **Decisioni prese**: nessuna nuova oltre a quelle registrate
+- **Domande nuove**: nessuna
+- **Cosa devono fare gli altri**: **Giuseppe**: dopo il pull `npm run build` in `frontend/`; la home vecchia è su `/vecchia-home`; leggere in `docs/MIGRAZIONE-FRONTEND.md` il "Piano del passo 8", in particolare il suo pezzo (test delle durate tra `room.py` e `animations.ts`, dopo l'8a)
+
 ### Migrazione, passo 7d — La home React su `/` (20/10/2026). Chiude il passo 7
 
 - **Branch**: feature/migrazione-passo7d

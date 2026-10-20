@@ -68,7 +68,7 @@ Non sono problemi: dipendenze circolari (non ce ne sono), ascolti Socket.IO spar
 
 ## 4. Piano di migrazione
 
-**Stato (19/10/2026, notte)**: fatti i passi 0–6 (avanzamento e commit in `REVIEW.md`, "Migrazione del frontend"). Il prossimo è il passo 7 (home): la divisione proposta è in `REVIEW.md`, da riconfermare.
+**Stato (20/10/2026)**: fatti i passi 0–7 (avanzamento e commit in `REVIEW.md`, "Migrazione del frontend"): dal 7d la home React è su `/` e quella Jinja resta su `/vecchia-home` (solo sviluppo e test) fino al passo 9. Il prossimo è il **passo 8** (tavolo): il piano è qui sotto, "Piano del passo 8", con le scelte già fatte e quelle da fare all'8a.
 
 Passi piccoli, ciascuno su un branch suo e reversibile. La vecchia interfaccia resta finché la nuova non la sostituisce del tutto, una pagina per volta. **La SPA e il proxy partono dal passo 1** (deciso il 19/10): così nessuna pagina si migra due volte (prima come isola, poi dentro la SPA) e non si scrive codice per le isole che poi andrebbe tolto. Tra una pagina della SPA e una pagina Jinja non ancora migrata si passa con un normale link, che ricarica la pagina.
 
@@ -81,11 +81,49 @@ Passi piccoli, ciascuno su un branch suo e reversibile. La vecchia interfaccia r
 | **4** | Accesso e registrazione (la pagina più piccola) e la navbar di chi non ha fatto il login; rotte JSON per accesso e registrazione e il codice CSRF letto da una rotta, **già sotto `/api/`** | i test di `api/` e `frontend/` su quelle pagine passano |
 | **5** | La cornice delle pagine con il login: navbar, pannello statistiche, pannello amici e chat (servono a tutte le pagine dopo); la rotta che dice chi è l'utente collegato. In tre lotti: **5a** navbar, statistiche e avviso di connessione; **5b** pannello amici; **5c** chat e suoni del menu. Fino al passo 6 la cornice si vedeva solo su `/prova-react` | test di `frontend2/` |
 | **6** | Impostazioni del profilo, con le rotte `/api/profile/` (contratto 2.4); si toglie `/prova-react` (doveva sparire al passo 4, ma era l'unica pagina della SPA con il login) | i test di quella pagina passano |
-| **7** | Home (carte-pulsante, `ModeModal`, coda, inviti) | `test_pagina_home.py`, prove nel browser |
-| **8** | Tavolo, prima **in parallelo** (per esempio su `/game/<id>?ui=react`), poi al posto di quello vecchio. Da qui home e tavolo stanno nella stessa SPA: entrando in partita la pagina non si ricarica (stesso collegamento Socket.IO, stesso audio, pannello amici e chat restano aperti) | tutte le suite `table*`, `sockets`, `e2e`, prova a mano su telefono |
-| **9** | Tolti i file JS vecchi, i template Jinja delle pagine migrate e i test che leggevano il loro testo (rifatti sul codice nuovo); le rotte JSON di oggi spostate sotto `/api/` (contratto, sezione 5); la SPA presa da una regola sola invece dell'elenco `SPA_PATHS` (sezione 6) | giro completo delle suite |
+| **7** | Home (carte-pulsante, `ModeModal`, coda, inviti). In quattro lotti: **7a** base, **7b** carta-modal, coda e CPU, **7c** inviti, **7d** `/` diventa la home React (la home Jinja su `/vecchia-home` fino al passo 9) | `test_spa_home*.py` (anche le misure di `test_pagina_home.py`), prove nel browser |
+| **8** | Tavolo, prima **in parallelo** (per esempio su `/game/<id>?ui=react`), poi al posto di quello vecchio. Da qui home e tavolo stanno nella stessa SPA: entrando in partita la pagina non si ricarica (stesso collegamento Socket.IO, stesso audio). Nota del 20/10: al tavolo oggi non ci sono né navbar né pannello amici e chat, quindi "restano aperti" non vale: aggiungerli sarebbe una funzione nuova | tutte le suite `table*`, `sockets`, `e2e`, prova a mano su telefono |
+| **9** | Tolti i file JS vecchi, i template Jinja delle pagine migrate (con `/vecchia-home`) e i test che leggevano il loro testo (rifatti sul codice nuovo); le rotte JSON di oggi spostate sotto `/api/` (contratto, sezione 5); la SPA presa da una regola sola invece dell'elenco `SPA_PATHS` (sezione 6) | giro completo delle suite |
 
 Il tavolo è per ultimo perché è il più delicato (animazioni, tempi uguali al server, iPhone). Si può anticipare **una piccola prova isolata** (per esempio solo la mano e la presa con una vista finta di `app/static/dev/`), senza sostituire niente.
+
+### Piano del passo 8 (20/10/2026)
+
+Preparato da un sotto-agente in sola lettura (legenda: **[L]** letto nel codice, **[D]** dedotto, **[N]** non verificato); da riprendere con Christian prima dell'8a.
+
+**Scelte già fatte da Christian (20/10)**: indirizzo **`/game/<id>?ui=react`** fino all'8h (tocca `app/blueprints/game/routes.py`: l'ok di Christian vale anche per Giuseppe, come ai passi 4 e 6); stato del tavolo in uno **"store" TypeScript** (`frontend/src/game/tableStore.ts`, quasi una traduzione 1:1 di `game.js`) letto da React con `useSyncExternalStore`, invece di `useReducer`; codice in **`frontend/src/game/`**, con **tutte le durate in `animations.ts`** (una per riga, `export const LAST_TRICK_MS: number = 1500;`, così i test le leggono con una regex).
+
+**Da decidere all'8a**:
+- `?ui=react` in tutti gli ambienti (consigliato: si prova dal telefono con `APP_ENV=demo`) o solo sviluppo e test;
+- terza copia di `AVATAR_CODES` in TypeScript, controllata da `test_avatar.py` (consigliato), per l'avatar al tavolo (`SeatAvatar.tsx`: robot per la CPU, iniziale per un codice sconosciuto);
+- interruttore **`TABLE_UI`** (`tests/table_ui.py`: `jinja` predefinito, `react` a mano), così i test del tavolo valgono per tutte e due le versioni senza raddoppiare le suite;
+- `bypass` del proxy di Vite per servire `/game/...?ui=react` con l'aggiornamento al salvataggio [D];
+- il blocco `declare module 'react'` delle variabili CSS spostato da `CardBackground.tsx` a `frontend/src/types/css.d.ts`.
+
+**I lotti** (in fila: toccano gli stessi file):
+
+| Lotto | Cosa | Test di riferimento (con `TABLE_UI=react`) |
+|---|---|---|
+| **8a** | Tavolo raggiungibile e disegnato "fermo" da una vista: `GamePage.tsx` (`page--game`, niente navbar, `ConnectionBanner`), viste finte `?demo=1v1` e `?demo=2v2` ed eventi `demo:state`; componenti `cards.ts`, `CardView.tsx`, `Hand.tsx`, `Trick.tsx`, `Table.tsx`, `Scoreboard.tsx`, `SingButtons.tsx`, `HandSummary.tsx`, `Timer.tsx`, `SeatAvatar.tsx`; `animations.ts` con tutte le durate; i 9 CSS del tavolo in `index.html` | nuovo confronto del DOM di `.table__inner` con il tavolo Jinja (più viste, 360×640, 390×844, 1280×720); `table3/test_grafica_tavolo.py`; `api/test_pagina_tavolo.py`, `test_csp.py`, `test_carte.py`, `test_avatar.py` |
+| **8b** | Partita vera: `tableStore.ts` e `useTable.ts`; `game:join` a ogni collegamento, `game:state` per `version`, mosse con `version` e `waiting`, `game:replaced` (D14), `not_found` e ritorno alla home (P95), "Esci" con `Modal.tsx`, secondi che scendono, `preloadSounds`, `data-cards-ready` (P79) | `table6/test_partita_interrotta.py`, `table4/test_carte_pronte.py`, `api/test_rating_tavolo.py`, più una partita vera contro la CPU |
+| **8c** | Momenti: presa chiusa, riepilogo (P58), canti, calata (P85), compagno e consiglio (P93, P123), punti della mano (P72) | `test_momenti_tavolo.py`, `test_calata.py`, `test_carte_compagno.py`, `test_punti_mano.py`, `test_presa_affiancata.py`, `test_tavolo_telefono.py` |
+| **8d** | Lanci (P70, P78, P99, P107), presa che scivola via, pescate, `notifyAfter` con `TIMER_SLACK_MS` (P91) | `test_lancio_carta.py`, `test_carte_avversari.py`, `test_lancio_mio.py`, `test_animazioni_in_fila.py`, `test_timer_in_anticipo.py`, `test_niente_lampeggi.py` |
+| **8e** | Distribuzione, mescolata, prima distribuzione (P118), anello del tempo in pausa (P132) | `test_distribuzione.py`, `test_prima_distribuzione.py`, `test_anello_tempo.py` |
+| **8f** | Frasi (P56, P80, P110, P112, P130) e suoni (P103, P109); proposta: `scheduleSound` annullabile in `sounds.ts` | `test_frasi_pagina.py`, `test_frasi_senza_lampeggio.py`, `test_frasi_di_lato.py`, `test_suoni.py` |
+| **8g** | Doppio tocco (P104, P133), regole di `page--game` (P69, P98), carta sotto il mouse (P97); suite `table*` intere in modalità React (da chiedere a Christian); **prova a mano su iPhone e Android** | `test_tocchi_tavolo.py`, `test_mano_ferma.py`, `test_grafica_tavolo.py`, `test_stile_tavolo.py`, `test_rifinitura.py`, `test_gira_telefono.py`, `test_hover.py` |
+| **8h** | Il cambio: `/game/<id>` sempre SPA, `navigate()` dalla home al tavolo e ritorno **senza ricaricare**; `stop()` del tavolo ferma timer, ticchettio, suoni e ascolti; `TABLE_UI` predefinito `react`; il tavolo Jinja raggiungibile con `?ui=jinja` fino al passo 9 (consigliato) | i test toccati, `table*`, `sockets`, `e2e` (da autorizzare), prova sul telefono |
+
+**Il pezzo di Giuseppe** (dopo il merge dell'8a, in parallelo con 8b e 8c): i confronti delle durate tra `room.py` e `animations.ts`. Oggi li fanno, con `game.js`, `sockets/test_turno.py::test_pause_uguali_a_quelle_della_pagina`, `table6/test_calata.py` e `table5/test_frasi_pagina.py`. Proposta: un file suo, `tests/sockets/test_durate_tavolo.py`, che fino al passo 9 controlla tutti e due i file. Da concordare con lui il nome del file e la forma delle righe.
+
+**Rischi principali**:
+- **Ritardi negativi** (P70, P119): in React un elemento che resta lo stesso continua la sua animazione da solo, e cambiare `animation-delay` a metà la sposterebbe [D]. Regola: lo store passa **quando** il momento è cominciato; il componente calcola il ritardo **una volta**, quando nasce (`useState`), e per far ripartire un'entrata si cambia la `key`.
+- **Anello del tempo** (P132): una `key` per turno e pausa, perché cambiare `--timer-left` a metà lo fa saltare [D].
+- **Immagini** (P70, P119, P135): React non sposta un `<img>` da un genitore a un altro; con le immagini già decodificate (P79) il lampo non dovrebbe vedersi [D]. Da provare anche sul telefono.
+- **Misure al pixel**: il CSS è lo stesso, quindi contano gli spazi nel JSX e gli attributi in più (come `checked` nel 7b).
+- **Quattro copie delle durate** fino al passo 9: `room.py`, `game.js`, `animations.ts`, CSS.
+- **StrictMode** e uscita dal tavolo (dall'8h): `start` e `stop` dello store devono fermare tutto.
+- **Tempo delle suite**: raddoppierebbe; per questo `TABLE_UI`, invece di girare sempre su tutte e due le versioni.
+- **Buco già aperto**: `test_icone.py` non guarda il TSX (le icone del tavolo sono `logout`, `campaign`, `playing_cards`, `chat_bubble`, `smart_toy`).
 
 ## 5. Architettura React proposta
 
