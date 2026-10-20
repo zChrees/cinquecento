@@ -13,7 +13,9 @@
   base.html va cambiato anche qui, finché tutte le pagine non sono nella SPA.
   I CSS delle pagine (css/pages/) sono quelli delle pagine già nella SPA: accesso e
   registrazione (auth.css, che dal passo 6 tocca .page--form solo se contiene
-  .auth) e impostazioni (profile.css, solo classi sue).
+  .auth), impostazioni (profile.css, solo classi sue) e home (home.css, dal
+  passo 7: solo classi sue, .home e le sue parti, con lo sfondo di
+  card-background.css).
 -->
 <html lang="it">
 <head>
@@ -45,6 +47,8 @@
   <link rel="stylesheet" href="/static/css/components/rotate-notice.css">
   <link rel="stylesheet" href="/static/css/pages/auth.css">
   <link rel="stylesheet" href="/static/css/pages/profile.css">
+  <link rel="stylesheet" href="/static/css/pages/home.css">
+  <link rel="stylesheet" href="/static/css/components/card-background.css">
 </head>
 <body>
   <div id="root"></div>

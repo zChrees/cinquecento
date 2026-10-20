@@ -28,7 +28,7 @@ const FLASK = 'http://localhost:5000';
 // SPA_PATHS: gli indirizzi che sono pagine della SPA. Deve restare uguale a
 // SPA_PATHS di app/blueprints/spa/routes.py (lo controlla tests/frontend/test_spa.py):
 // una pagina nuova della SPA si aggiunge in tutti e due i posti.
-const SPA_PATHS: string[] = ['/auth/login', '/auth/register', '/profile/settings'];
+const SPA_PATHS: string[] = ['/auth/login', '/auth/register', '/profile/settings', '/prova-home'];
 
 /**
  * Costruisce l'espressione regolare degli indirizzi da girare a Flask.

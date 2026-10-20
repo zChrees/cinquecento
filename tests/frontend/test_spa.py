@@ -11,8 +11,9 @@ Controlla:
   dentro la pagina, e nel browser React disegna la pagina di accesso e la CSP non
   blocca niente. Senza Node o senza `npm ci` questi si saltano;
 - passo 3 (frontend/src/socket/): senza login la pagina non si collega al tempo
-  reale; con il login (le impostazioni, dal passo 6) si collega. I controlli su
-  home:status e queue:leave della pagina di prova tornano con la home (passo 7);
+  reale; con il login (le impostazioni, dal passo 6) si collega. Il controllo su
+  home:status della pagina di prova è tornato con la home (7a, test_spa_home.py);
+  quello su queue:leave torna con la coda (7b);
 - passo 5a (la cornice con il login): la navbar ha nome e avatar, il pannello
   statistiche si apre con i numeri e si chiude, "Esci" porta il codice CSRF; scollegati
   dal server compare l'avviso "Sei stato scollegato" con "Ricarica".

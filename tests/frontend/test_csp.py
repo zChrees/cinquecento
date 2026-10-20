@@ -28,6 +28,8 @@ PAGES = [
     # Passo 6: le impostazioni della SPA, collegate e con l'elenco degli avatar arrivato
     ("/profile/settings", ("document.querySelector('[data-friends-panel]')?.dataset.connection === 'connected'"
                            " && document.querySelector('[data-avatar=\"coppe\"]') !== null")),
+    # Passo 7a: la home React, con home:status arrivato
+    ("/prova-home", "document.querySelector('[data-online-count]')?.textContent === '1'"),
 ]
 
 

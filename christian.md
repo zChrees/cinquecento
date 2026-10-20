@@ -22,6 +22,22 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Migrazione, passo 7a — Home React di base su `/prova-home` (20/10/2026)
+
+- **Branch**: feature/migrazione-passo7a
+- **Scelte di Christian** (20/10, riconfermate prima di ripartire): passo 7 in **quattro lotti** (7a base, 7b carta-modal + coda + CPU, 7c inviti, 7d `/` diventa la home React e si adattano i test); la home React su **`/prova-home`** (solo sviluppo e test) fino al 7d; **solo dati veri** (resta `?demo=rientro`). Nel 7a, con il login, una carta-pulsante mostra un **avviso provvisorio** ("La scelta della modalità arriva con il prossimo lotto della migrazione (7b).") come "Chatta" nel 5b
+- **File**:
+  - backend: `app/blueprints/spa/routes.py` (`/prova-home` in `SPA_PATHS` e la sua rotta `home_preview`: solo con `ENV_NAME` in `DEMO_ENVS`, altrove 404; accetta solo `?demo=rientro`, come `/`; senza login)
+  - frontend: creati `src/pages/HomePage.tsx`, `src/components/CardBackground.tsx`, `src/components/ResumeBanner.tsx`, `src/api/home.ts`; modificati `src/routes.tsx`, `vite.config.ts` (`SPA_PATHS`), `index.html` (`home.css` e `card-background.css`: solo classi loro). `types/api.ts` non è servito (`Online` c'era già)
+  - test: creato `tests/frontend2/test_spa_home.py`; modificati `tests/frontend/test_csp.py` (`/prova-home` in `PAGES`), `tests/frontend/test_spa.py` (solo la descrizione in cima)
+- **Cosa c'è**: stesso HTML, stesse classi e stessi `data-*` della home Jinja (anche `data-stato="ok"` e l'`h1` nascosto). Le quattro carte-pulsante con l'inclinazione sotto il mouse (solo mouse vero e senza "riduci movimento"; le variabili `--rx`, `--ry`, `--gx`, `--gy` si scrivono sull'elemento, senza ridisegnare); senza login aprono "Accedi o registrati". La cascata dello sfondo con gli stessi conti di `CardBackground.js` (ricreata dopo 120 ms da un cambio di misura). "giocatori online": con il login da `home:status`, ascoltato in un componente a parte (`HomeStatusListener`) disegnato **solo con il login** (mettersi in ascolto apre il collegamento); senza login da `GET /online` ogni 15 s, solo con la scheda visibile. L'avviso "Hai una partita in corso" (`ResumeBanner.tsx`, solo indirizzi `/game/...`) nello stesso spazio; con `?demo=rientro` i dati finti di `home_esempio.json` e `home:status` non li sostituisce
+- **Controlli** (solo i file toccati e quelli delle pagine che caricano i CSS nuovi, con pytest): `test_spa_home.py` **9 PASS** (nuovi: rotta solo in sviluppo e test e `?demo=` ammessi; **stessa pagina della home Jinja**, elemento per elemento con attributi e testi, sfondo compreso, a 390×844 e 1280×720, con e senza `?demo=rientro`; senza login numero da `/online`, nessun collegamento, carta → "Accedi o registrati"; con il login "1 giocatore online" e l'avviso provvisorio a ogni clic; avviso di rientro con il login; inclinazione sotto il mouse e niente con "riduci movimento"); con `test_spa.py`, `test_csp.py`, `test_tipi.py` **31 PASS**; `test_spa_impostazioni.py`, `test_spa_amici.py`, `test_spa_chat.py`, `test_gira_telefono.py` **26 PASS**; `test_pagine_accesso.py` **11 PASS**; `tsc --noEmit`, build e `ruff check .` puliti. Nessuna suite intera
+- **Decisioni prese**: le scelte di Christian qui sopra
+- **Domande nuove**: nessuna
+- **Punti delicati**: le variabili CSS dentro `style={{ ... }}` (`'--x'`, ...) TypeScript non le conosce: `CardBackground.tsx` gli spiega che in `CSSProperties` possono esserci nomi `--...` (un blocco `declare module 'react'`, che vale per tutto il frontend). Se al passo 8 il tavolo ne avrà bisogno (`--i`, `--n`), conviene spostarlo in `types/`. `/prova-home` sta in `SPA_PATHS` anche se in produzione risponde 404: al 7d si toglie e la home React prende `/`. I CSS della home ora si caricano in tutte le pagine della SPA (hanno solo classi loro: `.home`, `.mode-*`, `.online`, `.resume`, `.bg-*`)
+- **Da aggiornare nei documenti condivisi**: `REVIEW.md` (passo 7: scelte riconfermate il 20/10, 7a fatto); `DECISIONI.md` (le scelte del passo 7, ora decise); `CLAUDE.md` (riga "Stato"; punti delicati "SPA e migrazione" — `/prova-home` fino al 7d, variabili CSS in `CardBackground.tsx` — e "Home (P22)" — nella SPA `HomePage.tsx`, `home:status` solo in `HomeStatusListener`); `docs/MIGRAZIONE-FRONTEND.md` (stato: 7a fatto)
+- **Cosa devono fare gli altri**: niente (dopo il pull, `npm run build` in `frontend/`)
+
 ### Documenti: aggiornamento della notte del 19/10 (19/10/2026)
 
 - **Branch**: docs/aggiornamento-19-10-notte
