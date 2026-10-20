@@ -22,6 +22,19 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Migrazione, passo 7c — Inviti a partita nella home React (20/10/2026)
+
+- **Branch**: feature/migrazione-passo7c
+- **Come si è lavorato**: Claude ha scritto i componenti; un sotto-agente ha scritto in parallelo `test_spa_home_inviti.py` partendo dai test vecchi (stesso HTML), senza lanciarlo; poi Claude ha lanciato tutto
+- **File**: creati `frontend/src/components/InviteDialog.tsx`, `tests/frontend2/test_spa_home_inviti.py`; modificati `frontend/src/components/ModeModal.tsx` (la parte "Gioca con un amico"), `frontend/src/pages/HomePage.tsx`, `tests/frontend/test_spa_home_coda.py` (tolto l'avviso provvisorio del 7c, aggiunto il confronto della carta-modal con un amico), `tests/frontend2/test_spa_home.py` (con il login la carta apre la carta-modal), questo file. Nessun file del backend
+- **Cosa c'è**: la carta-modal "Gioca con un amico" di `ModeModal.js` con lo stesso HTML: amici online (lista presa all'apertura, come prima), "Invita" con i tre aspetti (Invita, In attesa…, Ha accettato), un invito alla volta nel 1v1 e fino a tre nel 2v2 (P59), punti fermi con un invito aperto, suggerimenti sotto la lista, "Gioca" dopo un sì (`invite:start`: tavolo o coda con compagno e avversari), chiusura senza "Gioca" che annulla gli inviti (`invite:cancel`, anche quelli ancora in viaggio). Gli inviti aperti li tiene `HomePage.tsx` (`InviteEntry`), la carta li disegna. L'invito ricevuto (`InviteDialog.tsx`, come `InviteDialog.js`): chi invita, conto alla rovescia, "Rifiuta" ("Esci" dopo il sì) e "Accetta", X ed Esc che rifiutano, suono dell'invito (P115). Amici riletti con `friends:presence` e `friends:changed` (vale l'ultima lettura, P65). P33/P83: senza connessione "Invita", "Accetta" e "Rifiuta" spenti; se cade, gli inviti mandati si considerano annullati (al ritorno `invite:cancel`) e quello ricevuto passa a `connection_lost`
+- **Controlli** (solo i file toccati, con pytest): `test_spa_home_inviti.py` **11 PASS** (nuovi, i casi di `test_invito_ricevuto.py` e `test_inviti_2v2.py` sulla pagina React: invito ricevuto con testo mai come HTML e conto alla rovescia, Accetta e annullamento, errore del server, Esc rifiuta, tre amici fino al tavolo, due amici in coda con compagno e avversari, un invito alla volta nel 1v1, amico bloccato/sbloccato che torna, carta chiusa dopo il sì (1v1 e 2v2), rete persa); `test_spa_home_coda.py` **12 PASS** (2 nuovi: carta-modal con un amico uguale a quella Jinja, 1v1 e 2v2); `test_spa_home.py` **10 PASS**; `test_csp.py` e `test_spa.py` **14 PASS**; `tsc --noEmit`, build e `ruff check .` puliti. Nessuna suite intera
+- **Decisioni prese**: nessuna (tutto come la home di oggi)
+- **Domande nuove**: nessuna
+- **Punti delicati**: il test P65 (amico bloccato e sbloccato) nella versione React non conta le letture esatte di `/friends/` come quello vecchio (nella SPA le fa anche il pannello amici): aspetta "almeno 3 letture nuove, poi nessuna per 1 secondo". I test dell'invito ricevuto usano un mittente finto (`Player(9999, "<b>Giulia</b>")`): la finestra usa solo i dati dell'evento. `frontend2` ora ha due file in più (7a e 7c): al prossimo giro completo va controllato che resti sotto i 240 s
+- **Da aggiornare nei documenti condivisi**: `REVIEW.md` (passo 7: 7c fatto); `CLAUDE.md`, punti delicati "Inviti (P47)", "Inviti e rete persa (P83)", "2v2 con più amici (P59)" (nella SPA `InviteDialog.tsx`, inviti aperti in `HomePage.tsx`); `docs/MIGRAZIONE-FRONTEND.md` (stato: 7c fatto)
+- **Cosa devono fare gli altri**: niente (dopo il pull, `npm run build` in `frontend/`)
+
 ### Migrazione, passo 7b — Carta-modal, coda e CPU nella home React (20/10/2026)
 
 - **Branch**: feature/migrazione-passo7b

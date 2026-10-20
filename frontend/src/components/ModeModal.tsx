@@ -6,40 +6,123 @@
  * descrizione, punti per vincere (150, 300, 500), la scelta tra un giocatore e la
  * CPU, "In breve", "Lo sapevi?" e "Gioca".
  *
- * Lotto 7b: solo la Partita Veloce (coda e CPU). "Gioca con un amico", con la
- * lista degli amici da invitare, arriva con il 7c.
+ * Con un amico (lotto 7c) al posto di "In breve", della scelta della CPU e di "Lo
+ * sapevi?" c'è la lista degli amici online da invitare. Nel 1v1 un invito alla
+ * volta; nel 2v2 fino a MAX_INVITES['2v2'] amici (P59), e "Gioca" si accende
+ * appena uno ha accettato. Mentre c'è un invito aperto i punti sono fermi, perché
+ * gli inviti portano già i punti scelti.
  *
  * Cosa contiene:
  *   <ModeModal kind="veloce" mode="1v1" tile={bottone} ratings={...} online={true}
- *              onPlay={handlePlay} onClosed={handleClosed} />
- *   PlayChoice   cosa riceve onPlay: modalità, punti, CPU sì o no
+ *              friends={...} invites={...} inviteNote={...}
+ *              onPlay={...} onInvite={...} onDismiss={...} onClosed={...} />
+ *   PlayChoice    cosa riceve onPlay: modalità, punti, CPU sì o no
+ *   InviteEntry   un invito mandato e ancora aperto (lo tiene la pagina)
  *
- * Il modal non parla con il server: lo fa la pagina (HomePage.tsx) con onPlay.
+ * Il modal non parla con il server: lo fa la pagina (HomePage.tsx).
  * - onPlay({ kind, mode, targetScore, cpu }): "Gioca". `cpu` è true se è scelta
  *   la CPU: "Avversario: CPU" nel 1v1 (P73), "Gioca con: CPU" nel 2v2 (P123).
  *   Il modal si chiude da solo.
+ * - onInvite(friend, targetScore): "Invita" (contratto 5.3, invite:send). La pagina
+ *   aggiorna invites e inviteNote con le risposte (invite:update).
+ * - onDismiss(): il modal si chiude senza "Gioca" (X, Esc, tocco fuori): la pagina
+ *   annulla gli inviti aperti (invite:cancel).
  * - onClosed(): il modal ha finito di chiudersi (dopo l'animazione); la pagina lo toglie.
- * - online (P33): senza connessione "Gioca" è spento.
+ * - online (P33): senza connessione "Gioca" e "Invita" sono spenti.
  * Si chiude con X, Esc o un tocco fuori dalla carta. Con "riduci movimento"
  * compare e sparisce senza animazione.
  *
  * DA DOVE ARRIVANO I DATI: modalità e carta-pulsante da HomePage.tsx; il rating di
- * "In breve" da GET /stats/me (HomePage.tsx); i testi sono scritti qui.
+ * "In breve" da GET /stats/me e gli amici da GET /friends/ (HomePage.tsx); i testi
+ * sono scritti qui.
  */
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { ChangeEvent, JSX, MouseEvent, RefObject, SyntheticEvent } from 'react';
-import type { Stats } from '../types/api';
+import type { Friend, Stats } from '../types/api';
 import type { Mode, TargetScore } from '../types/common';
 import { reduceMotion } from '../utils/motion';
+import { Avatar } from './Avatar';
 
 // TIMING_OPEN_MS e TIMING_CLOSE_MS: quanto durano il volo di apertura e quello di chiusura
 const TIMING_OPEN_MS = 820;
 const TIMING_CLOSE_MS = 620;
 
 // ModalKind: la sezione della carta-pulsante. La | vuol dire "uno di questi
-// valori" (come un enum del C). Nel 7b c'è solo 'veloce'; 'amico' arriva con il 7c
-export type ModalKind = 'veloce';
+// valori" (come un enum del C): 'veloce' = Partita Veloce, 'amico' = Gioca con un amico
+export type ModalKind = 'veloce' | 'amico';
+
+// InviteEntry: un invito mandato e ancora aperto (la pagina tiene l'elenco)
+export interface InviteEntry {
+  // l'amico invitato
+  friend: Friend;
+  // 'pending' = in attesa della risposta, 'accepted' = ha accettato
+  status: 'pending' | 'accepted';
+  // il codice dell'invito dal server; null finché invite:send non ha risposto
+  inviteId: string | null;
+}
+
+// MAX_INVITES: gli inviti aperti insieme per modalità (contratto 5.3; nel 2v2 P59:
+// con chi invita il tavolo è pieno)
+const MAX_INVITES: Record<Mode, number> = { '1v1': 1, '2v2': 3 };
+
+// FRIEND_DESC: la descrizione di "Gioca con un amico" (il 1v1 tra amici non conta
+// per il rating; il 2v2 con un amico sì)
+const FRIEND_DESC: Record<Mode, string> = {
+  '1v1': 'Scegli i punti e invita un amico online: la partita parte appena accetta. Non conta per il rating.',
+  '2v2': 'Invita fino a tre amici. Con uno siete in squadra, contro una coppia dalla coda; con più amici, squadre a sorte.',
+};
+
+// INVITE_TITLE e INVITE_HINT: il titolo della lista e il suggerimento di partenza
+const INVITE_TITLE: Record<Mode, string> = { '1v1': 'Invita un amico da sfidare', '2v2': 'Invita da uno a tre amici' };
+export const INVITE_HINT: Record<Mode, string> = {
+  '1v1': "Potrai giocare quando l'amico avrà accettato.",
+  '2v2': 'Potrai giocare appena un amico avrà accettato.',
+};
+
+// InviteLook: l'aspetto di "Invita" in uno stato: icona, testo e etichetta per i
+// lettori di schermo (che dipende dal nome)
+interface InviteLook {
+  icon: string;
+  text: string;
+  label: (name: string) => string;
+}
+
+/** L'etichetta di "Invita" da fermo. */
+function idleLabel(name: string): string {
+  return `Invita ${name}`;
+}
+
+/** L'etichetta di "Invita" con l'invito in attesa. */
+function pendingLabel(name: string): string {
+  return `Invito a ${name} in attesa`;
+}
+
+/** L'etichetta di "Invita" dopo l'accettazione. */
+function acceptedLabel(name: string): string {
+  return `${name} ha accettato`;
+}
+
+// INVITE_LOOKS: i tre aspetti di "Invita" (come setInviteButton di ModeModal.js)
+const INVITE_LOOKS: Record<'idle' | 'pending' | 'accepted', InviteLook> = {
+  idle: { icon: 'send', text: 'Invita', label: idleLabel },
+  pending: { icon: 'progress_activity', text: 'In attesa…', label: pendingLabel },
+  accepted: { icon: 'check_circle', text: 'Ha accettato', label: acceptedLabel },
+};
+
+/**
+ * Il colore dell'avatar con l'iniziale, sempre uguale per lo stesso nome.
+ *
+ * @param {string} name
+ * @returns {number} da 0 a 3 (classe mini-avatar--0 ... --3)
+ */
+function colorIndex(name: string): number {
+  let sum = 0;
+  for (let i = 0; i < name.length; i++) {
+    sum += name.charCodeAt(i);
+  }
+  return sum % 4;
+}
 
 // Opponent: con chi si gioca nella Partita Veloce: 'player' (la coda) o 'cpu'
 type Opponent = 'player' | 'cpu';
@@ -192,7 +275,7 @@ function frame(dx: number, dy: number, sx: number, sy: number, turn: number, eas
 
 // ModeModalProps: cosa riceve il componente
 interface ModeModalProps {
-  // la sezione: per ora solo 'veloce'
+  // la sezione: 'veloce' o 'amico'
   kind: ModalKind;
   // la modalità: '1v1' o '2v2'
   mode: Mode;
@@ -200,10 +283,21 @@ interface ModeModalProps {
   tile: HTMLElement;
   // il rating dell'utente, per "In breve"; null finché non arriva
   ratings: Ratings | null;
-  // P33: false senza connessione ("Gioca" spento)
+  // P33: false senza connessione ("Gioca" e "Invita" spenti)
   online: boolean;
+  // gli amici (GET /friends/): si invitano quelli online. La lista si prende
+  // all'apertura e resta quella (come ModeModal.js)
+  friends: Friend[];
+  // gli inviti mandati e ancora aperti (li tiene la pagina)
+  invites: InviteEntry[];
+  // il suggerimento sotto la lista; null = quello di partenza (INVITE_HINT)
+  inviteNote: string | null;
   // "Gioca": la scelta fatta. In C: void (*onPlay)(struct scelta)
   onPlay: (choice: PlayChoice) => void;
+  // "Invita": l'amico e i punti scelti. In C: void (*onInvite)(amico, punti)
+  onInvite: (friend: Friend, targetScore: TargetScore) => void;
+  // chiusura senza "Gioca": la pagina annulla gli inviti aperti. In C: void (*onDismiss)(void)
+  onDismiss: () => void;
   // il modal si è chiuso del tutto. In C: void (*onClosed)(void)
   onClosed: () => void;
 }
@@ -233,6 +327,9 @@ export function ModeModal(props: ModeModalProps): JSX.Element {
   const busy: RefObject<boolean> = useRef<boolean>(false);
   // closing: true quando la chiusura è partita (si chiude una volta sola)
   const closing: RefObject<boolean> = useRef<boolean>(false);
+  // playedRef: true dopo "Gioca" (letto da closeModal, che parte nello stesso clic,
+  // prima che lo stato played sia ridisegnato)
+  const playedRef: RefObject<boolean> = useRef<boolean>(false);
   // useState restituisce due cose: il valore attuale e la funzione per cambiarlo,
   // che fa ridisegnare il componente (regole-codice.md, sezione 6).
   // target: i punti scelti (500 all'apertura)
@@ -246,6 +343,9 @@ export function ModeModal(props: ModeModalProps): JSX.Element {
   // tip: il consiglio di questa apertura. useState con una funzione: React la
   // chiama solo al primo disegno, così il consiglio non cambia a ogni disegno
   const [tip] = useState<string>(pickTip);
+  // friends: gli amici presi all'apertura (useState tiene il primo valore e non
+  // segue i cambi di props.friends: la lista resta quella, come in ModeModal.js)
+  const [friends] = useState<Friend[]>(props.friends);
 
   /**
    * Fa il volo: aprendo dalla carta-pulsante al centro, chiudendo al contrario.
@@ -372,12 +472,18 @@ export function ModeModal(props: ModeModalProps): JSX.Element {
   // [props.tile]: legato alla carta-pulsante di questa apertura
   useEffect(showTileAgain, [props.tile]);
 
-  /** Chiude il modal (X, Esc, tocco fuori, "Gioca"): il volo al contrario, poi close. */
+  /**
+   * Chiude il modal (X, Esc, tocco fuori, "Gioca"): il volo al contrario, poi close.
+   * Senza "Gioca" la pagina annulla gli inviti aperti (onDismiss).
+   */
   function closeModal(): void {
     if (busy.current || closing.current) {
       return;
     }
     closing.current = true;
+    if (!playedRef.current) {
+      props.onDismiss();
+    }
     flip(false);
   }
 
@@ -426,23 +532,131 @@ export function ModeModal(props: ModeModalProps): JSX.Element {
     }
   }
 
+  // quick: Partita Veloce; withFriend: Gioca con un amico
+  const quick = props.kind === 'veloce';
+  const withFriend = props.kind === 'amico';
+
+  // accepted: c'è almeno un amico che ha accettato; invitesFull: inviti aperti al
+  // massimo (gli altri "Invita" sono fermi)
+  let accepted = false;
+  for (let i = 0; i < props.invites.length; i++) {
+    if (props.invites[i].status === 'accepted') {
+      accepted = true;
+    }
+  }
+  const invitesFull = props.invites.length >= MAX_INVITES[props.mode];
+
+  // playReady: "Gioca" si potrebbe premere (connessione a parte): con un amico solo
+  // dopo che ha accettato
+  const playReady = quick || accepted;
+
   /** "Gioca": manda la scelta alla pagina e chiude. */
   function handlePlay(): void {
-    if (played || !props.online || busy.current || closing.current) {
+    if (playedRef.current || !playReady || !props.online || busy.current || closing.current) {
       return;
     }
+    playedRef.current = true;
     setPlayed(true);
     closeModal();
-    props.onPlay({ kind: props.kind, mode: props.mode, targetScore: target, cpu: opponent === 'cpu' });
+    props.onPlay({ kind: props.kind, mode: props.mode, targetScore: target, cpu: quick && opponent === 'cpu' });
   }
 
-  // cpu: true con la CPU scelta; desc e facts: i testi, decisi con un if prima del return
-  const cpu = opponent === 'cpu';
+  /**
+   * "Invita" su una riga.
+   *
+   * @param {Friend} friend l'amico della riga
+   */
+  function handleInvite(friend: Friend): void {
+    if (busy.current || closing.current || invitesFull) {
+      return;
+    }
+    for (let i = 0; i < props.invites.length; i++) {
+      if (props.invites[i].friend.user_id === friend.user_id) {
+        return;
+      }
+    }
+    props.onInvite(friend, target);
+  }
+
+  // cpu: true con la CPU scelta (solo nella Partita Veloce); kicker, desc e facts:
+  // i testi, decisi con un if prima del return
+  const cpu = quick && opponent === 'cpu';
+  let kicker = 'Partita Veloce';
   let desc = QUICK_DESC[props.mode];
-  let facts = quickFacts(props.mode, props.ratings);
+  let facts: Fact[] = quickFacts(props.mode, props.ratings);
   if (cpu) {
     desc = CPU_DESC[props.mode];
     facts = CPU_FACTS[props.mode];
+  }
+  if (withFriend) {
+    kicker = 'Gioca con un amico';
+    desc = FRIEND_DESC[props.mode];
+    facts = [];
+  }
+
+  // inviteRows: una riga per amico online, oppure "Nessun amico online"
+  const inviteRows: JSX.Element[] = [];
+  if (withFriend) {
+    for (let i = 0; i < friends.length; i++) {
+      const friend = friends[i];
+      if (friend.presence !== 'online') {
+        continue;
+      }
+      // state: 'idle', 'pending' o 'accepted', dall'invito aperto (se c'è)
+      let state: 'idle' | 'pending' | 'accepted' = 'idle';
+      for (let j = 0; j < props.invites.length; j++) {
+        if (props.invites[j].friend.user_id === friend.user_id) {
+          state = props.invites[j].status;
+        }
+      }
+      const look = INVITE_LOOKS[state];
+
+      /** "Invita" di questa riga (una funzione per riga: sa di quale amico è). */
+      function handleRowInvite(): void {
+        handleInvite(friend);
+      }
+
+      // key: l'id dell'amico, unico nella lista
+      inviteRows.push(
+        <li className="invite__item" data-user-id={friend.user_id} data-state={state} key={friend.user_id}>
+          <span className="mini-avatar__wrap" aria-hidden="true">
+            <Avatar
+              username={friend.username}
+              avatar={friend.avatar}
+              className={`mini-avatar mini-avatar--${colorIndex(friend.username)}`}
+            />
+            <span className="mini-avatar__status"></span>
+          </span>
+          <span className="invite__name">{friend.username}</span>
+          <button
+            className="invite__btn"
+            type="button"
+            data-invite-user={friend.user_id}
+            data-state={state}
+            aria-label={look.label(friend.username)}
+            disabled={state !== 'idle' || invitesFull || !props.online}
+            onClick={handleRowInvite}
+          >
+            <span className="icon" aria-hidden="true">{look.icon}</span>
+            {look.text}
+          </button>
+        </li>,
+      );
+    }
+    if (inviteRows.length === 0) {
+      inviteRows.push(<li className="invite__empty" key="vuota">Nessun amico online in questo momento.</li>);
+    }
+  }
+
+  // inviteTitle e inviteHint: i testi della sezione degli amici (vuoti nella Partita Veloce)
+  let inviteTitle = '';
+  let inviteHint = '';
+  if (withFriend) {
+    inviteTitle = INVITE_TITLE[props.mode];
+    inviteHint = INVITE_HINT[props.mode];
+    if (props.inviteNote !== null) {
+      inviteHint = props.inviteNote;
+    }
   }
 
   // targetOptions: i tre punti. key: il "nome" con cui React riconosce ogni
@@ -456,6 +670,7 @@ export function ModeModal(props: ModeModalProps): JSX.Element {
           name="target"
           value={TARGETS[i].value}
           checked={target === TARGETS[i].value}
+          disabled={props.invites.length > 0}
           onChange={handleTargetChange}
         />
         <span><b>{TARGETS[i].value}</b><small>{TARGETS[i].word}</small></span>
@@ -501,16 +716,16 @@ export function ModeModal(props: ModeModalProps): JSX.Element {
           </button>
           <div className="mode-modal__body" ref={bodyRef}>
             <div className="mode-modal__head">
-              <p className="mode-modal__kicker">Partita Veloce</p>
+              <p className="mode-modal__kicker">{kicker}</p>
               <h2 className="mode-modal__title" id="mode-title">{props.mode}</h2>
             </div>
             <p className="mode-modal__desc" data-modal-desc="">{desc}</p>
             <fieldset className="target">
               <legend className="target__legend">Punti per vincere</legend>
               <div className="target__options">{targetOptions}</div>
-              <p className="target__note" aria-live="polite" hidden={cpu}>{`Incontri solo chi ha scelto ${target} punti.`}</p>
+              <p className="target__note" aria-live="polite" hidden={cpu || withFriend}>{`Incontri solo chi ha scelto ${target} punti.`}</p>
             </fieldset>
-            <fieldset className="target opponent" data-opponent="">
+            <fieldset className="target opponent" data-opponent="" hidden={withFriend}>
               <legend className="target__legend">{OPPONENT_LEGEND[props.mode]}</legend>
               <div className="target__options">
                 <label className="target__option">
@@ -529,17 +744,17 @@ export function ModeModal(props: ModeModalProps): JSX.Element {
                 </label>
               </div>
             </fieldset>
-            <section className="mode-modal__facts" aria-labelledby="facts-title">
+            <section className="mode-modal__facts" aria-labelledby="facts-title" hidden={withFriend}>
               <h3 className="mode-modal__section-title" id="facts-title">In breve</h3>
               <ul className="facts">{factItems}</ul>
             </section>
-            {/* Gli amici da invitare: nella Partita Veloce è nascosta (come in ModeModal.js); la riempie il 7c */}
-            <section className="invite" hidden>
-              <h3 className="invite__title"></h3>
-              <ul className="invite__list" data-invite-list=""></ul>
-              <p className="invite__hint" aria-live="polite" data-invite-hint=""></p>
+            {/* Gli amici da invitare: solo con un amico (nella Partita Veloce è nascosta, come in ModeModal.js) */}
+            <section className="invite" hidden={quick}>
+              <h3 className="invite__title">{inviteTitle}</h3>
+              <ul className="invite__list" data-invite-list="">{inviteRows}</ul>
+              <p className="invite__hint" aria-live="polite" data-invite-hint="">{inviteHint}</p>
             </section>
-            <aside className="mode-modal__tip">
+            <aside className="mode-modal__tip" hidden={withFriend}>
               <span className="icon" aria-hidden="true">lightbulb</span>
               <p><strong>Lo sapevi?</strong> <span>{tip}</span></p>
             </aside>
@@ -547,7 +762,7 @@ export function ModeModal(props: ModeModalProps): JSX.Element {
               className="btn btn--primary btn--big"
               type="button"
               data-play=""
-              disabled={played || !props.online}
+              disabled={played || !playReady || !props.online}
               onClick={handlePlay}
             >
               <span className="icon" aria-hidden="true">play_arrow</span>

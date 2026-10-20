@@ -16,8 +16,8 @@ Controlla:
   "Annulla" da una chiude la schermata anche nell'altra (queue:left);
 - con "CPU" (1v1 e 2v2) si va subito al tavolo, senza coda;
 - connessione persa (P33): la schermata di coda si chiude, si esce dalla coda e "Gioca"
-  è spento finché la connessione non torna;
-- le carte "Gioca con un amico" mostrano l'avviso provvisorio fino al 7c.
+  è spento finché la connessione non torna.
+Gli inviti ("Gioca con un amico", 7c) stanno in tests/frontend2/test_spa_home_inviti.py.
 Senza browser, o senza il build della SPA, i controlli si saltano.
 """
 
@@ -64,7 +64,6 @@ READY_OLD = ("document.querySelector('[data-online-count]')?.textContent !== ''"
 MODAL_OPEN = "document.querySelector('[data-mode-modal]')?.open === true"
 OVERLAY_OPEN = "document.querySelector('[data-queue-overlay]')?.open === true"
 NO_OVERLAY = "document.querySelector('[data-queue-overlay]') === null"
-FLASHES = "[...document.querySelectorAll('[data-flash] .flash')].map((f) => [f.dataset.flashKind, f.textContent.trim()])"
 # SIGNATURE: ogni elemento della carta-modal come "profondità tag attributi | testo proprio",
 # con gli attributi in ordine alfabetico. Senza "checked", che React scrive come attributo
 # e ModeModal.js solo come proprietà (la scelta vera si confronta a parte), senza il
@@ -190,6 +189,20 @@ def test_carta_modal_uguale_a_quella_della_home_jinja(browser, server, mode):
     assert browser.js("window.__csp") == []
 
 
+@pytest.mark.parametrize("mode", ["1v1", "2v2"])
+def test_carta_modal_con_un_amico_uguale_a_quella_della_home_jinja(browser, server, mode):
+    # 7c: "Gioca con un amico" (Mario non ha amici: "Nessun amico online in questo momento.")
+    signatures = []
+    for url, ready in ((f"{server}/", READY_OLD), (f"{server}{PAGE}", READY)):
+        browser.open(url, 390, 844, ready, timeout=60)
+        _click(browser, f'[data-tile][data-kind="amico"][data-mode="{mode}"]')
+        browser.wait_js(f"{MODAL_OPEN} && document.querySelector('.invite__empty') !== null", "carta-modal con un amico")
+        signatures.append(browser.js(SIGNATURE))
+    assert signatures[1] == signatures[0]
+    assert browser.js("document.querySelector('[data-play]').disabled") is True
+    assert browser.js("window.__csp") == []
+
+
 def test_in_breve_con_il_rating_vero(browser, server):
     _open(browser, server)
     _open_modal(browser, "1v1")
@@ -212,14 +225,6 @@ def test_in_breve_con_il_rating_vero(browser, server):
     browser.send("Input.dispatchMouseEvent", type="mousePressed", x=5, y=5, button="left", clickCount=1)
     browser.send("Input.dispatchMouseEvent", type="mouseReleased", x=5, y=5, button="left", clickCount=1)
     browser.wait_js("document.querySelector('[data-mode-modal]') === null", "tocco fuori dalla carta-modal")
-
-
-def test_carte_con_un_amico_avviso_fino_al_7c(browser, server):
-    _open(browser, server, 390, 844)
-    _click(browser, '[data-tile][data-kind="amico"][data-mode="1v1"]')
-    browser.wait_js("document.querySelector('[data-flash] .flash') !== null", "avviso provvisorio")
-    assert browser.js(FLASHES) == [["info", "infoGli inviti arrivano con il prossimo lotto della migrazione (7c)."]]
-    assert browser.js("document.querySelector('[data-mode-modal]')") is None
 
 
 # --- Coda ----------------------------------------------------------------------
