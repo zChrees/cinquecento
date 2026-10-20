@@ -18,16 +18,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, JSX, RefObject } from 'react';
 
-// Le variabili CSS (--x, --dur, ...) dentro style={{ ... }}. TypeScript conosce
-// solo le proprietà vere del CSS (color, width, ...): questo blocco gli dice che
-// in CSSProperties ci possono essere anche nomi che cominciano con "--", con un
-// testo come valore. `--${string}` vuol dire "due trattini e poi qualunque testo".
-// React le scrive con element.style.setProperty, che la CSP permette.
-declare module 'react' {
-  interface CSSProperties {
-    [name: `--${string}`]: string;
-  }
-}
+// Le variabili CSS (--x, --dur, ...) dentro style={{ ... }}: TypeScript le conosce
+// grazie a types/css.d.ts (dal passo 8; prima il blocco stava qui).
 
 // IMG_BASE: la cartella delle immagini dello sfondo (data-img-base, come prima)
 const IMG_BASE = '/static/img/cards-bg/';

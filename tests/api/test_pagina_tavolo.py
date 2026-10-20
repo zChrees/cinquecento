@@ -6,10 +6,15 @@ sono disattivate. Il disegno vero si controlla aprendo la pagina con Chrome o Ed
 senza finestra (--dump-dom), su un server di prova alla porta 5099; se nessuno dei
 due è installato quei controlli si saltano. Non serve MySQL: il login è spento
 (LOGIN_DISABLED) tranne nel controllo che lo richiede.
+Passo 8a della migrazione: con ?ui=react lo stesso indirizzo dà la pagina della SPA
+(il tavolo React), in tutti gli ambienti, con le stesse regole di ?demo=, e la SPA
+carica gli stessi CSS del template del tavolo (il disegno nel browser lo confronta
+tests/table2/test_tavolo_react.py).
 """
 
 import json
 import os
+import re
 import shutil
 import socket
 import subprocess
@@ -88,6 +93,55 @@ def test_viste_finte_solo_in_sviluppo_e_test():
     app.config["ENV_NAME"] = "demo"
     assert app.test_client().get("/game/prova?demo=1v1").status_code == 404
     assert app.test_client().get("/game/prova").status_code == 200
+
+
+# --- Passo 8a: il tavolo React con ?ui=react -----------------------------------
+
+
+@pytest.fixture
+def fake_spa(monkeypatch, tmp_path):
+    # Una pagina della SPA finta, così non serve il build (come test_spa.py)
+    from app.blueprints.spa import routes as spa_routes
+    (tmp_path / "index.html").write_text('<!doctype html><div id="root"></div>', encoding="utf-8")
+    monkeypatch.setattr(spa_routes, "dist_dir", lambda: tmp_path)
+
+
+@pytest.mark.parametrize("path", ["/game/prova?ui=react", "/game/prova?demo=1v1&ui=react",
+                                  "/game/a1b2c3d4?ui=react&demo=2v2"])
+def test_tavolo_react_e_la_pagina_della_spa(client, fake_spa, path):
+    html = _text(client.get(path))
+    assert '<div id="root">' in html and "data-table" not in html
+
+
+@pytest.mark.parametrize("path", ["/game/prova?ui=jinja", "/game/prova?ui=", "/game/prova?ui=react&demo=3v3",
+                                  "/game/" + "x" * 65 + "?ui=react"])
+def test_tavolo_react_indirizzi_non_validi(client, fake_spa, path):
+    assert client.get(path).status_code == 404
+
+
+def test_tavolo_react_ovunque_ma_viste_finte_solo_in_sviluppo_e_test(fake_spa):
+    # Scelta del 20/10: ?ui=react in tutti gli ambienti, per provarlo dal telefono
+    app = _app()
+    app.config["ENV_NAME"] = "demo"
+    assert app.test_client().get("/game/prova?ui=react").status_code == 200
+    assert app.test_client().get("/game/prova?demo=1v1&ui=react").status_code == 404
+
+
+def test_tavolo_react_senza_login_rimanda_all_accesso(fake_spa):
+    response = _app(login=True).test_client().get("/game/abc123?ui=react")
+    assert response.status_code == 302
+    assert response.headers["Location"].startswith("/auth/login")
+
+
+def test_la_spa_carica_i_css_del_tavolo_nello_stesso_ordine():
+    # frontend/index.html (la <head> della SPA) deve avere i CSS di game/table.html,
+    # nello stesso ordine: il tavolo React usa gli stessi stili
+    template = (ROOT / "app" / "templates" / "game" / "table.html").read_text(encoding="utf-8")
+    wanted = re.findall(r"filename='(css/[^']+)'", template)
+    spa = (ROOT / "frontend" / "index.html").read_text(encoding="utf-8")
+    loaded = re.findall(r'href="/static/(css/[^"]+)"', spa)
+    assert len(wanted) == 9
+    assert [name for name in loaded if name in wanted] == wanted
 
 
 def test_css_e_js_del_tavolo_esistono(client):

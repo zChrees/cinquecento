@@ -10,6 +10,10 @@
  * Flask: dalla SPA ci si arriva con un normale <a href>, che ricarica la pagina.
  * Dal passo 7d la home (/) è HomePage; la home Jinja di prima resta su
  * /vecchia-home (solo sviluppo e test) fino al passo 9.
+ * Dal passo 8 il tavolo React è GamePage su /game/:gameId (":gameId" vuol dire
+ * "qui un pezzo variabile, che la pagina legge con useParams"). Flask e Vite
+ * mandano qui solo /game/<codice>?ui=react (GAME_REACT di vite.config.ts, ?ui= in
+ * app/blueprints/game/routes.py): senza ?ui=react resta il tavolo Jinja fino al lotto 8h.
  *
  * DA DOVE ARRIVANO I DATI: React Router legge l'indirizzo della barra del
  * browser (window.location) e sceglie la voce di routes con lo stesso path.
@@ -17,6 +21,7 @@
 
 import { createBrowserRouter } from 'react-router';
 import type { DataRouter, RouteObject } from 'react-router';
+import { GamePage } from './game/GamePage';
 import { HomePage } from './pages/HomePage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
@@ -29,6 +34,7 @@ const routes: RouteObject[] = [
   { path: '/auth/login', element: <LoginPage /> },
   { path: '/auth/register', element: <RegisterPage /> },
   { path: '/profile/settings', element: <SettingsPage /> },
+  { path: '/game/:gameId', element: <GamePage /> },
 ];
 
 // router: chi segue la barra degli indirizzi e cambia pagina senza ricaricare

@@ -70,6 +70,28 @@ def test_stessi_indirizzi_in_flask_e_in_vite(app):
     assert set(routes.SPA_PATHS) <= rules
 
 
+@pytest.mark.parametrize(("url", "react"), [
+    ("/game/prova?ui=react", True),
+    ("/game/prova?demo=1v1&ui=react", True),
+    ("/game/e5f6a7b8?ui=react&demo=2v2", True),
+    ("/game/prova", False),
+    ("/game/prova?demo=1v1", False),
+    ("/game/prova?ui=reactx", False),
+    ("/game/prova?xui=react", False),
+    ("/game/prova/altro?ui=react", False),
+    ("/game/?ui=react", False),
+])
+def test_vite_tiene_il_tavolo_react(url, react):
+    # Passo 8a: in sviluppo Vite serve il tavolo React (GAME_REACT di vite.config.ts,
+    # dentro l'espressione di flaskPattern); il tavolo Jinja va a Flask
+    code = VITE_CONFIG.read_text(encoding="utf-8")
+    found = re.search(r"const GAME_REACT: string = '([^']+)';", code)
+    assert found, "GAME_REACT non trovato in vite.config.ts"
+    pattern = found.group(1).replace("\\\\", "\\")  # nel testo di JavaScript la \ è scritta \\
+    to_flask = re.compile(f"^/(?!{pattern})")
+    assert (to_flask.match(url) is None) is react
+
+
 # --- Flask -------------------------------------------------------------------
 
 

@@ -30,6 +30,18 @@ const FLASK = 'http://localhost:5000';
 // una pagina nuova della SPA si aggiunge in tutti e due i posti.
 const SPA_PATHS: string[] = ['/', '/auth/login', '/auth/register', '/profile/settings'];
 
+// GAME_REACT: il tavolo React del passo 8 (docs/MIGRAZIONE-FRONTEND.md), cioè
+// /game/<codice> con ?ui=react tra i parametri, per esempio /game/e5f6a7b8?ui=react
+// o /game/prova?demo=1v1&ui=react. Non sta in SPA_PATHS perché il codice cambia a ogni
+// partita e perché lo stesso indirizzo senza ?ui=react è ancora il tavolo Jinja di
+// Flask (fino al lotto 8h). È un pezzo di espressione regolare, scritto senza la /
+// iniziale come i nomi di SPA_PATHS dentro flaskPattern():
+//   game/[^/?#]+         "game/" e il codice (niente /, ? o #)
+//   \?(?:[^#]*&)?        il ? dei parametri, e forse altri parametri prima
+//   ui=react(?:[&#]|$)   ui=react, seguito da un altro parametro, da # o dalla fine
+// (in un testo di JavaScript la \ si scrive \\). Lo controlla tests/frontend/test_spa.py.
+const GAME_REACT: string = 'game/[^/?#]+\\?(?:[^#]*&)?ui=react(?:[&#]|$)';
+
 /**
  * Costruisce l'espressione regolare degli indirizzi da girare a Flask.
  *
@@ -44,6 +56,8 @@ const SPA_PATHS: string[] = ['/', '/auth/login', '/auth/register', '/profile/set
  *   (?!...) vuol dire "qui NON deve esserci...": per esempio /auth/login non
  *   va a Flask, /api/auth/login sì. Dopo il nome di una pagina può venire solo /, ?
  *   o la fine dell'indirizzo ([/?]|$), così /auth/loginx andrebbe a Flask.
+ *   In più resta a Vite il tavolo React (GAME_REACT): /game/prova?ui=react sì,
+ *   /game/prova (il tavolo Jinja) va a Flask.
  *
  *   Restituisce: il testo dell'espressione; Vite la riconosce come espressione
  *   regolare perché comincia con ^.
@@ -58,6 +72,7 @@ function flaskPattern(): string {
     const name = SPA_PATHS[i].slice(1);
     excluded.push(`${name}(?:[/?]|$)`);
   }
+  excluded.push(GAME_REACT);
   return `^/(?!${excluded.join('|')})`;
 }
 

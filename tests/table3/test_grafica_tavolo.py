@@ -14,7 +14,8 @@ docs/prototipo/LEGGIMI.md.
 Il tavolo si apre nella prova (/game/prova?demo=1v1 o 2v2) in Chrome o Edge senza
 finestra (tests/browser.py); il test gli manda viste e frasi con gli eventi del
 browser "demo:state" e "demo:phrases". Non serve MySQL. Se né Chrome né Edge sono
-installati i controlli nel browser si saltano.
+installati i controlli nel browser si saltano. Passo 8: con TABLE_UI=react gli stessi
+controlli valgono per il tavolo React (tests/table_ui.py).
 """
 
 import copy
@@ -26,6 +27,7 @@ import pytest
 from app import create_app
 from app.realtime import table_phrases
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
+from tests.table_ui import table_path
 
 ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"
@@ -52,7 +54,7 @@ def browser(server, tmp_path):
 
 
 def _open(browser, server, mode, size=PHONE):
-    browser.open(f"{server}/game/prova?demo={mode}", *size, "document.querySelector('[data-mode]') !== null")
+    browser.open(f"{server}{table_path('prova', demo=mode)}", *size, "document.querySelector('[data-mode]') !== null")
     _dispatch(browser, "demo:phrases", table_phrases.phrases_event())
 
 

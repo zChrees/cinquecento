@@ -4,10 +4,12 @@ Controlla il "Fatto quando" di SCALETTA.md (P43): ogni avatar di
 app/services/avatars.py ha la sua immagine (app/static/img/avatars/<codice>.svg);
 chi non ne ha scelto uno vede l'iniziale; il peso totale è sotto 300 KB.
 Controlla anche che js/components/Avatar.js conosca gli stessi codici (con Node,
-se c'è), che navbar, pannello statistiche e impostazioni mostrino l'immagine
+se c'è), e dal passo 8a anche frontend/src/game/SeatAvatar.tsx (la terza copia, per
+il tavolo React), che navbar, pannello statistiche e impostazioni mostrino l'immagine
 (macro templates/partials/avatar.html) e che al tavolo di prova (/game/prova?demo=2v2,
 in Chrome o Edge senza finestra, tests/browser.py) le immagini si carichino e un
-codice fuori elenco mostri l'iniziale. Non serve MySQL.
+codice fuori elenco mostri l'iniziale; con TABLE_UI=react il tavolo React
+(tests/table_ui.py). Non serve MySQL.
 """
 
 import json
@@ -25,11 +27,13 @@ from app import create_app
 from app.services.avatars import AVATARS
 from tests.browser import TEST_COOKIE, Browser, find_browser, running_server
 from tests.browser import FakeUser as BrowserUser
+from tests.table_ui import table_path
 
 ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"
 AVATAR_DIR = STATIC / "img" / "avatars"
 AVATAR_JS = STATIC / "js" / "components" / "Avatar.js"
+SEAT_AVATAR_TSX = ROOT / "frontend" / "src" / "game" / "SeatAvatar.tsx"
 SVG_NS = "{http://www.w3.org/2000/svg}"
 
 
@@ -122,6 +126,15 @@ def test_avatar_js_conosce_gli_stessi_codici_del_server():
     assert data["unknown"] == [None, None, None, None]
 
 
+def test_seat_avatar_tsx_conosce_gli_stessi_codici_del_server():
+    # Passo 8a: la terza copia dell'elenco, per l'avatar al tavolo React (codice fuori
+    # elenco → iniziale, come Avatar.js); si legge come testo, senza Node
+    code = SEAT_AVATAR_TSX.read_text(encoding="utf-8")
+    found = re.search(r"export const AVATAR_CODES: readonly string\[\] = \[(.*?)\];", code, flags=re.DOTALL)
+    assert found, "AVATAR_CODES non trovato in SeatAvatar.tsx"
+    assert re.findall(r"'([^']+)'", found.group(1)) == list(AVATARS)
+
+
 def test_componenti_usano_avatar_js():
     # Un solo posto decide immagine o iniziale: nessun componente la ricalcola da sé
     for name in ("Table.js", "FriendsPanel.js", "ModeModal.js", "QueueOverlay.js"):
@@ -196,7 +209,7 @@ SEATS = """[...document.querySelectorAll('.seat')].map((seat) => {
 
 @pytest.mark.parametrize("size", [(360, 640), (1440, 900)])
 def test_tavolo_con_immagini_e_iniziali(browser, server, size):
-    browser.open(f"{server}/game/prova?demo=2v2", *size, "document.querySelectorAll('.seat').length === 4")
+    browser.open(f"{server}{table_path('prova', demo='2v2')}", *size, "document.querySelectorAll('.seat').length === 4")
     browser.wait_js("[...document.querySelectorAll('.seat img.avatar__img')].every((i) => i.complete)",
                     "immagini degli avatar caricate")
     seats = {s["name"]: s for s in browser.js(SEATS)}

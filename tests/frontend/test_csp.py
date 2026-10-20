@@ -5,7 +5,7 @@ Nel browser (Chrome o Edge senza finestra, tests/browser.py), con il server vero
 che la pagina si carichi si registrano gli eventi `securitypolicyviolation`, che il
 browser lancia per ogni risorsa bloccata dalla CSP (script, stili, font, immagini,
 connessioni, anche il websocket). Home (con il collegamento in tempo reale), tavolo
-di prova e registrazione: nessuna violazione. Una violazione fatta apposta si vede,
+di prova (Jinja e, dal passo 8a, React) e registrazione: nessuna violazione. Una violazione fatta apposta si vede,
 così una lista vuota vuol dire davvero "niente bloccato".
 Se né Chrome né Edge sono installati il test si salta.
 """
@@ -26,6 +26,8 @@ PAGES = [
     ("/", "document.querySelector('[data-online-count]')?.textContent === '1'"),  # home:status arrivato
     ("/vecchia-home", "document.querySelector('[data-online-count]')?.textContent === '1'"),
     ("/game/prova?demo=1v1", "document.querySelector('[data-table]') !== null"),
+    # Passo 8a: il tavolo React, con la vista finta disegnata
+    ("/game/prova?demo=1v1&ui=react", "document.querySelector('[data-mode]') !== null"),
     ("/auth/register", "document.querySelector('form') !== null"),
     # Passo 6: le impostazioni della SPA, collegate e con l'elenco degli avatar arrivato
     ("/profile/settings", ("document.querySelector('[data-friends-panel]')?.dataset.connection === 'connected'"
