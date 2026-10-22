@@ -23,6 +23,7 @@ import pytest
 
 from app import create_app
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
+from tests.table_ui import table_path
 
 ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"
@@ -76,7 +77,7 @@ def browser(server, tmp_path):
 
 
 def _open(browser, server, size=PHONE):
-    browser.open(f"{server}/game/prova?demo=2v2", *size, "document.querySelector('[data-mode]') !== null")
+    browser.open(f"{server}{table_path('prova', demo='2v2')}", *size, "document.querySelector('[data-mode]') !== null")
 
 
 def _send(browser, view):
@@ -235,6 +236,6 @@ def test_cpu_compagna_carte_scoperte_ma_niente_consiglio(browser, server):
 
 def test_nel_1v1_niente(browser, server):
     base = _endgame(_view("1v1"))
-    browser.open(f"{server}/game/prova?demo=1v1", *PHONE, "document.querySelector('[data-mode]') !== null")
+    browser.open(f"{server}{table_path('prova', demo='1v1')}", *PHONE, "document.querySelector('[data-mode]') !== null")
     _send(browser, base)
     assert browser.js("document.querySelector('[data-revealed-hand], [data-partner-notice], [data-advice]')") is None

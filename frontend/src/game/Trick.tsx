@@ -26,6 +26,7 @@ import type { LastTrick as LastTrickData, Trick as TrickData } from '../types/vi
 import { AWAY_DELAY_MS } from './animations';
 import { CardBack, CardView } from './CardView';
 import { FIGURE_BASE, cardName, throwKey } from './cards';
+import { useStartDelay } from './useStartDelay';
 
 // Position: il posto di un giocatore visto da te ('bottom' sei tu)
 export type Position = 'bottom' | 'right' | 'top' | 'left';
@@ -174,8 +175,10 @@ interface LastTrickProps {
  */
 export function LastTrick(props: LastTrickProps): JSX.Element {
   const winner = props.lastTrick.winner_seat;
-  // awayDelay: l'uscita comincia AWAY_DELAY_MS dopo che la presa si vede, anche dopo un ridisegno
-  const awayDelay = `${Math.round(AWAY_DELAY_MS - props.shownFor)}ms`;
+  // awayDelay: l'uscita comincia AWAY_DELAY_MS dopo che la presa si vede, anche dopo
+  // un ridisegno; fissata al primo disegno (useStartDelay: React tiene lo stesso
+  // elemento, e l'animazione continua da sola)
+  const awayDelay = useStartDelay(`${Math.round(AWAY_DELAY_MS - props.shownFor)}ms`);
   const cards: JSX.Element[] = [];
   const names: string[] = [];
   for (let i = 0; i < props.lastTrick.cards.length; i++) {

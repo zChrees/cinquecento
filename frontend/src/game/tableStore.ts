@@ -12,7 +12,9 @@
  *   playCard(card), sing(suit), layDown(), advise(card)   le mosse
  *   askLeave(), answerLeave(scelta)  "Esci" con la finestra di conferma
  *   togglePhrases(), closePhrases(), pickPhrase(code)     le frasi (nella prova)
- *   demoState(dati), demoPhrases(dati), demoPhrase(dati)  gli eventi della prova
+ *   closeHandSummary()               "Ok" del riepilogo di fine mano
+ *   handEnding(snapshot), handTotals(lastHand)   per i momenti da disegnare (GamePage.tsx)
+ *   demoState(dati), demoSang(dati), demoPhrases(dati), demoPhrase(dati)  gli eventi della prova
  *
  * Partita vera (lotto 8b): si collega, manda game:join (anche dopo ogni
  * riconnessione: il server rimanda la vista attuale) e a ogni game:state tiene la
@@ -25,8 +27,23 @@
  * manda game:leave (partita persa per abbandono) e torna alla home. I secondi di chi
  * è scollegato scendono da soli, ogni secondo.
  * Prova (?demo=): niente server; vista finta ed eventi demo:* come in game.js.
- * Restano ai lotti dopo: i momenti del tavolo (8c-8e), canti, frasi e suoni nella
- * partita vera (8c, 8f).
+ *
+ * Momenti del tavolo (lotto 8c, P57: noticeMoments di game.js), decisi confrontando
+ * la vista nuova con quella di prima (mai alla prima vista):
+ *   - presa appena chiusa (last_trick cambiato nella stessa mano): resta al centro
+ *     per LAST_TRICK_MS, o finché qualcuno gioca la prima carta della presa nuova;
+ *   - fine mano (hand_number salito): prima l'ultima presa della mano
+ *     (last_hand.last_trick, P58), poi il riepilogo per SUMMARY_MS, o fino a "Ok";
+ *     intanto carte e canti sono spenti (P69) e i punti della mano sono quelli
+ *     della mano appena chiusa (P72);
+ *   - carte calate (last_hand.laid_down nuovo, P85): per LAID_DOWN_MS al posto
+ *     dell'ultima presa, poi il riepilogo;
+ *   - carte del compagno scoperte adesso (P93): entrano, e per PARTNER_NOTICE_MS
+ *     c'è la scritta "Mazzo finito: ora vedi le carte di …";
+ *   - canto (game:sang, D15; demo:sang nella prova): Re e Cavallo accanto a chi ha
+ *     cantato per show_seconds, e la frase nella riga di stato.
+ * Restano ai lotti dopo: lanci e pescate (8d), distribuzione e anello del tempo
+ * fermo nelle pause (8e), frasi e suoni nella partita vera (8f).
  *
  * DA DOVE ARRIVANO I DATI (la catena delle chiamate):
  *   1. GamePage.tsx chiama startTable con il codice della partita e ?demo=;
@@ -38,10 +55,13 @@ import { connect, getStatus, isConnected, on, onStatus, send } from '../socket/c
 import type { ConnectionStatus } from '../socket/client';
 import type { Card, Suit } from '../types/card';
 import type { ErrorResponse, NoConnection, OkEmpty } from '../types/common';
-import type { Phrase } from '../types/events';
-import type { Advice, GameView, Legal, PlayerView } from '../types/view';
+import type { Phrase, SangEvent } from '../types/events';
+import type { Advice, GameView, LaidDown, LastHand, LastTrick, Legal, PlayerView, TeamTotal } from '../types/view';
 import { preloadSounds } from '../utils/sounds';
-import { BUBBLE_MS, GONE_HOME_MS, PHRASE_PAUSE_MS, TIMER_SLACK_MS } from './animations';
+import {
+  BUBBLE_MS, GONE_HOME_MS, LAID_DOWN_MS, LAST_TRICK_MS, PARTNER_NOTICE_MS, PHRASE_PAUSE_MS, SUMMARY_MS,
+  TIMER_SLACK_MS,
+} from './animations';
 import { cardName, preloadCardImages, sameCard } from './cards';
 
 // DEMO_VIEWS: le viste finte della prova, come DEMO_VIEWS di app/blueprints/game/routes.py
@@ -67,6 +87,14 @@ export interface BubbleEntry {
   text: string;
   // performance.now() di quando è comparso (P130: un ridisegno non rifà l'entrata)
   since: number;
+}
+
+// SangEntry: le carte di un canto che si vedono adesso (D15)
+export interface SangEntry {
+  // l'evento game:sang (chi, seme, punti, carte, per quanti secondi)
+  event: SangEvent;
+  // performance.now() di quando è arrivato (P119: un ridisegno non rifà l'entrata)
+  at: number;
 }
 
 // TableSnapshot: la "fotografia" dello stato in un momento. Non si modifica mai:
@@ -116,6 +144,23 @@ export interface TableSnapshot {
   bubbles: Record<number, BubbleEntry>;
   // P79: true quando tutte le immagini del tavolo sono pronte (data-cards-ready)
   cardsReady: boolean;
+  // P57: la presa appena chiusa che si vede, oppure null; e da quando (performance.now())
+  lastTrick: LastTrick | null;
+  lastTrickAt: number;
+  // P57: il riepilogo di fine mano che si vede, oppure null
+  summary: LastHand | null;
+  // P58: il riepilogo che aspetta la fine dell'ultima presa (o delle carte calate)
+  nextSummary: LastHand | null;
+  // P85: le carte calate che si vedono, oppure null; e da quando
+  laidDown: LaidDown | null;
+  laidDownAt: number;
+  // P93: performance.now() di quando le carte del compagno si sono scoperte (0: alla
+  // prima vista, l'entrata è già finita)
+  partnerSince: number;
+  // P93: true finché c'è la scritta "Mazzo finito: ora vedi le carte di …"
+  partnerNotice: boolean;
+  // D15: posto → le carte del canto che si vedono
+  sang: Record<number, SangEntry>;
   // un contatore che sale a ogni ridisegno chiesto dal tempo (secondi che
   // scendono, fine di una pausa): cambia la fotografia anche se il resto è uguale
   tick: number;
@@ -160,6 +205,15 @@ function initialSnapshot(gameId: string, demo: string | null): TableSnapshot {
     phrasePausedUntil: 0,
     bubbles: {},
     cardsReady: false,
+    lastTrick: null,
+    lastTrickAt: 0,
+    summary: null,
+    nextSummary: null,
+    laidDown: null,
+    laidDownAt: 0,
+    partnerSince: 0,
+    partnerNotice: false,
+    sang: {},
     tick: 0,
   };
 }
@@ -193,6 +247,33 @@ let stops: (() => void)[] = [];
  */
 function update(changes: Partial<TableSnapshot>): void {
   snapshot = Object.assign({}, snapshot, changes);
+  for (const listener of listeners) {
+    listener();
+  }
+}
+
+/**
+ * Una copia della fotografia attuale, da cambiare e poi applicare con commit.
+ *
+ * @returns {TableSnapshot}
+ *
+ * In parole semplici:
+ *   const d = draft();   hideLastTrick(d);   d.view = next;   commit(d);
+ *   Serve quando un evento cambia più cose insieme (una vista nuova chiude la presa
+ *   e apre il riepilogo): si cambiano tutte sulla copia e React vede solo la
+ *   fotografia finale, mai una a metà.
+ */
+function draft(): TableSnapshot {
+  return Object.assign({}, snapshot);
+}
+
+/**
+ * Applica la copia preparata con draft e avvisa chi ascolta.
+ *
+ * @param {TableSnapshot} next la copia cambiata
+ */
+function commit(next: TableSnapshot): void {
+  snapshot = next;
   for (const listener of listeners) {
     listener();
   }
@@ -268,8 +349,10 @@ function answerText(answer: OkEmpty | ErrorResponse | NoConnection): string {
  * In parole semplici:
  *   viewForTable(snapshot, performance.now())
  *   Come timed() e render() di game.js: nella prova la vista finta è una
- *   fotografia e i secondi restano fermi. Con una mossa in viaggio, dopo "Esci" o
- *   senza connessione legal diventa vuoto: nessuna carta e nessun canto accesi.
+ *   fotografia e i secondi restano fermi. Con una mossa in viaggio, dopo "Esci",
+ *   senza connessione o a fine mano (P69: finché si vedono l'ultima presa della
+ *   mano, le carte calate e il riepilogo) legal diventa vuoto: nessuna carta e
+ *   nessun canto accesi.
  *   Le pause del tavolo (P132) arrivano con i lotti 8d-8e: per ora il turno scende subito.
  */
 export function viewForTable(current: TableSnapshot, now: number): GameView | null {
@@ -283,7 +366,7 @@ export function viewForTable(current: TableSnapshot, now: number): GameView | nu
   }
   // shown: una copia della vista, con i campi cambiati qui sotto
   const shown: GameView = Object.assign({}, view);
-  if (current.waiting || current.leaving || offline) {
+  if (current.waiting || current.leaving || offline || handEnding(current)) {
     shown.legal = NO_MOVES;
   }
   if (current.demo) {
@@ -305,6 +388,270 @@ export function viewForTable(current: TableSnapshot, now: number): GameView | nu
   }
   shown.players = players;
   return shown;
+}
+
+// --- I momenti del tavolo (P57, lotto 8c) ------------------------------------------------
+
+/**
+ * La mano sta finendo: si vedono l'ultima presa della mano (con il riepilogo che
+ * aspetta), le carte calate o il riepilogo. Intanto carte, canti e consigli sono
+ * spenti (P69).
+ *
+ * @param {TableSnapshot} current la fotografia
+ * @returns {boolean}
+ */
+export function handEnding(current: TableSnapshot): boolean {
+  return current.nextSummary !== null || current.summary !== null || current.laidDown !== null;
+}
+
+/**
+ * P72: i punti di una mano finita (last_hand) nella forma di hand_points.
+ *
+ * @param {LastHand} lastHand il riepilogo della mano
+ * @returns {TeamTotal[]} per esempio [{ team: 0, total: 64 }, { team: 1, total: 56 }]
+ */
+export function handTotals(lastHand: LastHand): TeamTotal[] {
+  const totals: TeamTotal[] = [];
+  for (let i = 0; i < lastHand.teams.length; i++) {
+    totals.push({ team: lastHand.teams[i].team, total: lastHand.teams[i].hand_total });
+  }
+  return totals;
+}
+
+/**
+ * Un campo della vista c'è: né null né assente.
+ *
+ * @param {T | null | undefined} value il campo
+ * @returns {boolean} true se c'è
+ *
+ * In parole semplici:
+ *   present(lastHand.last_trick)
+ *   Come "if (lastHand.last_trick)" di game.js: il contratto dice null quando un
+ *   campo non c'è, ma una vista più vecchia (prima di P58, e le viste finte dei
+ *   test) può non avere proprio il campo. "value is T" dice a TypeScript che,
+ *   quando la risposta è true, il valore non è né null né undefined.
+ */
+function present<T>(value: T | null | undefined): value is T {
+  return value !== null && value !== undefined;
+}
+
+/**
+ * Le carte del compagno nella vista, oppure null (nel 1v1 il campo non c'è).
+ *
+ * @param {GameView} view la vista
+ * @returns {Card[] | null}
+ */
+function partnerHandOf(view: GameView): Card[] | null {
+  if (view.mode === '2v2') {
+    return view.partner_hand;
+  }
+  return null;
+}
+
+/**
+ * Apre il riepilogo di fine mano, per SUMMARY_MS (o fino a "Ok").
+ *
+ * @param {TableSnapshot} d la copia da cambiare
+ * @param {LastHand} lastHand il riepilogo
+ */
+function openSummary(d: TableSnapshot, lastHand: LastHand): void {
+  d.summary = lastHand;
+  // hide: lo chiude, ma solo se nel frattempo non se ne è aperto un altro
+  function hide(): void {
+    if (snapshot.summary === lastHand) {
+      update({ summary: null });
+    }
+  }
+  later(hide, SUMMARY_MS);
+}
+
+/**
+ * Toglie la presa chiusa; se era l'ultima della mano, apre il riepilogo che aspettava.
+ *
+ * @param {TableSnapshot} d la copia da cambiare
+ */
+function hideLastTrick(d: TableSnapshot): void {
+  d.lastTrick = null;
+  if (d.nextSummary !== null) {
+    const waiting = d.nextSummary;
+    d.nextSummary = null;
+    openSummary(d, waiting);
+  }
+}
+
+/**
+ * P85: toglie le carte calate; se il riepilogo aspettava, lo apre (come hideLastTrick).
+ *
+ * @param {TableSnapshot} d la copia da cambiare
+ */
+function hideLaidDown(d: TableSnapshot): void {
+  d.laidDown = null;
+  if (d.nextSummary !== null) {
+    const waiting = d.nextSummary;
+    d.nextSummary = null;
+    openSummary(d, waiting);
+  }
+}
+
+/**
+ * Mostra la presa appena chiusa per LAST_TRICK_MS.
+ *
+ * @param {TableSnapshot} d la copia da cambiare
+ * @param {LastTrick} trick la presa
+ */
+function showLastTrick(d: TableSnapshot, trick: LastTrick): void {
+  hideLastTrick(d);
+  d.lastTrick = trick;
+  d.lastTrickAt = performance.now();
+  // hide: la toglie, ma solo se è ancora quella (una presa nuova ha il suo timer)
+  function hide(): void {
+    if (snapshot.lastTrick === trick) {
+      const next = draft();
+      hideLastTrick(next);
+      commit(next);
+    }
+  }
+  later(hide, LAST_TRICK_MS);
+}
+
+/**
+ * P85: mostra le carte calate per LAID_DOWN_MS.
+ *
+ * @param {TableSnapshot} d la copia da cambiare
+ * @param {LaidDown} laid le carte calate
+ */
+function showLaidDown(d: TableSnapshot, laid: LaidDown): void {
+  hideLaidDown(d);
+  d.laidDown = laid;
+  d.laidDownAt = performance.now();
+  function hide(): void {
+    if (snapshot.laidDown === laid) {
+      const next = draft();
+      hideLaidDown(next);
+      commit(next);
+    }
+  }
+  later(hide, LAID_DOWN_MS);
+}
+
+/**
+ * P93: le carte del compagno si sono appena scoperte: l'entrata parte adesso e la
+ * scritta "Mazzo finito: …" resta per PARTNER_NOTICE_MS.
+ *
+ * @param {TableSnapshot} d la copia da cambiare
+ */
+function showPartnerNotice(d: TableSnapshot): void {
+  const since = performance.now();
+  d.partnerSince = since;
+  d.partnerNotice = true;
+  // hide: toglie la scritta, se nel frattempo le carte non si sono riscoperte
+  function hide(): void {
+    if (snapshot.partnerSince === since) {
+      update({ partnerNotice: false });
+    }
+  }
+  later(hide, PARTNER_NOTICE_MS);
+}
+
+/**
+ * I momenti che cominciano con la vista nuova (noticeMoments di game.js).
+ *
+ * @param {GameView} previous la vista di prima
+ * @param {GameView} next la vista nuova
+ * @param {TableSnapshot} d la copia da cambiare
+ *
+ * In parole semplici:
+ *   noticeMoments(vistaDiPrima, vistaNuova, d)
+ *   Confronta le due viste: carte del compagno appena scoperte, presa appena
+ *   chiusa, mano finita (prima l'ultima presa, poi il riepilogo), carte calate.
+ *   Le prese si confrontano come testo (JSON.stringify): la vista nuova è sempre un
+ *   oggetto nuovo, anche quando la presa è la stessa.
+ */
+function noticeMoments(previous: GameView, next: GameView, d: TableSnapshot): void {
+  // P93: le carte del compagno si scoprono adesso: entrano e c'è la scritta
+  if (partnerHandOf(next) !== null && partnerHandOf(previous) === null) {
+    showPartnerNotice(d);
+  }
+  if (next.hand_number !== previous.hand_number) {
+    hideLastTrick(d);
+  }
+  // P85: qualcuno ha calato (la mano finita è nuova e ha laid_down): le carte calate
+  // al posto dell'ultima presa, poi il riepilogo; se la calata chiude la partita
+  // (hand_number non sale) il riepilogo è nel riquadro finale
+  let previousLastHand: number | null = null;
+  if (previous.last_hand !== null) {
+    previousLastHand = previous.last_hand.hand_number;
+  }
+  if (next.last_hand !== null && present(next.last_hand.laid_down) && next.last_hand.hand_number !== previousLastHand) {
+    hideLastTrick(d);
+    d.summary = null;
+    showLaidDown(d, next.last_hand.laid_down);
+    if (next.hand_number > previous.hand_number) {
+      d.nextSummary = next.last_hand;
+    }
+    return;
+  }
+  if (next.last_trick !== null && next.hand_number === previous.hand_number
+    && JSON.stringify(next.last_trick) !== JSON.stringify(previous.last_trick)) {
+    showLastTrick(d, next.last_trick);
+  }
+  if (next.hand_number > previous.hand_number && next.last_hand !== null) {
+    d.summary = null;
+    if (present(next.last_hand.last_trick)) {
+      // Prima la presa che ha chiuso la mano, poi il riepilogo (quando la presa sparisce)
+      showLastTrick(d, next.last_hand.last_trick);
+      d.nextSummary = next.last_hand;
+    } else {
+      openSummary(d, next.last_hand);
+    }
+  }
+}
+
+/** "Ok" del riepilogo di fine mano: lo chiude e riaccende le carte. */
+export function closeHandSummary(): void {
+  update({ summary: null });
+}
+
+/**
+ * D15: Re e Cavallo cantati restano accanto a chi ha cantato per show_seconds
+ * secondi (P57); la frase nella riga di stato, per i lettori di schermo, dura
+ * uguale se nel frattempo non arriva un altro messaggio.
+ *
+ * @param {SangEvent} event l'evento game:sang (o demo:sang nella prova)
+ */
+function showSang(event: SangEvent): void {
+  if (snapshot.replaced) {
+    return;
+  }
+  const ms = event.show_seconds * 1000;
+  const entry: SangEntry = { event: event, at: performance.now() };
+  const d = draft();
+  d.sang = Object.assign({}, d.sang);
+  d.sang[event.seat] = entry;
+  let who = 'Un giocatore';
+  if (d.view !== null && d.view.players[event.seat] !== undefined) {
+    who = d.view.players[event.seat].username;
+  }
+  const text = `${who} ha cantato ${event.points} a ${event.suit}.`;
+  d.status = text;
+  commit(d);
+  // hide: toglie le carte, ma solo se nel frattempo quel posto non ha cantato di nuovo
+  function hide(): void {
+    if (snapshot.sang[event.seat] !== entry) {
+      return;
+    }
+    const left: Record<number, SangEntry> = Object.assign({}, snapshot.sang);
+    delete left[event.seat];
+    update({ sang: left });
+  }
+  // clearText: toglie la frase, se è ancora quella
+  function clearText(): void {
+    if (snapshot.status === text) {
+      update({ status: '' });
+    }
+  }
+  later(hide, ms);
+  later(clearText, ms);
 }
 
 // --- Avvio e arresto ----------------------------------------------------------------
@@ -432,6 +779,7 @@ async function loadDemo(mine: number): Promise<void> {
 function startGame(): void {
   update({ message: WAITING });
   stops.push(on('game:state', onState));
+  stops.push(on('game:sang', showSang));
   stops.push(on('game:advice', onAdvice));
   stops.push(on('game:replaced', onReplaced));
   stops.push(onStatus(onConnection));
@@ -502,11 +850,18 @@ function showView(next: GameView): void {
   if (snapshot.replaced || (snapshot.view !== null && next.version < snapshot.view.version)) {
     return;
   }
-  const changes: Partial<TableSnapshot> = { view: next, viewAt: performance.now(), screen: 'table' };
+  const d = draft();
+  // P57: i momenti che cominciano adesso (mai alla prima vista)
+  if (snapshot.view !== null) {
+    noticeMoments(snapshot.view, next, d);
+  }
+  d.view = next;
+  d.viewAt = performance.now();
+  d.screen = 'table';
   // P93: il consiglio ricevuto lo ripete la vista (advice, solo nel 2v2); quello
   // dato vale finché la carta è ancora in mano al compagno
   if (next.mode === '2v2') {
-    changes.receivedAdvice = next.advice;
+    d.receivedAdvice = next.advice;
     let stillThere = false;
     if (snapshot.myAdvice !== null && next.partner_hand !== null) {
       for (let i = 0; i < next.partner_hand.length; i++) {
@@ -516,10 +871,20 @@ function showView(next: GameView): void {
       }
     }
     if (!stillThere) {
-      changes.myAdvice = null;
+      d.myAdvice = null;
     }
   }
-  update(changes);
+  if (partnerHandOf(next) === null) {
+    d.partnerNotice = false;
+  }
+  // La presa chiusa (o le carte calate, P85) lascia il posto alla presa nuova appena qualcuno gioca
+  if (d.lastTrick !== null && next.trick.cards.length > 0) {
+    hideLastTrick(d);
+  }
+  if (d.laidDown !== null && next.trick.cards.length > 0) {
+    hideLaidDown(d);
+  }
+  commit(d);
 }
 
 /** game:state: le viste arrivano in ordine di version (contratto 3.2). */
@@ -781,6 +1146,22 @@ export function demoState(detail: unknown): void {
   // perché un evento del browser non ha un tipo
   const next = detail as GameView;
   showView(next);
+}
+
+/**
+ * demo:sang: un canto mandato da un test o dalla console (P57), come game:sang.
+ *
+ * @param {unknown} detail i dati dell'evento, per esempio
+ *   { seat: 1, suit: 'coppe', points: 40, cards: [...], show_seconds: 3 }
+ */
+export function demoSang(detail: unknown): void {
+  if (!snapshot.demo || detail === null || typeof detail !== 'object' || !('seat' in detail)
+    || !('show_seconds' in detail) || typeof detail.seat !== 'number' || typeof detail.show_seconds !== 'number') {
+    return;
+  }
+  // event: il canto del test, preso come un evento del server (come demoState)
+  const event = detail as SangEvent;
+  showSang(event);
 }
 
 /**

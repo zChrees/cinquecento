@@ -11,7 +11,7 @@
  * Lo stato (vista, mosse, connessione, frasi, ...) sta nello store del tavolo
  * (tableStore.ts), letto con useTable: qui si disegna soltanto, più le cose che
  * riguardano gli elementi della pagina:
- *   - gli eventi della prova (demo:state, demo:phrases, demo:phrase sull'elemento
+ *   - gli eventi della prova (demo:state, demo:sang, demo:phrases, demo:phrase sull'elemento
  *     [data-table]), passati allo store e disegnati subito (flushSync);
  *   - Esc e il tocco fuori, che chiudono l'elenco delle frasi; la sua posizione sul
  *     telefono (P112);
@@ -37,10 +37,10 @@ import { Modal } from '../components/Modal';
 import type { ModalAction } from '../components/Modal';
 import type { Card } from '../types/card';
 import { NO_MOMENTS, Table } from './Table';
-import type { BubbleShown, PartnerMoment, TableHandlers, TableMoments, TablePhrasesState } from './Table';
+import type { BubbleShown, PartnerMoment, SangShown, TableHandlers, TableMoments, TablePhrasesState } from './Table';
 import {
-  advise, answerLeave, askLeave, closePhrases, demoPhrase, demoPhrases, demoState, layDown, pickPhrase,
-  playCard, sing, togglePhrases, viewForTable,
+  advise, answerLeave, askLeave, closeHandSummary, closePhrases, demoPhrase, demoPhrases, demoSang, demoState,
+  handEnding, handTotals, layDown, pickPhrase, playCard, sing, togglePhrases, viewForTable,
 } from './tableStore';
 import type { TableSnapshot } from './tableStore';
 import { sameCard } from './cards';
@@ -86,15 +86,53 @@ function GoneNotice(): JSX.Element {
  *
  * In parole semplici:
  *   momentsOf(table, performance.now())
- *   Nei lotti 8a e 8b nessun momento (NO_MOMENTS), tranne le carte del compagno
- *   scoperte (P93) e il consiglio ricevuto, che sono campi della vista. Alla prima
- *   vista le carte del compagno sono già lì: l'entrata è finita (come game.js, che
- *   conta dall'apertura della pagina).
+ *   Come l'oggetto moments di render() in game.js: presa chiusa, riepilogo, punti
+ *   della mano appena chiusa (P72), canti, carte calate (P85), carte del compagno e
+ *   consigli (P93), ognuno con i millisecondi da quando si vede. Quando e per quanto
+ *   lo decide lo store (tableStore.ts); lanci, pescate e distribuzione arrivano con
+ *   i lotti 8d-8e (per ora NO_MOMENTS). Alla prima vista le carte del compagno sono
+ *   già lì: partnerSince è 0 e l'entrata è finita.
  */
 function momentsOf(table: TableSnapshot, now: number): TableMoments {
   const moments: TableMoments = Object.assign({}, NO_MOMENTS);
   const view = table.view;
-  if (view === null || view.mode !== '2v2') {
+  if (view === null) {
+    return moments;
+  }
+  const ending = handEnding(table);
+  moments.lastTrick = table.lastTrick;
+  if (table.lastTrick !== null) {
+    moments.lastTrickFor = now - table.lastTrickAt;
+  }
+  moments.summary = table.summary;
+  // P72: finché si vedono l'ultima presa e il riepilogo, i punti della mano appena chiusa
+  if (table.nextSummary !== null) {
+    moments.handPoints = handTotals(table.nextSummary);
+  } else if (table.summary !== null) {
+    moments.handPoints = handTotals(table.summary);
+  }
+  moments.onCloseSummary = closeHandSummary;
+  // sang: posto → le carte del canto, con da quanto si vedono (P119)
+  const sang: Record<number, SangShown> = {};
+  for (let i = 0; i < view.players.length; i++) {
+    const seat = view.players[i].seat;
+    const entry = table.sang[seat];
+    if (entry !== undefined) {
+      sang[seat] = {
+        seat: entry.event.seat,
+        suit: entry.event.suit,
+        points: entry.event.points,
+        cards: entry.event.cards,
+        shownFor: now - entry.at,
+      };
+    }
+  }
+  moments.sang = sang;
+  moments.laidDown = table.laidDown;
+  if (table.laidDown !== null) {
+    moments.laidDownFor = now - table.laidDownAt;
+  }
+  if (view.mode !== '2v2') {
     return moments;
   }
   if (view.partner_hand !== null) {
@@ -106,13 +144,20 @@ function momentsOf(table: TableSnapshot, now: number): TableMoments {
       }
     }
     let disabled = false;
-    if (table.adviceSending || (!table.demo && table.connection !== 'connected')) {
+    if (table.adviceSending || ending || (!table.demo && table.connection !== 'connected')) {
       disabled = true;
     }
-    const partner: PartnerMoment = { picked: picked, disabled: disabled, shownFor: now, notice: false };
+    const partner: PartnerMoment = {
+      picked: picked,
+      disabled: disabled,
+      shownFor: now - table.partnerSince,
+      notice: table.partnerNotice,
+    };
     moments.partner = partner;
   }
-  moments.advice = table.receivedAdvice;
+  if (!ending) {
+    moments.advice = table.receivedAdvice;
+  }
   return moments;
 }
 
@@ -204,6 +249,14 @@ export function GamePage(): JSX.Element {
         });
       }
     }
+    function onDemoSang(event: Event): void {
+      if (event instanceof CustomEvent) {
+        const detail: unknown = event.detail;
+        flushSync(function apply(): void {
+          demoSang(detail);
+        });
+      }
+    }
     function onDemoPhrases(event: Event): void {
       if (event instanceof CustomEvent) {
         const detail: unknown = event.detail;
@@ -223,11 +276,13 @@ export function GamePage(): JSX.Element {
     function stop(): void {
       if (element !== null) {
         element.removeEventListener('demo:state', onDemoState);
+        element.removeEventListener('demo:sang', onDemoSang);
         element.removeEventListener('demo:phrases', onDemoPhrases);
         element.removeEventListener('demo:phrase', onDemoPhrase);
       }
     }
     element.addEventListener('demo:state', onDemoState);
+    element.addEventListener('demo:sang', onDemoSang);
     element.addEventListener('demo:phrases', onDemoPhrases);
     element.addEventListener('demo:phrase', onDemoPhrase);
     return stop;

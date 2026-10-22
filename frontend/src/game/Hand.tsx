@@ -24,6 +24,7 @@ import type { CSSProperties, JSX } from 'react';
 import type { Card } from '../types/card';
 import { CardBack, CardView } from './CardView';
 import { cardName, sameCard, throwKey } from './cards';
+import { useStartDelay } from './useStartDelay';
 
 // Side: il lato dello schermo di un altro giocatore. La | vuol dire "uno di questi
 // valori e nessun altro", come un enum del C
@@ -271,7 +272,8 @@ interface RevealedHandProps {
   label: string;
   // P93: solo per il compagno; null per le carte calate (P85)
   advise: RevealedAdvise | null;
-  // il ritardo dell'entrata, per esempio '-1200ms' (P119: un ridisegno non la fa ripartire)
+  // il ritardo dell'entrata, per esempio '-1200ms' (P119: un ridisegno non la fa
+  // ripartire); conta solo quello del primo disegno (useStartDelay)
   delay: string;
 }
 
@@ -290,6 +292,9 @@ interface RevealedHandProps {
  *   consiglia (aria-pressed dice quale è già consigliata). Lo usa Table.tsx.
  */
 export function RevealedHand(props: RevealedHandProps): JSX.Element {
+  // delay: il ritardo dell'entrata, fissato al primo disegno (React tiene lo stesso
+  // elemento e l'animazione continua da sola)
+  const delay = useStartDelay(props.delay);
   // pickable: le carte si toccano (c'è un compagno vero a cui consigliare)
   let pickable = false;
   if (props.advise !== null && props.advise.onPick !== null) {
@@ -364,7 +369,7 @@ export function RevealedHand(props: RevealedHandProps): JSX.Element {
     className = `${className} revealed-hand--partner`;
   }
   // style: quante carte ci sono (apertura del ventaglio) e il ritardo dell'entrata
-  const style: CSSProperties = { '--n': String(props.cards.length), animationDelay: props.delay };
+  const style: CSSProperties = { '--n': String(props.cards.length), animationDelay: delay };
 
   return (
     <div

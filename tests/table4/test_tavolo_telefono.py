@@ -23,6 +23,7 @@ import pytest
 
 from app import create_app
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
+from tests.table_ui import table_path
 
 ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"
@@ -94,7 +95,7 @@ def _crowded(mode):
 
 
 def _open(browser, server, mode, size):
-    browser.open(f"{server}/game/prova?demo={mode}", *size, "document.querySelector('[data-leave]') !== null")
+    browser.open(f"{server}{table_path('prova', demo=mode)}", *size, "document.querySelector('[data-leave]') !== null")
     browser.js("document.querySelector('[data-table]').dispatchEvent("
                f"new CustomEvent('demo:state', {{ detail: {json.dumps(_crowded(mode))} }}))")
 
@@ -197,7 +198,7 @@ def test_nomi_lunghi_canto_e_fumetto_non_si_toccano(browser, server, mode, width
         player["username"] = LONGEST[:-1] + str(player["seat"])
     view["sings"] = [{"seat": 0, "suit": "coppe", "points": 40}, {"seat": 0, "suit": "bastoni", "points": 20},
                      {"seat": 1, "suit": "spade", "points": 20}]
-    browser.open(f"{server}/game/prova?demo={mode}", width, 740, "document.querySelector('[data-leave]') !== null")
+    browser.open(f"{server}{table_path('prova', demo=mode)}", width, 740, "document.querySelector('[data-leave]') !== null")
     _dispatch(browser, "demo:state", view)
     _dispatch(browser, "demo:phrases", {"phrases": [{"code": "bravo", "text": "Bella giocata, complimenti!"}]})
     _dispatch(browser, "demo:sang", {"seat": 0, "suit": "denari", "points": 20, "show_seconds": 30,

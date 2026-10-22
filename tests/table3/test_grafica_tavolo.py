@@ -56,6 +56,10 @@ def browser(server, tmp_path):
 def _open(browser, server, mode, size=PHONE):
     browser.open(f"{server}{table_path('prova', demo=mode)}", *size, "document.querySelector('[data-mode]') !== null")
     _dispatch(browser, "demo:phrases", table_phrases.phrases_event())
+    # I caratteri dei nomi si scaricano quando il tavolo compare (nel tavolo React
+    # dopo il primo disegno): senza aspettarli, una misura presa prima e una dopo
+    # differivano di 1-2 px a caso (test_meno_carte_in_mano_niente_si_sposta, 8c)
+    browser.js("document.fonts.ready.then(() => true)")
 
 
 def _dispatch(browser, name, detail):

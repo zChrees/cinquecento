@@ -51,6 +51,7 @@ import { PhraseBubble, PhrasesButton, PhrasesMenu } from './TablePhrases';
 import { Timer } from './Timer';
 import { Deck, LastTrick, Trick, TrumpBadge } from './Trick';
 import type { Position, PositionOf } from './Trick';
+import { useStartDelay } from './useStartDelay';
 
 // --- Tipi di quello che riceve il tavolo --------------------------------------
 
@@ -274,6 +275,8 @@ interface SangCardsProps {
  * @returns {JSX.Element}
  */
 function SangCards(props: SangCardsProps): JSX.Element {
+  // delay: l'entrata delle carte, fissata al primo disegno (useStartDelay)
+  const delay = useStartDelay(`${-Math.round(props.sang.shownFor)}ms`);
   const cards: JSX.Element[] = [];
   for (let i = 0; i < props.sang.cards.length; i++) {
     const card = props.sang.cards[i];
@@ -287,7 +290,7 @@ function SangCards(props: SangCardsProps): JSX.Element {
   // aria-hidden: lo annuncia già la riga di stato
   return (
     <div className={`sang sang--${props.position}`} data-sang-seat={props.sang.seat} data-suit={props.sang.suit} data-points={props.sang.points} aria-hidden="true">
-      <div className="sang__cards" style={{ animationDelay: `${-Math.round(props.sang.shownFor)}ms` }}>{cards}</div>
+      <div className="sang__cards" style={{ animationDelay: delay }}>{cards}</div>
       <span className="sang__points">{`Canta ${props.sang.points}`}</span>
     </div>
   );
@@ -440,7 +443,8 @@ function Seat(props: SeatProps): JSX.Element {
   }
   let sang: JSX.Element | null = null;
   if (props.sang !== null) {
-    sang = <SangCards sang={props.sang} position={props.position} />;
+    // key: un canto nuovo (un altro seme) è un elemento nuovo, con la sua entrata
+    sang = <SangCards key={`${props.sang.suit}-${props.sang.points}`} sang={props.sang} position={props.position} />;
   }
 
   // className e label: di turno e scollegato cambiano classe ed etichetta
@@ -575,8 +579,10 @@ interface PartnerNoticeProps {
  * @returns {JSX.Element}
  */
 function PartnerNotice(props: PartnerNoticeProps): JSX.Element {
+  // delay: l'entrata della scritta, fissata al primo disegno (useStartDelay)
+  const delay = useStartDelay(`${-Math.round(props.shownFor)}ms`);
   return (
-    <p className="partner-notice" data-partner-notice="" role="status" style={{ animationDelay: `${-Math.round(props.shownFor)}ms` }}>
+    <p className="partner-notice" data-partner-notice="" role="status" style={{ animationDelay: delay }}>
       {`Mazzo finito: ora vedi le carte di ${props.name}`}
     </p>
   );
@@ -602,6 +608,8 @@ interface LaidDownNoticeProps {
  * @returns {JSX.Element}
  */
 function LaidDownNotice(props: LaidDownNoticeProps): JSX.Element {
+  // delay: l'entrata della scritta, fissata al primo disegno (useStartDelay)
+  const delay = useStartDelay(`${-Math.round(props.shownFor)}ms`);
   const view = props.view;
   let text = `${nameOf(view, props.laid.seat, 'Un giocatore')} cala le carte`;
   if (props.laid.seat === view.you.seat) {
@@ -632,7 +640,7 @@ function LaidDownNotice(props: LaidDownNoticeProps): JSX.Element {
       role="status"
       aria-label={`${text}. ${cards.join('; ')}`}
     >
-      <span className="laid-down__text" aria-hidden="true" style={{ animationDelay: `${-Math.round(props.shownFor)}ms` }}>{text}</span>
+      <span className="laid-down__text" aria-hidden="true" style={{ animationDelay: delay }}>{text}</span>
     </div>
   );
 }
@@ -808,8 +816,10 @@ export function Table(props: TableProps): JSX.Element {
   if (moments.laidDown !== null) {
     laidNotice = <LaidDownNotice view={view} laid={moments.laidDown} positionOf={positionOf} shownFor={moments.laidDownFor} />;
   } else if (moments.lastTrick !== null) {
+    // key: una presa chiusa diversa è un elemento nuovo, con la sua uscita
     center = (
       <LastTrick
+        key={trickKey(moments.lastTrick)}
         lastTrick={moments.lastTrick}
         positionOf={positionOf}
         winnerText={winnerText(view, moments.lastTrick.winner_seat)}
@@ -919,8 +929,9 @@ export function Table(props: TableProps): JSX.Element {
     if (laidHands !== null) {
       const cards = laidHands[player.seat];
       if (cards !== undefined && cards.length > 0) {
+        // key: le carte calate sono un ventaglio diverso da quello del compagno, con la sua entrata
         edgeHands.push(
-          <RevealedHand key={key} cards={cards} side={side} seat={player.seat} label={`Carte di ${player.username}`}
+          <RevealedHand key={`laid-${key}`} cards={cards} side={side} seat={player.seat} label={`Carte di ${player.username}`}
             advise={null} delay={`${-Math.round(moments.laidDownFor)}ms`} />,
         );
       }
@@ -982,6 +993,20 @@ export function Table(props: TableProps): JSX.Element {
       {result}
     </div>
   );
+}
+
+/**
+ * Un nome che riconosce una presa chiusa: chi ha preso e le carte, in ordine.
+ *
+ * @param {LastTrickData} trick la presa
+ * @returns {string} per esempio '1:coppe-1,denari-3'
+ */
+function trickKey(trick: LastTrickData): string {
+  const cards: string[] = [];
+  for (let i = 0; i < trick.cards.length; i++) {
+    cards.push(throwKey(trick.cards[i].card));
+  }
+  return `${trick.winner_seat}:${cards.join(',')}`;
 }
 
 /**
