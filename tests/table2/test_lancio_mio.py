@@ -23,6 +23,7 @@ import pytest
 
 from app import create_app
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
+from tests.table_ui import table_path
 
 ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"
@@ -77,7 +78,7 @@ def _send(browser, view):
 
 
 def _open(browser, server, size):
-    browser.open(f"{server}/game/prova?demo=1v1", *size, "document.querySelector('[data-mode]') !== null")
+    browser.open(f"{server}{table_path('prova', demo='1v1')}", *size, "document.querySelector('[data-mode]') !== null")
     browser.send("Emulation.setEmulatedMedia", features=[{"name": "prefers-reduced-motion", "value": "no-preference"}])
 
 
@@ -175,7 +176,7 @@ def _opponent_views(mode, seat):
 @pytest.mark.parametrize("size", SIZES)
 @pytest.mark.parametrize(("mode", "seat", "side"), [("1v1", 1, "top"), ("2v2", 1, "right"), ("2v2", 3, "left")])
 def test_la_carta_dell_avversario_parte_dal_suo_ventaglio(browser, server, size, mode, seat, side):
-    browser.open(f"{server}/game/prova?demo={mode}", *size, "document.querySelector('[data-mode]') !== null")
+    browser.open(f"{server}{table_path('prova', demo=mode)}", *size, "document.querySelector('[data-mode]') !== null")
     browser.send("Emulation.setEmulatedMedia", features=[{"name": "prefers-reduced-motion", "value": "no-preference"}])
     base, played = _opponent_views(mode, seat)
     _send(browser, base)

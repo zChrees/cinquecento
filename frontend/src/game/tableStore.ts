@@ -14,6 +14,7 @@
  *   togglePhrases(), closePhrases(), pickPhrase(code)     le frasi (nella prova)
  *   closeHandSummary()               "Ok" del riepilogo di fine mano
  *   handEnding(snapshot), handTotals(lastHand)   per i momenti da disegnare (GamePage.tsx)
+ *   flying(snapshot, adesso), drawing(snapshot, adesso)   le carte in volo e le pescate in corso
  *   demoState(dati), demoSang(dati), demoPhrases(dati), demoPhrase(dati)  gli eventi della prova
  *
  * Partita vera (lotto 8b): si collega, manda game:join (anche dopo ogni
@@ -41,9 +42,16 @@
  *   - carte del compagno scoperte adesso (P93): entrano, e per PARTNER_NOTICE_MS
  *     c'è la scritta "Mazzo finito: ora vedi le carte di …";
  *   - canto (game:sang, D15; demo:sang nella prova): Re e Cavallo accanto a chi ha
- *     cantato per show_seconds, e la frase nella riga di stato.
- * Restano ai lotti dopo: lanci e pescate (8d), distribuzione e anello del tempo
- * fermo nelle pause (8e), frasi e suoni nella partita vera (8f).
+ *     cantato per show_seconds, e la frase nella riga di stato;
+ *   - lancio (lotto 8d, P70): ogni carta che arriva sul tavolo (anche quella che
+ *     chiude la presa o la mano) vola al suo posto in THROW_MS (la tua in
+ *     MY_THROW_MS, P99), partendo da dove stava (P107, throwStart); P78: in fila,
+ *     una quando si è posata la precedente; finché vola non se ne gioca un'altra;
+ *   - pescata (lotto 8d, P70): quando il mazzo cala nella stessa mano, ognuno pesca
+ *     a turno partendo da chi ha preso, una carta alla volta (DRAW_MS), dopo che si
+ *     è posata la carta che ha chiuso la presa (P78).
+ * Restano ai lotti dopo: distribuzione e anello del tempo fermo nelle pause (8e),
+ * frasi e suoni nella partita vera (8f).
  *
  * DA DOVE ARRIVANO I DATI (la catena delle chiamate):
  *   1. GamePage.tsx chiama startTable con il codice della partita e ?demo=;
@@ -56,13 +64,13 @@ import type { ConnectionStatus } from '../socket/client';
 import type { Card, Suit } from '../types/card';
 import type { ErrorResponse, NoConnection, OkEmpty } from '../types/common';
 import type { Phrase, SangEvent } from '../types/events';
-import type { Advice, GameView, LaidDown, LastHand, LastTrick, Legal, PlayerView, TeamTotal } from '../types/view';
+import type { Advice, GameView, LaidDown, LastHand, LastTrick, Legal, PlayerView, TeamTotal, TrickPlay } from '../types/view';
 import { preloadSounds } from '../utils/sounds';
 import {
-  BUBBLE_MS, GONE_HOME_MS, LAID_DOWN_MS, LAST_TRICK_MS, PARTNER_NOTICE_MS, PHRASE_PAUSE_MS, SUMMARY_MS,
-  TIMER_SLACK_MS,
+  BUBBLE_MS, DRAW_MS, GONE_HOME_MS, LAID_DOWN_MS, LAST_TRICK_MS, MY_THROW_MS, PARTNER_NOTICE_MS, PHRASE_PAUSE_MS,
+  SUMMARY_MS, THROW_MS, TIMER_SLACK_MS,
 } from './animations';
-import { cardName, preloadCardImages, sameCard } from './cards';
+import { cardName, preloadCardImages, sameCard, throwKey } from './cards';
 
 // DEMO_VIEWS: le viste finte della prova, come DEMO_VIEWS di app/blueprints/game/routes.py
 const DEMO_VIEWS: Record<string, string> = {
@@ -95,6 +103,37 @@ export interface SangEntry {
   event: SangEvent;
   // performance.now() di quando è arrivato (P119: un ridisegno non rifà l'entrata)
   at: number;
+}
+
+// ThrowFrom: P99, P107, da dove parte una carta lanciata, misurato sul tavolo
+// disegnato prima della vista nuova (centro, larghezza, rotazione)
+export interface ThrowFrom {
+  // il centro, in pixel dalla finestra
+  cx: number;
+  cy: number;
+  // la larghezza della carta di partenza
+  w: number;
+  // la rotazione di partenza, in gradi
+  tilt: number;
+}
+
+// ThrowEntry: una carta lanciata sul tavolo (P70)
+export interface ThrowEntry {
+  // performance.now() del lancio (P78: anche nel futuro, se aspetta in fila)
+  at: number;
+  // quanto dura il volo: MY_THROW_MS la tua (P99), THROW_MS le altre
+  ms: number;
+  // da dove parte, oppure null se non si trova (arriva dal suo lato)
+  from: ThrowFrom | null;
+}
+
+// Drawing: le pescate in corso (P70), con i millisecondi da quando sono partite
+// (negativi: tra poco)
+export interface Drawing {
+  // posto di un altro → millisecondi
+  seats: Record<number, number>;
+  // carta pescata da te ('denari-7') → millisecondi
+  cards: Record<string, number>;
 }
 
 // TableSnapshot: la "fotografia" dello stato in un momento. Non si modifica mai:
@@ -161,6 +200,14 @@ export interface TableSnapshot {
   partnerNotice: boolean;
   // D15: posto → le carte del canto che si vedono
   sang: Record<number, SangEntry>;
+  // P70: carta ('coppe-3') → il suo lancio
+  throws: Record<string, ThrowEntry>;
+  // P78: performance.now() in cui si posa l'ultima carta in fila
+  throwsEnd: number;
+  // P70: posto di un altro → performance.now() della sua pescata (anche nel futuro)
+  drawSeats: Record<number, number>;
+  // P70: carta pescata da te → performance.now() della pescata
+  drawCards: Record<string, number>;
   // un contatore che sale a ogni ridisegno chiesto dal tempo (secondi che
   // scendono, fine di una pausa): cambia la fotografia anche se il resto è uguale
   tick: number;
@@ -214,6 +261,10 @@ function initialSnapshot(gameId: string, demo: string | null): TableSnapshot {
     partnerSince: 0,
     partnerNotice: false,
     sang: {},
+    throws: {},
+    throwsEnd: 0,
+    drawSeats: {},
+    drawCards: {},
     tick: 0,
   };
 }
@@ -534,6 +585,253 @@ function showLaidDown(d: TableSnapshot, laid: LaidDown): void {
   later(hide, LAID_DOWN_MS);
 }
 
+// --- Lanci e pescate (P70, P78, P99, P107, lotto 8d) -------------------------------------
+
+/** "Riduci movimento" è acceso: niente lanci né pescate animati (i tempi restano gli stessi). */
+function reducedMotion(): boolean {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+/**
+ * P70: le carte in volo adesso.
+ *
+ * @param {TableSnapshot} current la fotografia
+ * @param {number} now performance.now() di adesso
+ * @returns {Record<string, number>} carta ('coppe-3') → millisecondi dal lancio (P78: negativi, in fila)
+ */
+export function flying(current: TableSnapshot, now: number): Record<string, number> {
+  const thrown: Record<string, number> = {};
+  for (const key of Object.keys(current.throws)) {
+    const entry = current.throws[key];
+    if (now - entry.at < entry.ms) {
+      thrown[key] = now - entry.at;
+    }
+  }
+  return thrown;
+}
+
+/**
+ * P70: le pescate in corso.
+ *
+ * @param {TableSnapshot} current la fotografia
+ * @param {number} now performance.now() di adesso
+ * @returns {Drawing} posti e carte con i millisecondi dalla pescata (negativi: tra poco)
+ */
+export function drawing(current: TableSnapshot, now: number): Drawing {
+  const seats: Record<number, number> = {};
+  for (const key of Object.keys(current.drawSeats)) {
+    const seat = Number(key);
+    const at = current.drawSeats[seat];
+    if (now - at < DRAW_MS) {
+      seats[seat] = now - at;
+    }
+  }
+  const cards: Record<string, number> = {};
+  for (const key of Object.keys(current.drawCards)) {
+    const at = current.drawCards[key];
+    if (now - at < DRAW_MS) {
+      cards[key] = now - at;
+    }
+  }
+  return { seats: seats, cards: cards };
+}
+
+// FAN_TILT: P107, come sono girate le carte coperte nel ventaglio di ogni lato
+// (table.css, .edge-hand--…); ai lati un po' meno, così la carta si raddrizza in
+// volo senza fare un giro intero
+const FAN_TILT: Record<string, number> = { top: 0, left: 70, right: -70 };
+
+/**
+ * Centro, larghezza e rotazione di un elemento della pagina.
+ *
+ * @param {Element} element l'elemento
+ * @param {number} width la larghezza da usare
+ * @param {number} tilt la rotazione, in gradi
+ * @returns {ThrowFrom}
+ */
+function boxOf(element: Element, width: number, tilt: number): ThrowFrom {
+  const r = element.getBoundingClientRect();
+  return { cx: r.left + r.width / 2, cy: r.top + r.height / 2, w: width, tilt: tilt };
+}
+
+/**
+ * P99, P107: da dove parte la carta di `seat` che arriva sul tavolo, misurata sul
+ * tavolo disegnato **prima** di questa vista (React non l'ha ancora ridisegnato):
+ * la tua dal suo posto nella mano; quella di un altro dalle sue carte scoperte (P85,
+ * P93), se c'è, altrimenti dal suo ventaglio coperto.
+ *
+ * @param {number} seat il posto di chi l'ha giocata
+ * @param {Card} card la carta
+ * @param {boolean} mine true se è tua
+ * @returns {ThrowFrom | null} null se non si trova (per esempio la prima vista dopo un rientro)
+ */
+function throwStart(seat: number, card: Card, mine: boolean): ThrowFrom | null {
+  const root = document.querySelector('[data-table]');
+  if (root === null) {
+    return null;
+  }
+  const same = `[data-suit="${card.suit}"][data-rank="${card.rank}"]`;
+  if (mine) {
+    const button = root.querySelector(`.table__mine .hand > .card${same}`);
+    if (button === null) {
+      return null;
+    }
+    return boxOf(button, button.getBoundingClientRect().width, 0);
+  }
+  const shown = root.querySelector<HTMLElement>(`[data-revealed-seat="${seat}"] ${same}`);
+  if (shown !== null) {
+    return boxOf(shown, shown.offsetWidth, 0);
+  }
+  const place = root.querySelector<HTMLElement>(`.seat[data-seat="${seat}"]`);
+  if (place === null || place.dataset.position === undefined) {
+    return null;
+  }
+  const side = place.dataset.position;
+  const fan = root.querySelector<HTMLElement>(`[data-edge-hand="${side}"]`);
+  if (fan === null) {
+    return null;
+  }
+  let tilt = 0;
+  if (FAN_TILT[side] !== undefined) {
+    tilt = FAN_TILT[side];
+  }
+  return boxOf(fan, fan.offsetWidth, tilt);
+}
+
+/**
+ * Le carte di una presa che c'erano già nella vista di prima, come insieme di codici.
+ *
+ * @param {TrickPlay[]} cards le carte
+ * @returns {Set<string>} per esempio {'coppe-3'}
+ */
+function keysOf(cards: TrickPlay[]): Set<string> {
+  const keys: Set<string> = new Set();
+  for (let i = 0; i < cards.length; i++) {
+    keys.add(throwKey(cards[i].card));
+  }
+  return keys;
+}
+
+/**
+ * P70: le carte arrivate sul tavolo con la vista nuova partono con il lancio: quelle
+ * nuove nella presa, e quella che ha chiuso la presa o la mano (nella presa chiusa).
+ * P78: in fila, ognuna quando si è posata la precedente (anche di una vista di prima).
+ *
+ * @param {GameView} previous la vista di prima
+ * @param {GameView} next la vista nuova
+ * @param {TableSnapshot} d la copia da cambiare
+ */
+function noticeThrows(previous: GameView, next: GameView, d: TableSnapshot): void {
+  const before = keysOf(previous.trick.cards);
+  // arrived: le carte sul tavolo nella vista nuova, nell'ordine in cui sono arrivate
+  const arrived: TrickPlay[] = [];
+  for (let i = 0; i < next.trick.cards.length; i++) {
+    arrived.push(next.trick.cards[i]);
+  }
+  if (next.hand_number === previous.hand_number && next.last_trick !== null
+    && JSON.stringify(next.last_trick) !== JSON.stringify(previous.last_trick)) {
+    for (let i = 0; i < next.last_trick.cards.length; i++) {
+      arrived.push(next.last_trick.cards[i]);
+    }
+  }
+  // P85: con una calata last_hand.last_trick è una presa già vista, nessuna carta vola
+  if (next.hand_number > previous.hand_number && next.last_hand !== null && present(next.last_hand.last_trick)
+    && !present(next.last_hand.laid_down)) {
+    for (let i = 0; i < next.last_hand.last_trick.cards.length; i++) {
+      arrived.push(next.last_hand.last_trick.cards[i]);
+    }
+  }
+  if (reducedMotion()) {
+    return;
+  }
+  const now = performance.now();
+  // throws: i lanci ancora in corso, più quelli nuovi
+  const throws: Record<string, ThrowEntry> = {};
+  for (const key of Object.keys(d.throws)) {
+    if (now - d.throws[key].at < d.throws[key].ms) {
+      throws[key] = d.throws[key];
+    }
+  }
+  let at = Math.max(now, d.throwsEnd);
+  for (let i = 0; i < arrived.length; i++) {
+    const play = arrived[i];
+    const key = throwKey(play.card);
+    if (!before.has(key) && throws[key] === undefined) {
+      // P99, P107: la carta parte da dov'era (la tua anche se giocata dalla mossa
+      // automatica), sul tavolo ancora disegnato prima di questa vista
+      const mine = play.seat === next.you.seat;
+      let ms = THROW_MS;
+      if (mine) {
+        ms = MY_THROW_MS;
+      }
+      throws[key] = { at: at, ms: ms, from: throwStart(play.seat, play.card, mine) };
+      at += ms;
+    }
+  }
+  d.throws = throws;
+  if (at > Math.max(now, d.throwsEnd)) {
+    d.throwsEnd = at;
+    // P91: a lanci finiti le carte tornano ferme; TIMER_SLACK_MS perché setTimeout
+    // a volte scatta poco prima del tempo chiesto
+    later(redraw, at - now + TIMER_SLACK_MS);
+  }
+}
+
+/**
+ * P70: il mazzo è calato nella stessa mano, quindi dopo la presa chi ha preso e poi
+ * gli altri, in ordine, hanno pescato una carta ciascuno. P78: una alla volta, a
+ * partire da quando si è posata la carta che ha chiuso la presa (dopo noticeThrows).
+ *
+ * @param {GameView} previous la vista di prima
+ * @param {GameView} next la vista nuova
+ * @param {TableSnapshot} d la copia da cambiare
+ */
+function noticeDraws(previous: GameView, next: GameView, d: TableSnapshot): void {
+  if (next.hand_number !== previous.hand_number || next.last_trick === null) {
+    return;
+  }
+  const drawn = previous.deck_count - next.deck_count;
+  if (drawn <= 0 || reducedMotion()) {
+    return;
+  }
+  const n = next.players.length;
+  const now = performance.now();
+  const start = Math.max(now, d.throwsEnd);
+  // mine: le tue carte di prima; quelle nuove sono le pescate
+  const mine: Set<string> = new Set();
+  for (let i = 0; i < previous.hand.length; i++) {
+    mine.add(throwKey(previous.hand[i]));
+  }
+  // seats e cards: le pescate ancora in corso (drawing le filtra), più quelle nuove
+  const still = drawing(d, now);
+  const seats: Record<number, number> = {};
+  for (const key of Object.keys(still.seats)) {
+    seats[Number(key)] = d.drawSeats[Number(key)];
+  }
+  const cards: Record<string, number> = {};
+  for (const key of Object.keys(still.cards)) {
+    cards[key] = d.drawCards[key];
+  }
+  const steps = Math.min(drawn, n);
+  for (let step = 0; step < steps; step++) {
+    const seat = (next.last_trick.winner_seat + step) % n;
+    const at = start + step * DRAW_MS;
+    if (seat === next.you.seat) {
+      for (let i = 0; i < next.hand.length; i++) {
+        const key = throwKey(next.hand[i]);
+        if (!mine.has(key)) {
+          cards[key] = at;
+        }
+      }
+    } else {
+      seats[seat] = at;
+    }
+  }
+  d.drawSeats = seats;
+  d.drawCards = cards;
+  later(redraw, start - now + steps * DRAW_MS + TIMER_SLACK_MS);
+}
+
 /**
  * P93: le carte del compagno si sono appena scoperte: l'entrata parte adesso e la
  * scritta "Mazzo finito: …" resta per PARTNER_NOTICE_MS.
@@ -572,6 +870,9 @@ function noticeMoments(previous: GameView, next: GameView, d: TableSnapshot): vo
   if (partnerHandOf(next) !== null && partnerHandOf(previous) === null) {
     showPartnerNotice(d);
   }
+  // P78: prima i lanci, poi le pescate (che partono quando si posa l'ultima carta)
+  noticeThrows(previous, next, d);
+  noticeDraws(previous, next, d);
   if (next.hand_number !== previous.hand_number) {
     hideLastTrick(d);
   }
@@ -937,6 +1238,10 @@ function endMove(mine: number, answer: OkEmpty | ErrorResponse | NoConnection): 
  * @param {Card} card la carta
  */
 export async function playCard(card: Card): Promise<void> {
+  // P70: finché una carta vola sul tavolo non se ne gioca un'altra
+  if (Object.keys(flying(snapshot, performance.now())).length > 0) {
+    return;
+  }
   if (snapshot.demo) {
     update({ status: `Prova: hai scelto ${cardName(card)}. In partita la carta va al server.` });
     return;

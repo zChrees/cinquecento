@@ -20,6 +20,7 @@
 import type { CSSProperties, JSX, ReactNode } from 'react';
 import type { Card } from '../types/card';
 import { BACK_URL, cardName, faceUrl } from './cards';
+import { useStartDelay } from './useStartDelay';
 
 /**
  * Trasforma un sì/no in un attributo data-* senza valore.
@@ -38,6 +39,31 @@ export function dataFlag(on: boolean): string | undefined {
     return '';
   }
   return undefined;
+}
+
+/**
+ * Lo stile della carta con il ritardo dell'animazione fermo finché l'animazione è
+ * la stessa (useStartDelay): lanci, pescate e distribuzione (P70) non si spostano
+ * quando la carta si ridisegna a metà.
+ *
+ * @param {CSSProperties | undefined} style lo stile calcolato da chi disegna
+ * @returns {CSSProperties | undefined} lo stesso stile, o una copia con il ritardo ricordato
+ *
+ * In parole semplici:
+ *   const style = useSteadyStyle({ '--i': '2', animationDelay: '-120ms' });
+ *   È un hook (comincia con "use" e usa useStartDelay): si chiama sempre, in cima
+ *   al componente.
+ */
+function useSteadyStyle(style: CSSProperties | undefined): CSSProperties | undefined {
+  let delay: string | undefined = undefined;
+  if (style !== undefined && typeof style.animationDelay === 'string') {
+    delay = style.animationDelay;
+  }
+  const steady = useStartDelay(delay);
+  if (style === undefined || steady === delay) {
+    return style;
+  }
+  return Object.assign({}, style, { animationDelay: steady });
 }
 
 // CardViewProps: cosa riceve la carta scoperta
@@ -88,6 +114,8 @@ interface CardViewProps {
  *   spento se playable è false; toccandolo chiama onPlay con la carta.
  */
 export function CardView(props: CardViewProps): JSX.Element {
+  // style: il ritardo dell'animazione resta quello di quando è cominciata
+  const style = useSteadyStyle(props.style);
   // className: le classi, quelle di sempre e poi quelle in più
   let className = `card card--${props.card.suit}`;
   if (props.extraClass !== '') {
@@ -126,7 +154,7 @@ export function CardView(props: CardViewProps): JSX.Element {
         role="img"
         aria-label={label}
         aria-pressed={pressed}
-        style={props.style}
+        style={style}
       >
         {face}
         {props.children}
@@ -164,7 +192,7 @@ export function CardView(props: CardViewProps): JSX.Element {
       aria-label={label}
       aria-pressed={pressed}
       disabled={!props.playable}
-      style={props.style}
+      style={style}
       onClick={handleClick}
     >
       {face}
@@ -194,12 +222,14 @@ interface CardBackProps {
  *   coperta"> con dentro l'immagine del dorso.
  */
 export function CardBack(props: CardBackProps): JSX.Element {
+  // style: il ritardo dell'animazione resta quello di quando è cominciata
+  const style = useSteadyStyle(props.style);
   let className = 'card card--back';
   if (props.extraClass !== '') {
     className = `${className} ${props.extraClass}`;
   }
   return (
-    <div className={className} data-back="" role="img" aria-label="Carta coperta" style={props.style}>
+    <div className={className} data-back="" role="img" aria-label="Carta coperta" style={style}>
       <img className="card__back" src={BACK_URL} alt="" draggable={false} />
     </div>
   );

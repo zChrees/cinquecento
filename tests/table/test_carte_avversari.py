@@ -25,6 +25,7 @@ import pytest
 
 from app import create_app
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
+from tests.table_ui import table_path
 
 ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"
@@ -61,7 +62,7 @@ def _view(mode):
 
 
 def _open(browser, server, mode, size=PHONE, motion=False):
-    browser.open(f"{server}/game/prova?demo={mode}", *size, "document.querySelector('[data-mode]') !== null")
+    browser.open(f"{server}{table_path('prova', demo=mode)}", *size, "document.querySelector('[data-mode]') !== null")
     if motion:
         browser.send("Emulation.setEmulatedMedia", features=[{"name": "prefers-reduced-motion", "value": "no-preference"}])
 
@@ -156,6 +157,10 @@ def _draw_state(browser):
       const progress = (e, name) => {
         const a = e && e.getAnimations().find((x) => x.animationName === name);
         return a ? a.effect.getComputedTiming().progress : null; };
+      // quanto manca alla partenza (negativo: è già partita), dal ritardo e dal tempo già passato
+      const wait = (e, name) => {
+        const a = e && e.getAnimations().find((x) => x.animationName === name);
+        return a ? a.effect.getTiming().delay - a.currentTime : null; };
       return {
         mine: mine && `${mine.dataset.suit}-${mine.dataset.rank}`,
         mineDelay: mine && parseFloat(mine.style.animationDelay),
@@ -164,6 +169,7 @@ def _draw_state(browser):
         lastDelay: parseFloat(last.style.animationDelay),
         roomMaking: [...fan.children].slice(0, -1).every((c) => c.classList.contains('card--making-room')),
         lastProgress: progress(last, 'card-draw'),
+        lastWait: wait(last, 'card-draw'),
       };
     })()""")
 
@@ -193,7 +199,10 @@ def test_un_ridisegno_a_meta_non_fa_ripartire_la_pescata(browser, server):
     # P78: Turi comincia a 1,05 s (lancio del 7 di Mario, 0,55 s per P99, poi la pescata di
     # Mario): dopo 1,3 s la sua pescata è avanti, non di nuovo all'inizio
     assert state["lastProgress"] is None or state["lastProgress"] >= 0.2, state
-    assert state["lastDelay"] < 0, state
+    # La pescata di Turi è già partita. Conta quanto manca davvero (ritardo meno tempo già
+    # passato), non il ritardo scritto: il tavolo Jinja ricrea la carta con il ritardo
+    # negativo, quello React la tiene con il ritardo di partenza (lotto 8d)
+    assert state["lastWait"] is None or state["lastWait"] < 0, state
 
 
 def test_con_riduci_movimento_niente_pescata_animata(browser, server):

@@ -23,6 +23,7 @@ import pytest
 
 from app import create_app
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
+from tests.table_ui import table_path
 
 ROOT = Path(__file__).resolve().parents[2]
 DEV = ROOT / "app" / "static" / "dev"
@@ -97,7 +98,7 @@ def _views(mode):
 @pytest.mark.parametrize("mode", ["1v1", "2v2"])
 def test_canto_avatar_e_briscola_non_lampeggiano(browser, server, mode, size):
     view, thrown = _views(mode)
-    browser.open(f"{server}/game/prova?demo={mode}", *SIZES[size], "document.querySelector('[data-cards-ready]') !== null", 30)
+    browser.open(f"{server}{table_path('prova', demo=mode)}", *SIZES[size], "document.querySelector('[data-cards-ready]') !== null", 30)
     browser.send("Emulation.setEmulatedMedia", features=[{"name": "prefers-reduced-motion", "value": "no-preference"}])
     _send(browser, "demo:state", view)
     _send(browser, "demo:sang", {"seat": 1, "suit": "spade", "points": 20, "show_seconds": 5, "cards": [

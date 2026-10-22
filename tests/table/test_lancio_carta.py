@@ -23,6 +23,7 @@ import pytest
 
 from app import create_app
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
+from tests.table_ui import table_path
 
 ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"
@@ -57,7 +58,7 @@ def _view():
 
 
 def _open(browser, server, motion=True):
-    browser.open(f"{server}/game/prova?demo=1v1", *PHONE, "document.querySelector('[data-mode]') !== null")
+    browser.open(f"{server}{table_path('prova', demo='1v1')}", *PHONE, "document.querySelector('[data-mode]') !== null")
     if motion:
         browser.send("Emulation.setEmulatedMedia", features=[{"name": "prefers-reduced-motion", "value": "no-preference"}])
         assert browser.js("matchMedia('(prefers-reduced-motion: reduce)').matches") is False
@@ -161,10 +162,16 @@ def test_la_presa_chiusa_non_riparte_dopo_un_ridisegno(browser, server):
     time.sleep(0.7)
     browser.js("document.querySelector('[data-table]').dispatchEvent(new CustomEvent('demo:phrases', "
                "{ detail: { phrases: [{ code: 'ciao', text: 'Ciao!' }] } }))")
-    # L'uscita verso chi ha preso comincia 1,1 s dopo che la presa si vede, non 1,1 s dopo il ridisegno
-    delay = browser.js("parseFloat(document.querySelector('[data-last-trick] .trick__card').style.animationDelay)")
+    # L'uscita verso chi ha preso comincia 1,1 s dopo che la presa si vede, non 1,1 s dopo il ridisegno.
+    # Conta quanto manca davvero all'uscita (ritardo meno tempo già passato), non il ritardo scritto:
+    # il tavolo Jinja ricrea la casella con un ritardo più corto, quello React la tiene (lotto 8d)
+    wait = browser.js("""(() => {
+      const away = document.querySelector('[data-last-trick] .trick__card').getAnimations()
+        .find((a) => a.animationName === 'trick-away');
+      return away.effect.getTiming().delay - away.currentTime;
+    })()""")
     # (su un PC lento il ridisegno arriva più tardi: conta che non sia tornato a 1100)
-    assert delay <= 450, delay
+    assert wait <= 450, wait
 
 
 def test_a_ogni_ridisegno_le_immagini_delle_carte_restano_le_stesse(browser, server):

@@ -24,6 +24,7 @@ import pytest
 
 from app import create_app
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
+from tests.table_ui import table_path
 
 ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"
@@ -53,7 +54,7 @@ def browser(server, tmp_path):
 
 
 def _open(browser, server):
-    browser.open(f"{server}/game/prova?demo=2v2", 1280, 720, "document.querySelector('[data-mode]') !== null")
+    browser.open(f"{server}{table_path('prova', demo='2v2')}", 1280, 720, "document.querySelector('[data-mode]') !== null")
     browser.send("Emulation.setEmulatedMedia", features=[{"name": "prefers-reduced-motion", "value": "no-preference"}])
     assert browser.js("matchMedia('(prefers-reduced-motion: reduce)').matches") is False
 

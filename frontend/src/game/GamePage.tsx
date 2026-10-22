@@ -40,7 +40,8 @@ import { NO_MOMENTS, Table } from './Table';
 import type { BubbleShown, PartnerMoment, SangShown, TableHandlers, TableMoments, TablePhrasesState } from './Table';
 import {
   advise, answerLeave, askLeave, closeHandSummary, closePhrases, demoPhrase, demoPhrases, demoSang, demoState,
-  handEnding, handTotals, layDown, pickPhrase, playCard, sing, togglePhrases, viewForTable,
+  drawing, flying, getSnapshot, handEnding, handTotals, layDown, pickPhrase, playCard, sing, togglePhrases,
+  viewForTable,
 } from './tableStore';
 import type { TableSnapshot } from './tableStore';
 import { sameCard } from './cards';
@@ -88,9 +89,9 @@ function GoneNotice(): JSX.Element {
  *   momentsOf(table, performance.now())
  *   Come l'oggetto moments di render() in game.js: presa chiusa, riepilogo, punti
  *   della mano appena chiusa (P72), canti, carte calate (P85), carte del compagno e
- *   consigli (P93), ognuno con i millisecondi da quando si vede. Quando e per quanto
- *   lo decide lo store (tableStore.ts); lanci, pescate e distribuzione arrivano con
- *   i lotti 8d-8e (per ora NO_MOMENTS). Alla prima vista le carte del compagno sono
+ *   consigli (P93), lanci e pescate (P70), ognuno con i millisecondi da quando si
+ *   vede. Quando e per quanto lo decide lo store (tableStore.ts); la distribuzione
+ *   arriva con il lotto 8e (per ora null). Alla prima vista le carte del compagno sono
  *   già lì: partnerSince è 0 e l'entrata è finita.
  */
 function momentsOf(table: TableSnapshot, now: number): TableMoments {
@@ -100,6 +101,11 @@ function momentsOf(table: TableSnapshot, now: number): TableMoments {
     return moments;
   }
   const ending = handEnding(table);
+  // P70: le carte in volo e le pescate in corso (lotto 8d)
+  moments.thrown = flying(table, now);
+  const drawn = drawing(table, now);
+  moments.drawnSeats = drawn.seats;
+  moments.drawnCards = drawn.cards;
   moments.lastTrick = table.lastTrick;
   if (table.lastTrick !== null) {
     moments.lastTrickFor = now - table.lastTrickAt;
@@ -159,6 +165,82 @@ function momentsOf(table: TableSnapshot, now: number): TableMoments {
     moments.advice = table.receivedAdvice;
   }
   return moments;
+}
+
+// aimed: le carte in volo a cui aimThrows ha già dato il punto di partenza. Un
+// WeakSet è un insieme di oggetti che non li tiene in vita: quando React toglie
+// l'elemento dalla pagina, sparisce anche da qui
+const aimed: WeakSet<HTMLElement> = new WeakSet();
+
+/**
+ * P99, P107: dopo il disegno, per ogni carta appena entrata in volo dice al CSS
+ * (card-throw di trick.css) da dove parte rispetto al suo posto sul tavolo:
+ * spostamento, misura, rotazione iniziale, verso in cui gira e direzione in cui si
+ * stacca (verso il centro). Senza il punto di partenza restano i valori di
+ * trick.css: arriva dal suo lato. Come aimThrows di game.js.
+ *
+ * @param {HTMLElement} root l'elemento [data-table]
+ *
+ * In parole semplici:
+ *   aimThrows(tableRef.current)
+ *   Per misurare dove si posa, toglie per un attimo l'animazione (che così riparte
+ *   da capo): per questo lo fa **una volta sola** per carta, appena nata, quando
+ *   l'animazione non è ancora cominciata. game.js lo faceva a ogni ridisegno perché
+ *   ricreava tutte le carte; React invece le tiene.
+ */
+function aimThrows(root: HTMLElement): void {
+  const throws = getSnapshot().throws;
+  const faces = root.querySelectorAll<HTMLElement>('.trick__card > [data-thrown]');
+  for (let i = 0; i < faces.length; i++) {
+    const face = faces[i];
+    if (aimed.has(face)) {
+      continue;
+    }
+    aimed.add(face);
+    const entry = throws[`${face.dataset.suit}-${face.dataset.rank}`];
+    if (entry === undefined || entry.from === null || face.offsetWidth === 0 || face.parentElement === null) {
+      continue;
+    }
+    const from = entry.from;
+    // Dove si posa: la carta senza l'animazione (il ritardo resta)
+    face.style.animationName = 'none';
+    const to = face.getBoundingClientRect();
+    face.style.animationName = '';
+    // Lo spostamento dell'animazione è girato con la casella della presa (un po'
+    // ruotata) e ingrandito con la carta che vince (P76): si riporta nelle sue misure.
+    // DOMMatrix legge la trasformazione della casella: a, b, c, d sono i numeri della
+    // matrice 2x2 (rotazione e ingrandimento)
+    const matrix = new DOMMatrix(getComputedStyle(face.parentElement).transform);
+    let scale = parseFloat(getComputedStyle(face).scale);
+    if (Number.isNaN(scale) || scale === 0) {
+      scale = 1;
+    }
+    const det = (matrix.a * matrix.d - matrix.b * matrix.c) * scale;
+    const sx = from.cx - (to.left + to.width / 2);
+    const sy = from.cy - (to.top + to.height / 2);
+    const dx = (matrix.d * sx - matrix.c * sy) / det;
+    const dy = (matrix.a * sy - matrix.b * sx) / det;
+    face.style.setProperty('--from-x', `${dx.toFixed(1)}px`);
+    face.style.setProperty('--from-y', `${dy.toFixed(1)}px`);
+    face.style.setProperty('--from-scale', (from.w / (face.offsetWidth * scale)).toFixed(3));
+    // All'inizio com'era dov'è partita (dritta in mano, girata nel ventaglio), meno
+    // la rotazione della casella
+    const boxTilt = Math.atan2(matrix.b, matrix.a) * 180 / Math.PI;
+    face.style.setProperty('--from-tilt', `${(from.tilt - boxTilt).toFixed(1)}deg`);
+    // Gira verso il centro: da destra in senso antiorario, da sinistra in senso orario
+    let turn = 14;
+    if (dx > 0) {
+      turn = -14;
+    }
+    face.style.setProperty('--from-turn', `${turn}deg`);
+    // Si stacca di 16 px verso il suo posto, prima di volare
+    let far = Math.hypot(dx, dy);
+    if (far === 0) {
+      far = 1;
+    }
+    face.style.setProperty('--lift-x', `${(-dx / far * 16).toFixed(1)}px`);
+    face.style.setProperty('--lift-y', `${(-dy / far * 16).toFixed(1)}px`);
+  }
 }
 
 /**
@@ -352,6 +434,15 @@ export function GamePage(): JSX.Element {
   }
   // nessun elenco tra quadre: dopo ogni disegno
   useLayoutEffect(placePhrasesMenu);
+
+  /** Effetto dopo ogni disegno (P99, P107): il punto di partenza delle carte appena entrate in volo. */
+  function aimNewThrows(): void {
+    if (tableRef.current !== null) {
+      aimThrows(tableRef.current);
+    }
+  }
+  // nessun elenco tra quadre: dopo ogni disegno, prima che il browser mostri la pagina
+  useLayoutEffect(aimNewThrows);
 
   // --- Il disegno ---
 
