@@ -14,6 +14,7 @@
  * DA DOVE ARRIVANO I DATI: dal campo turn della vista; paused lo decide la pagina.
  */
 
+import { useState } from 'react';
 import type { CSSProperties, JSX } from 'react';
 import type { Turn } from '../types/view';
 
@@ -43,13 +44,17 @@ export function Timer(props: TimerProps): JSX.Element {
   const total = Math.max(1, props.turn.seconds_total);
   const left = Math.min(Math.max(0, props.turn.seconds_left), total);
   const rounded = Math.round(left);
+  // startLeft: i secondi del primo disegno. L'animazione CSS parte da lì e scende da
+  // sola; cambiare --timer-left a metà la farebbe saltare (React tiene lo stesso
+  // elemento). Per ripartire da secondi nuovi Table.tsx cambia la key (P132)
+  const [startLeft] = useState(left);
 
   let className = 'timer';
   if (left <= 10) {
     className = 'timer timer--warn';
   }
   // style: i valori calcolati per il CSS; in pausa l'animazione è ferma
-  const style: CSSProperties = { '--timer-start': String(left / total), '--timer-left': String(left) };
+  const style: CSSProperties = { '--timer-start': String(startLeft / total), '--timer-left': String(startLeft) };
   let paused: string | undefined = undefined;
   if (props.paused) {
     paused = '';

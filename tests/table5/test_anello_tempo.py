@@ -22,6 +22,7 @@ from app.realtime import room_manager
 from app.realtime.room import CPU_PLAYER, Player
 from app.sockets import friends_events
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
+from tests.table_ui import table_path
 
 USER_ID = 12
 
@@ -70,7 +71,7 @@ def test_l_anello_resta_pieno_durante_la_prima_distribuzione(browser, server, ro
     # Come Browser.open, ma con le animazioni accese già alla prima vista (test_prima_distribuzione.py)
     browser.send("Emulation.setDeviceMetricsOverride", width=390, height=844, deviceScaleFactor=1, mobile=False)
     browser.send("Emulation.setEmulatedMedia", features=[{"name": "prefers-reduced-motion", "value": "no-preference"}])
-    browser.send("Page.navigate", url=f"{server}/game/{room.id}")
+    browser.send("Page.navigate", url=f"{server}{table_path(room.id)}")
     browser.wait_js("document.querySelector('[data-timer]') !== null", "tavolo con il turno", 30)
     state = browser.js(RING)
     assert state["dealing"], "la prima distribuzione non si vede"

@@ -121,6 +121,9 @@ export interface TableMoments {
   drawnCards: Record<string, number>;
   // la distribuzione, oppure null
   deal: DealMoment | null;
+  // P70: la parte della key delle carte che cambia a ogni distribuzione (dealRoundKey
+  // dello store): all'inizio della distribuzione le carte sono elementi nuovi
+  dealRound: string;
   // il riepilogo di fine mano da mostrare (last_hand), oppure null
   summary: LastHand | null;
   // P72: i punti della mano da mostrare al posto di hand_points, oppure null
@@ -147,6 +150,7 @@ export const NO_MOMENTS: TableMoments = {
   drawnSeats: {},
   drawnCards: {},
   deal: null,
+  dealRound: '',
   summary: null,
   handPoints: null,
   onCloseSummary: null,
@@ -427,7 +431,9 @@ function Seat(props: SeatProps): JSX.Element {
 
   let timer: JSX.Element | null = null;
   if (isTurn && view.turn !== null) {
-    timer = <Timer turn={view.turn} paused={props.turnPaused} />;
+    // key: P132, l'anello si ricrea a ogni vista nuova e quando la pausa finisce:
+    // l'animazione parte dai secondi di quel momento (cambiarli a metà la farebbe saltare)
+    timer = <Timer key={`timer-${view.version}-${String(props.turnPaused)}`} turn={view.turn} paused={props.turnPaused} />;
   }
   let bubble: JSX.Element | null = null;
   if (props.phrase !== null) {
@@ -874,7 +880,7 @@ export function Table(props: TableProps): JSX.Element {
     if (laidHands[me.seat] !== undefined) {
       laidMine = laidHands[me.seat];
     }
-    hand = <Hand cards={laidMine} playable={[]} onPlay={null} drawn={{}} dealt={{}} advice={null} />;
+    hand = <Hand cards={laidMine} playable={[]} onPlay={null} drawn={{}} dealt={{}} advice={null} round="" />;
   } else {
     let dealtMine: Record<string, number> = {};
     if (moments.deal !== null) {
@@ -888,6 +894,7 @@ export function Table(props: TableProps): JSX.Element {
         drawn={moments.drawnCards}
         dealt={dealtMine}
         advice={handAdvice}
+        round={moments.dealRound}
       />
     );
   }
@@ -971,7 +978,7 @@ export function Table(props: TableProps): JSX.Element {
         dealt = moments.deal.seats[player.seat];
       }
     }
-    edgeHands.push(<EdgeHand key={key} count={player.cards_in_hand} side={side} drawn={drawn} dealt={dealt} />);
+    edgeHands.push(<EdgeHand key={key} count={player.cards_in_hand} side={side} drawn={drawn} dealt={dealt} round={moments.dealRound} />);
   }
 
   // A fine partita il riquadro arriva dopo che si è vista l'ultima presa (o le carte calate, P85)

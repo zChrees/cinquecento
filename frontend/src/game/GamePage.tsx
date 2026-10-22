@@ -40,8 +40,8 @@ import { NO_MOMENTS, Table } from './Table';
 import type { BubbleShown, PartnerMoment, SangShown, TableHandlers, TableMoments, TablePhrasesState } from './Table';
 import {
   advise, answerLeave, askLeave, closeHandSummary, closePhrases, demoPhrase, demoPhrases, demoSang, demoState,
-  drawing, flying, getSnapshot, handEnding, handTotals, layDown, pickPhrase, playCard, sing, togglePhrases,
-  viewForTable,
+  dealMoments, dealRoundKey, drawing, flying, getSnapshot, handEnding, handTotals, layDown, pickPhrase, playCard,
+  sing, tablePaused, togglePhrases, viewForTable,
 } from './tableStore';
 import type { TableSnapshot } from './tableStore';
 import { sameCard } from './cards';
@@ -90,8 +90,8 @@ function GoneNotice(): JSX.Element {
  *   Come l'oggetto moments di render() in game.js: presa chiusa, riepilogo, punti
  *   della mano appena chiusa (P72), canti, carte calate (P85), carte del compagno e
  *   consigli (P93), lanci e pescate (P70), ognuno con i millisecondi da quando si
- *   vede. Quando e per quanto lo decide lo store (tableStore.ts); la distribuzione
- *   arriva con il lotto 8e (per ora null). Alla prima vista le carte del compagno sono
+ *   vede, e la distribuzione (P70, P118). Quando e per quanto lo decide lo store
+ *   (tableStore.ts). Alla prima vista le carte del compagno sono
  *   già lì: partnerSince è 0 e l'entrata è finita.
  */
 function momentsOf(table: TableSnapshot, now: number): TableMoments {
@@ -106,6 +106,9 @@ function momentsOf(table: TableSnapshot, now: number): TableMoments {
   const drawn = drawing(table, now);
   moments.drawnSeats = drawn.seats;
   moments.drawnCards = drawn.cards;
+  // P70, P118: la distribuzione (lotto 8e)
+  moments.deal = dealMoments(table, now);
+  moments.dealRound = dealRoundKey(table);
   moments.lastTrick = table.lastTrick;
   if (table.lastTrick !== null) {
     moments.lastTrickFor = now - table.lastTrickAt;
@@ -456,7 +459,7 @@ export function GamePage(): JSX.Element {
     content = (
       <Table
         view={shown}
-        turnPaused={false}
+        turnPaused={tablePaused(table, now)}
         handlers={HANDLERS}
         status={table.status}
         moments={momentsOf(table, now)}

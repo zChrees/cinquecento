@@ -22,6 +22,7 @@ import pytest
 
 from app import create_app
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
+from tests.table_ui import table_path
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = json.loads((ROOT / "app" / "static" / "dev" / "vista_1v1.json").read_text(encoding="utf-8"))
@@ -63,7 +64,7 @@ def _open(browser, server):
         window.__soundsHeard = true;
         document.addEventListener('cinquecento:sound', (e) => window.__sounds.push(e.detail.name));
       }""")
-    browser.send("Page.navigate", url=f"{server}/game/prova?demo=1v1")
+    browser.send("Page.navigate", url=f"{server}{table_path('prova', demo='1v1')}")
     browser.wait_js("document.readyState === 'complete' && document.querySelector('[data-mode]') !== null",
                     "tavolo di prova")
 

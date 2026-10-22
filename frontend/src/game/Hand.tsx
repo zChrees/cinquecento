@@ -55,6 +55,9 @@ interface HandProps {
   dealt: Record<string, number>;
   // P93: la carta consigliata dal compagno, oppure null
   advice: HandAdvice | null;
+  // P70: la parte della key che cambia a ogni distribuzione (per esempio 'r3'): le
+  // carte distribuite sono elementi nuovi, e la loro animazione parte davvero adesso
+  round: string;
 }
 
 /**
@@ -64,7 +67,7 @@ interface HandProps {
  * @returns {JSX.Element}
  *
  * In parole semplici:
- *   <Hand cards={view.hand} playable={view.legal.play} onPlay={onPlay} drawn={{}} dealt={{}} advice={null} />
+ *   <Hand cards={view.hand} playable={view.legal.play} onPlay={onPlay} drawn={{}} dealt={{}} advice={null} round="r0" />
  *   Disegna <div class="hand" data-hand data-count="5"> con dentro una carta per
  *   ogni elemento di cards: un pulsante acceso se la carta è giocabile, spento se
  *   no. La carta consigliata dal compagno ha il bordo e la scritta "consiglio di …";
@@ -129,7 +132,7 @@ export function Hand(props: HandProps): JSX.Element {
 
     items.push(
       <CardView
-        key={key}
+        key={`${key}@${props.round}`}
         card={card}
         onPlay={props.onPlay}
         playable={isPlayable}
@@ -170,6 +173,8 @@ interface EdgeHandProps {
   // per esempio [300, 150, -50]; null se non si sta distribuendo. Un posto può
   // essere vuoto (undefined): quella carta non sta volando
   dealt: (number | undefined)[] | null;
+  // P70: la parte della key che cambia a ogni distribuzione (come in Hand)
+  round: string;
 }
 
 /**
@@ -180,7 +185,7 @@ interface EdgeHandProps {
  * @returns {JSX.Element}
  *
  * In parole semplici:
- *   <EdgeHand count={4} side="top" drawn={null} dealt={null} />
+ *   <EdgeHand count={4} side="top" drawn={null} dealt={null} round="r0" />
  *   Disegna <div class="edge-hand edge-hand--top" data-edge-hand="top"
  *   data-count="4"> con un dorso per carta. Il CSS gira ogni dorso con le
  *   variabili --i (la sua posizione), --n (quante sono) e --n-before (quante
@@ -213,7 +218,7 @@ export function EdgeHand(props: EdgeHandProps): JSX.Element {
     }
     // key: i dorsi sono tutti uguali, quindi qui il "nome" è il loro posto nel
     // ventaglio (back-0, back-1, ...): è proprio la posizione a distinguerli
-    items.push(<CardBack key={`back-${i}`} extraClass={extraClass} style={style} />);
+    items.push(<CardBack key={`back-${i}@${props.round}`} extraClass={extraClass} style={style} />);
   }
 
   // drawing e dealing: data-drawing e data-dealing solo durante pescata e distribuzione

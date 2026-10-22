@@ -15,6 +15,7 @@
  *   closeHandSummary()               "Ok" del riepilogo di fine mano
  *   handEnding(snapshot), handTotals(lastHand)   per i momenti da disegnare (GamePage.tsx)
  *   flying(snapshot, adesso), drawing(snapshot, adesso)   le carte in volo e le pescate in corso
+ *   dealing, dealMoments, dealRoundKey, tablePaused       la distribuzione e le pause del tavolo
  *   demoState(dati), demoSang(dati), demoPhrases(dati), demoPhrase(dati)  gli eventi della prova
  *
  * Partita vera (lotto 8b): si collega, manda game:join (anche dopo ogni
@@ -50,8 +51,14 @@
  *   - pescata (lotto 8d, P70): quando il mazzo cala nella stessa mano, ognuno pesca
  *     a turno partendo da chi ha preso, una carta alla volta (DRAW_MS), dopo che si
  *     è posata la carta che ha chiuso la presa (P78).
- * Restano ai lotti dopo: distribuzione e anello del tempo fermo nelle pause (8e),
- * frasi e suoni nella partita vera (8f).
+ *   - distribuzione (lotto 8e, P70): a ogni mano nuova le carte restano nascoste
+ *     finché si vedono l'ultima presa e il riepilogo; poi il mazzo si mescola
+ *     (SHUFFLE_MS) e le carte partono una alla volta, dal giocatore dopo il mazziere
+ *     (DEAL_STEP_MS); P118: alla prima vista anche la prima mano, una volta per scheda;
+ *   - pause (P132): finché c'è uno dei momenti qui sopra il tempo del turno non
+ *     scende e l'anello resta pieno e fermo (tablePaused, settle).
+ * Restano al lotto 8f: frasi e suoni nella partita vera (qui ci sono già i suoni
+ * della distribuzione, che il test della prima distribuzione controlla).
  *
  * DA DOVE ARRIVANO I DATI (la catena delle chiamate):
  *   1. GamePage.tsx chiama startTable con il codice della partita e ?demo=;
@@ -65,11 +72,12 @@ import type { Card, Suit } from '../types/card';
 import type { ErrorResponse, NoConnection, OkEmpty } from '../types/common';
 import type { Phrase, SangEvent } from '../types/events';
 import type { Advice, GameView, LaidDown, LastHand, LastTrick, Legal, PlayerView, TeamTotal, TrickPlay } from '../types/view';
-import { preloadSounds } from '../utils/sounds';
+import { playSound, preloadSounds } from '../utils/sounds';
 import {
-  BUBBLE_MS, DRAW_MS, GONE_HOME_MS, LAID_DOWN_MS, LAST_TRICK_MS, MY_THROW_MS, PARTNER_NOTICE_MS, PHRASE_PAUSE_MS,
-  SUMMARY_MS, THROW_MS, TIMER_SLACK_MS,
+  BUBBLE_MS, DEAL_STEP_MS, DRAW_MS, GONE_HOME_MS, LAID_DOWN_MS, LAST_TRICK_MS, MY_THROW_MS, PARTNER_NOTICE_MS,
+  PHRASE_PAUSE_MS, SHUFFLE_MS, SUMMARY_MS, THROW_MS, TIMER_SLACK_MS,
 } from './animations';
+import type { DealMoment } from './Table';
 import { cardName, preloadCardImages, sameCard, throwKey } from './cards';
 
 // DEMO_VIEWS: le viste finte della prova, come DEMO_VIEWS di app/blueprints/game/routes.py
@@ -208,6 +216,16 @@ export interface TableSnapshot {
   drawSeats: Record<number, number>;
   // P70: carta pescata da te → performance.now() della pescata
   drawCards: Record<string, number>;
+  // P70: mano nuova, la distribuzione aspetta la fine di ultima presa e riepilogo
+  dealWaiting: boolean;
+  // P70: performance.now() dell'inizio della mescolata, e dell'ultima carta arrivata
+  dealAt: number;
+  dealEnd: number;
+  // P70: quante distribuzioni sono cominciate in questa pagina (fa parte della key
+  // delle carte: all'inizio della distribuzione le carte sono elementi nuovi)
+  dealRound: number;
+  // P132: performance.now() da cui scende il tempo del turno; null mentre il tavolo è in pausa
+  turnClockAt: number | null;
   // un contatore che sale a ogni ridisegno chiesto dal tempo (secondi che
   // scendono, fine di una pausa): cambia la fotografia anche se il resto è uguale
   tick: number;
@@ -265,6 +283,11 @@ function initialSnapshot(gameId: string, demo: string | null): TableSnapshot {
     throwsEnd: 0,
     drawSeats: {},
     drawCards: {},
+    dealWaiting: false,
+    dealAt: 0,
+    dealEnd: 0,
+    dealRound: 0,
+    turnClockAt: 0,
     tick: 0,
   };
 }
@@ -298,6 +321,7 @@ let stops: (() => void)[] = [];
  */
 function update(changes: Partial<TableSnapshot>): void {
   snapshot = Object.assign({}, snapshot, changes);
+  settle(snapshot);
   for (const listener of listeners) {
     listener();
   }
@@ -324,6 +348,7 @@ function draft(): TableSnapshot {
  * @param {TableSnapshot} next la copia cambiata
  */
 function commit(next: TableSnapshot): void {
+  settle(next);
   snapshot = next;
   for (const listener of listeners) {
     listener();
@@ -423,10 +448,16 @@ export function viewForTable(current: TableSnapshot, now: number): GameView | nu
   if (current.demo) {
     return shown;
   }
-  // passed: i secondi passati da quando la vista è arrivata
+  // passed: i secondi passati da quando la vista è arrivata (per chi è scollegato)
   const passed = (now - current.viewAt) / 1000;
   if (view.turn !== null) {
-    shown.turn = Object.assign({}, view.turn, { seconds_left: Math.max(0, view.turn.seconds_left - passed) });
+    // P132: il tempo del turno scende da quando il tavolo ha finito le pause
+    // (turnClockAt); durante le pause la vista dice il turno pieno, e resta così
+    let turnPassed = 0;
+    if (current.turnClockAt !== null) {
+      turnPassed = Math.max(0, (now - current.turnClockAt) / 1000);
+    }
+    shown.turn = Object.assign({}, view.turn, { seconds_left: Math.max(0, view.turn.seconds_left - turnPassed) });
   }
   const players: PlayerView[] = [];
   for (let i = 0; i < view.players.length; i++) {
@@ -832,6 +863,264 @@ function noticeDraws(previous: GameView, next: GameView, d: TableSnapshot): void
   later(redraw, start - now + steps * DRAW_MS + TIMER_SLACK_MS);
 }
 
+// --- Distribuzione e pause del tavolo (P70, P118, P132, lotto 8e) -------------------------
+
+// HIDDEN: "parte tra molto": la carta resta nascosta finché la distribuzione non comincia
+const HIDDEN = -1e6;
+// FIRST_DEAL_KEY: P118, + game_id, la distribuzione della prima mano già vista in questa scheda
+const FIRST_DEAL_KEY = 'cinquecento.first-deal.';
+
+// DealStep: una carta distribuita, in ordine
+interface DealStep {
+  // a chi va
+  seat: number;
+  // la sua posizione nella mano di quel giocatore
+  index: number;
+}
+
+/**
+ * P70: a chi va, in ordine, ogni carta distribuita: a giro dal giocatore dopo il
+ * mazziere, una carta alla volta.
+ *
+ * @param {GameView} view la vista
+ * @returns {DealStep[]} per esempio [{ seat: 1, index: 0 }, { seat: 0, index: 0 }, ...]
+ */
+function dealOrder(view: GameView): DealStep[] {
+  const n = view.players.length;
+  const first = (view.dealer_seat + 1) % n;
+  // counts: quante carte ha ognuno, nell'ordine dei posti
+  const counts: number[] = [];
+  let most = 0;
+  for (let i = 0; i < n; i++) {
+    let count = view.players[i].cards_in_hand;
+    if (view.players[i].seat === view.you.seat) {
+      count = view.hand.length;
+    }
+    counts.push(count);
+    most = Math.max(most, count);
+  }
+  const order: DealStep[] = [];
+  for (let round = 0; round < most; round++) {
+    for (let step = 0; step < n; step++) {
+      const seat = (first + step) % n;
+      if (round < counts[seat]) {
+        order.push({ seat: seat, index: round });
+      }
+    }
+  }
+  return order;
+}
+
+/**
+ * P70: la distribuzione è in corso, o aspetta la fine di ultima presa e riepilogo.
+ *
+ * @param {TableSnapshot} current la fotografia
+ * @param {number} now performance.now() di adesso
+ * @returns {boolean}
+ */
+export function dealing(current: TableSnapshot, now: number): boolean {
+  return current.dealWaiting || now < current.dealEnd;
+}
+
+/**
+ * P70: comincia la distribuzione: prima la mescolata (SHUFFLE_MS), poi una carta
+ * ogni DEAL_STEP_MS, ognuna in volo per DRAW_MS. D47: un suono per la mescolata e
+ * uno per ogni carta, quando arriva.
+ *
+ * @param {TableSnapshot} d la copia da cambiare (con la vista)
+ * @param {number} now performance.now() di adesso
+ */
+function startDeal(d: TableSnapshot, now: number): void {
+  d.dealWaiting = false;
+  d.dealAt = now;
+  d.dealRound = d.dealRound + 1;
+  let cards = 0;
+  if (d.view !== null) {
+    cards = dealOrder(d.view).length;
+  }
+  d.dealEnd = now + SHUFFLE_MS + Math.max(cards - 1, 0) * DEAL_STEP_MS + DRAW_MS;
+  playSound('shuffle', 0);
+  for (let k = 0; k < cards; k++) {
+    playSound('deal', SHUFFLE_MS + k * DEAL_STEP_MS + DRAW_MS);
+  }
+  // P91: a distribuzione finita le carte tornano ferme
+  later(redraw, d.dealEnd - now + TIMER_SLACK_MS);
+}
+
+/**
+ * P70: i tempi della distribuzione da disegnare, oppure null se non c'è.
+ *
+ * @param {TableSnapshot} current la fotografia
+ * @param {number} now performance.now() di adesso
+ * @returns {DealMoment | null}
+ *
+ * In parole semplici:
+ *   dealMoments(snapshot, performance.now())
+ *   Per ogni carta i millisecondi da quando è partita (negativi: parte tra poco;
+ *   HIDDEN mentre la distribuzione aspetta), e quanto è avanti la mescolata.
+ */
+export function dealMoments(current: TableSnapshot, now: number): DealMoment | null {
+  const view = current.view;
+  if (view === null || !dealing(current, now)) {
+    return null;
+  }
+  const mine: Record<string, number> = {};
+  const seats: Record<number, (number | undefined)[]> = {};
+  const order = dealOrder(view);
+  for (let k = 0; k < order.length; k++) {
+    let since = HIDDEN;
+    if (!current.dealWaiting) {
+      since = now - (current.dealAt + SHUFFLE_MS + k * DEAL_STEP_MS);
+    }
+    const step = order[k];
+    if (step.seat === view.you.seat) {
+      if (view.hand[step.index] !== undefined) {
+        mine[throwKey(view.hand[step.index])] = since;
+      }
+    } else {
+      if (seats[step.seat] === undefined) {
+        seats[step.seat] = [];
+      }
+      seats[step.seat][step.index] = since;
+    }
+  }
+  let shuffled: number | null = null;
+  if (!current.dealWaiting && now - current.dealAt < SHUFFLE_MS) {
+    shuffled = now - current.dealAt;
+  }
+  return { shuffled: shuffled, mine: mine, seats: seats };
+}
+
+/**
+ * La parte della key delle carte che cambia a ogni distribuzione.
+ *
+ * @param {TableSnapshot} current la fotografia
+ * @returns {string} per esempio 'r3' (dopo la terza distribuzione) o 'r3w' (la quarta aspetta)
+ *
+ * In parole semplici:
+ *   Le carte che aspettano la distribuzione hanno già l'animazione, con un ritardo
+ *   enorme che le tiene nascoste. Quando la distribuzione parte cambia solo il
+ *   ritardo, ma il browser conta il tempo da quando l'animazione è stata creata
+ *   (all'inizio dell'attesa), e le carte comparirebbero di colpo. Con una key nuova
+ *   React crea carte nuove, e l'animazione comincia davvero adesso. A distribuzione
+ *   finita la key resta la stessa: le carte non si ricreano.
+ */
+export function dealRoundKey(current: TableSnapshot): string {
+  if (current.dealWaiting) {
+    return `r${current.dealRound}w`;
+  }
+  return `r${current.dealRound}`;
+}
+
+/**
+ * P70: con la mano nuova la distribuzione aspetta; parte quando presa e riepilogo spariscono.
+ *
+ * @param {GameView} previous la vista di prima
+ * @param {GameView} next la vista nuova
+ * @param {TableSnapshot} d la copia da cambiare
+ */
+function noticeDeal(previous: GameView, next: GameView, d: TableSnapshot): void {
+  if (reducedMotion() || next.hand_number <= previous.hand_number || next.status !== 'playing') {
+    return;
+  }
+  d.dealWaiting = true;
+  d.dealEnd = 0;
+}
+
+/**
+ * P118: la partita è appena cominciata (prima mano, nessuna carta giocata né canto,
+ * tutti con le carte in mano e il turno ancora pieno): vale anche per chi arriva
+ * per ultimo, perché il server fa partire il primo turno quando tutti sono al tavolo.
+ *
+ * @param {GameView} next la vista
+ * @returns {boolean}
+ */
+function freshStart(next: GameView): boolean {
+  if (next.status !== 'playing' || next.hand_number !== 1 || next.last_hand !== null || next.last_trick !== null
+    || next.trick.cards.length > 0 || next.sings.length > 0 || next.turn === null
+    || next.turn.seconds_left < next.turn.seconds_total) {
+    return false;
+  }
+  for (let i = 0; i < next.players.length; i++) {
+    const player = next.players[i];
+    if (player.seat !== next.you.seat && player.cards_in_hand !== next.hand.length) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * P118: alla prima vista la distribuzione della prima mano, una volta sola per
+ * scheda (sessionStorage): chi ricarica la pagina o arriva a partita cominciata non
+ * la rivede.
+ *
+ * @param {GameView} next la prima vista
+ * @param {TableSnapshot} d la copia da cambiare
+ */
+function noticeFirstDeal(next: GameView, d: TableSnapshot): void {
+  if (reducedMotion() || !freshStart(next)) {
+    return;
+  }
+  const key = FIRST_DEAL_KEY + next.game_id;
+  try {
+    if (sessionStorage.getItem(key) !== null) {
+      return;
+    }
+    sessionStorage.setItem(key, '1');
+  } catch {
+    // Memoria del browser bloccata: la distribuzione si vede, al massimo anche dopo un ricaricamento
+  }
+  d.dealWaiting = true;
+  d.dealEnd = 0;
+}
+
+/**
+ * Il tavolo è in pausa: lanci, pescate, ultima presa, carte calate, riepilogo,
+ * distribuzione. Il turno aspetta la fine, come il conto alla rovescia del server
+ * (P94): l'anello del tempo (P132) resta pieno e fermo.
+ *
+ * @param {TableSnapshot} current la fotografia
+ * @param {number} now performance.now() di adesso
+ * @returns {boolean}
+ */
+export function tablePaused(current: TableSnapshot, now: number): boolean {
+  if (Object.keys(flying(current, now)).length > 0) {
+    return true;
+  }
+  const draws = drawing(current, now);
+  if (Object.keys(draws.seats).length > 0 || Object.keys(draws.cards).length > 0) {
+    return true;
+  }
+  return dealing(current, now) || current.lastTrick !== null || current.laidDown !== null
+    || current.summary !== null || current.nextSummary !== null;
+}
+
+/**
+ * Dopo ogni cambio, prima di mostrarlo: fa partire la distribuzione che aspettava,
+ * se presa e riepilogo sono spariti (come render() di game.js), e ferma o fa
+ * ripartire l'orologio del turno (P132).
+ *
+ * @param {TableSnapshot} d la fotografia nuova (si cambia qui)
+ *
+ * In parole semplici:
+ *   Lo chiamano update e commit, a ogni cambio: anche quelli dei timer di fine
+ *   lancio, pescata e distribuzione (redraw), quindi l'orologio riparte appena
+ *   finisce la pausa.
+ */
+function settle(d: TableSnapshot): void {
+  const now = performance.now();
+  if (d.dealWaiting && d.view !== null && d.lastTrick === null && d.laidDown === null && d.nextSummary === null
+    && d.summary === null) {
+    startDeal(d, now);
+  }
+  if (tablePaused(d, now)) {
+    d.turnClockAt = null;
+  } else if (d.turnClockAt === null) {
+    d.turnClockAt = now;
+  }
+}
+
 /**
  * P93: le carte del compagno si sono appena scoperte: l'entrata parte adesso e la
  * scritta "Mazzo finito: …" resta per PARTNER_NOTICE_MS.
@@ -873,6 +1162,7 @@ function noticeMoments(previous: GameView, next: GameView, d: TableSnapshot): vo
   // P78: prima i lanci, poi le pescate (che partono quando si posa l'ultima carta)
   noticeThrows(previous, next, d);
   noticeDraws(previous, next, d);
+  noticeDeal(previous, next, d);
   if (next.hand_number !== previous.hand_number) {
     hideLastTrick(d);
   }
@@ -1152,12 +1442,17 @@ function showView(next: GameView): void {
     return;
   }
   const d = draft();
-  // P57: i momenti che cominciano adesso (mai alla prima vista)
+  // P57: i momenti che cominciano adesso (mai alla prima vista); P118: alla prima
+  // vista, la distribuzione della prima mano
   if (snapshot.view !== null) {
     noticeMoments(snapshot.view, next, d);
+  } else {
+    noticeFirstDeal(next, d);
   }
   d.view = next;
   d.viewAt = performance.now();
+  // P132: il tempo del turno scende dai secondi della vista nuova (se il tavolo non è in pausa: settle)
+  d.turnClockAt = d.viewAt;
   d.screen = 'table';
   // P93: il consiglio ricevuto lo ripete la vista (advice, solo nel 2v2); quello
   // dato vale finché la carta è ancora in mano al compagno
@@ -1238,8 +1533,9 @@ function endMove(mine: number, answer: OkEmpty | ErrorResponse | NoConnection): 
  * @param {Card} card la carta
  */
 export async function playCard(card: Card): Promise<void> {
-  // P70: finché una carta vola sul tavolo non se ne gioca un'altra
-  if (Object.keys(flying(snapshot, performance.now())).length > 0) {
+  // P70: finché una carta vola sul tavolo, o si distribuisce, non se ne gioca un'altra
+  const now = performance.now();
+  if (Object.keys(flying(snapshot, now)).length > 0 || dealing(snapshot, now)) {
     return;
   }
   if (snapshot.demo) {
