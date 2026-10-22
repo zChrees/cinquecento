@@ -157,7 +157,10 @@ def test_cancellazione_con_la_password(browser, server, app):
     browser.send("Input.dispatchKeyEvent", type="keyDown", key="Enter", code="Enter", windowsVirtualKeyCode=13, text="\r")
     browser.send("Input.dispatchKeyEvent", type="keyUp", key="Enter", code="Enter", windowsVirtualKeyCode=13)
     browser.wait_js("location.pathname === '/' && document.readyState === 'complete'", "home dopo la cancellazione", 30)
-    assert "Account cancellato" in browser.js("document.querySelector('[data-flash]')?.textContent ?? ''")
+    # Dal passo 7d la home è React: il messaggio arriva un attimo dopo, con la risposta di
+    # /api/auth/session, quindi si aspetta che compaia invece di cercarlo subito
+    browser.wait_js("(document.querySelector('[data-flash]')?.textContent ?? '').includes('Account cancellato')",
+                    "messaggio dell'account cancellato", 10)
     assert not _exists(app, user_id)
 
 

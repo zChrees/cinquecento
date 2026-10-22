@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### Correzione — Test della cancellazione dell'account instabile dal passo 7d (22/10/2026)
+
+- **Branch**: fix/test-impostazioni-cancellazione. File di Christian, corretto da Giuseppe (permesso del 20/10); il difetto l'avevo segnalato nel riepilogo dell'8a
+- **File**: modificati `tests/frontend2/test_spa_impostazioni.py` (`test_cancellazione_con_la_password`), questo file. Nessun file del programma
+- **Il difetto**: dopo la cancellazione si torna su `/`, che dal 7d è la home React; "Account cancellato…" compare un attimo dopo, con la risposta di `/api/auth/session`, ma il test lo cercava subito. Riprodotto [T]: **1 fallimento su 8** giri del test da solo (nell'8a era fallito anche in un giro singolo)
+- **Correzione**: al posto dell'`assert` subito dopo l'arrivo sulla home, un `wait_js` che aspetta il messaggio (fino a 10 s)
+- **Controlli**: il test **10 PASS su 10** giri; il file intero **3 PASS**; `ruff check` pulito
+- **Decisioni prese**: nessuna
+- **Domande nuove**: nessuna
+- **Punti delicati**: dopo una navigazione verso una pagina della SPA, i messaggi (flash) arrivano con `/api/auth/session`, dopo il caricamento: un test li aspetta, non li cerca subito
+- **Note per gli altri**: **Christian**: corretto il tuo test, come segnalato all'8a. **Chi è di turno sui documenti**: niente da spuntare (non era un punto del tracker)
+
 ### Migrazione, passo 8g (codice) — Doppio tocco e test dei tocchi sul tavolo React (22/10/2026)
 
 - **Branch**: feature/migrazione-passo8g. Punto di Christian fatto da Giuseppe (permesso del 20/10). **Restano dell'8g**: le sei suite del tavolo intere con `TABLE_UI=react` (da chiedere a Christian, come dice il piano) e la **prova a mano su iPhone e Android**
