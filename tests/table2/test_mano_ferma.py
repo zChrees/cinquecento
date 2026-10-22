@@ -28,6 +28,7 @@ from tests.browser import (
     running_server,
     wait,
 )
+from tests.table_ui import table_path
 
 ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"
@@ -73,7 +74,7 @@ def browser(server, tmp_path):
 def _open(browser, server, size, touch=False):
     if touch:
         browser.send("Emulation.setTouchEmulationEnabled", enabled=True, maxTouchPoints=5)
-    browser.open(f"{server}/game/prova?demo=1v1", *size, "document.querySelector('[data-mode]') !== null")
+    browser.open(f"{server}{table_path('prova', demo='1v1')}", *size, "document.querySelector('[data-mode]') !== null")
     browser.send("Emulation.setEmulatedMedia", features=[{"name": "prefers-reduced-motion", "value": "no-preference"}])
     assert browser.js("matchMedia('(hover: hover)').matches") is not touch
 
@@ -122,7 +123,11 @@ def test_carta_ridisegnata_si_abbassa_quando_il_mouse_esce(browser, server):
     _open(browser, server, DESKTOP)
     _move_mouse(browser, _card_center(browser, 0))
     _renders(browser, 1)
-    assert browser.js("document.querySelectorAll('.card--hover-kept').length") == 1
+    # Ridisegnata, la carta è ancora sollevata. Si misura la carta, non la classe
+    # card--hover-kept: il tavolo Jinja ricrea la carta e la rialza con quella classe,
+    # quello React tiene la stessa carta, che resta sotto il mouse da sola (lotto 8g)
+    lifted = f"new DOMMatrix(getComputedStyle(document.querySelector('{HAND_CARDS}')).transform).m42"
+    assert browser.js(lifted) < -5
     _move_mouse(browser, {"x": 640, "y": 300})
     wait(lambda: browser.js(f"new DOMMatrix(getComputedStyle(document.querySelector('{HAND_CARDS}')).transform).m42") == 0,
          3, "carta tornata giù")

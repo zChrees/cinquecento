@@ -15,11 +15,15 @@ import pytest
 
 from app import create_app
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
+from tests.table_ui import table_path
 
 LANDSCAPE = [(844, 390), (667, 375), (640, 360)]
 NOT_PHONE_LANDSCAPE = [(390, 844), (360, 640), (768, 1024), (1024, 768), (1280, 720)]
+# TABLE: il tavolo di prova come indirizzo "logico"; l'indirizzo vero lo dà table_path
+# dentro il test (TABLE_UI: tavolo Jinja o React), mai all'importazione del file
+TABLE = "/game/prova?demo=1v1"
 PAGES = [  # (indirizzo, con il login)
-    ("/", True), ("/game/prova?demo=1v1", True), ("/profile/settings", True),
+    ("/", True), (TABLE, True), ("/profile/settings", True),
     ("/auth/login", False), ("/auth/register", False), ("/non-esiste", False),
 ]
 
@@ -62,8 +66,11 @@ SPA_PAGES = ("/", "/profile/settings")  # dal passo 7d anche la home (/) è dell
 def _open(browser, server, path, logged, size):
     if logged:
         browser.send("Network.setCookie", name=TEST_COOKIE[0], value=TEST_COOKIE[1], url=server)
-    browser.open(server + path, *size, "document.querySelector('[data-rotate-notice]') !== null")
-    if logged and path != "/game/prova?demo=1v1":  # la prova del tavolo non si collega
+    url = path
+    if path == TABLE:
+        url = table_path("prova", demo="1v1")
+    browser.open(server + url, *size, "document.querySelector('[data-rotate-notice]') !== null")
+    if logged and path != TABLE:  # la prova del tavolo non si collega
         # Con il login la pagina si collega al tempo reale: prima di cambiarla o di chiudere il
         # browser si aspetta il collegamento, altrimenti blocca il server del file dopo (P58, P62)
         connected = CONNECTED
@@ -83,7 +90,7 @@ def test_in_orizzontale_l_avviso_copre_la_pagina(browser, server, path, logged):
                                  "Cinquecento si gioca con il telefono in verticale."), cover
 
 
-@pytest.mark.parametrize(("path", "logged"), [("/", True), ("/game/prova?demo=1v1", True), ("/auth/login", False)])
+@pytest.mark.parametrize(("path", "logged"), [("/", True), (TABLE, True), ("/auth/login", False)])
 def test_in_verticale_sul_tablet_e_da_computer_niente(browser, server, path, logged):
     for size in NOT_PHONE_LANDSCAPE:
         _open(browser, server, path, logged, size)

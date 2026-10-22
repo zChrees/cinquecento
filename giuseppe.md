@@ -22,6 +22,19 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### Migrazione, passo 8g (codice) — Doppio tocco e test dei tocchi sul tavolo React (22/10/2026)
+
+- **Branch**: feature/migrazione-passo8g. Punto di Christian fatto da Giuseppe (permesso del 20/10). **Restano dell'8g**: le sei suite del tavolo intere con `TABLE_UI=react` (da chiedere a Christian, come dice il piano) e la **prova a mano su iPhone e Android**
+- **File**: modificati `frontend/src/game/GamePage.tsx` (blocco del doppio tocco); i sette test del piano: `table/test_tocchi_tavolo.py`, `table2/test_mano_ferma.py`, `table4/test_stile_tavolo.py` (`table_path`), `frontend/test_rifinitura.py` e `frontend2/test_gira_telefono.py` (`table_path` dentro il test, vedi sotto), `table3/test_grafica_tavolo.py` e `frontend/test_hover.py` (già a posto, non toccati); questo file
+- **Cosa c'è**: P104 e P133 (`onTouchEnd` e il `touchstart` di `game.js`): il secondo tocco con un dito entro `DOUBLE_TAP_MS` non fa lo zoom di Safari (`preventDefault`) e la pagina manda da sé il clic all'elemento toccato (pulsante, link, `role="button"`, `summary`, `label`); il `touchend` si ascolta sull'elemento toccato, dal `touchstart`, e se un ridisegno l'ha tolto il clic va a quello che c'è adesso nel punto. In un `useEffect` di `GamePage`, che lo toglie quando la pagina sparisce. Le regole di `page--game` (P69, P98) e il `:hover` solo con il mouse (P97, P129) sono del CSS, già caricato dalla SPA: nessun codice
+- **Carta sotto il mouse (P97)**: niente `keepHover` nel tavolo React. `game.js` ricreava la carta a ogni vista e la rialzava con `card--hover-kept`; React tiene la stessa carta, che resta sotto il mouse e sollevata da sola (`test_carta_sotto_il_mouse_resta_sollevata_a_ogni_vista` lo misura fotogramma per fotogramma, su tre viste). Per questo **un controllo di `test_mano_ferma.py` è cambiato**: dopo il ridisegno misurava la classe `card--hover-kept`, ora misura che la carta sia ancora sollevata (vale per tutti e due i tavoli)
+- **Indirizzo del tavolo nei parametri**: in `test_rifinitura.py` e `test_gira_telefono.py` il tavolo sta negli elenchi di `parametrize`; lì resta l'indirizzo "logico" (`TABLE`) e `table_path` si chiama dentro il test, perché chiamato all'importazione del file salterebbe tutto il file quando manca la SPA
+- **Controlli** (solo i file toccati, con pytest): i sette test **88 PASS con `TABLE_UI=react`** e **88 PASS sul tavolo Jinja**; con il frontend dell'8f falliscono i **3** test del doppio tocco [T]. Test React dei lotti 8a–8f (tutti i file già passati, tranne `test_grafica_tavolo.py` già nei 88) **175 PASS**. `tsc --noEmit`, `npm run build`, `ruff check` puliti
+- **Decisioni prese**: niente `keepHover` nel tavolo React (non serve: la carta non si ricrea)
+- **Domande nuove**: per Christian, come da piano: si possono lanciare le sei suite del tavolo intere con `TABLE_UI=react` (circa 20–25 minuti, a PC libero)?
+- **Punti delicati**: il doppio tocco non si prova davvero senza un iPhone: i test lo simulano con `Input.dispatchTouchEvent` di Chrome, che non fa lo zoom
+- **Note per gli altri**: **Christian**: la domanda qui sopra; nessun tuo file fuori dalla lista. **Chi è di turno sui documenti**: `REVIEW.md` e `docs/MIGRAZIONE-FRONTEND.md` (8g: codice fatto, restano suite intere e prova sui telefoni); `CLAUDE.md`, punto delicato "Tocchi al tavolo (P69)": nel tavolo React il blocco del doppio tocco sta in `GamePage.tsx` e `keepHover` non c'è. Prossimo: la prova sui telefoni, poi **8h**
+
 ### Migrazione, passo 8f — Frasi e suoni nella partita vera, tavolo React (22/10/2026)
 
 - **Branch**: feature/migrazione-passo8f. Punto di Christian fatto da Giuseppe (permesso del 20/10)

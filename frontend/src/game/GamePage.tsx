@@ -16,7 +16,8 @@
  *   - Esc e il tocco fuori, che chiudono l'elenco delle frasi; la sua posizione sul
  *     telefono (P112);
  *   - l'avviso di connessione (P33), solo nella partita vera;
- *   - la finestra "Vuoi uscire dalla partita?" (P25).
+ *   - la finestra "Vuoi uscire dalla partita?" (P25);
+ *   - il blocco del doppio tocco su iPhone (P104, P133, lotto 8g).
  * Al tavolo niente navbar: tutto lo schermo va al gioco.
  *
  * DA DOVE ARRIVANO I DATI (la catena delle chiamate):
@@ -45,6 +46,7 @@ import {
 } from './tableStore';
 import type { TableSnapshot } from './tableStore';
 import { sameCard } from './cards';
+import { DOUBLE_TAP_MS } from './animations';
 import { useTable } from './useTable';
 
 // LEAVE_ACTIONS: i pulsanti della finestra di "Esci", come confirmModal di Modal.js
@@ -168,6 +170,70 @@ function momentsOf(table: TableSnapshot, now: number): TableMoments {
     moments.advice = table.receivedAdvice;
   }
   return moments;
+}
+
+// lastTapEnd: P104, event.timeStamp della fine dell'ultimo tocco con un dito
+let lastTapEnd = -Infinity;
+
+/**
+ * P104: la fine di un tocco al tavolo. Su iPhone Safari ingrandisce la pagina con il
+ * doppio tocco anche con touch-action: manipulation (P69, P98): il secondo tocco con
+ * un dito che arriva entro DOUBLE_TAP_MS dal precedente non lascia fare lo zoom
+ * (preventDefault); così però il browser non manda nemmeno il clic, e la pagina lo
+ * manda da sé al pulsante o alla carta toccata: due tocchi veloci non si perdono. Lo
+ * zoom con due dita resta. Come onTouchEnd di game.js.
+ *
+ * @param {Event} event il touchend
+ */
+function onTouchEnd(event: Event): void {
+  if (!(event instanceof TouchEvent)) {
+    return;
+  }
+  // dita ancora giù: sono due dita, non un doppio tocco
+  if (event.touches.length > 0 || event.changedTouches.length !== 1) {
+    return;
+  }
+  const now = event.timeStamp;
+  const double = now - lastTapEnd <= DOUBLE_TAP_MS;
+  lastTapEnd = now;
+  if (!double || !event.cancelable) {
+    return;
+  }
+  event.preventDefault();
+  const touch = event.changedTouches[0];
+  // touched: l'elemento toccato; se un ridisegno l'ha tolto dalla pagina (P133),
+  // quello che c'è adesso in quel punto
+  let touched: Element | null = null;
+  if (event.target instanceof Element && event.target.isConnected) {
+    touched = event.target;
+  } else {
+    touched = document.elementFromPoint(touch.clientX, touch.clientY);
+  }
+  if (touched === null) {
+    return;
+  }
+  const target = touched.closest('button, a[href], [role="button"], summary, label');
+  if (!(target instanceof HTMLElement)) {
+    return;
+  }
+  if (target instanceof HTMLButtonElement && target.disabled) {
+    return;
+  }
+  target.click();
+}
+
+/**
+ * P133: all'inizio di un tocco si ascolta la sua fine **sull'elemento toccato**: un
+ * elemento tolto da un ridisegno a metà del tocco non fa salire il touchend fino a
+ * document, e il blocco di P104 non lo vedeva (Safari ingrandiva).
+ *
+ * @param {Event} event il touchstart
+ */
+function onTouchStart(event: Event): void {
+  if (event.target !== null) {
+    // lo stesso ascoltatore con le stesse opzioni non si aggiunge due volte (più dita sullo stesso elemento)
+    event.target.addEventListener('touchend', onTouchEnd, { once: true, passive: false });
+  }
 }
 
 // aimed: le carte in volo a cui aimThrows ha già dato il punto di partenza. Un
@@ -315,6 +381,20 @@ export function GamePage(): JSX.Element {
   }
   // []: una volta sola, all'apertura della pagina
   useEffect(setTitle, []);
+
+  /**
+   * Effetto (P104, P133): il blocco del doppio tocco, finché c'è il tavolo. capture:
+   * il touchstart si sente prima che arrivi all'elemento; passive: non lo blocca.
+   */
+  function watchDoubleTap(): () => void {
+    document.addEventListener('touchstart', onTouchStart, { capture: true, passive: true });
+    function stop(): void {
+      document.removeEventListener('touchstart', onTouchStart, { capture: true });
+    }
+    return stop;
+  }
+  // []: una volta sola, all'apertura della pagina (e si toglie quando la pagina sparisce)
+  useEffect(watchDoubleTap, []);
 
   /**
    * Effetto nella prova: gli eventi demo:* sull'elemento [data-table]. Lo store li

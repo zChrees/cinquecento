@@ -17,8 +17,20 @@ import pytest
 
 from app import create_app
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
+from tests.table_ui import table_path
 
 PHONE = (360, 640)
+# TABLE: il tavolo di prova come indirizzo "logico"; l'indirizzo vero lo dà table_path
+# dentro il test (TABLE_UI: tavolo Jinja o React), mai all'importazione del file, dove
+# salterebbe tutto il file senza la SPA
+TABLE = "/game/prova?demo=1v1"
+
+
+def _url(path):
+    """L'indirizzo da aprire: per il tavolo quello scelto da TABLE_UI (tests/table_ui.py)."""
+    if path == TABLE:
+        return table_path("prova", demo="1v1")
+    return path
 ENTER = chr(13)  # il carattere che il tasto Invio scrive
 
 
@@ -40,21 +52,21 @@ def _login(browser, server):
 
 
 @pytest.mark.parametrize("path, logged", [
-    ("/", True), ("/game/prova?demo=1v1", True), ("/profile/settings", True),
+    ("/", True), (TABLE, True), ("/profile/settings", True),
     ("/auth/login", False), ("/auth/register", False),
 ])
 def test_un_solo_titolo_principale(browser, server, path, logged):
     if logged:
         _login(browser, server)
     # Le pagine della SPA (accesso, registrazione) le disegna React dopo il caricamento
-    browser.open(server + path, *PHONE, "document.querySelector('h1') !== null")
+    browser.open(server + _url(path), *PHONE, "document.querySelector('h1') !== null")
     assert browser.js("location.pathname") == path.split("?")[0]
     assert browser.js("[...document.querySelectorAll('h1')].map((h) => h.textContent.trim().length > 0)") == [True]
 
 
 def test_icone_dei_canti_con_ruolo(browser, server):
     _login(browser, server)
-    browser.open(f"{server}/game/prova?demo=1v1", *PHONE, "document.querySelector('.sing-badge') !== null")
+    browser.open(server + _url(TABLE), *PHONE, "document.querySelector('.sing-badge') !== null")
     badge = browser.js("""(() => { const b = document.querySelector('.sing-badge');
       return { role: b.getAttribute('role'), label: b.getAttribute('aria-label') }; })()""")
     assert badge == {"role": "img", "label": "Ha cantato 40 a coppe"}
@@ -62,7 +74,7 @@ def test_icone_dei_canti_con_ruolo(browser, server):
 
 def test_una_carta_giocata_con_la_tastiera(browser, server):
     _login(browser, server)
-    browser.open(f"{server}/game/prova?demo=1v1", *PHONE, "document.querySelector('[data-mode]') !== null")
+    browser.open(server + _url(TABLE), *PHONE, "document.querySelector('[data-mode]') !== null")
     for _ in range(30):
         browser.key("Tab", "Tab", 9)
         if browser.js("document.activeElement.matches('.table__mine .hand button.card:not([disabled])')"):

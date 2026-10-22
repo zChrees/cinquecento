@@ -18,6 +18,7 @@ import pytest
 
 from app import create_app
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
+from tests.table_ui import table_path
 
 STYLES = r"""(() => {
   const root = getComputedStyle(document.documentElement);
@@ -85,7 +86,7 @@ def _check_glass(part, styles, where):
 @pytest.mark.parametrize("mode", ["1v1", "2v2"])
 @pytest.mark.parametrize("size", [(360, 640), (1280, 720)], ids=lambda s: f"{s[0]}x{s[1]}")
 def test_vetro_scuro_che_si_legge(browser, server, mode, size):
-    browser.open(f"{server}/game/prova?demo={mode}", *size, "document.querySelector('[data-mode]') !== null")
+    browser.open(f"{server}{table_path('prova', demo=mode)}", *size, "document.querySelector('[data-mode]') !== null")
     styles = browser.js(STYLES)
     _check_glass(styles["leave"], styles, (mode, size, "Esci"))
     _check_glass(styles["mine"], styles, (mode, size, "i tuoi punti"))

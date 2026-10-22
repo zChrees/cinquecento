@@ -19,6 +19,7 @@ import pytest
 
 from app import create_app
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
+from tests.table_ui import table_path
 
 ROOT = Path(__file__).resolve().parents[2]
 GAME_CSS = ROOT / "app" / "static" / "css" / "pages" / "game.css"
@@ -51,7 +52,7 @@ def browser(server, tmp_path):
 
 
 def test_tavolo_senza_zoom_e_senza_selezione(browser, server):
-    browser.open(f"{server}/game/prova?demo=1v1", *PHONE, "document.querySelector('[data-mode]') !== null")
+    browser.open(f"{server}{table_path('prova', demo='1v1')}", *PHONE, "document.querySelector('[data-mode]') !== null")
     styles = browser.js("""(() => {
       const root = getComputedStyle(document.documentElement);
       const face = document.querySelector('.table__mine .hand .card__face');
@@ -69,7 +70,7 @@ def test_tavolo_senza_zoom_e_senza_selezione(browser, server):
 
 def test_regole_solo_al_tavolo(browser, server):
     # La regola dipende dalla classe del tavolo: senza, la pagina torna come le altre
-    browser.open(f"{server}/game/prova?demo=1v1", *PHONE, "document.querySelector('[data-mode]') !== null")
+    browser.open(f"{server}{table_path('prova', demo='1v1')}", *PHONE, "document.querySelector('[data-mode]') !== null")
     browser.js("document.querySelector('main').classList.remove('page--game')")
     assert browser.js("getComputedStyle(document.documentElement).touchAction") == "auto"
 
@@ -77,7 +78,7 @@ def test_regole_solo_al_tavolo(browser, server):
 def test_ogni_elemento_del_tavolo_ha_la_regola(browser, server):
     # P98: touch-action non si eredita e Safari su iPhone guarda l'elemento toccato:
     # la regola deve stare su ogni elemento, anche fuori da <main>
-    browser.open(f"{server}/game/prova?demo=1v1", *PHONE, "document.querySelector('[data-mode]') !== null")
+    browser.open(f"{server}{table_path('prova', demo='1v1')}", *PHONE, "document.querySelector('[data-mode]') !== null")
     result = browser.js("""(() => {
       const extra = document.body.appendChild(document.createElement('div'));
       const all = [...document.body.querySelectorAll('*')];
@@ -90,7 +91,7 @@ def test_ogni_elemento_del_tavolo_ha_la_regola(browser, server):
 
 
 def test_regola_su_ogni_elemento_solo_al_tavolo(browser, server):
-    browser.open(f"{server}/game/prova?demo=1v1", *PHONE, "document.querySelector('[data-mode]') !== null")
+    browser.open(f"{server}{table_path('prova', demo='1v1')}", *PHONE, "document.querySelector('[data-mode]') !== null")
     browser.js("document.querySelector('main').classList.remove('page--game')")
     assert browser.js("getComputedStyle(document.querySelector('.card')).touchAction") == "auto"
 
@@ -106,7 +107,7 @@ def _tap(browser, selector):
 
 def _open_touch(browser, server):
     browser.send("Emulation.setTouchEmulationEnabled", enabled=True, maxTouchPoints=5)
-    browser.open(f"{server}/game/prova?demo=1v1", *PHONE, "document.querySelector('[data-mode]') !== null")
+    browser.open(f"{server}{table_path('prova', demo='1v1')}", *PHONE, "document.querySelector('[data-mode]') !== null")
     browser.js("""(() => { const phrases = { phrases: [{ code: 'ciao', text: 'Ciao!' }] };
       document.querySelector('[data-table]').dispatchEvent(new CustomEvent('demo:phrases', { detail: phrases }));
       window.__blocked = [];
