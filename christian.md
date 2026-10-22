@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Migrazione, passo 8g (prove) — Suite del tavolo con il tavolo React e prova sui telefoni (22/10/2026). Chiude l'8g
+
+- **Branch**: test/passo8g-prove (da `dev` a `1e0781c`, con la correzione di Giuseppe di `test_spa_impostazioni.py`)
+- **File**: modificato solo questo file. Nessun file del programma né dei test
+- **Controlli**: le sei suite del tavolo intere con **`TABLE_UI=react`** (`table`, `table2`, `table3`, `table4`, `table5`, `table6`): **242 PASS in 6 suite** (45, 43, 50, 42, 38, 24), nessun test saltato, TUTTO PASS al primo giro [T]; la più lenta `table2` con 106 s (limite 240), 545 s in tutto. Lanciate con `python run.py` acceso (porta 5000, `cinquecento_dev`) e un telefono collegato: nessun disturbo
+- **Prova a mano**: Christian ha provato il tavolo React (`/game/<codice>?ui=react`) su iPhone e Android: va bene
+- **Decisioni prese**: nessuna
+- **Domande nuove**: nessuna
+- **Punti delicati**: per provare dal telefono `run.py` deve ascoltare sulla rete di casa (`HOST=0.0.0.0` nel `.env`, poi rimesso com'era: con `DEBUG` acceso il debugger sarebbe raggiungibile da chi è nella stessa Wi-Fi, R13)
+- **Cosa devono fare gli altri**: **Giuseppe**: l'8g è chiuso, puoi passare all'**8h** (il cambio: `/game/<id>` sempre React). **Chi è di turno sui documenti**: in `REVIEW.md` e `docs/MIGRAZIONE-FRONTEND.md` l'8g è fatto, con le suite React e la prova sui telefoni
+
 ### Documenti: Giuseppe può continuare i punti di Christian (20/10/2026)
 
 - **Branch**: docs/giuseppe-punti-christian
