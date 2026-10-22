@@ -267,8 +267,11 @@ Il 2v2 con gli amici non passa da `queue:join`: la coppia o il gruppo di tre ent
 | Evento | Chi → chi | Dati |
 |---|---|---|
 | `home:status` | server → pagina, appena collegata e poi a ogni cambiamento | `{"online_count", "resume"}` |
+| `home:refresh` | pagina → server (dal 23/10/2026, passo 8h della migrazione) | nessuno; risposta `{"ok": true, "data": {"online_count", "resume"}}` |
 
 `online_count` conta gli utenti collegati (lo stesso utente con due schede conta una volta). `resume` è `null`, oppure `{"game_id", "url", "mode", "target_score"}` quando l'utente ha una partita in corso da cui rientrare: la home mostra "Hai una partita in corso: rientra".
+
+`home:refresh` serve alla home della SPA quando compare con il collegamento **già aperto** (per esempio tornando dal tavolo senza ricaricare la pagina): `home:status` arriva solo al collegamento e ai cambiamenti, quindi la home chiede lo stato attuale. La risposta porta gli stessi dati di `home:status`, solo a chi l'ha chiesto; nessun evento parte verso le altre schede.
 
 **Senza login** (P82; approvato da Giuseppe e Christian il 05/10/2026) la pagina non si collega al tempo reale, quindi non riceve `home:status`. Il numero lo chiede con una richiesta HTTP, l'unica che **non richiede il login** (eccezione alla regola di 2):
 

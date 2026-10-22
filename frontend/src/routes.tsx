@@ -6,14 +6,13 @@
  *
  * Una pagina nuova della SPA si aggiunge qui, in SPA_PATHS di vite.config.ts e
  * in SPA_PATHS di app/blueprints/spa/routes.py (lo controlla test_spa.py).
- * Le pagine non ancora migrate (home, tavolo, ...) restano pagine Jinja di
- * Flask: dalla SPA ci si arriva con un normale <a href>, che ricarica la pagina.
  * Dal passo 7d la home (/) è HomePage; la home Jinja di prima resta su
  * /vecchia-home (solo sviluppo e test) fino al passo 9.
  * Dal passo 8 il tavolo React è GamePage su /game/:gameId (":gameId" vuol dire
- * "qui un pezzo variabile, che la pagina legge con useParams"). Flask e Vite
- * mandano qui solo /game/<codice>?ui=react (GAME_REACT di vite.config.ts, ?ui= in
- * app/blueprints/game/routes.py): senza ?ui=react resta il tavolo Jinja fino al lotto 8h.
+ * "qui un pezzo variabile, che la pagina legge con useParams"). Dal lotto 8h Flask e
+ * Vite mandano qui ogni /game/<codice> (GAME_TABLE di vite.config.ts, ?ui= in
+ * app/blueprints/game/routes.py), tranne ?ui=jinja, il tavolo Jinja fino al passo 9;
+ * dalla home al tavolo e ritorno si va senza ricaricare la pagina (navigate).
  *
  * DA DOVE ARRIVANO I DATI: React Router legge l'indirizzo della barra del
  * browser (window.location) e sceglie la voce di routes con lo stesso path.

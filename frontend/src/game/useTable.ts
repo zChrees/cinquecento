@@ -25,22 +25,24 @@ import type { TableSnapshot } from './tableStore';
  *
  * @param {string} gameId il codice della partita, per esempio 'e5f6a7b8'
  * @param {string | null} demo il valore di ?demo=, oppure null fuori dalla prova
+ * @param {() => void} home la funzione che torna alla home (passo 8h: navigate, senza ricaricare)
  * @returns {TableSnapshot}
  *
  * In parole semplici:
- *   const table = useTable(gameId, demo);
+ *   const table = useTable(gameId, demo, goHome);
  *   Quando la pagina compare avvia il tavolo (startTable); quando sparisce, o se
  *   cambiano partita o prova, lo ferma (la funzione restituita da startTable).
  *   In sviluppo React (StrictMode) avvia, ferma e riavvia apposta una volta: lo
  *   store riparte da zero a ogni avvio, quindi va bene.
  */
-export function useTable(gameId: string, demo: string | null): TableSnapshot {
+export function useTable(gameId: string, demo: string | null, home: () => void): TableSnapshot {
   /** Effetto: avvia il tavolo e restituisce la funzione che lo ferma. */
   function start(): () => void {
-    const stop = startTable(gameId, demo);
+    const stop = startTable(gameId, demo, home);
     return stop;
   }
-  // [gameId, demo]: si rifà solo se cambiano la partita o la prova
+  // [gameId, demo]: si rifà solo se cambiano la partita o la prova (home non cambia
+  // di significato tra un disegno e l'altro: torna sempre a /)
   useEffect(start, [gameId, demo]);
   return useSyncExternalStore(subscribe, getSnapshot);
 }

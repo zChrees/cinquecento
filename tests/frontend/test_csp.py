@@ -25,9 +25,9 @@ PAGES = [
     # Dal passo 7d / è la home React; la home Jinja di prima è su /vecchia-home (fino al passo 9)
     ("/", "document.querySelector('[data-online-count]')?.textContent === '1'"),  # home:status arrivato
     ("/vecchia-home", "document.querySelector('[data-online-count]')?.textContent === '1'"),
-    ("/game/prova?demo=1v1", "document.querySelector('[data-table]') !== null"),
+    ("/game/prova?demo=1v1&ui=jinja", "document.querySelector('[data-table]') !== null"),
     # Passo 8a: il tavolo React, con la vista finta disegnata
-    ("/game/prova?demo=1v1&ui=react", "document.querySelector('[data-mode]') !== null"),
+    ("/game/prova?demo=1v1", "document.querySelector('[data-mode]') !== null"),
     ("/auth/register", "document.querySelector('form') !== null"),
     # Passo 6: le impostazioni della SPA, collegate e con l'elenco degli avatar arrivato
     ("/profile/settings", ("document.querySelector('[data-friends-panel]')?.dataset.connection === 'connected'"

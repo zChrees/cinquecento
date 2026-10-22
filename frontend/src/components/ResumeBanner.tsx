@@ -16,6 +16,7 @@
  */
 
 import type { JSX } from 'react';
+import { Link } from 'react-router';
 import type { Resume } from '../types/events';
 
 // GAME_URL: la forma dell'indirizzo di un tavolo, per esempio /game/a1b2c3d4.
@@ -61,6 +62,9 @@ export function validResume(resume: Resume | null): boolean {
  *   <ResumeBanner resume={resume} />
  *   →  "Hai una partita in corso · 1v1 a 500 punti · Rientra", un collegamento al
  *   tavolo (props.resume.url). Chi lo usa controlla prima validResume.
+ *   Dal passo 8h il collegamento è un <Link> di React Router: nella pagina è lo
+ *   stesso <a href>, ma toccandolo si va al tavolo senza ricaricare (il tavolo è
+ *   una pagina della SPA, e il collegamento al tempo reale resta aperto).
  */
 export function ResumeBanner(props: ResumeBannerProps): JSX.Element {
   // detail: la riga piccola, per esempio "1v1 a 500 punti"
@@ -68,7 +72,9 @@ export function ResumeBanner(props: ResumeBannerProps): JSX.Element {
 
   return (
     <div className="resume" role="status" data-resume={props.resume.game_id}>
-      <a className="resume__link felt-text" href={props.resume.url} data-resume-link="">
+      {/* discover="none": senza, React Router aggiunge l'attributo data-discover, che
+          ResumeBanner.js non ha (lo stesso HTML, lotto 8h) */}
+      <Link className="resume__link felt-text" to={props.resume.url} data-resume-link="" discover="none">
         <span className="icon resume__icon" aria-hidden="true">playing_cards</span>
         <span className="resume__text">
           <strong>Hai una partita in corso</strong>
@@ -78,7 +84,7 @@ export function ResumeBanner(props: ResumeBannerProps): JSX.Element {
           <span className="icon" aria-hidden="true">login</span>
           Rientra
         </span>
-      </a>
+      </Link>
     </div>
   );
 }

@@ -6,10 +6,11 @@ sono disattivate. Il disegno vero si controlla aprendo la pagina con Chrome o Ed
 senza finestra (--dump-dom), su un server di prova alla porta 5099; se nessuno dei
 due è installato quei controlli si saltano. Non serve MySQL: il login è spento
 (LOGIN_DISABLED) tranne nel controllo che lo richiede.
-Passo 8a della migrazione: con ?ui=react lo stesso indirizzo dà la pagina della SPA
-(il tavolo React), in tutti gli ambienti, con le stesse regole di ?demo=, e la SPA
-carica gli stessi CSS del template del tavolo (il disegno nel browser lo confronta
-tests/table2/test_tavolo_react.py).
+Passo 8 della migrazione: dal lotto 8h l'indirizzo dà la pagina della SPA (il tavolo
+React), in tutti gli ambienti, con le stesse regole di ?demo=, e la SPA carica gli
+stessi CSS del template del tavolo (il disegno nel browser lo confronta
+tests/table2/test_tavolo_react.py). Il template di prima si vede con ?ui=jinja, fino
+al passo 9: i controlli sull'HTML del template lo aprono così.
 """
 
 import json
@@ -66,7 +67,7 @@ def test_senza_login_rimanda_all_accesso():
 
 @pytest.mark.parametrize("mode", ["1v1", "2v2"])
 def test_pagina_con_vista_finta(client, mode):
-    response = client.get(f"/game/prova?demo={mode}")
+    response = client.get(f"/game/prova?demo={mode}&ui=jinja")
     assert response.status_code == 200
     html = _text(response)
     assert 'data-table data-game-id="prova"' in html
@@ -78,7 +79,7 @@ def test_pagina_con_vista_finta(client, mode):
 
 
 def test_pagina_senza_demo_aspetta_la_partita(client):
-    html = _text(client.get("/game/a1b2c3d4"))
+    html = _text(client.get("/game/a1b2c3d4?ui=jinja"))
     assert 'data-game-id="a1b2c3d4"' in html
     assert "data-demo-url" not in html
 
@@ -91,11 +92,11 @@ def test_indirizzi_non_validi(client, path):
 def test_viste_finte_solo_in_sviluppo_e_test():
     app = _app()
     app.config["ENV_NAME"] = "demo"
-    assert app.test_client().get("/game/prova?demo=1v1").status_code == 404
-    assert app.test_client().get("/game/prova").status_code == 200
+    assert app.test_client().get("/game/prova?demo=1v1&ui=jinja").status_code == 404
+    assert app.test_client().get("/game/prova?ui=jinja").status_code == 200
 
 
-# --- Passo 8a: il tavolo React con ?ui=react -----------------------------------
+# --- Passo 8: il tavolo React (con ?ui=react dall'8a, sempre dall'8h) -----------
 
 
 @pytest.fixture
@@ -106,15 +107,16 @@ def fake_spa(monkeypatch, tmp_path):
     monkeypatch.setattr(spa_routes, "dist_dir", lambda: tmp_path)
 
 
-@pytest.mark.parametrize("path", ["/game/prova?ui=react", "/game/prova?demo=1v1&ui=react",
+@pytest.mark.parametrize("path", ["/game/prova", "/game/prova?demo=1v1", "/game/a1b2c3d4?demo=2v2",
+                                  "/game/prova?ui=react", "/game/prova?demo=1v1&ui=react",
                                   "/game/a1b2c3d4?ui=react&demo=2v2"])
 def test_tavolo_react_e_la_pagina_della_spa(client, fake_spa, path):
     html = _text(client.get(path))
     assert '<div id="root">' in html and "data-table" not in html
 
 
-@pytest.mark.parametrize("path", ["/game/prova?ui=jinja", "/game/prova?ui=", "/game/prova?ui=react&demo=3v3",
-                                  "/game/" + "x" * 65 + "?ui=react"])
+@pytest.mark.parametrize("path", ["/game/prova?ui=jinjax", "/game/prova?ui=", "/game/prova?ui=react&demo=3v3",
+                                  "/game/prova?ui=jinja&demo=3v3", "/game/" + "x" * 65 + "?ui=react"])
 def test_tavolo_react_indirizzi_non_validi(client, fake_spa, path):
     assert client.get(path).status_code == 404
 
@@ -124,11 +126,16 @@ def test_tavolo_react_ovunque_ma_viste_finte_solo_in_sviluppo_e_test(fake_spa):
     app = _app()
     app.config["ENV_NAME"] = "demo"
     assert app.test_client().get("/game/prova?ui=react").status_code == 200
+    assert app.test_client().get("/game/prova").status_code == 200
     assert app.test_client().get("/game/prova?demo=1v1&ui=react").status_code == 404
+    assert app.test_client().get("/game/prova?demo=1v1").status_code == 404
 
 
 def test_tavolo_react_senza_login_rimanda_all_accesso(fake_spa):
     response = _app(login=True).test_client().get("/game/abc123?ui=react")
+    assert response.status_code == 302
+    assert response.headers["Location"].startswith("/auth/login")
+    response = _app(login=True).test_client().get("/game/abc123?ui=jinja")
     assert response.status_code == 302
     assert response.headers["Location"].startswith("/auth/login")
 
@@ -145,7 +152,7 @@ def test_la_spa_carica_i_css_del_tavolo_nello_stesso_ordine():
 
 
 def test_css_e_js_del_tavolo_esistono(client):
-    html = _text(client.get("/game/prova?demo=1v1"))
+    html = _text(client.get("/game/prova?demo=1v1&ui=jinja"))
     for name in ("card", "hand", "table", "trick", "scoreboard", "timer"):
         path = f"/static/css/components/{name}.css"
         assert f'href="{path}"' in html, name
@@ -224,7 +231,7 @@ def _render(server, tmp_path, mode):
     result = subprocess.run(
         [browser, "--headless=new", "--disable-gpu", f"--user-data-dir={tmp_path}",
          "--virtual-time-budget=5000", "--window-size=390,844", "--dump-dom",
-         f"{server}/game/prova?demo={mode}"],
+         f"{server}/game/prova?demo={mode}&ui=jinja"],
         capture_output=True, text=True, encoding="utf-8", timeout=60, check=False,
     )
     assert result.returncode == 0, result.stderr[-2000:]

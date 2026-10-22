@@ -315,6 +315,24 @@ let generation = 0;
 let timers: number[] = [];
 // stops: le funzioni che smettono di ascoltare (socket, stato, load)
 let stops: (() => void)[] = [];
+// homeOf: la funzione della pagina che torna alla home (passo 8h: navigate di React
+// Router, senza ricaricare). La passa startTable; prima vale la home con un caricamento
+let homeOf: () => void = loadHome;
+
+/** Torna alla home ricaricando la pagina: solo se il tavolo non ha ancora ricevuto la funzione della pagina. */
+function loadHome(): void {
+  window.location.assign('/');
+}
+
+/**
+ * Torna alla home (passo 8h): ferma il tavolo (timer, ticchettio, suoni programmati,
+ * ascolti) e chiede alla pagina di cambiare indirizzo, senza ricaricare.
+ */
+function goHome(): void {
+  const go = homeOf;
+  stopTable(generation);
+  go();
+}
 
 // P103, suoni del turno (lotto 8f): il tuo turno già annunciato, quello che aspetta
 // la fine delle pause, e il numero dei tic programmati (sale quando si annullano:
@@ -1425,10 +1443,11 @@ function showSang(event: SangEvent): void {
  *   server e si collega. La funzione restituita smette di ascoltare e ferma i timer
  *   (React la chiama quando la pagina sparisce).
  */
-export function startTable(gameId: string, demo: string | null): () => void {
+export function startTable(gameId: string, demo: string | null, home: () => void): () => void {
   generation += 1;
   const mine = generation;
   snapshot = initialSnapshot(gameId, demo);
+  homeOf = home;
   turnKey = null;
   turnPending = null;
   clearTicks();
@@ -1596,9 +1615,6 @@ async function join(): Promise<void> {
  */
 function showGone(): void {
   update({ replaced: true, screen: 'gone', confirmingLeave: false });
-  function goHome(): void {
-    window.location.assign('/');
-  }
   later(goHome, GONE_HOME_MS);
 }
 
@@ -1800,7 +1816,7 @@ export function askLeave(): void {
   }
   const view = snapshot.view;
   if (snapshot.replaced || (view !== null && view.status === 'finished')) {
-    window.location.assign('/');
+    goHome();
     return;
   }
   update({ confirmingLeave: true });
@@ -1823,7 +1839,7 @@ export async function answerLeave(choice: string | null): Promise<void> {
     return;
   }
   if (snapshot.demo) {
-    window.location.assign('/');
+    goHome();
     return;
   }
   const mine = generation;
@@ -1833,7 +1849,7 @@ export async function answerLeave(choice: string | null): Promise<void> {
     return;
   }
   if (answer.ok) {
-    window.location.assign('/');
+    goHome();
     return;
   }
   update({ leaving: false, status: answer.error.message });

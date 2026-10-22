@@ -30,6 +30,10 @@ TYPES = ROOT / "frontend" / "src" / "types"
 DEV = ROOT / "app" / "static" / "dev"
 TSC = ROOT / "frontend" / "node_modules" / "typescript" / "bin" / "tsc"
 EVENTS_JS = ROOT / "app" / "static" / "js" / "core" / "events.js"
+# SPA_ONLY: gli eventi che esistono solo nella SPA, non nel JavaScript di prima (events.js):
+# home:refresh dal passo 8h (23/10/2026, contratto 5.1). Al passo 9 events.js sparisce e il
+# confronto qui sotto va rifatto sul contratto
+SPA_ONLY = {"home:refresh"}
 
 # Ogni esempio (file, chiave; None = tutto il file) → il tipo TypeScript che deve rispettare
 EXAMPLES = {
@@ -201,7 +205,7 @@ def _keys_of(interface):
 
 def test_nomi_degli_eventi_come_quelli_di_oggi():
     names = set(re.findall(r":\s*'([a-z_]+:[a-z_]+)'", EVENTS_JS.read_text(encoding="utf-8")))
-    assert _keys_of("ServerEvents") | _keys_of("ClientEvents") == names
+    assert _keys_of("ServerEvents") | _keys_of("ClientEvents") == names | SPA_ONLY
     assert _keys_of("ClientEvents") == _keys_of("ClientAnswers")
 
 

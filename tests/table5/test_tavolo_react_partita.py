@@ -1,8 +1,8 @@
 """Passo 8b della migrazione: il tavolo React (frontend/src/game/tableStore.ts) gioca una partita vera.
 
 Una partita vera contro la CPU (P68, non si salva), aperta sul tavolo React
-(/game/<codice>?ui=react) in Chrome o Edge senza finestra (tests/browser.py).
-Controlla:
+(/game/<codice>; fino all'8g con ?ui=react) in Chrome o Edge senza finestra
+(tests/browser.py). Controlla:
 - la pagina si collega, manda game:join e disegna la vista del server, con le
   immagini delle carte pronte (data-cards-ready, P79) e senza avviso di connessione;
 - toccando una carta giocabile la mossa arriva al server (con la version della vista)
@@ -13,7 +13,10 @@ Controlla:
   aperta in un'altra scheda o su un altro dispositivo." (game:replaced, D14);
 - lotto 8f: l'elenco delle frasi arriva dal server (game:phrases); una frase scelta va
   al server (game:send_phrase), il fumetto torna con game:phrase e il pulsante resta
-  spento per la pausa (P56).
+  spento per la pausa (P56);
+- lotto 8h: dalla home al tavolo (game:start) e ritorno ("Esci") senza ricaricare la
+  pagina, e tornati alla home il numero degli online c'è (home:refresh: il
+  collegamento è rimasto aperto, quindi home:status non arriva di nuovo).
 La partita interrotta (P95) la prova table6/test_partita_interrotta.py con
 TABLE_UI=react. Rating e avvisi agli amici non leggono il database (non serve MySQL).
 Senza browser, o senza il build della SPA, i test si saltano.
@@ -26,6 +29,7 @@ import pytest
 from app import create_app
 from app.realtime import room_manager, table_phrases
 from app.realtime.room import CPU_PLAYER, Player
+from app.realtime.room_manager import create_room, rooms
 from app.sockets import friends_events
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
 from tests.spa import needs_spa
@@ -35,6 +39,8 @@ READY = "document.querySelector('[data-mode]') !== null"
 # PLAYABLE: la prima carta della tua mano che si può giocare adesso, oppure null
 PLAYABLE = "document.querySelector('[data-hand] button.card:not(:disabled)')"
 DIALOG = "document.querySelector('dialog.dialog[open]')"
+# ONLINE: il numero degli online della home ('' finché non arriva lo stato)
+ONLINE = "(document.querySelector('[data-online-count]')?.textContent ?? '')"
 
 
 @pytest.fixture(scope="module")
@@ -78,7 +84,7 @@ def room(app, monkeypatch):
 
 
 def _open(browser, server, room):
-    browser.open(f"{server}/game/{room.id}?ui=react", 390, 844, READY, timeout=30)
+    browser.open(f"{server}/game/{room.id}", 390, 844, READY, timeout=30)
 
 
 def test_si_collega_e_gioca_una_carta(browser, server, room):
@@ -147,6 +153,44 @@ def test_frase_nella_partita_vera(browser, server, room):
     assert browser.js("document.querySelector('[data-phrases-button]').disabled") is True
     assert browser.js("document.querySelector('[data-phrases-menu]')") is None
     assert browser.js("document.querySelector('[data-table-status]').textContent") == ""
+
+
+def test_dalla_home_al_tavolo_e_ritorno_senza_ricaricare(app, server, tmp_path, monkeypatch):
+    # Niente database, come la fixture room
+    monkeypatch.setattr(room_manager, "_ratings_of", lambda players, mode, cpu_seats: None)
+    monkeypatch.setattr(friends_events, "notify_presence", lambda *args, **kwargs: None)
+    # Un browser con la home vera (quello delle altre prove risponde da sé su /)
+    browser = Browser(find_browser(), tmp_path / "home")
+    browser.send("Network.setCookie", name=TEST_COOKIE[0], value=TEST_COOKIE[1], url=server)
+    created = None
+    try:
+        # La home con il login si collega e riceve home:status: c'è il numero degli online
+        browser.open(f"{server}/", 390, 844, f"{ONLINE} !== ''", timeout=30)
+        # Un segno nella pagina: se la pagina si ricaricasse, sparirebbe
+        browser.js("window.__stessa_pagina = true")
+        # La partita parte (come dalla coda): il server manda game:start e la home va al tavolo
+        with app.app_context():
+            created = create_room([Player(user_id=USER_ID, username="Mario"), CPU_PLAYER], "1v1", 150,
+                                  rated=False, cpu_seats=(1,))
+        browser.wait_js(f"location.pathname === '/game/{created.id}' && {READY}", "tavolo dopo game:start", 30)
+        assert browser.js("window.__stessa_pagina === true") is True
+        assert browser.js("document.querySelector('[data-table]').dataset.gameId") == created.id
+        # "Esci", conferma: game:leave e di nuovo la home, sempre senza ricaricare
+        browser.click("[data-leave]")
+        browser.wait_js(f"{DIALOG} !== null", "finestra di Esci")
+        browser.js(f"[...{DIALOG}.querySelectorAll('button')].find((b) => b.textContent === 'Esci').click()")
+        browser.wait_js("location.pathname === '/' && document.querySelector('[data-home]') !== null",
+                        "ritorno alla home", 15)
+        assert browser.js("window.__stessa_pagina === true") is True
+        assert created.finished is True
+        # La home nuova chiede lo stato con home:refresh: il numero degli online torna
+        browser.wait_js(f"{ONLINE} !== ''", "numero degli online dopo il ritorno", 10)
+        assert browser.js("document.querySelector('[data-table]')") is None
+    finally:
+        browser.close()
+        if created is not None:
+            created._stop_timers()
+            rooms.remove(created.id)
 
 
 def test_partita_aperta_in_un_altra_scheda(browser, server, room, tmp_path):

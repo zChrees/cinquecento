@@ -1,6 +1,8 @@
 """Stato della home (P44, contratto 5.1): home:status {"online_count", "resume"}.
 
-- La pagina non manda eventi: home:status parte sempre dal server.
+- home:status parte dal server. Dal passo 8h della migrazione (23/10/2026) la home
+  della SPA può anche chiederlo con home:refresh, quando compare con il collegamento
+  già aperto (tornando dal tavolo senza ricaricare): la risposta porta lo stato.
 - Lo riceve ogni scheda appena si collega (connection_events.py) e poi a ogni
   cambiamento: quando un utente entra online o esce (tutti gli utenti collegati) e
   quando una partita finisce (i suoi giocatori: l'avviso di rientro sparisce).
@@ -8,9 +10,11 @@
 Nei log solo numeri di utente.
 """
 
+from flask_login import current_user
+
 from app.extensions import socketio
 from app.realtime import room as room_module
-from app.realtime.events import user_channel
+from app.realtime.events import handler, user_channel
 from app.realtime.presence import presence
 from app.realtime.room import MODE_OF_PLAYERS
 from app.realtime.room_manager import find_room_of_user
@@ -44,7 +48,21 @@ def _game_finished(user_ids, _app):
     send_status(user_ids)
 
 
+@handler
+def on_refresh(data=None):
+    """home:refresh: lo stato della home di chi lo chiede, nella risposta.
+
+    In parole semplici:
+        La pagina manda home:refresh (senza dati: quelli che arrivano non si usano,
+        come per queue:leave) e riceve {"ok": true, "data": {"online_count",
+        "resume"}}, gli stessi dati di home:status. Login e limite di frequenza li
+        controlla @handler, come per ogni evento.
+    """
+    return home_status(current_user.id)
+
+
 def register(socketio):
-    """Nessun evento dalla pagina; a fine partita i giocatori ricevono lo stato nuovo."""
+    """home:refresh dalla pagina; a fine partita i giocatori ricevono lo stato nuovo."""
+    socketio.on_event("home:refresh", on_refresh)
     if _game_finished not in room_module.finish_listeners:
         room_module.finish_listeners.append(_game_finished)

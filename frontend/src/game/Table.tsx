@@ -36,6 +36,7 @@
  */
 
 import type { JSX } from 'react';
+import { Link } from 'react-router';
 import type { Card, Suit } from '../types/card';
 import type { Phrase } from '../types/events';
 import type { Advice, GameView, LaidDown, LastHand, LastTrick as LastTrickData, PlayerView, TeamTotal } from '../types/view';
@@ -540,7 +541,9 @@ function Result(props: ResultProps): JSX.Element | null {
       <h2>{title}</h2>
       <p>{text}</p>
       {summary}
-      <a className="btn btn--primary" href="/">Torna alla home</a>
+      {/* discover="none": senza, React Router aggiunge l'attributo data-discover, che il
+          template Jinja non ha (lo stesso HTML, lotto 8h) */}
+      <Link className="btn btn--primary" to="/" discover="none">Torna alla home</Link>
     </div>
   );
 }

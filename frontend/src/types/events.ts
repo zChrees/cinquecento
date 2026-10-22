@@ -206,6 +206,8 @@ export interface ClientEvents {
   'queue:join': { request_id: string; mode: Mode; target_score: TargetScore };
   // nessun dato: un oggetto vuoto
   'queue:leave': Record<string, never>;
+  // dal 23/10/2026 (passo 8h): la home chiede lo stato quando compare con il collegamento già aperto
+  'home:refresh': Record<string, never>;
   'cpu:start': { request_id: string; target_score: TargetScore; mode: Mode };
   'invite:send': { request_id: string; user_id: number; mode: Mode; target_score: TargetScore };
   'invite:accept': { invite_id: string };
@@ -231,6 +233,7 @@ export interface ClientAnswers {
   'game:leave': OkEmpty | ErrorResponse;
   'queue:join': OkWithData<QueueStatus> | ErrorResponse;
   'queue:leave': OkEmpty | ErrorResponse;
+  'home:refresh': OkWithData<HomeStatus> | ErrorResponse;
   'cpu:start': OkWithData<{ game_id: string }> | ErrorResponse;
   'invite:send': OkWithData<Invite> | ErrorResponse;
   'invite:accept': OkEmpty | ErrorResponse;

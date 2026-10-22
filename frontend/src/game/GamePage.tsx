@@ -32,7 +32,7 @@
 import { useEffect, useLayoutEffect, useRef } from 'react';
 import type { JSX } from 'react';
 import { flushSync } from 'react-dom';
-import { useParams, useSearchParams } from 'react-router';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { ConnectionBanner } from '../components/ConnectionBanner';
 import { Modal } from '../components/Modal';
 import type { ModalAction } from '../components/Modal';
@@ -75,7 +75,9 @@ function GoneNotice(): JSX.Element {
     <div className="table__gone panel" data-game-gone="" role="alert">
       <h2>La partita è stata interrotta</h2>
       <p>Il server si è riavviato o la partita non esiste più.</p>
-      <a className="btn btn--primary" href="/">Torna alla home</a>
+      {/* discover="none": senza, React Router aggiunge l'attributo data-discover, che il
+          template Jinja non ha (lo stesso HTML, lotto 8h) */}
+      <Link className="btn btn--primary" to="/" discover="none">Torna alla home</Link>
     </div>
   );
 }
@@ -369,8 +371,14 @@ export function GamePage(): JSX.Element {
   }
   // demo: il valore di ?demo= ('1v1', '2v2'), oppure null nella partita vera
   const demo = search.get('demo');
+  // navigate: cambia pagina dentro la SPA, senza ricaricare (passo 8h)
+  const navigate = useNavigate();
+  /** Torna alla home senza ricaricare: lo store la chiama dopo "Esci", a fine partita, ... */
+  function goHome(): void {
+    navigate('/');
+  }
   // table: la fotografia dello store, che fa ridisegnare la pagina quando cambia
-  const table = useTable(gameId, demo);
+  const table = useTable(gameId, demo, goHome);
   // tableRef: l'elemento <div data-table>. useRef è una "scatola" che resta uguale
   // tra un disegno e l'altro; React ci mette l'elemento dopo averlo disegnato
   const tableRef = useRef<HTMLDivElement | null>(null);

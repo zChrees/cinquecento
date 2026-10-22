@@ -56,7 +56,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { JSX, MouseEvent, PointerEvent, ReactNode, RefObject } from 'react';
-import { useSearchParams } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import { DEMO_RESUME, fetchDemoStatus, fetchOnlineCount } from '../api/home';
 import { CardBackground } from '../components/CardBackground';
 import { FlashList } from '../components/FlashList';
@@ -261,6 +261,36 @@ function HomeListener(props: HomeListenerProps): null {
 
   // [status]: si rifà quando lo stato della connessione cambia
   useEffect(report, [status]);
+
+  // onStatus: la funzione della pagina, fissata in una costante per l'effetto qui sotto
+  const onStatus = props.onStatus;
+
+  /**
+   * Effetto (passo 8h, contratto 5.1): con il collegamento aperto chiede lo stato
+   * della home (home:refresh). home:status arriva solo al collegamento e ai
+   * cambiamenti: tornando dal tavolo senza ricaricare la pagina il collegamento è
+   * già aperto, e senza questa richiesta mancherebbero il numero degli online e
+   * l'avviso di rientro. Una risposta arrivata dopo che la home è sparita si ignora.
+   */
+  function askStatus(): (() => void) | undefined {
+    if (status !== 'connected') {
+      return undefined;
+    }
+    let current = true;
+    async function ask(): Promise<void> {
+      const answer = await send('home:refresh', {});
+      if (current && answer.ok) {
+        onStatus(answer.data);
+      }
+    }
+    ask();
+    function stop(): void {
+      current = false;
+    }
+    return stop;
+  }
+  // [status]: a ogni collegamento (anche quello già aperto quando la home compare)
+  useEffect(askStatus, [status]);
   return null;
 }
 
@@ -316,6 +346,8 @@ export function HomePage(): JSX.Element {
   const joining: RefObject<boolean> = useRef<boolean>(false);
   // starting: è arrivato game:start, si sta andando al tavolo
   const starting: RefObject<boolean> = useRef<boolean>(false);
+  // navigate: cambia pagina dentro la SPA, senza ricaricare (passo 8h: verso il tavolo)
+  const navigate = useNavigate();
   // wasOnline: la pagina è già stata collegata almeno una volta
   const wasOnline: RefObject<boolean> = useRef<boolean>(false);
   // friends: gli amici (GET /friends/), per la lista da invitare
@@ -832,13 +864,17 @@ export function HomePage(): JSX.Element {
     closeQueue();
   }
 
-  /** game:start: si va al tavolo (solo un indirizzo /game/... di questo sito). */
+  /**
+   * game:start: si va al tavolo (solo un indirizzo /game/... di questo sito). Dal
+   * passo 8h senza ricaricare la pagina (navigate di React Router): il tavolo è una
+   * pagina della SPA e il collegamento al tempo reale resta aperto.
+   */
   function handleGameStart(start: GameStart): void {
     if (typeof start.url !== 'string' || !start.url.startsWith(GAME_PREFIX)) {
       return;
     }
     starting.current = true;
-    window.location.assign(start.url);
+    navigate(start.url);
   }
 
   /**

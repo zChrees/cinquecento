@@ -1,7 +1,7 @@
 """Passo 8a della migrazione: il tavolo React (frontend/src/game/) disegnato da una vista.
 
-Controlla, aprendo la prova (/game/prova?demo=1v1 o 2v2) nel tavolo Jinja e poi in
-quello React (&ui=react), in Chrome o Edge senza finestra (tests/browser.py):
+Controlla, aprendo la prova (/game/prova?demo=1v1 o 2v2) nel tavolo Jinja (dal lotto 8h
+con &ui=jinja) e poi in quello React, in Chrome o Edge senza finestra (tests/browser.py):
 - la stessa pagina, elemento per elemento (tag, attributi, testi) dentro <main>, per
   la vista finta e per varie viste mandate con l'evento "demo:state": canti e
   "Cala le carte", mazzo finito, avversario CPU e scollegato, fine partita a punti e
@@ -33,8 +33,8 @@ from tests.spa import needs_spa
 
 ROOT = Path(__file__).resolve().parents[2]
 DEV = ROOT / "app" / "static" / "dev"
-JINJA = "/game/prova?demo={mode}"
-REACT = "/game/prova?demo={mode}&ui=react"
+JINJA = "/game/prova?demo={mode}&ui=jinja"
+REACT = "/game/prova?demo={mode}"
 READY = "document.querySelector('[data-mode]') !== null"
 # Come test_csp.py: registra ogni risorsa bloccata dalla CSP
 RECORD = (
@@ -256,7 +256,7 @@ def test_senza_demo_partita_che_non_esiste(browser, server):
     # il messaggio "In attesa della partita…" lascia il posto alla risposta del
     # server, come nel tavolo Jinja (join di game.js)
     message = "Questa partita non esiste o è già finita."
-    browser.open(f"{server}/game/a1b2c3d4?ui=react", 390, 844,
+    browser.open(f"{server}/game/a1b2c3d4", 390, 844,
                  f"document.querySelector('[data-table-message]')?.textContent === {json.dumps(message)}")
     page = browser.js("""(() => { const t = document.querySelector('[data-table]');
       return { id: t.dataset.gameId, demo: t.dataset.demoUrl ?? null,
