@@ -11,7 +11,7 @@
  *   viewForTable(snapshot, adesso)   la vista da disegnare (secondi scesi, mosse spente)
  *   playCard(card), sing(suit), layDown(), advise(card)   le mosse
  *   askLeave(), answerLeave(scelta)  "Esci" con la finestra di conferma
- *   togglePhrases(), closePhrases(), pickPhrase(code)     le frasi (nella prova)
+ *   togglePhrases(), closePhrases(), pickPhrase(code)     le frasi
  *   closeHandSummary()               "Ok" del riepilogo di fine mano
  *   handEnding(snapshot), handTotals(lastHand)   per i momenti da disegnare (GamePage.tsx)
  *   flying(snapshot, adesso), drawing(snapshot, adesso)   le carte in volo e le pescate in corso
@@ -57,8 +57,13 @@
  *     (DEAL_STEP_MS); P118: alla prima vista anche la prima mano, una volta per scheda;
  *   - pause (P132): finché c'è uno dei momenti qui sopra il tempo del turno non
  *     scende e l'anello resta pieno e fermo (tablePaused, settle).
- * Restano al lotto 8f: frasi e suoni nella partita vera (qui ci sono già i suoni
- * della distribuzione, che il test della prima distribuzione controlla).
+ *
+ * Frasi (P56, D24) e suoni (P103, P109), lotto 8f: l'elenco arriva con game:phrases
+ * a ogni game:join, una frase parte con game:send_phrase e il fumetto arriva con
+ * game:phrase. Ogni momento ha il suo suono (carta che si posa, pescata, presa,
+ * calata, canto, frase, mescolata e carte distribuite, vittoria o sconfitta), più
+ * il ticchettio degli ultimi TICK_SECONDS secondi del tuo turno; i suoni con un
+ * ritardo passano da later(), così chiudendo il tavolo non suonano più.
  *
  * DA DOVE ARRIVANO I DATI (la catena delle chiamate):
  *   1. GamePage.tsx chiama startTable con il codice della partita e ?demo=;
@@ -73,9 +78,10 @@ import type { ErrorResponse, NoConnection, OkEmpty } from '../types/common';
 import type { Phrase, SangEvent } from '../types/events';
 import type { Advice, GameView, LaidDown, LastHand, LastTrick, Legal, PlayerView, TeamTotal, TrickPlay } from '../types/view';
 import { playSound, preloadSounds } from '../utils/sounds';
+import type { SoundName } from '../utils/sounds';
 import {
   BUBBLE_MS, DEAL_STEP_MS, DRAW_MS, GONE_HOME_MS, LAID_DOWN_MS, LAST_TRICK_MS, MY_THROW_MS, PARTNER_NOTICE_MS,
-  PHRASE_PAUSE_MS, SHUFFLE_MS, SUMMARY_MS, THROW_MS, TIMER_SLACK_MS,
+  PHRASE_PAUSE_MS, SHUFFLE_MS, SUMMARY_MS, THROW_MS, TICK_SECONDS, TIMER_SLACK_MS, TRICK_AWAY_MS,
 } from './animations';
 import type { DealMoment } from './Table';
 import { cardName, preloadCardImages, sameCard, throwKey } from './cards';
@@ -187,6 +193,8 @@ export interface TableSnapshot {
   phrasesOpenedAt: number;
   // P56: performance.now() fino a cui il pulsante delle frasi resta spento
   phrasePausedUntil: number;
+  // P56: true mentre una frase aspetta la risposta del server
+  phraseSending: boolean;
   // P56: posto → il fumetto che si vede
   bubbles: Record<number, BubbleEntry>;
   // P79: true quando tutte le immagini del tavolo sono pronte (data-cards-ready)
@@ -268,6 +276,7 @@ function initialSnapshot(gameId: string, demo: string | null): TableSnapshot {
     phrasesOpen: false,
     phrasesOpenedAt: 0,
     phrasePausedUntil: 0,
+    phraseSending: false,
     bubbles: {},
     cardsReady: false,
     lastTrick: null,
@@ -306,6 +315,39 @@ let generation = 0;
 let timers: number[] = [];
 // stops: le funzioni che smettono di ascoltare (socket, stato, load)
 let stops: (() => void)[] = [];
+
+// P103, suoni del turno (lotto 8f): il tuo turno già annunciato, quello che aspetta
+// la fine delle pause, e il numero dei tic programmati (sale quando si annullano:
+// un tic con il numero vecchio non suona). Non sono nella fotografia perché non si
+// disegnano
+let turnKey: string | null = null;
+let turnPending: string | null = null;
+let tickToken = 0;
+// P103: il riquadro di fine partita aspetta di comparire per suonare
+let resultPending = false;
+
+/**
+ * Un suono tra `ms` millisecondi (subito se 0 o meno), con un timer che stopTable
+ * ferma: chiudendo il tavolo, i suoni programmati non suonano più (lotto 8f).
+ *
+ * @param {SoundName} name il suono, per esempio 'card'
+ * @param {number} ms tra quanti millisecondi
+ *
+ * In parole semplici:
+ *   soundLater('trick', TRICK_AWAY_MS)
+ *   playSound di sounds.ts ha già un ritardo, ma con un setTimeout suo, che nessuno
+ *   può fermare; qui il ritardo lo fa later(), come per gli altri timer del tavolo.
+ */
+function soundLater(name: SoundName, ms: number): void {
+  if (ms <= 0) {
+    playSound(name, 0);
+    return;
+  }
+  function play(): void {
+    playSound(name, 0);
+  }
+  later(play, ms);
+}
 
 /**
  * Cambia lo stato e avvisa chi ascolta.
@@ -585,6 +627,8 @@ function showLastTrick(d: TableSnapshot, trick: LastTrick): void {
   hideLastTrick(d);
   d.lastTrick = trick;
   d.lastTrickAt = performance.now();
+  // P103: quando le carte scivolano verso chi ha preso
+  soundLater('trick', TRICK_AWAY_MS);
   // hide: la toglie, ma solo se è ancora quella (una presa nuova ha il suo timer)
   function hide(): void {
     if (snapshot.lastTrick === trick) {
@@ -606,6 +650,7 @@ function showLaidDown(d: TableSnapshot, laid: LaidDown): void {
   hideLaidDown(d);
   d.laidDown = laid;
   d.laidDownAt = performance.now();
+  soundLater('lay_down', 0);
   function hide(): void {
     if (snapshot.laidDown === laid) {
       const next = draft();
@@ -773,6 +818,13 @@ function noticeThrows(previous: GameView, next: GameView, d: TableSnapshot): voi
     }
   }
   if (reducedMotion()) {
+    // P103: niente volo, ma il suono della carta giocata sì
+    for (let i = 0; i < arrived.length; i++) {
+      if (!before.has(throwKey(arrived[i].card))) {
+        soundLater('card', 0);
+        return;
+      }
+    }
     return;
   }
   const now = performance.now();
@@ -796,6 +848,8 @@ function noticeThrows(previous: GameView, next: GameView, d: TableSnapshot): voi
         ms = MY_THROW_MS;
       }
       throws[key] = { at: at, ms: ms, from: throwStart(play.seat, play.card, mine) };
+      // P103, P109: la carta che si posa, a fine volo
+      soundLater('card', at - now + ms);
       at += ms;
     }
   }
@@ -822,7 +876,12 @@ function noticeDraws(previous: GameView, next: GameView, d: TableSnapshot): void
     return;
   }
   const drawn = previous.deck_count - next.deck_count;
-  if (drawn <= 0 || reducedMotion()) {
+  if (drawn <= 0) {
+    return;
+  }
+  if (reducedMotion()) {
+    // P103: niente animazione, il suono sì
+    soundLater('draw', 0);
     return;
   }
   const n = next.players.length;
@@ -847,6 +906,7 @@ function noticeDraws(previous: GameView, next: GameView, d: TableSnapshot): void
   for (let step = 0; step < steps; step++) {
     const seat = (next.last_trick.winner_seat + step) % n;
     const at = start + step * DRAW_MS;
+    soundLater('draw', at - now);
     if (seat === next.you.seat) {
       for (let i = 0; i < next.hand.length; i++) {
         const key = throwKey(next.hand[i]);
@@ -939,9 +999,9 @@ function startDeal(d: TableSnapshot, now: number): void {
     cards = dealOrder(d.view).length;
   }
   d.dealEnd = now + SHUFFLE_MS + Math.max(cards - 1, 0) * DEAL_STEP_MS + DRAW_MS;
-  playSound('shuffle', 0);
+  soundLater('shuffle', 0);
   for (let k = 0; k < cards; k++) {
-    playSound('deal', SHUFFLE_MS + k * DEAL_STEP_MS + DRAW_MS);
+    soundLater('deal', SHUFFLE_MS + k * DEAL_STEP_MS + DRAW_MS);
   }
   // P91: a distribuzione finita le carte tornano ferme
   later(redraw, d.dealEnd - now + TIMER_SLACK_MS);
@@ -1119,6 +1179,105 @@ function settle(d: TableSnapshot): void {
   } else if (d.turnClockAt === null) {
     d.turnClockAt = now;
   }
+  turnSounds(d, now);
+  resultSound(d);
+}
+
+/** P103: annulla i tic programmati (quelli già partiti con il numero vecchio non suonano). */
+function clearTicks(): void {
+  tickToken += 1;
+}
+
+/**
+ * P103: il ticchettio degli ultimi TICK_SECONDS secondi del tuo turno (il suono di
+ * "tocca a te" è stato tolto in P109), come turnSounds di game.js.
+ *
+ * @param {TableSnapshot} d la fotografia nuova
+ * @param {number} now performance.now() di adesso
+ *
+ * In parole semplici:
+ *   Il turno comincia quando il tavolo ha finito le pause, come il conto alla
+ *   rovescia del server (P94): fino ad allora aspetta (turnPending). Un turno è
+ *   nuovo quando cambiano la mano o la presa: un canto lascia il turno a te, e il
+ *   ticchettio non riparte.
+ */
+function turnSounds(d: TableSnapshot, now: number): void {
+  const view = d.view;
+  if (d.replaced || view === null || view.status !== 'playing' || view.turn === null
+    || view.turn.seat !== view.you.seat) {
+    turnKey = null;
+    turnPending = null;
+    clearTicks();
+    return;
+  }
+  const key = JSON.stringify([view.hand_number, view.hand, view.trick.cards.length]);
+  if (key !== turnKey && key !== turnPending) {
+    turnPending = key;
+    clearTicks();
+  }
+  if (turnPending === null || tablePaused(d, now)) {
+    return;
+  }
+  turnKey = turnPending;
+  turnPending = null;
+  // Durante le pause la vista dice il turno pieno: il conto parte adesso
+  const left = view.turn.seconds_left * 1000;
+  const token = tickToken;
+  for (let s = TICK_SECONDS; s >= 1; s--) {
+    const wait = left - s * 1000;
+    if (wait < 0) {
+      continue;
+    }
+    let name: SoundName = 'tick';
+    if (s === 1) {
+      name = 'last_tick';
+    }
+    scheduleTick(name, wait, token);
+  }
+}
+
+/**
+ * Un tic tra `ms` millisecondi, che suona solo se nel frattempo i tic non sono stati annullati.
+ *
+ * @param {SoundName} name 'tick' oppure 'last_tick'
+ * @param {number} ms tra quanti millisecondi
+ * @param {number} token il numero dei tic di adesso (tickToken)
+ */
+function scheduleTick(name: SoundName, ms: number, token: number): void {
+  function tick(): void {
+    if (token === tickToken) {
+      playSound(name, 0);
+    }
+  }
+  later(tick, ms);
+}
+
+/**
+ * P103: vittoria, sconfitta o pareggio, quando compare il riquadro di fine partita
+ * (dopo l'ultima presa o le carte calate).
+ *
+ * @param {TableSnapshot} d la fotografia nuova
+ */
+function resultSound(d: TableSnapshot): void {
+  const view = d.view;
+  if (!resultPending || view === null || view.result === null || d.lastTrick !== null || d.laidDown !== null) {
+    return;
+  }
+  resultPending = false;
+  const winner = view.result.winner_team;
+  let mine: number | null = null;
+  for (let i = 0; i < view.players.length; i++) {
+    if (view.players[i].seat === view.you.seat) {
+      mine = view.players[i].team;
+    }
+  }
+  if (winner === null) {
+    playSound('tie', 0);
+  } else if (winner === mine) {
+    playSound('win', 0);
+  } else {
+    playSound('lose', 0);
+  }
 }
 
 /**
@@ -1155,6 +1314,10 @@ function showPartnerNotice(d: TableSnapshot): void {
  *   oggetto nuovo, anche quando la presa è la stessa.
  */
 function noticeMoments(previous: GameView, next: GameView, d: TableSnapshot): void {
+  // P103: il suono di fine partita, quando compare il riquadro (resultSound)
+  if (next.result !== null && previous.result === null) {
+    resultPending = true;
+  }
   // P93: le carte del compagno si scoprono adesso: entrano e c'è la scritta
   if (partnerHandOf(next) !== null && partnerHandOf(previous) === null) {
     showPartnerNotice(d);
@@ -1226,6 +1389,7 @@ function showSang(event: SangEvent): void {
   const text = `${who} ha cantato ${event.points} a ${event.suit}.`;
   d.status = text;
   commit(d);
+  soundLater('sing', 0);
   // hide: toglie le carte, ma solo se nel frattempo quel posto non ha cantato di nuovo
   function hide(): void {
     if (snapshot.sang[event.seat] !== entry) {
@@ -1265,6 +1429,10 @@ export function startTable(gameId: string, demo: string | null): () => void {
   generation += 1;
   const mine = generation;
   snapshot = initialSnapshot(gameId, demo);
+  turnKey = null;
+  turnPending = null;
+  clearTicks();
+  resultPending = false;
 
   // P118: i suoni e il contesto audio subito, prima della prima vista
   preloadSounds(true);
@@ -1371,6 +1539,8 @@ function startGame(): void {
   update({ message: WAITING });
   stops.push(on('game:state', onState));
   stops.push(on('game:sang', showSang));
+  stops.push(on('game:phrases', acceptPhrases));
+  stops.push(on('game:phrase', acceptPhrase));
   stops.push(on('game:advice', onAdvice));
   stops.push(on('game:replaced', onReplaced));
   stops.push(onStatus(onConnection));
@@ -1690,6 +1860,8 @@ export function closePhrases(): void {
  * @param {string} text il testo
  */
 function showBubble(seat: number, text: string): void {
+  // P109: anche le frasi del tavolo hanno il loro suono
+  soundLater('phrase', 0);
   const entry: BubbleEntry = { text: text, since: performance.now() };
   const bubbles: Record<number, BubbleEntry> = Object.assign({}, snapshot.bubbles);
   bubbles[seat] = entry;
@@ -1707,26 +1879,106 @@ function showBubble(seat: number, text: string): void {
 }
 
 /**
+ * Spegne il pulsante delle frasi per `ms` millisecondi (dopo l'invio, o con too_fast).
+ *
+ * @param {number} ms per quanto
+ */
+function pausePhrases(ms: number): void {
+  update({ phrasePausedUntil: performance.now() + ms });
+  // P91: ridisegna quando la pausa è finita, con il margine per i timer in anticipo
+  later(redraw, ms + TIMER_SLACK_MS);
+}
+
+/**
  * Una frase scelta. Nella prova mostra subito il proprio fumetto, senza server, e
- * spegne il pulsante per PHRASE_PAUSE_MS; nella partita vera l'invio arriva con il lotto 8f.
+ * spegne il pulsante per PHRASE_PAUSE_MS. Nella partita vera (lotto 8f) la manda con
+ * game:send_phrase: il fumetto arriva con game:phrase, che il server rimanda a tutti
+ * (anche a te); dopo l'invio il pulsante resta spento PHRASE_PAUSE_MS, o i
+ * retry_after secondi di too_fast. Si mandano anche a partita finita, per i saluti.
  *
  * @param {string} code il codice della frase
  */
-export function pickPhrase(code: string): void {
+export async function pickPhrase(code: string): Promise<void> {
   const view = snapshot.view;
   const phrases = snapshot.phrases;
-  if (view === null || phrases === null || performance.now() < snapshot.phrasePausedUntil) {
+  if (view === null || phrases === null || snapshot.replaced || snapshot.phraseSending
+    || performance.now() < snapshot.phrasePausedUntil) {
     return;
   }
   update({ phrasesOpen: false });
-  if (!snapshot.demo) {
+  if (snapshot.demo) {
+    pausePhrases(PHRASE_PAUSE_MS);
+    for (let i = 0; i < phrases.length; i++) {
+      if (phrases[i].code === code) {
+        showBubble(view.you.seat, phrases[i].text);
+      }
+    }
     return;
   }
-  update({ phrasePausedUntil: performance.now() + PHRASE_PAUSE_MS });
-  later(redraw, PHRASE_PAUSE_MS + TIMER_SLACK_MS);
+  const mine = generation;
+  update({ phraseSending: true });
+  const answer = await send('game:send_phrase', { game_id: snapshot.gameId, code: code });
+  if (mine !== generation) {
+    return;
+  }
+  update({ phraseSending: false });
+  if (answer.ok) {
+    pausePhrases(PHRASE_PAUSE_MS);
+  } else if (answer.error.code === 'too_fast') {
+    let seconds = PHRASE_PAUSE_MS / 1000;
+    if ('retry_after' in answer.error && typeof answer.error.retry_after === 'number') {
+      seconds = answer.error.retry_after;
+    }
+    pausePhrases(seconds * 1000);
+  } else {
+    // per esempio senza connessione (no_connection)
+    update({ status: answer.error.message });
+  }
+}
+
+/**
+ * L'elenco delle frasi (game:phrases a ogni ingresso nella stanza, o demo:phrases);
+ * una voce senza codice o testo si salta. La pagina non ne tiene una copia sua.
+ *
+ * @param {unknown} detail i dati, per esempio { phrases: [{ code, text }] }
+ */
+function acceptPhrases(detail: unknown): void {
+  if (snapshot.replaced || detail === null || typeof detail !== 'object' || !('phrases' in detail)
+    || !Array.isArray(detail.phrases)) {
+    return;
+  }
+  const list: Phrase[] = [];
+  for (let i = 0; i < detail.phrases.length; i++) {
+    const item: unknown = detail.phrases[i];
+    if (item !== null && typeof item === 'object' && 'code' in item && 'text' in item
+      && typeof item.code === 'string' && typeof item.text === 'string') {
+      list.push({ code: item.code, text: item.text });
+    }
+  }
+  update({ phrases: list });
+}
+
+/**
+ * Una frase detta { seat, code } (game:phrase o demo:phrase): il fumetto accanto a
+ * chi ha parlato; il testo si prende dall'elenco, un codice sconosciuto si ignora.
+ *
+ * @param {unknown} detail i dati
+ */
+function acceptPhrase(detail: unknown): void {
+  const view = snapshot.view;
+  const phrases = snapshot.phrases;
+  if (snapshot.replaced || view === null || phrases === null || detail === null || typeof detail !== 'object'
+    || !('seat' in detail) || !('code' in detail) || typeof detail.seat !== 'number') {
+    return;
+  }
+  const seat = detail.seat;
+  if (view.players[seat] === undefined) {
+    return;
+  }
   for (let i = 0; i < phrases.length; i++) {
-    if (phrases[i].code === code) {
-      showBubble(view.you.seat, phrases[i].text);
+    if (phrases[i].code === detail.code) {
+      showBubble(seat, phrases[i].text);
+      return;
     }
   }
 }
@@ -1771,19 +2023,9 @@ export function demoSang(detail: unknown): void {
  * @param {unknown} detail i dati dell'evento, per esempio { phrases: [{ code, text }] }
  */
 export function demoPhrases(detail: unknown): void {
-  if (!snapshot.demo || detail === null || typeof detail !== 'object' || !('phrases' in detail)
-    || !Array.isArray(detail.phrases)) {
-    return;
+  if (snapshot.demo) {
+    acceptPhrases(detail);
   }
-  const list: Phrase[] = [];
-  for (let i = 0; i < detail.phrases.length; i++) {
-    const item: unknown = detail.phrases[i];
-    if (item !== null && typeof item === 'object' && 'code' in item && 'text' in item
-      && typeof item.code === 'string' && typeof item.text === 'string') {
-      list.push({ code: item.code, text: item.text });
-    }
-  }
-  update({ phrases: list });
 }
 
 /**
@@ -1792,20 +2034,7 @@ export function demoPhrases(detail: unknown): void {
  * @param {unknown} detail i dati dell'evento
  */
 export function demoPhrase(detail: unknown): void {
-  const view = snapshot.view;
-  const phrases = snapshot.phrases;
-  if (!snapshot.demo || view === null || phrases === null || detail === null || typeof detail !== 'object'
-    || !('seat' in detail) || !('code' in detail) || typeof detail.seat !== 'number') {
-    return;
-  }
-  const seat = detail.seat;
-  if (view.players[seat] === undefined) {
-    return;
-  }
-  for (let i = 0; i < phrases.length; i++) {
-    if (phrases[i].code === detail.code) {
-      showBubble(seat, phrases[i].text);
-      return;
-    }
+  if (snapshot.demo) {
+    acceptPhrase(detail);
   }
 }

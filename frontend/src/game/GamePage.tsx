@@ -262,13 +262,14 @@ function phrasesOf(table: TableSnapshot, now: number): TablePhrasesState | null 
     const seat = table.view.players[i].seat;
     const entry = table.bubbles[seat];
     if (entry !== undefined) {
-      bubbles[seat] = { text: entry.text, shownFor: now - entry.since };
+      bubbles[seat] = { text: entry.text, shownFor: now - entry.since, since: entry.since };
     }
   }
   return {
     list: table.phrases,
     open: table.phrasesOpen,
-    disabled: now < table.phrasePausedUntil,
+    // spente subito dopo una frase, mentre parte, e senza connessione (P33)
+    disabled: now < table.phrasePausedUntil || table.phraseSending || (!table.demo && table.connection !== 'connected'),
     openFor: now - table.phrasesOpenedAt,
     onToggle: togglePhrases,
     onPick: pickPhrase,

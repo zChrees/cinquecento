@@ -10,7 +10,10 @@ Controlla:
 - "Esci" apre la finestra "Vuoi uscire dalla partita?": "Annulla" resta al tavolo e
   la partita continua; "Esci" la chiude per abbandono e torna alla home (P25);
 - aprendo la stessa partita in un altro browser, questo si ferma con "Questa partita è
-  aperta in un'altra scheda o su un altro dispositivo." (game:replaced, D14).
+  aperta in un'altra scheda o su un altro dispositivo." (game:replaced, D14);
+- lotto 8f: l'elenco delle frasi arriva dal server (game:phrases); una frase scelta va
+  al server (game:send_phrase), il fumetto torna con game:phrase e il pulsante resta
+  spento per la pausa (P56).
 La partita interrotta (P95) la prova table6/test_partita_interrotta.py con
 TABLE_UI=react. Rating e avvisi agli amici non leggono il database (non serve MySQL).
 Senza browser, o senza il build della SPA, i test si saltano.
@@ -21,7 +24,7 @@ import json
 import pytest
 
 from app import create_app
-from app.realtime import room_manager
+from app.realtime import room_manager, table_phrases
 from app.realtime.room import CPU_PLAYER, Player
 from app.sockets import friends_events
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
@@ -123,6 +126,27 @@ def test_esci_annulla_e_conferma(browser, server, room):
     browser.wait_js("location.pathname === '/'", "ritorno alla home", 15)
     assert room.finished is True
     assert room.abandoned_seats
+
+
+def test_frase_nella_partita_vera(browser, server, room):
+    _open(browser, server, room)
+    # L'elenco lo manda il server a game:join: senza, il pulsante non c'è
+    browser.wait_js("document.querySelector('[data-phrases-button]') !== null", "pulsante delle frasi", 15)
+    browser.wait_js("document.querySelector('[data-phrases-button]').disabled === false", "pulsante acceso", 15)
+    browser.click("[data-phrases-button]")
+    browser.wait_js("document.querySelector('[data-phrase-code]') !== null", "elenco delle frasi")
+    phrase = browser.js("""(() => { const p = document.querySelector('[data-phrase-code]');
+      return { code: p.dataset.phraseCode, text: p.textContent }; })()""")
+    assert phrase["code"] in {item["code"] for item in table_phrases.phrases_event()["phrases"]}
+    browser.click(f"[data-phrase-code=\"{phrase['code']}\"]")
+    # Il fumetto lo rimanda il server (game:phrase), accanto a te
+    bubble = ".seat[data-position=\"bottom\"] [data-phrase-bubble]"
+    browser.wait_js(f"document.querySelector({json.dumps(bubble)}) !== null", "il tuo fumetto", 10)
+    assert browser.js(f"document.querySelector({json.dumps(bubble)}).textContent") == f"Mario: {phrase['text']}"
+    # Subito dopo il pulsante è spento (pausa di P55), e l'elenco chiuso
+    assert browser.js("document.querySelector('[data-phrases-button]').disabled") is True
+    assert browser.js("document.querySelector('[data-phrases-menu]')") is None
+    assert browser.js("document.querySelector('[data-table-status]').textContent") == ""
 
 
 def test_partita_aperta_in_un_altra_scheda(browser, server, room, tmp_path):

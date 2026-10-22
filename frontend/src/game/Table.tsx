@@ -167,6 +167,9 @@ export interface BubbleShown {
   text: string;
   // millisecondi da quando è comparso
   shownFor: number;
+  // performance.now() di quando è comparso: la key del fumetto (una frase nuova
+  // dello stesso posto è un elemento nuovo, con la sua entrata)
+  since: number;
 }
 
 // TablePhrasesState: le frasi del tavolo (P56), decise dalla pagina
@@ -437,7 +440,10 @@ function Seat(props: SeatProps): JSX.Element {
   }
   let bubble: JSX.Element | null = null;
   if (props.phrase !== null) {
-    bubble = <PhraseBubble name={player.username} text={props.phrase.text} shownFor={props.phrase.shownFor} position={props.position} />;
+    bubble = (
+      <PhraseBubble key={`bubble-${props.phrase.since}`} name={player.username} text={props.phrase.text}
+        shownFor={props.phrase.shownFor} position={props.position} />
+    );
   }
   let name = player.username;
   if (isMe) {

@@ -13,8 +13,9 @@
  * non ne tiene una copia sua, P56). Quando aprire, chiudere e spegnere lo decide
  * la pagina (GamePage.tsx).
  *
- * Passo 8a: qui c'è il disegno; le regole fini di game.js (fuoco e scorrimento che
- * restano dopo un ridisegno, P110) arrivano con il lotto 8f.
+ * Fuoco e scorrimento dell'elenco restano dopo un ridisegno da soli (P110): React
+ * tiene gli stessi elementi, mentre game.js li ricreava e doveva rimetterli. Le
+ * entrate di elenco e fumetto hanno il ritardo fermo (useStartDelay, lotto 8f).
  *
  * DA DOVE ARRIVANO I DATI: l'elenco da game:phrases (nella prova dall'evento
  * demo:phrases), il fumetto da game:phrase (nella prova demo:phrase).
@@ -23,6 +24,7 @@
 import type { JSX } from 'react';
 import type { Phrase } from '../types/events';
 import type { Position } from './Trick';
+import { useStartDelay } from './useStartDelay';
 
 // PhrasesButtonProps: cosa riceve il pulsante
 interface PhrasesButtonProps {
@@ -120,6 +122,8 @@ interface PhrasesMenuProps {
  *   un pulsante per frase. Lo usa Table.tsx, dentro .table__mine.
  */
 export function PhrasesMenu(props: PhrasesMenuProps): JSX.Element {
+  // delay: l'entrata dell'elenco, ferma finché resta aperto (useStartDelay)
+  const delay = useStartDelay(`${-Math.round(props.openFor)}ms`);
   // items: una frase per pulsante; la `key` (il "nome" con cui React riconosce lo
   // stesso pulsante tra un disegno e l'altro) è il codice della frase
   const items: JSX.Element[] = [];
@@ -134,7 +138,7 @@ export function PhrasesMenu(props: PhrasesMenuProps): JSX.Element {
       id="table-phrases"
       role="group"
       aria-label="Frasi da mandare al tavolo"
-      style={{ animationDelay: `${-Math.round(props.openFor)}ms` }}
+      style={{ animationDelay: delay }}
     >
       {items}
     </div>
@@ -165,12 +169,14 @@ interface PhraseBubbleProps {
  *   "Turi: " nascosto (solo per i lettori di schermo) e il testo. Lo usa Table.tsx.
  */
 export function PhraseBubble(props: PhraseBubbleProps): JSX.Element {
+  // delay: l'entrata del fumetto, ferma (useStartDelay); un fumetto nuovo ha una key nuova (Table.tsx)
+  const delay = useStartDelay(`${-Math.round(props.shownFor)}ms`);
   return (
     <p
       className={`phrase-bubble phrase-bubble--${props.position}`}
       data-phrase-bubble=""
       role="status"
-      style={{ animationDelay: `${-Math.round(props.shownFor)}ms` }}
+      style={{ animationDelay: delay }}
     >
       <span className="visually-hidden">{`${props.name}: `}</span>
       {props.text}

@@ -24,6 +24,7 @@ import pytest
 from app import create_app
 from app.realtime import table_phrases
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
+from tests.table_ui import table_path
 
 ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"
@@ -83,7 +84,7 @@ def browser(server, tmp_path):
 
 
 def _open(browser, server, mode, size=PHONE, phrases=PHRASES):
-    browser.open(f"{server}/game/prova?demo={mode}", *size, "document.querySelector('[data-mode]') !== null")
+    browser.open(f"{server}{table_path('prova', demo=mode)}", *size, "document.querySelector('[data-mode]') !== null")
     if phrases is not None:
         _dispatch(browser, "demo:phrases", phrases)
 

@@ -20,6 +20,7 @@ import pytest
 from app import create_app
 from app.realtime import table_phrases
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
+from tests.table_ui import table_path
 
 PARTS = r"""(() => {
   const R = (s) => [...document.querySelectorAll(s)].map((e) => {
@@ -67,7 +68,7 @@ def _overlap(a, b):
 
 
 def _open_menu(browser, server, mode, size):
-    browser.open(f"{server}/game/prova?demo={mode}", *size, "document.querySelector('[data-mode]') !== null")
+    browser.open(f"{server}{table_path('prova', demo=mode)}", *size, "document.querySelector('[data-mode]') !== null")
     browser.js(f"document.querySelector('[data-table]').dispatchEvent(new CustomEvent('demo:phrases', "
                f"{{ detail: {json.dumps(table_phrases.phrases_event())} }}))")
     browser.click("[data-phrases-button]")

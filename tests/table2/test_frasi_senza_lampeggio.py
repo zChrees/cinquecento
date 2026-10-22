@@ -27,6 +27,7 @@ from tests.browser import (
     running_server,
     wait,
 )
+from tests.table_ui import table_path
 
 ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"
@@ -90,7 +91,7 @@ def _turi_plays(base):
 
 @pytest.mark.parametrize("size", [(360, 640), (1280, 720)], ids=["telefono", "computer"])
 def test_lancio_dell_avversario_con_le_frasi_aperte(browser, server, size):
-    browser.open(f"{server}/game/prova?demo=1v1", *size, "document.querySelector('[data-mode]') !== null")
+    browser.open(f"{server}{table_path('prova', demo='1v1')}", *size, "document.querySelector('[data-mode]') !== null")
     browser.send("Emulation.setEmulatedMedia", features=[{"name": "prefers-reduced-motion", "value": "no-preference"}])
     _dispatch(browser, "demo:phrases", PHRASES)
     base = _waiting()
@@ -111,7 +112,7 @@ def test_lancio_dell_avversario_con_le_frasi_aperte(browser, server, size):
 
 def test_elenco_fatto_scorrere_resta_dov_era(browser, server):
     # Sul telefono l'elenco scorre (P101): un ridisegno non lo riporta in cima
-    browser.open(f"{server}/game/prova?demo=1v1", 360, 640, "document.querySelector('[data-mode]') !== null")
+    browser.open(f"{server}{table_path('prova', demo='1v1')}", 360, 640, "document.querySelector('[data-mode]') !== null")
     browser.send("Emulation.setEmulatedMedia", features=[{"name": "prefers-reduced-motion", "value": "no-preference"}])
     _dispatch(browser, "demo:phrases", PHRASES)
     base = _waiting()
@@ -146,7 +147,7 @@ FRAMES = """(() => {
 @pytest.mark.parametrize("mode", ["1v1", "2v2"])
 def test_sul_telefono_l_elenco_si_apre_al_suo_posto_e_non_si_muove(browser, server, mode):
     # P112: su iPhone l'elenco compariva più in alto, sopra la tua riga, e poi scendeva
-    browser.open(f"{server}/game/prova?demo={mode}", 390, 844, "document.querySelector('[data-mode]') !== null")
+    browser.open(f"{server}{table_path('prova', demo=mode)}", 390, 844, "document.querySelector('[data-mode]') !== null")
     browser.send("Emulation.setEmulatedMedia", features=[{"name": "prefers-reduced-motion", "value": "no-preference"}])
     _dispatch(browser, "demo:phrases", PHRASES)
     row = browser.js("document.querySelector('.table__me').getBoundingClientRect().bottom")
@@ -180,7 +181,7 @@ BUBBLE_WATCH = """(() => {
 @pytest.mark.parametrize("size", [(360, 640), (1280, 720)], ids=["telefono", "computer"])
 def test_il_fumetto_non_rifa_l_entrata_quando_il_tavolo_si_ridisegna(browser, server, size):
     # P130: il fumetto ricreato a ogni ridisegno rifaceva phrase-pop e sembrava una frase nuova
-    browser.open(f"{server}/game/prova?demo=1v1", *size, "document.querySelector('[data-mode]') !== null")
+    browser.open(f"{server}{table_path('prova', demo='1v1')}", *size, "document.querySelector('[data-mode]') !== null")
     browser.send("Emulation.setEmulatedMedia", features=[{"name": "prefers-reduced-motion", "value": "no-preference"}])
     _dispatch(browser, "demo:phrases", PHRASES)
     base = _waiting()
