@@ -22,6 +22,16 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: aggiornamento del 24/10, 9c fatto (24/10/2026)
+
+- **Branch**: docs/aggiornamento-24-10
+- **File**: modificati `CLAUDE.md` (riga "Stato": 9c fatto, prossimo il 9d; punti delicati P16 con il logout `POST /api/auth/logout`, P82 `GET /api/online`, P31 server `e2e` pronto su `/api/online`, P59 `GET /api/friends/`, "SPA e migrazione" con le rotte tutte sotto `/api/`, `JSON_PREFIXES` e "Esci" che ricarica la home; Testing con i numeri del 9c), `REVIEW.md` (9c spuntato, commit `d1e32bf`), `DECISIONI.md` (Processo: ricarica dopo "Esci", chiave dell'esempio degli amici, logout senza login e non riuscito), `docs/MIGRAZIONE-FRONTEND.md` (stato e "Com'è andata" del 9c), questo file
+- **Registrati**: `christian.md` fino a "Migrazione, passo 9c — Rotte JSON sotto /api/"; `giuseppe.md` e `antonio.md` niente di nuovo
+- **Controlli**: nessuna suite lanciata (solo documenti)
+- **Decisioni prese**: nessuna nuova oltre a quelle registrate
+- **Domande nuove**: nessuna per `DA-DECIDERE.md`
+- **Cosa devono fare gli altri**: **Giuseppe**: dopo il pull `npm run build`; le rotte di dati sono sotto `/api/` (contratto aggiornato al 9c)
+
 ### Migrazione, passo 9c — Rotte JSON sotto /api/ (24/10/2026)
 
 - **Branch**: feature/passo-9c-api (da `dev` a `57b85c1`)
