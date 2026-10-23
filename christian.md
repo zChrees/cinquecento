@@ -22,6 +22,16 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: aggiornamento del 23/10 sera, 9a e 9b fatti (23/10/2026)
+
+- **Branch**: docs/aggiornamento-23-10-sera
+- **File**: modificati `CLAUDE.md` (riga "Stato"; "Stack", "Parti principali", file principali, convenzioni "Commenti", "Dipendenze" e "Pagine"; in cima ai punti delicati una tabella "file vecchio → file React"; punti delicati corretti: Timer (P25), Avatar (P43), Icone (P62), Suoni, Carte (P20), Chat (P48), Frasi nella pagina (P56), Utente nelle pagine (P19), Navbar e pagine (P40), Home (P22), Online senza login (P82), Test nel browser e tempo reale, SPA e migrazione; Testing con i numeri del passo 9), `REVIEW.md` (passo 9: scelte confermate, 9a, 9b-1, 9b-2 e il test di `cards.ts` spuntati con i commit; 9c, 9d, 9e aperti, tutti di Christian; nel 9c la sezione 1.5 del contratto), `DECISIONI.md` (Processo: le otto scelte, chi fa cosa, `?ui=` ignorato, `table_path`, 9b diviso, pagina di prova delle carte cancellata e la decisione del 28/09 segnata come superata, avviso "Gira il telefono" in `base.html`, eventi confrontati con il server, `cards.ts` con Node), `docs/MIGRAZIONE-FRONTEND.md` (stato e "Com'è andata" del 9a e del 9b), questo file
+- **Registrati**: `christian.md` fino a "Test — checkCard e cardName di cards.ts eseguiti con Node" (9a, 9b-1, 9b-2, test); `giuseppe.md` e `antonio.md` niente di nuovo
+- **Controlli**: nessuna suite lanciata (solo documenti)
+- **Decisioni prese**: nessuna nuova oltre a quelle registrate
+- **Domande nuove**: nessuna per `DA-DECIDERE.md`
+- **Cosa devono fare gli altri**: **Giuseppe**: dopo il pull `npm run build`; leggi in `CLAUDE.md` la tabella in cima ai punti delicati (i file JS citati nei punti non ci sono più); il passo 9 lo fa tutto Christian
+
 ### Test — checkCard e cardName di cards.ts eseguiti con Node (23/10/2026)
 
 - **Branch**: test/checkcard-con-node (da `dev` a `c8a2dbf`)
