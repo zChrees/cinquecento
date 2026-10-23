@@ -1,7 +1,7 @@
 """P115: suoni del menu per richiesta di amicizia, messaggio e invito.
 
 Controlla il "Fatto quando" di SCALETTA.md (P115): ognuno dei tre avvisi ha il suo suono,
-diverso dagli altri (sounds.js), e parte quando arriva l'avviso: friends:changed con
+diverso dagli altri (frontend/src/utils/sounds.ts), e parte quando arriva l'avviso: friends:changed con
 "request_received" (non con gli altri motivi), chat:message di un amico (non i propri
 messaggi mandati da un'altra scheda), invite:received nella home; con l'interruttore
 "Suoni" spento (scelta ricordata nel browser) niente. Il contesto audio non si crea mai
@@ -11,8 +11,8 @@ ascoltano l'evento "cinquecento:sound", che parte anche quando il browser non fa
 La home si apre in Chrome o Edge senza finestra (tests/browser.py) con l'utente di prova
 collegato al tempo reale; gli avvisi li manda il server vero (socketio.emit sul canale
 dell'utente), come farebbero friend_service, chat e inviti. Non serve MySQL. Se né Chrome
-né Edge sono installati i controlli nel browser si saltano.
-Dal passo 7d della migrazione / è la home React: la home Jinja (con il JS vecchio) è su /vecchia-home.
+né Edge sono installati, o manca il build della SPA, i controlli nel browser si saltano.
+Si apre la home React (/); fino al lotto 9b-1 era la home Jinja (/vecchia-home), con sounds.js.
 """
 
 import json
@@ -27,9 +27,13 @@ from app.realtime.events import user_channel
 from app.realtime.invites import invites
 from app.realtime.room import Player
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
+from tests.spa import needs_spa
 
 ROOT = Path(__file__).resolve().parents[2]
-SOUNDS_JS = (ROOT / "app" / "static" / "js" / "core" / "sounds.js").read_text(encoding="utf-8")
+SOUNDS_TS = (ROOT / "frontend" / "src" / "utils" / "sounds.ts").read_text(encoding="utf-8")
+# READY: la home React collegata al tempo reale (home:status vero: 1 online)
+READY = ("document.querySelector('[data-online-count]')?.textContent === '1'"
+         " && document.querySelector('[data-friends-panel]')?.dataset.connection === 'connected'")
 ME = 8
 FRIEND = Player(45, "Giulia")
 RECORD = """
@@ -38,7 +42,7 @@ RECORD = """
 
 
 def _files_of(name):
-    return re.search(rf"^\s+{name}: \[([^\]]*)\]", SOUNDS_JS, re.MULTILINE).group(1)
+    return re.search(rf"^\s+{name}: \[([^\]]*)\]", SOUNDS_TS, re.MULTILINE).group(1)
 
 
 def test_tre_suoni_diversi_tra_loro_e_da_quelli_del_tavolo():
@@ -51,6 +55,7 @@ def test_tre_suoni_diversi_tra_loro_e_da_quelli_del_tavolo():
 
 @pytest.fixture(scope="module")
 def server():
+    needs_spa()
     with running_server(create_app("testing"), FakeUser("Mario", ME)) as url:
         yield url
 
@@ -67,9 +72,9 @@ def browser(server, tmp_path_factory):
 
 def _home(browser, server, sounds="on"):
     """La home aperta e collegata al tempo reale (home:status vero: 1 online)."""
-    browser.open(f"{server}/vecchia-home", 390, 844, "document.querySelector('[data-online-count]') !== null")
+    browser.open(f"{server}/", 390, 844, "document.querySelector('[data-online-count]') !== null")
     browser.js(f"localStorage.setItem('cinquecento.sounds', {json.dumps(sounds)})")
-    browser.open(f"{server}/vecchia-home", 390, 844, "document.querySelector('[data-online-count]')?.textContent === '1'")
+    browser.open(f"{server}/", 390, 844, READY)
     return browser
 
 

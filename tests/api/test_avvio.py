@@ -19,10 +19,12 @@ def app():
     return create_app("testing")
 
 
-def test_home_mostra_ok(app):
-    response = app.test_client().get("/vecchia-home")  # dal passo 7d la home Jinja (data-stato) è su /vecchia-home
+def test_l_applicazione_risponde(app):
+    # Fino al lotto 9b-1 la home Jinja con data-stato="ok"; ora la rotta che la SPA
+    # chiama per prima, che non vuole né il build né MySQL
+    response = app.test_client().get("/api/auth/session")
     assert response.status_code == 200
-    assert b'data-stato="ok"' in response.data
+    assert response.get_json()["ok"] is True
 
 
 def test_blueprint_registrati(app):

@@ -1,4 +1,4 @@
-"""P48: la chat vera nel pannello amici (FriendsPanel.js, ChatWindow.js).
+"""P48: la chat vera nel pannello amici (dal lotto 9b-1 quella React, ChatWindow.tsx).
 
 Nel browser (Chrome o Edge senza finestra, tests/browser.py), con il server vero e il
 database dei test (svuotato e ricreato qui con migrate.py, come nella suite sockets):
@@ -6,8 +6,10 @@ Mario e Giulia sono amici e hanno 55 messaggi. Controlla: gli ultimi 50 in ordin
 "Messaggi precedenti" carica gli altri 5, un messaggio con tag resta testo, un
 messaggio arrivato mentre la chat è aperta compare da solo, e dopo un blocco la chat
 dice "Bloccato" e chiude la scrittura (scelta di Giuseppe).
-Se né Chrome né Edge sono installati i controlli nel browser si saltano.
-Dal passo 7d della migrazione / è la home React: la home Jinja (con il JS vecchio) è su /vecchia-home.
+Si apre la home React (/); fino al lotto 9b-1 era la home Jinja (/vecchia-home), con
+FriendsPanel.js e ChatWindow.js. La casella è "controllata" da React: il testo si
+scrive con Input.insertText dopo il fuoco, non con .value = ... (React non lo vedrebbe).
+Se né Chrome né Edge sono installati, o manca il build della SPA, i controlli si saltano.
 """
 
 import importlib.util
@@ -23,10 +25,14 @@ from app.realtime.events import user_channel
 from app.repositories import chat_repo
 from app.services import auth_service, chat_service, friend_service
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
+from tests.spa import needs_spa
 
 ROOT = Path(__file__).resolve().parents[2]
 PASSWORD = "Password-di-prova-1"
 CHAT = "document.querySelector('[data-view=\"chat\"]')"
+# READY: la home React collegata al tempo reale (senza, chat:history non parte)
+READY = ("document.querySelector('[data-online-count]')?.textContent === '1'"
+         " && document.querySelector('[data-friends-panel]')?.dataset.connection === 'connected'")
 
 
 def _migrate(url):
@@ -38,6 +44,7 @@ def _migrate(url):
 
 @pytest.fixture(scope="module")
 def app():
+    needs_spa()
     app = create_app("testing")
     with app.app_context():
         assert db.engine.url.database.endswith("_test")
@@ -83,12 +90,17 @@ def browser(server, tmp_path_factory):
 
 
 def _open_chat(browser, server, friend_id):
-    browser.open(f"{server}/vecchia-home", 390, 844, "document.querySelector('[data-online-count]')?.textContent === '1'",
-                 timeout=60)
+    browser.open(f"{server}/", 390, 844, READY, timeout=60)
     browser.click("[data-friends-button]")
     browser.wait_js(f"document.querySelector(\"[data-chat-open='{friend_id}']\") !== null", "lista degli amici")
     browser.click(f"[data-chat-open='{friend_id}']")
-    browser.wait_js(f"{CHAT} !== null", "apertura della chat")
+    browser.wait_js(f"{CHAT} !== null && document.querySelectorAll('.chat__msg').length > 0", "apertura della chat")
+
+
+def _write(browser, text):
+    """Scrive `text` nella casella della chat come da tastiera."""
+    browser.js("document.querySelector('#chat-input').focus()")
+    browser.send("Input.insertText", text=text)
 
 
 def test_ultimi_50_poi_messaggi_precedenti(browser, server, users):
@@ -106,7 +118,7 @@ def test_ultimi_50_poi_messaggi_precedenti(browser, server, users):
 
 def test_messaggio_con_tag_e_messaggio_arrivato(browser, server, users, app):
     _open_chat(browser, server, users["Giulia"])
-    browser.js("document.querySelector('#chat-input').value = '<b>ciao</b>'")
+    _write(browser, "<b>ciao</b>")
     browser.click("[data-chat-form] button[type=submit]")
     browser.wait_js("[...document.querySelectorAll('.chat__msg--mine')].at(-1).firstChild.textContent === '<b>ciao</b>'",
                     "messaggio mandato")
@@ -125,7 +137,7 @@ def test_dopo_il_blocco_la_chat_dice_bloccato(browser, server, users, app):
     with app.app_context():
         friend_service.block(users["Giulia"], uuid.uuid4().hex, users["Mario"])  # Giulia blocca Mario
     try:
-        browser.js("document.querySelector('#chat-input').value = 'ci sei?'")
+        _write(browser, "ci sei?")
         browser.click("[data-chat-form] button[type=submit]")
         browser.wait_js("document.querySelector('#chat-input').disabled === true", "scrittura chiusa")
         notice = browser.js("document.querySelector('[data-chat-notice]').textContent")

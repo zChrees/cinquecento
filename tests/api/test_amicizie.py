@@ -457,8 +457,8 @@ def test_senza_login_not_logged_in(app, method, url):
 def test_modifiche_solo_con_il_codice_csrf(app, mario, nina):
     app.config["WTF_CSRF_ENABLED"] = True
     try:
-        page = mario.client.get("/vecchia-home").get_data(as_text=True)  # dal passo 7d la home Jinja, con il csrf-token, è su /vecchia-home
-        token = re.search(r'name="csrf-token" content="([^"]+)"', page).group(1)
+        # Il codice CSRF lo dà GET /api/auth/session, come alla SPA (dal lotto 9b-1)
+        token = mario.client.get("/api/auth/session").get_json()["data"]["csrf_token"]
         payload = {"request_id": "c-1", "username": "Nina"}
         assert mario.client.post("/friends/requests", json=payload).status_code == 400
         response = mario.client.post("/friends/requests", json=payload, headers={"X-CSRFToken": token})

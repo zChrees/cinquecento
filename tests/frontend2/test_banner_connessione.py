@@ -9,8 +9,9 @@ Controlla: "Connessione persa" in cima alla pagina, "Gioca" e "Invia" spenti, al
 ritorno avviso tolto, pulsanti di nuovo attivi e messaggi arrivati nel frattempo nella
 chat aperta; lo scollegamento deciso dal server ("Esci" da un'altra scheda, P32) con
 "Ricarica"; l'avviso al primo collegamento solo se ci mette più di 3 secondi.
-Se né Chrome né Edge sono installati i controlli nel browser si saltano.
-Dal passo 7d della migrazione / è la home React: la home Jinja (con il JS vecchio) è su /vecchia-home.
+Si apre la home React (/), con l'avviso di ConnectionBanner.tsx; fino al lotto 9b-1 era la
+home Jinja (/vecchia-home) con core/socket.js. Se né Chrome né Edge sono installati, o
+manca il build della SPA, i controlli nel browser si saltano.
 """
 
 import importlib.util
@@ -32,6 +33,7 @@ from tests.browser import (
     find_browser,
     running_server,
 )
+from tests.spa import needs_spa
 
 ROOT = Path(__file__).resolve().parents[2]
 PASSWORD = "Password-di-prova-1"
@@ -52,6 +54,7 @@ def _migrate(url):
 
 @pytest.fixture(scope="module")
 def app():
+    needs_spa()
     app = create_app("testing")
     with app.app_context():
         assert db.engine.url.database.endswith("_test")
@@ -123,7 +126,7 @@ def _lose_connection(browser, user_id):
 
 
 def _open_home(browser, server):
-    browser.open(f"{server}/vecchia-home", 390, 844, ONLINE, timeout=60)
+    browser.open(f"{server}/", 390, 844, ONLINE, timeout=60)
     assert browser.js(BANNER) is None
 
 
@@ -182,7 +185,7 @@ def test_scollegato_dal_server_chiede_di_ricaricare(browser, server, users, app)
 
 def test_primo_collegamento_lento(browser, server):
     _block_socket(browser)
-    browser.open(f"{server}/vecchia-home", 390, 844)
+    browser.open(f"{server}/", 390, 844)
     assert browser.js(BANNER) is None   # subito niente avviso: non lampeggia a ogni apertura
     browser.wait_js(f"{BANNER}?.textContent.includes('Collegamento al server in corso')",
                     "avviso dopo 3 secondi", timeout=10)

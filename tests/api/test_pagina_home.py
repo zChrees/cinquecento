@@ -1,150 +1,50 @@
-"""P22: home con dati finti (carte-pulsante, carta-modal, coda, rientro, online, sfondo).
+"""P22: home (carte-pulsante, carta-modal, online, sfondo): i controlli rimasti qui.
 
-Dal passo 7d della migrazione / è la home React: la home Jinja provata qui è su
-/vecchia-home (solo sviluppo e test).
-
-Controlla il "Fatto quando" di SCALETTA.md (P22):
-- risposte del server: la pagina ha le quattro carte-pulsante e i marcatori data-*;
-  i dati finti ci sono solo in sviluppo e nei test (?demo=rientro per l'avviso di
-  rientro); index.html ha solo markup, senza <style> né script scritti dentro;
-- nel browser (Chrome o Edge senza finestra, pilotato con il protocollo DevTools
-  su un server di prova alla porta 5099): la pagina non scorre alle misure di
-  docs/prototipo/LEGGIMI.md; nelle quattro modalità ogni parte della carta-modal,
-  "Gioca" compreso, sta dentro la cornice senza sovrapporsi alle altre; "Gioca"
-  con un amico resta disattivato finché l'invito finto non è accettato; senza
-  login il tocco apre la finestra di accesso; la schermata di coda si apre e si
-  annulla; l'avviso di rientro compare solo con i dati che lo prevedono; le carte
-  dello sfondo passano dietro a titoli e carte-pulsante.
-Se né Chrome né Edge sono installati i controlli nel browser si saltano.
+Fino al lotto 9b-1 della migrazione questo file provava la home Jinja (/vecchia-home):
+da allora quasi tutti i suoi controlli li fanno, sulla home React (/), i file
+tests/frontend2/test_spa_home.py (pagina, ?demo=, senza e con il login, rientro),
+tests/frontend/test_spa_home_misure.py (la home non scorre, sfondo, carta-modal che
+contiene tutto) e tests/frontend/test_spa_home_coda.py (coda, CPU, connessione persa).
+Qui restano, sulla home React:
+- i CSS della home caricati dalla SPA, che esistono, e le immagini che usano;
+- "Lo sapevi?" con i termini del regolamento (cantare 40 / 20, mai "matrimonio");
+- la scelta dell'avversario solo nella Partita Veloce, con le parole del 1v1 e del 2v2
+  (P73, P123) e i testi della carta-modal contro la CPU nel 2v2;
+- "1 giocatore online" al singolare e "2 giocatori online" senza login (P120).
+Nel browser (Chrome o Edge senza finestra) su un server di prova alla porta 5099; se
+mancano, o manca il build della SPA, quei controlli si saltano.
 Non serve MySQL: l'utente con il login è finto (un cookie dei soli test).
 """
 
-import itertools
 import json
 import re
+import time
 from pathlib import Path
 
 import pytest
 
 from app import create_app
-from app.realtime import matchmaking
 from app.realtime.presence import presence
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
+from tests.spa import needs_spa
 
 ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"
-DEV = STATIC / "dev"
-INDEX = ROOT / "app" / "templates" / "main" / "index.html"
 TILES = [("veloce", "1v1"), ("veloce", "2v2"), ("amico", "1v1"), ("amico", "2v2")]
+# PAGE_CSS: i CSS della home (prima in main/index.html); la SPA li carica in frontend/index.html
 PAGE_CSS = ("pages/home", "components/card-background", "components/mode-modal", "components/queue-overlay")
-COMPONENTS = ("ModeModal", "CardBackground", "QueueOverlay", "ResumeBanner")
-
-# Misure controllate nel prototipo (docs/prototipo/LEGGIMI.md); P116: niente telefono in orizzontale
-# (844×390, 667×375), dove la pagina è coperta dall'avviso "Gira il telefono" (test_gira_telefono.py)
-NO_SCROLL_SIZES = [(360, 640), (375, 667), (390, 844), (412, 915), (768, 1024),
-                   (1280, 720), (1440, 900), (1920, 1080)]
-MODAL_SIZES = [(1920, 1080), (1440, 900), (1366, 657), (1536, 730), (360, 560), (360, 640),
-               (390, 844), (412, 915)]
 
 
-@pytest.fixture
-def app():
-    return create_app("testing")
+# --- File ----------------------------------------------------------------------
 
 
-@pytest.fixture
-def client(app):
-    return app.test_client()
-
-
-def _text(response):
-    text = response.get_data(as_text=True)
-    response.close()
-    return text
-
-
-# --- Risposte del server -----------------------------------------------------
-
-
-def test_home_con_le_quattro_carte_pulsante(client):
-    html = _text(client.get("/vecchia-home"))
-    assert 'data-page="home"' in html and 'class="page home"' in html
-    for kind, mode in TILES:
-        assert re.search(rf'<button class="mode-tile [^"]+" type="button" data-tile data-kind="{kind}" data-mode="{mode}"', html), (kind, mode)
-    assert "Partita Veloce" in html and "Gioca con un amico" in html
-    for marker in ("data-home", "data-status-slot", "data-online", "data-online-count", "data-resume-slot"):
-        assert marker in html, marker
-    assert 'data-bg-cards data-img-base="/static/img/cards-bg/"' in html
-    assert '<script type="module" src="/static/js/pages/home.js"></script>' in html
-
-
-def test_dati_finti_in_sviluppo_e_nei_test(client):
-    html = _text(client.get("/vecchia-home"))
-    urls = dict(re.findall(r'data-demo-(home|friends|stats)-url="([^"]+)"', html))
-    assert urls == {
-        "home": "/static/dev/home_esempio.json",
-        "friends": "/static/dev/amici_esempio.json",
-        "stats": "/static/dev/statistiche_esempio.json",
-    }
-    for url in urls.values():
-        response = client.get(url)
-        assert response.status_code == 200, url
-        response.close()
-    assert "data-demo-state" not in html
-
-
-def test_forma_dei_dati_finti_usati_dalla_home():
-    home = json.loads((DEV / "home_esempio.json").read_text(encoding="utf-8"))
-    assert set(home["home:status"]) == {"online_count", "resume"} and home["home:status"]["resume"] is None
-    resume = home["home:status con partita in corso"]["resume"]
-    assert re.fullmatch(r"/game/[A-Za-z0-9_-]+", resume["url"])
-    for key in ("queue:status", "queue:status 2v2 con un amico", "queue:status 2v2 con due amici"):
-        assert set(home[key]) == {"mode", "target_score", "seconds_waiting", "rating_range", "partner",
-                                  "opponents"}, key
-    friends = json.loads((DEV / "amici_esempio.json").read_text(encoding="utf-8"))["GET /friends/"]["friends"]
-    assert [f for f in friends if f["presence"] == "online"], "serve almeno un amico online da invitare"
-    stats = json.loads((DEV / "statistiche_esempio.json").read_text(encoding="utf-8"))
-    assert {"value", "provisional"} <= set(stats["ratings"]["1v1"])
-
-
-def test_avviso_di_rientro_con_demo_rientro(client):
-    html = _text(client.get("/vecchia-home?demo=rientro"))
-    assert 'data-demo-state="rientro"' in html
-
-
-@pytest.mark.parametrize("path", ["/vecchia-home?demo=coda", "/vecchia-home?demo=", "/vecchia-home?demo=RIENTRO"])
-def test_stati_finti_non_validi(client, path):
-    assert client.get(path).status_code == 404
-
-
-def test_niente_dati_finti_nella_demo_vera(app):
-    # Dal passo 7d nella demo la home Jinja (/vecchia-home) non c'è proprio, e ?demo= dà 404
-    # anche sulla home React (/)
-    app.config["ENV_NAME"] = "demo"
-    client = app.test_client()
-    assert client.get("/vecchia-home").status_code == 404
-    assert client.get("/vecchia-home?demo=rientro").status_code == 404
-    assert client.get("/?demo=rientro").status_code == 404
-
-
-def test_index_solo_markup():
-    text = re.sub(r"\{#.*?#\}", "", INDEX.read_text(encoding="utf-8"), flags=re.DOTALL)
-    assert "<style" not in text
-    assert not re.search(r"<script\b(?![^>]*\bsrc=)", text), "script scritto nella pagina"
-    assert not re.search(r"\sstyle=", text)
-    assert '{% extends "base.html" %}' in text
-
-
-def test_css_e_js_della_home_esistono(client):
-    html = _text(client.get("/vecchia-home"))
+def test_la_spa_carica_i_css_della_home():
+    spa = (ROOT / "frontend" / "index.html").read_text(encoding="utf-8")
+    client = create_app("testing").test_client()
     for name in PAGE_CSS:
         path = f"/static/css/{name}.css"
-        assert f'href="{path}"' in html, name
+        assert f'href="{path}"' in spa, name
         response = client.get(path)
-        assert response.status_code == 200, name
-        response.close()
-    for name in COMPONENTS:
-        response = client.get(f"/static/js/components/{name}.js")
         assert response.status_code == 200, name
         response.close()
 
@@ -156,15 +56,10 @@ def test_immagini_usate_dai_css_esistono():
             assert (css_path.parent / url).resolve().is_file(), f"{name}.css: {url}"
 
 
-def test_una_sola_funzione_render():
-    code = (STATIC / "js" / "pages" / "home.js").read_text(encoding="utf-8")
-    assert code.count("function render(") == 1
-    assert "initLayout()" in code
-
-
 def test_consigli_del_modal_dal_regolamento():
     # "Lo sapevi?" usa i termini del regolamento: cantare 40 / 20, mai "matrimonio"
-    code = (STATIC / "js" / "components" / "ModeModal.js").read_text(encoding="utf-8")
+    # (dal lotto 9b-1 nella carta-modal React)
+    code = (ROOT / "frontend" / "src" / "components" / "ModeModal.tsx").read_text(encoding="utf-8")
     assert "matrimonio" not in code.lower()
     rules = (ROOT / "docs" / "REGOLE-GIOCO.md").read_text(encoding="utf-8")
     assert "Ogni mano vale 120 punti di carte, più i canti." in rules
@@ -175,30 +70,24 @@ def test_consigli_del_modal_dal_regolamento():
 # --- Nel browser ---------------------------------------------------------------
 
 
-# La home è pronta quando c'è la cascata e, in sviluppo e nei test, "giocatori online" (il numero
-# vero: da P82 anche senza login, con GET /online) o l'avviso di rientro dei dati finti
+# La home è pronta quando c'è la cascata e "giocatori online" (il numero vero: con il login
+# da home:status, senza da GET /online)
 HOME_READY = ("document.querySelector('[data-bg-cards]')?.children.length > 0"
-              " && (!document.querySelector('[data-demo-home-url]')"
-              "     || !document.querySelector('[data-online]').hidden"
-              "     || !document.querySelector('[data-resume-slot]').hidden)")
-
-
-class HomeBrowser(Browser):
-    def open(self, url, width, height, timeout=15):
-        super().open(url, width, height, HOME_READY, timeout)
+              " && document.querySelector('[data-online]:not([hidden])') !== null")
 
 
 @pytest.fixture(scope="module")
 def server():
+    needs_spa()
     with running_server(create_app("testing"), FakeUser("Mario")) as url:
         yield url
 
 
 @pytest.fixture(scope="module")
 def browser(server, tmp_path_factory):
-    b = HomeBrowser(find_browser(), tmp_path_factory.mktemp("chrome"))
+    b = Browser(find_browser(), tmp_path_factory.mktemp("chrome"))
     # Prima apertura: la prima volta si scaricano font e icone (poi restano in FONT_CACHE)
-    b.open(f"{server}/vecchia-home", 390, 844, timeout=100)
+    b.open(f"{server}/", 390, 844, HOME_READY, timeout=100)
     yield b
     b.close()
 
@@ -208,49 +97,6 @@ def logged_in(browser, server):
     browser.send("Network.setCookie", name=TEST_COOKIE[0], value=TEST_COOKIE[1], url=server)
     yield browser
     browser.send("Network.deleteCookies", name=TEST_COOKIE[0], url=server)
-
-
-# Misure della home: rettangoli di navbar, spazio di stato, titoli e carte-pulsante
-MEASURE_HOME = """(() => {
-  const box = (e) => { const r = e.getBoundingClientRect(); return {top: r.top, bottom: r.bottom, left: r.left, right: r.right}; };
-  const visible = (e) => e.getClientRects().length > 0;
-  const main = document.querySelector('main');
-  const status = [...document.querySelectorAll('[data-status-slot] > *')].filter(visible);
-  return {
-    vw: innerWidth, vh: innerHeight,
-    scrollW: document.documentElement.scrollWidth, scrollH: document.documentElement.scrollHeight,
-    mainScroll: main.scrollHeight, mainClient: main.clientHeight,
-    navbar: box(document.querySelector('[data-part="navbar"]')),
-    status: status.map(box),
-    titles: [...document.querySelectorAll('.mode-section__title')].map(box),
-    tiles: [...document.querySelectorAll('[data-tile]')].map(box),
-  };
-})()"""
-
-# Misure della carta-modal: faccia, parti visibili del corpo nell'ordine, X e titolo
-MEASURE_MODAL = """(() => {
-  const box = (e) => { const r = e.getBoundingClientRect(); return {top: r.top, bottom: r.bottom, left: r.left, right: r.right}; };
-  const dialog = document.querySelector('[data-mode-modal]');
-  const parts = [...dialog.querySelector('.mode-modal__body').children].filter((e) => e.getClientRects().length > 0);
-  return {
-    vw: innerWidth, vh: innerHeight,
-    face: box(dialog.querySelector('.mode-modal__face')),
-    parts: parts.map((e) => ({name: e.className || e.tagName, ...box(e)})),
-    close: box(dialog.querySelector('.mode-modal__close')),
-    title: box(dialog.querySelector('.mode-modal__title')),
-    play: box(dialog.querySelector('[data-play]')),
-    faceScroll: dialog.querySelector('.mode-modal__face').scrollHeight,
-    faceClient: dialog.querySelector('.mode-modal__face').clientHeight,
-  };
-})()"""
-
-FRAME = 14   # cornice doppia della faccia: 10 px dal bordo più 4 px di spessore
-EPS = 0.5
-
-
-def _overlap(a, b):
-    return a["left"] < b["right"] - EPS and b["left"] < a["right"] - EPS \
-        and a["top"] < b["bottom"] - EPS and b["top"] < a["bottom"] - EPS
 
 
 def _click(browser, selector):
@@ -263,129 +109,10 @@ def _open_modal(browser, kind, mode):
 
 
 def _close_modal(browser):
+    # Nella home React la carta-modal chiusa non c'è nella pagina (CLAUDE.md, Home P22): si
+    # aspetta che sparisca, cioè che finisca l'animazione di chiusura, prima di aprirne un'altra
     _click(browser, ".mode-modal__close")
-    browser.wait_js("!document.querySelector('[data-mode-modal]').open", "chiusura del modal")
-
-
-@pytest.mark.parametrize("size", NO_SCROLL_SIZES, ids=lambda s: f"{s[0]}x{s[1]}")
-def test_la_home_non_scorre(logged_in, server, size):
-    width, height = size
-    logged_in.open(f"{server}/vecchia-home", width, height)
-    m = logged_in.js(MEASURE_HOME)
-    assert m["scrollW"] <= m["vw"] and m["scrollH"] <= m["vh"], m
-    assert m["mainScroll"] <= m["mainClient"] + 1, "il contenuto della home esce dalla pagina"
-    assert len(m["tiles"]) == 4 and len(m["status"]) == 1
-    for tile in m["tiles"]:
-        assert tile["top"] >= m["navbar"]["bottom"] - EPS, tile
-        assert tile["bottom"] <= m["vh"] + EPS and tile["left"] >= -EPS and tile["right"] <= m["vw"] + EPS, tile
-    for block in m["titles"] + m["status"]:
-        assert block["top"] >= m["navbar"]["bottom"] - EPS and block["bottom"] <= m["vh"] + EPS, block
-        for tile in m["tiles"]:
-            assert not _overlap(block, tile), (block, tile)
-
-
-def test_sfondo_dietro_a_titoli_e_carte(logged_in, server):
-    logged_in.open(f"{server}/vecchia-home", 1440, 900)
-    result = logged_in.js("""(() => {
-      const deco = document.querySelector('[data-bg-cards]');
-      const hit = (e) => { const r = e.getBoundingClientRect();
-        return document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); };
-      return {
-        cards: deco.children.length,
-        zIndex: getComputedStyle(deco).zIndex,
-        tiles: [...document.querySelectorAll('[data-tile]')].every((t) => t.contains(hit(t))),
-        titles: [...document.querySelectorAll('.mode-section__title')].every((t) => t.contains(hit(t))),
-      };
-    })()""")
-    assert result["cards"] >= 8 and result["zIndex"] == "-1"
-    assert result["tiles"] and result["titles"], result
-
-
-@pytest.mark.parametrize("size", MODAL_SIZES, ids=lambda s: f"{s[0]}x{s[1]}")
-def test_la_carta_modal_contiene_tutto(logged_in, server, size):
-    width, height = size
-    logged_in.open(f"{server}/vecchia-home", width, height)
-    for kind, mode in TILES:
-        _open_modal(logged_in, kind, mode)
-        m = logged_in.js(MEASURE_MODAL)
-        where = f"{kind} {mode} a {width}x{height}"
-        face = m["face"]
-        assert face["top"] >= -EPS and face["bottom"] <= m["vh"] + EPS, where
-        assert face["left"] >= -EPS and face["right"] <= m["vw"] + EPS, where
-        assert m["faceScroll"] <= m["faceClient"], f"{where}: la faccia scorre"
-        inner = {"top": face["top"] + FRAME, "bottom": face["bottom"] - FRAME,
-                 "left": face["left"] + FRAME, "right": face["right"] - FRAME}
-        names = [p["name"] for p in m["parts"]]
-        assert "btn btn--primary btn--big" in names, f"{where}: manca Gioca"
-        for part in m["parts"]:
-            assert part["top"] >= inner["top"] - EPS and part["bottom"] <= inner["bottom"] + EPS, (where, part)
-            assert part["left"] >= inner["left"] - EPS and part["right"] <= inner["right"] + EPS, (where, part)
-        for before, after in zip(m["parts"], m["parts"][1:]):
-            assert before["bottom"] <= after["top"] + EPS, (where, before["name"], after["name"])
-        assert not _overlap(m["close"], m["title"]), f"{where}: la X copre il titolo"
-        _close_modal(logged_in)
-
-
-# Da P47 amici e inviti della home sono veri: i due test dell'invito finto (l'amico
-# che accettava dopo 2 secondi, il messaggio "Prova: qui comincerebbe la partita")
-# sono stati tolti. Il flusso vero lo provano tests/sockets/test_inviti.py (server)
-# e tests/frontend/test_invito_ricevuto.py (browser), di P47.
-
-
-def test_partita_veloce_apre_e_annulla_la_coda(logged_in, server):
-    logged_in.open(f"{server}/vecchia-home", 1440, 900)
-    _open_modal(logged_in, "veloce", "1v1")
-    facts = logged_in.js("document.querySelector('.facts').textContent")
-    assert "Conta per il tuo rating 1v1 (1540)" in facts
-    _click(logged_in, 'input[name="target"][value="150"]')
-    _click(logged_in, "[data-play]")
-    logged_in.wait_js("document.querySelector('[data-queue-overlay]')?.open", "schermata di coda")
-    overlay = logged_in.js("""(() => { const o = document.querySelector('[data-queue-overlay]');
-      return {mode: o.dataset.mode, target: o.dataset.targetScore, text: o.textContent,
-              seconds: o.querySelector('[data-queue-seconds]').textContent}; })()""")
-    assert overlay["mode"] == "1v1" and overlay["target"] == "150"
-    # Da P28 la Partita Veloce 1v1 usa la coda vera: l'utente di prova non ha rating
-    # (1500), quindi l'intervallo è 1500 ± 150 (D16, P111), non quello dei dati finti
-    assert "Cerco un avversario" in overlay["text"] and "tra 1350 e 1650" in overlay["text"]
-    assert re.fullmatch(r"\d+:\d\d", overlay["seconds"])
-    # Esc vale come "Annulla"
-    logged_in.send("Input.dispatchKeyEvent", type="keyDown", key="Escape", code="Escape", windowsVirtualKeyCode=27)
-    logged_in.send("Input.dispatchKeyEvent", type="keyUp", key="Escape", code="Escape", windowsVirtualKeyCode=27)
-    logged_in.wait_js("!document.querySelector('[data-queue-overlay]')", "Esc sulla schermata di coda")
-
-
-def test_intervallo_allargato_senza_riaprire_la_schermata(logged_in, server, monkeypatch):
-    # P105: un queue:status nuovo della stessa coda non riapre la schermata (faceva un
-    # lampo): cambiano solo i numeri, che scorrono fino ai valori nuovi
-    monkeypatch.setattr(matchmaking, "RANGE_STEP_SECONDS", 1)
-    logged_in.open(f"{server}/vecchia-home", 1440, 900)
-    _open_modal(logged_in, "veloce", "1v1")
-    _click(logged_in, 'input[name="target"][value="150"]')
-    _click(logged_in, "[data-play]")
-    logged_in.wait_js("document.querySelector('[data-queue-overlay]')?.open", "schermata di coda")
-    # Con "riduci movimento" spento (solo adesso: la carta-modal si apre con un'animazione)
-    logged_in.send("Emulation.setEmulatedMedia", features=[{"name": "prefers-reduced-motion", "value": "no-preference"}])
-    logged_in.js("""(() => {
-      window.__overlay = document.querySelector('[data-queue-overlay]');
-      window.__mins = [];
-      const tick = () => { const m = document.querySelector('[data-range-min]'); if (m) window.__mins.push(Number(m.textContent));
-        if (window.__mins.length < 400) requestAnimationFrame(tick); };
-      requestAnimationFrame(tick);
-    })()""")
-    logged_in.wait_js("Number(document.querySelector('[data-range-min]')?.dataset.rangeMin) <= 1250", "intervallo allargato", 6)
-    logged_in.wait_js("document.querySelector('[data-range-min]').textContent === document.querySelector('[data-range-min]').dataset.rangeMin",
-                      "numeri arrivati", 3)
-    assert logged_in.js("document.querySelector('[data-queue-overlay]') === window.__overlay && window.__overlay.open") is True
-    assert logged_in.js("document.querySelectorAll('[data-queue-overlay]').length") == 1
-    mins = logged_in.js("window.__mins")
-    # Cambia un po' alla volta, senza salti (passando per valori intermedi)
-    assert all(abs(a - b) <= 30 for a, b in itertools.pairwise(mins)), mins
-    assert any(1250 < m < 1350 for m in mins), mins
-    text = logged_in.js("document.querySelector('[data-queue-range]').textContent")
-    assert re.fullmatch(r"Avversari con rating tra \d+ e \d+", text), text
-    logged_in.send("Input.dispatchKeyEvent", type="keyDown", key="Escape", code="Escape", windowsVirtualKeyCode=27)
-    logged_in.send("Input.dispatchKeyEvent", type="keyUp", key="Escape", code="Escape", windowsVirtualKeyCode=27)
-    logged_in.wait_js("!document.querySelector('[data-queue-overlay]')", "Esc sulla schermata di coda")
+    browser.wait_js("document.querySelector('[data-mode-modal]') === null", "chiusura del modal")
 
 
 OPPONENT = """(() => { const d = document.querySelector('[data-mode-modal]');
@@ -394,25 +121,6 @@ OPPONENT = """(() => { const d = document.querySelector('[data-mode-modal]');
           desc: d.querySelector('[data-modal-desc]').textContent,
           facts: d.querySelector('.facts').textContent,
           note: d.querySelector('.target__note').getClientRects().length > 0}; })()"""
-
-
-# P123: registra i dati di ogni cpu:start mandato al server. Il client Socket.IO è un
-# modulo: importato dal test con lo stesso indirizzo, è lo stesso della pagina. I dati
-# stanno in sessionStorage, che resta quando la scheda passa al tavolo.
-RECORD_CPU_START = """import('/static/js/vendor/socket.io.min.js').then((m) => {
-  sessionStorage.setItem('test-cpu-start', '[]');
-  const emit = m.Socket.prototype.emit;
-  m.Socket.prototype.emit = function (event, ...args) {
-    if (event === 'cpu:start') {
-      const sent = JSON.parse(sessionStorage.getItem('test-cpu-start'));
-      sessionStorage.setItem('test-cpu-start', JSON.stringify([...sent, args[0]]));
-    }
-    return emit.call(this, event, ...args);
-  };
-  return true;
-})"""
-CPU_START_SENT = "JSON.parse(sessionStorage.getItem('test-cpu-start') ?? '[]')"
-
 CHOICES = "[...document.querySelectorAll('fieldset[data-opponent] .opponent__choice')].map((s) => s.textContent)"
 LEGEND = "document.querySelector('fieldset[data-opponent] legend').textContent"   # la finestra ha anche data-opponent
 
@@ -420,7 +128,7 @@ LEGEND = "document.querySelector('fieldset[data-opponent] legend').textContent" 
 def test_scelta_dell_avversario_solo_nella_partita_veloce(logged_in, server):
     # P73 (D43): "Avversario: Giocatore · CPU" nella Partita Veloce 1v1; P123: "Gioca con:
     # Giocatori · CPU" nella Partita Veloce 2v2; con un amico niente; parte sempre da Giocatore
-    logged_in.open(f"{server}/vecchia-home", 1440, 900)
+    logged_in.open(f"{server}/", 1440, 900, HOME_READY)
     for kind, mode in TILES:
         _open_modal(logged_in, kind, mode)
         state = logged_in.js(OPPONENT)
@@ -441,101 +149,23 @@ def test_scelta_dell_avversario_solo_nella_partita_veloce(logged_in, server):
     _close_modal(logged_in)
 
 
-def test_contro_la_cpu_nel_2v2(logged_in, server):
-    # P123 (D49): con "Gioca con: CPU" cambiano descrizione e "In breve", sparisce la frase
-    # dei punti, e "Gioca" manda cpu:start con mode "2v2". La partita 2v2 vera la crea il
-    # server di P122 (tests/sockets): qui si controlla solo cosa manda la pagina.
-    from app.realtime.room_manager import rooms
-
-    logged_in.open(f"{server}/vecchia-home", 1440, 900)
-    logged_in.wait_js("import('/static/js/core/socket.js').then((m) => m.isConnected())", "collegamento al tempo reale")
-    assert logged_in.js(RECORD_CPU_START) is True
+def test_contro_la_cpu_nel_2v2_i_testi(logged_in, server):
+    # P123 (D49): con "Gioca con: CPU" cambiano descrizione e "In breve" e sparisce la frase
+    # dei punti; tornando a "Giocatori" torna tutto. Che "Gioca" porti al tavolo 2v2 con le
+    # tre CPU lo controlla test_spa_home_coda.py (test_contro_la_cpu_si_va_subito_al_tavolo)
+    logged_in.open(f"{server}/", 1440, 900, HOME_READY)
     _open_modal(logged_in, "veloce", "2v2")
     _click(logged_in, 'input[name="opponent"][value="cpu"]')
+    logged_in.wait_js("document.querySelector('[data-mode-modal]').dataset.opponent === 'cpu'", "scelta della CPU")
     state = logged_in.js(OPPONENT)
     assert "in coppia con il computer" in state["desc"] and state["note"] is False
     assert "Parte subito, senza coda" in state["facts"] and "Non conta per il rating" in state["facts"]
     assert "CPU 1, la tua compagna, siede di fronte a te" in state["facts"]
-    _click(logged_in, 'input[name="opponent"][value="player"]')   # e tornando a Giocatori torna tutto
+    _click(logged_in, 'input[name="opponent"][value="player"]')
+    logged_in.wait_js("document.querySelector('[data-mode-modal]').dataset.opponent === 'player'", "scelta dei giocatori")
     state = logged_in.js(OPPONENT)
     assert "Entri in coda da solo" in state["desc"] and state["note"] is True and "Conta per il tuo rating 2v2" in state["facts"]
-    _click(logged_in, 'input[name="opponent"][value="cpu"]')
-    _click(logged_in, 'input[name="target"][value="300"]')
-    _click(logged_in, "[data-play]")
-    try:
-        logged_in.wait_js("location.pathname.startsWith('/game/')", "tavolo contro la CPU", 8)
-        assert logged_in.js("document.querySelector('[data-queue-overlay]')") is None   # niente coda
-        sent = logged_in.js(CPU_START_SENT)
-        assert len(sent) == 1 and sent[0]["mode"] == "2v2" and sent[0]["target_score"] == 300, sent
-        assert isinstance(sent[0]["request_id"], str) and sent[0]["request_id"], sent
-    finally:
-        for room in rooms.rooms_of(7):   # FakeUser("Mario"): la partita contro la CPU non resta aperta
-            room.run(room._stop_timers)
-            rooms.remove(room.id)
-
-
-def test_contro_la_cpu_si_va_subito_al_tavolo(logged_in, server):
-    # P73: con "Avversario: CPU" cambiano descrizione e "In breve", sparisce la frase dei
-    # punti, e "Gioca" manda cpu:start (contratto 4.1): niente coda, si va al tavolo
-    from app.realtime.room_manager import rooms
-
-    logged_in.open(f"{server}/vecchia-home", 1440, 900)
-    logged_in.wait_js("import('/static/js/core/socket.js').then((m) => m.isConnected())", "collegamento al tempo reale")
-    assert logged_in.js(RECORD_CPU_START) is True
-    _open_modal(logged_in, "veloce", "1v1")
-    _click(logged_in, 'input[name="opponent"][value="cpu"]')
-    state = logged_in.js(OPPONENT)
-    assert "contro il computer" in state["desc"] and state["note"] is False
-    assert "Parte subito, senza coda" in state["facts"] and "Non conta per il rating" in state["facts"]
-    _click(logged_in, 'input[name="opponent"][value="player"]')   # e tornando a Giocatore torna tutto
-    state = logged_in.js(OPPONENT)
-    assert "Entri in coda" in state["desc"] and state["note"] is True and "Conta per il tuo rating 1v1" in state["facts"]
-    _click(logged_in, 'input[name="opponent"][value="cpu"]')
-    _click(logged_in, 'input[name="target"][value="150"]')
-    _click(logged_in, "[data-play]")
-    try:
-        logged_in.wait_js("location.pathname.startsWith('/game/')", "tavolo contro la CPU", 8)
-        assert logged_in.js("document.querySelector('[data-queue-overlay]')") is None
-        assert [d["mode"] for d in logged_in.js(CPU_START_SENT)] == ["1v1"]   # P123 (D49)
-        room = rooms.get(logged_in.js("location.pathname").split("/")[2])
-        assert room is not None and len(room.players) == 2 and room.cpu_seats == frozenset({1}) and room.rated is False
-        logged_in.wait_js("document.querySelector('.seat .avatar--cpu .icon')?.textContent === 'smart_toy'",
-                          "robot al posto dell'avatar della CPU", 8)
-    finally:
-        for room in rooms.rooms_of(7):   # FakeUser("Mario"): la partita contro la CPU non resta aperta
-            room.run(room._stop_timers)
-            rooms.remove(room.id)
-
-
-def test_senza_login_la_carta_apre_la_finestra_di_accesso(browser, server):
-    browser.open(f"{server}/vecchia-home", 390, 844)
-    assert browser.js("document.body.dataset.userId") == ""
-    _click(browser, '[data-tile][data-kind="veloce"][data-mode="1v1"]')
-    browser.wait_js("document.querySelector('dialog.dialog[open]') !== null", "finestra di accesso")
-    assert "Accedi o registrati per giocare" in browser.js("document.querySelector('dialog.dialog[open]').textContent")
-    assert browser.js("document.querySelector('[data-mode-modal]')") is None
-
-
-def test_avviso_di_rientro_solo_se_previsto(logged_in, server):
-    logged_in.open(f"{server}/vecchia-home", 1440, 900)
-    assert logged_in.js("document.querySelector('[data-resume]')") is None
-    # Da P44 il numero degli online è quello vero (solo l'utente del test: 1); da P82 quello
-    # finto non compare più, ma quello vero arriva con home:status, quindi si aspetta
-    logged_in.wait_js("document.querySelector('[data-online-count]').textContent === '1'", "numero vero degli online")
-    assert logged_in.js("document.querySelector('[data-online-label]').textContent") == "giocatore online"  # P120
-
-    for width, height in [(1440, 900), (360, 640), (768, 1024)]:
-        logged_in.open(f"{server}/vecchia-home?demo=rientro", width, height)
-        banner = logged_in.js("""(() => { const b = document.querySelector('[data-resume]');
-          return b && {text: b.textContent, href: b.querySelector('[data-resume-link]').getAttribute('href'),
-                       online: document.querySelector('[data-online]').hidden}; })()""")
-        assert banner and "Hai una partita in corso" in banner["text"] and "1v1 a 500 punti" in banner["text"]
-        assert banner["href"] == "/game/a1b2c3d4" and banner["online"] is True
-        m = logged_in.js(MEASURE_HOME)
-        assert m["scrollH"] <= m["vh"] and m["mainScroll"] <= m["mainClient"] + 1, (width, height)
-        for tile in m["tiles"]:
-            assert not _overlap(m["status"][0], tile), (width, height)
-            assert tile["bottom"] <= m["vh"] + EPS, (width, height)
+    _close_modal(logged_in)
 
 
 ONLINE_TEXT = r"document.querySelector('[data-online]').textContent.replace(/\s+/g, ' ').trim()"
@@ -543,7 +173,14 @@ ONLINE_TEXT = r"document.querySelector('[data-online]').textContent.replace(/\s+
 
 def test_un_giocatore_online_al_singolare(browser, server):
     # P120: "1 giocatore online", "2 giocatori online" (senza login, il numero di GET /online, P82);
-    # schede finte di utenti che non esistono (come test_online_senza_login.py)
+    # schede finte di utenti che non esistono (come test_online_senza_login.py).
+    # La pagina del test prima (con il login di Mario, utente 7) è ancora aperta e collegata:
+    # si apre la home senza login e si aspetta che la sua scheda esca, altrimenti il conto
+    # di partenza sarebbe sbagliato
+    browser.open(f"{server}/", 390, 844, HOME_READY)
+    deadline = time.monotonic() + 10
+    while presence.tabs_of(7) and time.monotonic() < deadline:
+        time.sleep(0.1)
     before = presence.count()
     if before > 1:
         pytest.skip(f"già {before} utenti collegati")
@@ -551,7 +188,7 @@ def test_un_giocatore_online_al_singolare(browser, server):
     try:
         for count, (user_id, sid) in enumerate(tabs, start=before + 1):
             presence.add(user_id, sid)
-            browser.open(f"{server}/vecchia-home", 390, 844)  # HOME_READY aspetta la risposta di GET /online
+            browser.open(f"{server}/", 390, 844, HOME_READY)
             browser.wait_js(f"{ONLINE_TEXT}.startsWith('{count} ')", f"{count} online")
             expected = "1 giocatore online" if count == 1 else f"{count} giocatori online"
             assert browser.js(ONLINE_TEXT) == expected

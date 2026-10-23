@@ -2,10 +2,11 @@
 
 Controlla:
 - / c'è ovunque e accetta solo ?demo=rientro, che vale solo in sviluppo e nei test
-  (altrove 404, come la home Jinja di prima, /vecchia-home); /prova-home non c'è più;
-- nel browser, la stessa pagina della home Jinja (/vecchia-home): stessi elementi, classi, data-* e
-  testi in <main>, e la stessa cascata di carte dello sfondo, a 390×844 e 1280×720,
-  anche con ?demo=rientro (l'avviso "Hai una partita in corso");
+  (altrove 404); /prova-home e /vecchia-home non ci sono più;
+- nel browser, a 390×844 e 1280×720, anche con ?demo=rientro (l'avviso "Hai una
+  partita in corso"), la cascata di carte dello sfondo e la CSP che non blocca niente
+  (fino al lotto 9b-1 qui c'era anche il confronto, elemento per elemento, con la home
+  Jinja: tolto con la home Jinja, scelta 2 del passo 9);
 - senza login: il numero degli online da GET /online, nessun collegamento al tempo
   reale, una carta-pulsante apre "Accedi o registrati", la CSP non blocca niente;
 - con il login: il numero da home:status ("1 giocatore online", al singolare), una
@@ -25,38 +26,17 @@ from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_
 from tests.spa import needs_spa
 
 PAGE = "/"  # dal passo 7d (fino al 7c era /prova-home)
-OLD_PAGE = "/vecchia-home"  # la home Jinja di prima, solo in sviluppo e nei test
 # Come test_csp.py: registra ogni risorsa bloccata dalla CSP
 RECORD = (
     "window.__csp = [];"
     "document.addEventListener('securitypolicyviolation',"
     " e => window.__csp.push(e.effectiveDirective + ' ' + e.blockedURI));"
 )
-# READY: la home (Jinja o React) ha lo sfondo pieno e il numero degli online o l'avviso di rientro
+# READY: la home ha lo sfondo pieno e il numero degli online o l'avviso di rientro
 READY = ("document.querySelector('h1') !== null"
          " && document.querySelectorAll('[data-bg-cards] > *').length > 0"
          " && (document.querySelector('[data-online]:not([hidden])') !== null"
          " || document.querySelector('[data-resume-slot]:not([hidden])') !== null)")
-# SIGNATURE: ogni elemento sotto `root` come "profondità tag attributi | testo proprio";
-# gli attributi in ordine alfabetico (React e Jinja li scrivono in ordini diversi).
-# Si saltano i data-demo-*-url della home Jinja (gli indirizzi dei dati finti, che la
-# home React non usa) e, con `skip`, il contenuto degli elementi indicati.
-SIGNATURE = """((selector, skip) => {
-  const out = [];
-  function walk(node, depth) {
-    for (const child of node.children) {
-      const attrs = [...child.attributes]
-        .filter((a) => !(a.name.startsWith('data-demo-') && a.name.endsWith('-url')))
-        .map((a) => `${a.name}=${a.value}`).sort();
-      const text = [...child.childNodes].filter((n) => n.nodeType === 3)
-        .map((n) => n.textContent.trim()).filter(Boolean).join(' ');
-      out.push(`${depth} ${child.tagName} ${attrs.join(' ')} | ${text}`);
-      if (!(skip && child.matches(skip))) walk(child, depth + 1);
-    }
-  }
-  walk(document.querySelector(selector), 0);
-  return out;
-})"""
 FLASHES = "[...document.querySelectorAll('[data-flash] .flash')].map((f) => [f.dataset.flashKind, f.textContent.trim()])"
 
 
@@ -82,10 +62,6 @@ def browser(server, tmp_path):
     b.close()
 
 
-def _signature(browser, selector, skip=None):
-    return browser.js(f"{SIGNATURE}({json.dumps(selector)}, {json.dumps(skip)})")
-
-
 def _login(browser, server):
     browser.send("Network.setCookie", name=TEST_COOKIE[0], value=TEST_COOKIE[1], url=server)
 
@@ -93,18 +69,19 @@ def _login(browser, server):
 # --- Flask -------------------------------------------------------------------
 
 
-def test_rientro_finto_e_home_jinja_solo_in_sviluppo_e_nei_test(app, server, monkeypatch):
+def test_rientro_finto_solo_in_sviluppo_e_nei_test(app, server, monkeypatch):
     client = app.test_client()
     assert client.get(PAGE).status_code == 200
     assert client.get(f"{PAGE}?demo=rientro").status_code == 200
-    assert client.get(f"{PAGE}?demo=altro").status_code == 404
-    assert client.get(OLD_PAGE).status_code == 200
+    # P22: un ?demo= diverso da rientro è un indirizzo sbagliato (fino al lotto 9b-1 lo
+    # controllava per la home Jinja anche test_pagina_home.py, con coda e vuoto)
+    for query in ("?demo=altro", "?demo=coda", "?demo=", "?demo=RIENTRO"):
+        assert client.get(f"{PAGE}{query}").status_code == 404, query
     assert client.get("/prova-home").status_code == 404
-    # Nella demo e in produzione la home c'è, ma senza ?demo= e senza la home Jinja
+    # Nella demo e in produzione la home c'è, ma senza ?demo=
     monkeypatch.setitem(app.config, "ENV_NAME", "demo")
     assert client.get(PAGE).status_code == 200
     assert client.get(f"{PAGE}?demo=rientro").status_code == 404
-    assert client.get(OLD_PAGE).status_code == 404
 
 
 # --- Nel browser ---------------------------------------------------------------
@@ -112,15 +89,11 @@ def test_rientro_finto_e_home_jinja_solo_in_sviluppo_e_nei_test(app, server, mon
 
 @pytest.mark.parametrize("size", [(390, 844), (1280, 720)])
 @pytest.mark.parametrize("query", ["", "?demo=rientro"])
-def test_stessa_pagina_della_home_jinja(browser, server, size, query):
+def test_sfondo_pieno_e_csp_pulita(browser, server, size, query):
     width, height = size
-    browser.open(f"{server}{OLD_PAGE}{query}", width, height, READY)
-    old_main = _signature(browser, "main", "[data-bg-cards]")
-    old_background = _signature(browser, "[data-bg-cards]")
     browser.open(f"{server}{PAGE}{query}", width, height, READY)
-    assert _signature(browser, "main", "[data-bg-cards]") == old_main
-    assert _signature(browser, "[data-bg-cards]") == old_background
-    assert 8 <= len(old_background) and browser.js("window.__csp") == []
+    assert browser.js("document.querySelectorAll('[data-bg-cards] *').length") >= 8
+    assert browser.js("window.__csp") == []
 
 
 def test_senza_login(browser, server):

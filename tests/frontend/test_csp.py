@@ -22,9 +22,8 @@ RECORD = (
 )
 PAGES = [
     # (indirizzo, condizione JS di pagina pronta)
-    # Dal passo 7d / è la home React; la home Jinja di prima è su /vecchia-home (fino al passo 9)
+    # Dal passo 7d / è la home React (la home Jinja è tolta dal passo 9)
     ("/", "document.querySelector('[data-online-count]')?.textContent === '1'"),  # home:status arrivato
-    ("/vecchia-home", "document.querySelector('[data-online-count]')?.textContent === '1'"),
     # Passo 8a: il tavolo React, con la vista finta disegnata
     ("/game/prova?demo=1v1", "document.querySelector('[data-mode]') !== null"),
     ("/auth/register", "document.querySelector('form') !== null"),

@@ -6,11 +6,12 @@
   dei dati di prova (24); il numero si aggiorna quando qualcuno entra o esce; con la
   scheda nascosta la pagina smette di chiederlo e riprende quando torna visibile.
   Per non aspettare i 15 s veri, uno script nella pagina accorcia solo i timer da
-  15 s (ONLINE_POLL_MS di home.js) a 0,3 s.
+  15 s (ONLINE_POLL_MS di pages/HomePage.tsx) a 0,3 s.
 Non serve MySQL: chi è online lo sa presence.py, in memoria; i test aggiungono e
 tolgono schede finte (utenti 9001 e 9002, che non esistono).
-Se né Chrome né Edge sono installati i controlli nel browser si saltano.
-Dal passo 7d della migrazione la home Jinja (home.js) è su /vecchia-home: si prova lì.
+Se né Chrome né Edge sono installati, o manca il build della SPA, i controlli nel
+browser si saltano. Fino al lotto 9b-1 si provava la home Jinja (home.js); da allora
+la home React, su /.
 """
 
 import json
@@ -20,12 +21,14 @@ import pytest
 from app import create_app
 from app.realtime.presence import presence
 from tests.browser import Browser, find_browser, running_server
+from tests.spa import needs_spa
 
 FAKE_TABS = [(9001, "p82-a"), (9001, "p82-b"), (9002, "p82-c")]
 DEMO_COUNT = "24"  # il numero finto di app/static/dev/home_esempio.json
 
-# Prima di home.js: timer da 15 s accorciati, ogni numero mostrato e ogni GET /online
-# ricordati, e document.hidden comandabile dal test
+# Prima della pagina: timer da 15 s accorciati, ogni numero mostrato e ogni GET /online
+# ricordati, e document.hidden comandabile dal test. React disegna il numero dopo il
+# caricamento: l'osservatore guarda tutta la pagina e ricorda il numero quando cambia
 EARLY = """
 (() => {
   const original = window.setTimeout;
@@ -40,9 +43,14 @@ EARLY = """
   window.__hidden = false;
   Object.defineProperty(Document.prototype, 'hidden', { get: () => window.__hidden, configurable: true });
   document.addEventListener('DOMContentLoaded', () => {
-    const count = document.querySelector('[data-online-count]');
-    new MutationObserver(() => window.__counts.push(count.textContent))
-      .observe(count, { childList: true, characterData: true, subtree: true });
+    let last = null;
+    new MutationObserver(() => {
+      const count = document.querySelector('[data-online-count]');
+      if (count !== null && count.textContent !== last) {
+        last = count.textContent;
+        window.__counts.push(last);
+      }
+    }).observe(document.body, { childList: true, characterData: true, subtree: true });
   });
 })();
 """
@@ -90,7 +98,8 @@ def test_solo_lettura():
 
 @pytest.fixture(scope="module")
 def server():
-    with running_server(create_app("testing")) as url:
+    needs_spa()
+    with running_server(create_app("testing")) as url:  # senza utente finto: nessun login
         yield url
 
 
@@ -104,15 +113,16 @@ def browser(server, tmp_path_factory):
 
 
 def _open(browser, server):
-    browser.open(f"{server}/vecchia-home", 390, 844, f"{SHOWN} && {COUNT} === '{presence.count()}'", timeout=100)
-    assert browser.js("document.body.dataset.userId") == ""
+    ready = f"document.querySelector('[data-online]:not([hidden])') !== null && {COUNT} === '{presence.count()}'"
+    browser.open(f"{server}/", 390, 844, ready, timeout=100)
+    # Senza login la navbar ha "Accedi" al posto dell'avatar con le statistiche
+    assert browser.js("document.querySelector('[data-open-stats]') === null") is True
 
 
 def test_senza_login_il_numero_vero_anche_zero(browser, server, fake_tabs):
     _open(browser, server)
     assert browser.js(COUNT) == str(presence.count())
-    # Il numero finto non compare mai, nemmeno per un attimo (i dati di prova ci sono)
-    assert browser.js("document.querySelector('[data-demo-home-url]') !== null")
+    # Il numero finto dei dati di prova non compare mai, nemmeno per un attimo
     assert DEMO_COUNT not in json.loads(browser.js("JSON.stringify(window.__counts)"))
 
     before = presence.count()

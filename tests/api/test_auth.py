@@ -125,7 +125,9 @@ def test_registrazione_ok_entra_e_torna_alla_home(app, client):
     response = register(client)
     assert redirect_of(response) == "/"
     assert logged_in(client)
-    assert "Benvenuto, Mario!" in client.get("/vecchia-home").get_data(as_text=True)  # dal passo 7d la home Jinja (con i flash) è su /vecchia-home
+    # Il messaggio la home React lo legge da GET /api/auth/session (dal lotto 9b-1)
+    flashes = client.get("/api/auth/session").get_json()["data"]["flashes"]
+    assert [flash["message"] for flash in flashes] == ["Benvenuto, Mario!"]
     [user] = users(app)
     assert (user.username, user.email) == ("Mario", "mario@esempio.it")
 

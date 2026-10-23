@@ -4,13 +4,14 @@ Controlla le correzioni trovate con un controllo di accessibilità di tutte le p
 (axe-core, lanciato a mano fuori dal progetto il 29/09/2026) e dai riepiloghi:
 - ogni pagina ha un solo titolo principale (<h1>), anche dove si vede solo il logo;
 - le icone dei canti accanto al nome hanno un ruolo, così l'etichetta si legge;
-- al tavolo si gioca una carta con la sola tastiera (Tab e Invio);
-- dopo un ricaricamento con il pannello amici aperto, "indietro" chiude di nuovo il
-  pannello riaperto (prima la cronologia teneva lo stato vecchio).
+- al tavolo si gioca una carta con la sola tastiera (Tab e Invio).
+"Indietro" dopo un ricaricamento con il pannello amici aperto lo controllava qui il
+pannello del JS vecchio; dal lotto 9b-1 lo controlla, per quello React,
+tests/frontend2/test_spa_amici.py (test_dopo_un_ricaricamento_non_si_riapre).
 
 Le pagine si aprono in Chrome o Edge senza finestra (tests/browser.py), con un utente
-di prova collegato e senza MySQL: il pannello amici si apre anche se la lista non
-arriva. Se né Chrome né Edge sono installati i controlli nel browser si saltano.
+di prova collegato e senza MySQL. Se né Chrome né Edge sono installati i controlli
+nel browser si saltano.
 """
 
 import pytest
@@ -86,19 +87,3 @@ def test_una_carta_giocata_con_la_tastiera(browser, server):
     browser.send("Input.dispatchKeyEvent", type="keyUp", key="Enter", code="Enter", windowsVirtualKeyCode=13)
     status = browser.js("document.querySelector('[data-table-status]').textContent")
     assert card.startswith("Gioca ") and status.startswith("Prova: hai scelto")
-
-
-def test_indietro_chiude_il_pannello_dopo_un_ricaricamento(browser, server):
-    _login(browser, server)
-    # Pannello amici del JS vecchio (FriendsPanel.js): dal passo 7d sta sulla home Jinja, /vecchia-home
-    browser.open(f"{server}/vecchia-home", *PHONE, "document.querySelector('[data-friends-button]') !== null")
-    # Come dopo un ricaricamento con la chat aperta: la cronologia ricorda ancora il pannello
-    browser.js("history.replaceState({ friendsPanel: 'chat' }, '')")
-    browser.send("Page.reload")
-    browser.wait_js("document.readyState === 'complete' && document.querySelector('[data-friends-button]') !== null",
-                    "pagina ricaricata")
-    browser.wait_js("history.state === null || !history.state.friendsPanel", "stato vecchio tolto", 5)
-    browser.click("[data-friends-button]")
-    assert browser.js("document.getElementById('friends').open") is True
-    browser.js("history.back()")
-    browser.wait_js("!document.getElementById('friends').open", "pannello chiuso con indietro", 5)

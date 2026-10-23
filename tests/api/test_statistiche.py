@@ -27,6 +27,7 @@ from app.services.auth_service import LoginLimiter
 from app.services.match_service import MatchRecord, PlayerRecord
 from tests import accounts
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
+from tests.spa import needs_spa
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 PASSWORD = "Password-di-prova-30"
@@ -234,12 +235,12 @@ def test_pannello_a_360_px_con_i_dati_veri(app, players, tmp_path):
     _save(app, "1v1", (mario, turi), 0, number=3)
     expected = mario.stats()
 
+    needs_spa()  # dal lotto 9b-1 il pannello della home React (StatsSheet.tsx)
     with running_server(app, FakeUser("Mario", mario.id)) as url:
         browser = Browser(find_browser(), tmp_path / "chrome")
         try:
             browser.send("Network.setCookie", name=TEST_COOKIE[0], value=TEST_COOKIE[1], url=url)
-            browser.open(f"{url}/vecchia-home", 360, 640,  # dal passo 7d la home Jinja (StatsPanel.js) è qui
-                          "document.querySelector('[data-open-stats]') !== null")
+            browser.open(f"{url}/", 360, 640, "document.querySelector('[data-open-stats]') !== null")
             browser.click("[data-open-stats]")
             browser.wait_js("document.querySelector('[data-stats-body] .stats-grid') !== null", "statistiche")
             shown = browser.js("""Object.fromEntries([...document.querySelectorAll('[data-stats-body] [data-stat]')]

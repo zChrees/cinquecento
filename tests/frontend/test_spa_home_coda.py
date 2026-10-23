@@ -1,15 +1,14 @@
 """Passo 7b della migrazione: carta-modal, coda e CPU nella home React (dal passo 7d su /;
-prima /prova-home). La home Jinja di confronto è su /vecchia-home.
+prima /prova-home).
 
 Nel browser (Chrome o Edge senza finestra), con il server vero e il database dei test,
 svuotato e ricreato qui con migrate.py (come test_chat_pannello.py: la suite frontend
 non lo prepara). L'utente è Mario, registrato davvero, con il login finto di
 running_server (FakeUser con il suo id).
 Controlla:
-- la carta-modal della Partita Veloce è la stessa della home Jinja (elementi,
-  attributi e testi, 1v1 e 2v2, con "Giocatore" e con "CPU"), a parte il consiglio
-  (a caso) e il rating (vero qui, finto nella home Jinja: "In breve" lo prende da
-  GET /stats/me, e Mario ha 1500 provvisorio);
+- la carta-modal della Partita Veloce (1v1 e 2v2) parte da 500 punti e "Giocatore",
+  e passa a "CPU"; quella "con un amico" non ha la scelta dell'avversario (P73);
+  "In breve" ha il rating vero (da GET /stats/me: Mario ha 1500 provvisorio);
 - "Gioca" con "Giocatore" apre la schermata di coda (modo, punti, intervallo, secondi);
   "Annulla" e Esc la chiudono e tolgono dalla coda; P105: con l'intervallo allargato la
   schermata resta la stessa e i numeri scorrono;
@@ -48,7 +47,6 @@ from tests.frontend.test_chat_pannello import _migrate
 from tests.spa import needs_spa
 
 PAGE = "/"  # dal passo 7d (fino al 7c era /prova-home)
-OLD_PAGE = "/vecchia-home"  # la home Jinja di prima, solo in sviluppo e nei test
 PASSWORD = "Password-di-prova-7b"
 SOCKET_ROUTE = "*/socket.io/*"
 # Come test_csp.py: registra ogni risorsa bloccata dalla CSP
@@ -60,35 +58,12 @@ RECORD = (
 # READY: home collegata al tempo reale (il numero degli online da home:status)
 CONNECTED = "document.querySelector('[data-friends-panel]')?.dataset.connection === 'connected'"
 READY = f"document.querySelector('[data-online-count]')?.textContent !== '' && {CONNECTED}"
-# READY_OLD: la home Jinja, collegata
-READY_OLD = ("document.querySelector('[data-online-count]')?.textContent !== ''"
-             " && import('/static/js/core/socket.js').then((m) => m.isConnected())")
 MODAL_OPEN = "document.querySelector('[data-mode-modal]')?.open === true"
 OVERLAY_OPEN = "document.querySelector('[data-queue-overlay]')?.open === true"
 NO_OVERLAY = "document.querySelector('[data-queue-overlay]') === null"
-# SIGNATURE: ogni elemento della carta-modal come "profondità tag attributi | testo proprio",
-# con gli attributi in ordine alfabetico. Senza "checked", che React scrive come attributo
-# e ModeModal.js solo come proprietà (la scelta vera si confronta a parte), senza il
-# consiglio (a caso) e senza il rating tra parentesi (vero qui, finto nella home Jinja).
-SIGNATURE = """(() => {
-  const out = [];
-  function walk(node, depth) {
-    for (const child of node.children) {
-      const attrs = [...child.attributes].filter((a) => a.name !== 'checked')
-        .map((a) => `${a.name}=${a.value}`).sort();
-      let text = [...child.childNodes].filter((n) => n.nodeType === 3)
-        .map((n) => n.textContent.trim()).filter(Boolean).join(' ');
-      if (child.matches('.mode-modal__tip p > span')) text = '(consiglio)';
-      text = text.replace(/ \\(\\d+(, provvisorio)?\\)$/, '');
-      out.push(`${depth} ${child.tagName} ${attrs.join(' ')} | ${text}`);
-      walk(child, depth + 1);
-    }
-  }
-  const dialog = document.querySelector('[data-mode-modal]');
-  walk({ children: [dialog] }, 0);
-  const checked = [...dialog.querySelectorAll('input:checked')].map((i) => `${i.name}=${i.value}`);
-  return { out, checked };
-})()"""
+# CHECKED: le scelte attive della carta-modal, come "nome=valore"
+CHECKED = ("[...document.querySelectorAll('[data-mode-modal] input:checked')]"
+           ".map((i) => `${i.name}=${i.value}`)")
 
 
 @pytest.fixture(scope="module")
@@ -175,33 +150,31 @@ def _join(browser, mode="1v1", target=150):
 # --- Carta-modal ---------------------------------------------------------------
 
 
+# Fino al lotto 9b-1 i due test qui sotto confrontavano anche la carta-modal, elemento per
+# elemento, con quella della home Jinja: tolto con la home Jinja (scelta 2 del passo 9).
+
+
 @pytest.mark.parametrize("mode", ["1v1", "2v2"])
-def test_carta_modal_uguale_a_quella_della_home_jinja(browser, server, mode):
-    signatures = []
-    for url, ready in ((f"{server}{OLD_PAGE}", READY_OLD), (f"{server}{PAGE}", READY)):
-        browser.open(url, 390, 844, ready, timeout=60)
-        _open_modal(browser, mode)
-        player = browser.js(SIGNATURE)
-        _click(browser, 'input[name="opponent"][value="cpu"]')
-        browser.wait_js("document.querySelector('[data-mode-modal]').dataset.opponent === 'cpu'", "scelta della CPU")
-        signatures.append((player, browser.js(SIGNATURE)))
-    assert signatures[1] == signatures[0]
-    assert signatures[1][0]["checked"] == ["target=500", "opponent=player"]
-    assert signatures[1][1]["checked"] == ["target=500", "opponent=cpu"]
+def test_carta_modal_della_partita_veloce(browser, server, mode):
+    browser.open(f"{server}{PAGE}", 390, 844, READY, timeout=60)
+    _open_modal(browser, mode)
+    assert browser.js(CHECKED) == ["target=500", "opponent=player"]
+    _click(browser, 'input[name="opponent"][value="cpu"]')
+    browser.wait_js("document.querySelector('[data-mode-modal]').dataset.opponent === 'cpu'", "scelta della CPU")
+    assert browser.js(CHECKED) == ["target=500", "opponent=cpu"]
     assert browser.js("window.__csp") == []
 
 
 @pytest.mark.parametrize("mode", ["1v1", "2v2"])
-def test_carta_modal_con_un_amico_uguale_a_quella_della_home_jinja(browser, server, mode):
+def test_carta_modal_con_un_amico(browser, server, mode):
     # 7c: "Gioca con un amico" (Mario non ha amici: "Nessun amico online in questo momento.")
-    signatures = []
-    for url, ready in ((f"{server}{OLD_PAGE}", READY_OLD), (f"{server}{PAGE}", READY)):
-        browser.open(url, 390, 844, ready, timeout=60)
-        _click(browser, f'[data-tile][data-kind="amico"][data-mode="{mode}"]')
-        browser.wait_js(f"{MODAL_OPEN} && document.querySelector('.invite__empty') !== null", "carta-modal con un amico")
-        signatures.append(browser.js(SIGNATURE))
-    assert signatures[1] == signatures[0]
+    browser.open(f"{server}{PAGE}", 390, 844, READY, timeout=60)
+    _click(browser, f'[data-tile][data-kind="amico"][data-mode="{mode}"]')
+    browser.wait_js(f"{MODAL_OPEN} && document.querySelector('.invite__empty') !== null", "carta-modal con un amico")
     assert browser.js("document.querySelector('[data-play]').disabled") is True
+    # P73: la scelta "Avversario" (Giocatore o CPU) c'è solo nella Partita Veloce (fino al
+    # lotto 9b-1 lo controllava per la home Jinja test_pagina_home.py)
+    assert browser.js("document.querySelector('[data-mode-modal] fieldset[data-opponent]').hidden") is True
     assert browser.js("window.__csp") == []
 
 

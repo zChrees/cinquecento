@@ -1,18 +1,19 @@
-"""P46 con la chat vera di P48: finestra chat nel pannello amici.
+"""P46 con la chat vera di P48: finestra chat nel pannello amici (P128, molti messaggi).
 
-I controlli della finestra chat di P46 ("Fatto quando" di SCALETTA.md) che prima
-usavano la chat finta: a 360×640 il campo di scrittura resta visibile, un messaggio
-vuoto si rifiuta, il campo accetta al massimo 1000 caratteri, aprire la chat azzera
-il contatore dei non letti, "indietro" riporta dalla chat alla lista e poi chiude il
-pannello. Nel browser (Chrome o Edge senza finestra, tests/browser.py), con il server
-vero e il database dei test, svuotato e ricreato qui con migrate.py come in
-test_chat_vera.py: Mario e Giulia sono amici, Giulia ha mandato 3 messaggi non letti.
-Se né Chrome né Edge sono installati i controlli nel browser si saltano.
-Dal passo 7d della migrazione / è la home React: la home Jinja (con il JS vecchio) è su /vecchia-home.
+Fino al lotto 9b-1 della migrazione questo file provava la chat del JavaScript vecchio
+(sulla home Jinja, /vecchia-home): i suoi controlli (campo visibile a 360 px e limiti,
+non letti azzerati, fuoco dopo "Invia", doppio clic, "indietro", pochi messaggi in
+fondo, trascinamento) li fa ora tests/frontend/test_spa_chat.py sulla chat React. Qui
+resta, sulla home React (/), quello che lì non c'è: con molti messaggi l'elenco scorre
+fino al primo (lo spazio vuoto in alto di P128 non li rende irraggiungibili).
+Nel browser (Chrome o Edge senza finestra, tests/browser.py), con il server vero e il
+database dei test, svuotato e ricreato qui con migrate.py: Mario e Giulia sono amici,
+Giulia ha mandato 3 messaggi non letti. _migrate la usano anche test_spa_chat.py,
+test_spa_home_coda.py e test_spa_impostazioni.py.
+Se né Chrome né Edge sono installati, o manca il build della SPA, i controlli si saltano.
 """
 
 import importlib.util
-import json
 import uuid
 from pathlib import Path
 
@@ -22,15 +23,17 @@ import sqlalchemy as sa
 from app import create_app
 from app.extensions import db
 from app.repositories import chat_repo
-from app.services import auth_service, chat_service, friend_service
+from app.services import auth_service, friend_service
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
+from tests.spa import needs_spa
 
 ROOT = Path(__file__).resolve().parents[2]
 PASSWORD = "Password-di-prova-1"
 UNREAD = 3
 CHAT = "document.querySelector('[data-view=\"chat\"]')"
-PANEL_OPEN = "document.querySelector('[data-friends-panel]')?.open === true"
-BADGE = "Number(document.querySelector('[data-friends-badge]').hidden ? 0 : document.querySelector('[data-friends-badge]').textContent)"
+# READY: la home React collegata al tempo reale (senza, chat:history non parte)
+READY = ("document.querySelector('[data-online-count]')?.textContent === '1'"
+         " && document.querySelector('[data-friends-panel]')?.dataset.connection === 'connected'")
 
 
 def _migrate(url):
@@ -42,6 +45,7 @@ def _migrate(url):
 
 @pytest.fixture(scope="module")
 def app():
+    needs_spa()
     app = create_app("testing")
     with app.app_context():
         assert db.engine.url.database.endswith("_test")
@@ -79,8 +83,6 @@ def server(app, users):
 
 @pytest.fixture
 def browser(server, tmp_path):
-    # Un browser nuovo per ogni test: riaprire la stessa pagina con la chat aperta vale
-    # come ricaricarla, e la cronologia terrebbe lo stato della chat del test prima
     b = Browser(find_browser(), tmp_path / "chrome")
     b.send("Network.setCookie", name=TEST_COOKIE[0], value=TEST_COOKIE[1], url=server)
     yield b
@@ -88,102 +90,11 @@ def browser(server, tmp_path):
 
 
 def _open_chat(browser, server, friend_id, width, height):
-    browser.open(f"{server}/vecchia-home", width, height, "document.querySelector('[data-online-count]')?.textContent === '1'",
-                 timeout=60)
+    browser.open(f"{server}/", width, height, READY, timeout=60)
     browser.click("[data-friends-button]")
     browser.wait_js(f"document.querySelector(\"[data-chat-open='{friend_id}']\") !== null", "lista degli amici")
     browser.click(f"[data-chat-open='{friend_id}']")
-    browser.wait_js(f"{CHAT} !== null", "apertura della chat")
-
-
-def test_aprire_la_chat_azzera_i_non_letti(browser, server, users):
-    # Anche collegati al tempo reale (1 online): senza, chat:history non parte e la chat non si apre
-    browser.open(f"{server}/vecchia-home", 390, 844,
-                 f"{BADGE} === {UNREAD} && document.querySelector('[data-online-count]')?.textContent === '1'",
-                 timeout=60)
-    browser.click("[data-friends-button]")
-    browser.wait_js(f"document.querySelector(\"[data-chat-open='{users['Giulia']}']\") !== null", "lista degli amici")
-    unread = browser.js(f"document.querySelector('[data-user-id=\"{users['Giulia']}\"] [data-unread]').dataset.unread")
-    assert unread == str(UNREAD)
-    browser.click(f"[data-chat-open='{users['Giulia']}']")
-    browser.wait_js(f"{CHAT} !== null", "apertura della chat")
-    assert browser.js("document.querySelectorAll('.chat__msg').length") == UNREAD + 1
-    assert browser.js("document.querySelectorAll('.chat__msg--mine').length") == 1
-    assert browser.js(BADGE) == 0
-
-
-def test_a_360_il_campo_si_vede_e_i_limiti(browser, server, users):
-    _open_chat(browser, server, users["Giulia"], 360, 640)
-    field = browser.js("(() => { const r = document.querySelector('#chat-input').getBoundingClientRect();"
-                       " return {top: r.top, bottom: r.bottom, vh: innerHeight}; })()")
-    assert 0 <= field["top"] and field["bottom"] <= field["vh"]
-    assert browser.js("document.querySelector('#chat-input').maxLength") == 1000
-    # Messaggio di soli spazi: rifiutato nella pagina, non parte niente
-    count = browser.js("document.querySelectorAll('.chat__msg').length")
-    browser.js("document.querySelector('#chat-input').value = '   '")
-    browser.click("[data-chat-form] button[type=submit]")
-    assert browser.js("document.querySelector('[data-chat-error]').textContent") == "Scrivi un messaggio."
-    assert browser.js("document.querySelector('[data-chat-error]').hidden") is False
-    assert browser.js("document.querySelectorAll('.chat__msg').length") == count
-
-
-def _real_clicks(browser, selector, count=1):
-    """`count` clic veri del mouse al centro di `selector` (il pulsante prende il fuoco come con un tocco)."""
-    point = browser.js(f"""(() => {{
-      const b = document.querySelector({json.dumps(selector)}).getBoundingClientRect();
-      return {{ x: b.left + b.width / 2, y: b.top + b.height / 2 }};
-    }})()""")
-    for _ in range(count):
-        for kind in ("mousePressed", "mouseReleased"):
-            browser.send("Input.dispatchMouseEvent", type=kind, x=point["x"], y=point["y"], button="left", clickCount=1)
-
-
-def _write(browser, text, user_id):
-    """Scrive `text` nella casella come da tastiera e conta da qui le volte che perde il fuoco."""
-    chat_service.rate_limit.give_back(user_id)  # il messaggio del test prima non conta (1 al secondo, P48)
-    browser.js("""(() => { const input = document.querySelector('#chat-input');
-      input.focus(); window.blurs = 0; input.addEventListener('blur', () => { window.blurs += 1; }); })()""")
-    browser.send("Input.insertText", text=text)
-
-
-SEND = "[data-chat-form] button[type=submit]"
-FOCUSED = "document.activeElement === document.querySelector('#chat-input')"
-
-
-def test_dopo_invia_la_casella_tiene_il_fuoco(browser, server, users):
-    # P81: toccando "Invia" il fuoco passava al pulsante e il telefono chiudeva la tastiera
-    _open_chat(browser, server, users["Giulia"], 360, 640)
-    mine = browser.js("document.querySelectorAll('.chat__msg--mine').length")
-    _write(browser, "la tastiera resta aperta", users["Mario"])
-    _real_clicks(browser, SEND)
-    # Subito, mentre si aspetta la risposta: casella attiva, con il fuoco, mai perso
-    assert browser.js("document.querySelector('#chat-input').disabled") is False
-    assert browser.js(FOCUSED) is True
-    browser.wait_js(f"document.querySelectorAll('.chat__msg--mine').length === {mine + 1}", "messaggio inviato")
-    assert browser.js(FOCUSED) is True
-    assert browser.js("window.blurs") == 0
-    assert browser.js("document.querySelector('#chat-input').value") == ""
-
-
-def test_doppio_clic_su_invia_un_solo_messaggio(browser, server, users):
-    _open_chat(browser, server, users["Giulia"], 360, 640)
-    mine = browser.js("document.querySelectorAll('.chat__msg--mine').length")
-    _write(browser, "una volta sola", users["Mario"])
-    _real_clicks(browser, SEND, 2)
-    browser.wait_js(f"document.querySelectorAll('.chat__msg--mine').length === {mine + 1}", "messaggio inviato")
-    browser.wait_js(f"document.querySelector('{SEND}').disabled === false", "Invia riacceso")
-    assert browser.js("document.querySelectorAll('.chat__msg--mine').length") == mine + 1
-    assert browser.js("document.querySelector('[data-chat-error]').hidden") is True
-    assert browser.js("window.blurs") == 0
-
-
-def test_indietro_dalla_chat_alla_lista_poi_chiude(browser, server, users):
-    _open_chat(browser, server, users["Giulia"], 1440, 900)
-    browser.js("history.back()")
-    browser.wait_js(f"{CHAT} === null && {PANEL_OPEN}", "ritorno alla lista")
-    browser.js("history.back()")
-    browser.wait_js("document.querySelector('[data-friends-panel]').open === false", "chiusura con indietro")
-    assert browser.js("history.state?.friendsPanel ?? null") is None
+    browser.wait_js(f"{CHAT} !== null && document.querySelectorAll('.chat__msg').length > 0", "apertura della chat")
 
 
 # P128: dove stanno l'ultimo messaggio, l'elenco e la casella
@@ -197,21 +108,6 @@ LAST = """(() => {
 })()"""
 
 
-def test_pochi_messaggi_attaccati_in_fondo_anche_con_la_tastiera(browser, server, users):
-    # P128: con pochi messaggi stavano in cima, e su iPhone aprendo la tastiera sparivano
-    _open_chat(browser, server, users["Giulia"], 390, 844)
-    where = browser.js(LAST)
-    assert where["listBottom"] - 16 <= where["lastBottom"] <= where["listBottom"], where  # in fondo
-    assert where["firstTop"] - where["listTop"] > 100, where  # lo spazio vuoto è sopra
-    # La tastiera accorcia lo schermo: gli ultimi messaggi restano visibili sopra la casella
-    browser.send("Emulation.setDeviceMetricsOverride", width=390, height=420, deviceScaleFactor=1, mobile=False)
-    browser.wait_js("innerHeight === 420", "schermo più basso")
-    browser.wait_js(f"(() => {{ const w = {LAST}; return w.lastBottom <= w.listBottom + 1"
-                    " && w.lastTop >= w.listTop; })()", "ultimo messaggio visibile", 3)
-    where = browser.js(LAST)
-    assert where["listBottom"] <= where["formTop"] + 1, where
-
-
 def test_con_molti_messaggi_si_scorre_fino_al_primo(browser, server, users):
     # Lo spazio vuoto in alto non deve rendere irraggiungibili i messaggi più vecchi
     _open_chat(browser, server, users["Giulia"], 390, 420)
@@ -223,34 +119,3 @@ def test_con_molti_messaggi_si_scorre_fino_al_primo(browser, server, users):
     where = browser.js(LAST)
     assert where["firstTop"] >= where["listTop"], where  # il primo si vede tutto
     assert browser.js("document.querySelector('[data-chat-messages]').scrollTop") == 0
-
-
-def _touch_drag(browser, selector, fingers=1):
-    """Un trascinamento verso l'alto su `selector`; restituisce se il touchmove è stato bloccato."""
-    point = browser.js(f"""(() => {{ const b = document.querySelector({selector!r}).getBoundingClientRect();
-      window.__moves = [];
-      document.addEventListener('touchmove', (e) => setTimeout(() => window.__moves.push(e.defaultPrevented)),
-                                {{ once: true }});
-      return {{ x: b.left + b.width / 2, y: b.top + b.height / 2 }}; }})()""")
-
-    def points(dy):
-        return [{"x": point["x"] + 30 * i, "y": point["y"] + dy, "id": i} for i in range(fingers)]
-
-    browser.send("Input.dispatchTouchEvent", type="touchStart", touchPoints=points(0))
-    browser.send("Input.dispatchTouchEvent", type="touchMove", touchPoints=points(-40))
-    browser.send("Input.dispatchTouchEvent", type="touchEnd", touchPoints=[])
-    browser.wait_js("window.__moves.length === 1", "touchmove", 3)
-    return browser.js("window.__moves[0]")
-
-
-def test_trascinare_dove_non_si_scorre_non_muove_la_pagina_dietro(browser, server, users):
-    # P128: su iPhone, con la chat vuota (o cercando un amico) si scorreva fino a vedere la pagina dietro
-    browser.send("Emulation.setTouchEmulationEnabled", enabled=True, maxTouchPoints=5)
-    _open_chat(browser, server, users["Giulia"], 390, 844)
-    assert _touch_drag(browser, ".chat .drawer__head") is True  # la testata non scorre
-    assert _touch_drag(browser, "[data-chat-messages]") is True  # pochi messaggi: l'elenco non scorre
-    assert _touch_drag(browser, ".chat .drawer__head", fingers=2) is False  # lo zoom con due dita resta
-    browser.send("Emulation.setDeviceMetricsOverride", width=390, height=300, deviceScaleFactor=1, mobile=False)
-    browser.wait_js("(() => { const l = document.querySelector('[data-chat-messages]');"
-                    " return l.scrollHeight > l.clientHeight; })()", "elenco che scorre", 3)
-    assert _touch_drag(browser, ".chat__msg") is False  # un elenco che scorre scorre
