@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: aggiornamento del 23/10 e piano del passo 9 (23/10/2026)
+
+- **Branch**: docs/aggiornamento-23-10
+- **File**: modificati `CLAUDE.md` (riga "Stato": passo 8 fatto, prossimo il passo 9; punti delicati "SPA e migrazione" con il tavolo React, "Timer (P25)" con `animations.ts` e `test_durate_tavolo.py`, "Avatar (P43)" con la terza copia, "Tocchi al tavolo (P69)", "Suoni", "Home (P22)" con `home:refresh`; Testing con i numeri del passo 8), `REVIEW.md` (passo 8 spuntato con 8a–8h e i commit; passo 9 con il piano), `DECISIONI.md` (Processo: scelte dell'8a, durate del tavolo, 8b, 8f, 8g, 8h), `docs/MIGRAZIONE-FRONTEND.md` (stato; riga del passo 9; "Com'è andata" del passo 8; sezione nuova **"Piano del passo 9"**), questo file
+- **Registrati**: `giuseppe.md` fino a "Migrazione, passo 8h" (8a, durate, 8b–8h e la correzione del test delle impostazioni); `christian.md` fino a "Migrazione, passo 8g (prove)"; `antonio.md` niente di nuovo
+- **Controlli**: nessuna suite lanciata (solo documenti)
+- **Piano del passo 9**: preparato da Claude leggendo codice e test (in sola lettura): cinque lotti, **9a** tavolo vecchio, **9b** home e cornice vecchie, **9c** rotte JSON sotto `/api/`, **9d** regola unica della SPA, **9e** giro completo; otto scelte da confermare prima del 9a, ognuna con la raccomandazione
+- **Decisioni prese**: nessuna nuova oltre a quelle di Giuseppe registrate
+- **Domande nuove**: nessuna per `DA-DECIDERE.md`; le scelte del passo 9 sono nel piano
+- **Cosa devono fare gli altri**: **Giuseppe**: il passo 9 lo cominciamo il 24/10; leggi il "Piano del passo 9", in particolare 9c (rotte sotto `/api/`) e 9e (giro completo), che sono tuoi
+
 ### Migrazione, passo 8g (prove) — Suite del tavolo con il tavolo React e prova sui telefoni (22/10/2026). Chiude l'8g
 
 - **Branch**: test/passo8g-prove (da `dev` a `1e0781c`, con la correzione di Giuseppe di `test_spa_impostazioni.py`)
