@@ -22,6 +22,16 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Test — checkCard e cardName di cards.ts eseguiti con Node (23/10/2026)
+
+- **Branch**: test/checkcard-con-node (da `dev` a `c8a2dbf`)
+- **File**: modificati `tests/frontend/test_carte.py` e questo file
+- **Controlli**: `test_carte.py` **15 PASS** [T] (11 nuovi: nomi delle carte eseguiti, 9 carte sbagliate rifiutate con "Carta non valida.", le 40 accettate); `ruff` pulito
+- **Cosa cambia**: tornano i controlli di comportamento persi nel 9b-2. Node 24 esegue i file `.ts` togliendo da solo i tipi (`cards.ts` ha solo `import type`), quindi non serve compilarli; senza Node i tre test si saltano, come prima con `Card.js`. Le costanti si leggono ancora anche come testo (scelta 3)
+- **Decisioni prese**: Christian, 23/10 ("fai tutte cose"): recuperare quei test con Node
+- **Punti delicati**: un file `.ts` eseguito così deve avere solo `import type` (un `import` normale senza `.ts` nel nome non lo trova Node) e niente sintassi solo di TypeScript come `enum`
+- **Cosa devono fare gli altri**: niente
+
 ### Migrazione, passo 9b-2 — Via il codice vecchio della home e della cornice (23/10/2026). Chiude il 9b
 
 - **Branch**: feature/passo-9b2-codice-vecchio (da `dev` a `d271a87`)

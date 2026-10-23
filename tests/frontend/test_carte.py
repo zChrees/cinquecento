@@ -6,14 +6,21 @@ e del contratto ({"suit", "rank"}, rank da 1 a 10); e (P35) le 40 immagini delle
 vere, leggere e con la licenza.
 Dal lotto 9b-2 della migrazione le carte sono quelle del tavolo React:
 frontend/src/game/cards.ts (nomi, semi, indirizzi) e CardView.tsx (il disegno). Le
-costanti si leggono come testo (scelta 3 del passo 9), senza Node. Fino al 9b-2 qui
-c'erano anche la pagina di prova delle carte (app/static/dev/carte.html, tolta con il
-JavaScript vecchio) e i controlli di checkCard di Card.js eseguito con Node (una carta
-fuori elenco rifiutata, le 40 accettate): leggendo il testo non si possono fare.
+costanti si leggono come testo (scelta 3 del passo 9), senza Node. I controlli sul
+comportamento di checkCard (una carta fuori elenco si rifiuta, le 40 si accettano) e
+di cardName eseguono cards.ts con Node, che dalla versione 24 toglie da solo i tipi
+di TypeScript (cards.ts ha solo "import type", quindi non serve compilarlo); senza
+Node si saltano. Fino al 9b-2 si eseguiva Card.js, e c'era anche la pagina di prova
+delle carte (app/static/dev/carte.html), tolta con il JavaScript vecchio.
 """
 
+import json
 import re
+import shutil
+import subprocess
 from pathlib import Path
+
+import pytest
 
 from app.game.engine.cards import RANK_NAMES, Suit
 
@@ -21,6 +28,20 @@ ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"
 GAME_SRC = ROOT / "frontend" / "src" / "game"
 CARDS_TS = (GAME_SRC / "cards.ts").read_text(encoding="utf-8")
+CARDS_URL = (GAME_SRC / "cards.ts").resolve().as_uri()
+
+
+def _node(script):
+    """Esegue un modulo ES con Node e restituisce il JSON che stampa."""
+    node = shutil.which("node")
+    if node is None:
+        pytest.skip("Node non installato: controllo di cards.ts saltato")
+    result = subprocess.run(
+        [node, "--input-type=module", "-e", script],
+        capture_output=True, text=True, timeout=30, check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    return json.loads(result.stdout)
 
 
 def test_ogni_carta_ha_data_suit_e_data_rank():
@@ -64,6 +85,46 @@ def test_semi_e_nomi_uguali_al_motore():
     assert "return `${RANK_NAMES[card.rank]} di ${card.suit}`;" in CARDS_TS
 
 
-def test_carta_non_valida_con_il_messaggio_del_motore():
+def test_nomi_delle_carte_eseguiti():
+    data = _node(
+        f"import {{ SUITS, cardName }} from '{CARDS_URL}';"
+        "console.log(JSON.stringify({ suits: SUITS,"
+        " king: cardName({ suit: 'coppe', rank: 10 }), seven: cardName({ suit: 'denari', rank: 7 }) }));"
+    )
+    assert sorted(data["suits"]) == sorted(suit.value for suit in Suit)
+    assert data["king"] == "Re di coppe"
+    assert data["seven"] == "7 di denari"
+
+
+@pytest.mark.parametrize(
+    "card",
+    [
+        {"suit": "Coppe", "rank": 10},
+        {"suit": "coppe", "rank": 0},
+        {"suit": "coppe", "rank": 11},
+        {"suit": "coppe", "rank": "10"},
+        {"suit": "coppe", "rank": 1.5},
+        {"suit": "cuori", "rank": 1},
+        {"suit": "coppe"},
+        {},
+        None,
+    ],
+)
+def test_carta_non_valida_rifiutata(card):
     # Il messaggio è quello del motore e del contratto (P10, P20)
-    assert "throw new Error('Carta non valida.');" in CARDS_TS
+    result = _node(
+        f"import {{ checkCard }} from '{CARDS_URL}';"
+        f"let out; try {{ checkCard({json.dumps(card)}); out = 'accettata'; }}"
+        " catch (error) { out = error.message; }"
+        "console.log(JSON.stringify(out));"
+    )
+    assert result == "Carta non valida."
+
+
+def test_tutte_le_40_carte_valide():
+    result = _node(
+        f"import {{ checkCard, SUITS }} from '{CARDS_URL}';"
+        "let n = 0; for (const suit of SUITS) for (let rank = 1; rank <= 10; rank += 1) { checkCard({ suit, rank }); n += 1; }"
+        "console.log(JSON.stringify(n));"
+    )
+    assert result == 40
