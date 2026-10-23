@@ -8,8 +8,8 @@ se c'è), e dal passo 8a anche frontend/src/game/SeatAvatar.tsx (la terza copia,
 il tavolo React), che navbar, pannello statistiche e impostazioni mostrino l'immagine
 (macro templates/partials/avatar.html) e che al tavolo di prova (/game/prova?demo=2v2,
 in Chrome o Edge senza finestra, tests/browser.py) le immagini si carichino e un
-codice fuori elenco mostri l'iniziale; con TABLE_UI=react il tavolo React
-(tests/table_ui.py). Non serve MySQL.
+codice fuori elenco mostri l'iniziale (il tavolo React: table_path di tests/spa.py).
+Non serve MySQL.
 """
 
 import json
@@ -27,7 +27,7 @@ from app import create_app
 from app.services.avatars import AVATARS
 from tests.browser import TEST_COOKIE, Browser, find_browser, running_server
 from tests.browser import FakeUser as BrowserUser
-from tests.table_ui import table_path
+from tests.spa import table_path
 
 ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"
@@ -137,10 +137,17 @@ def test_seat_avatar_tsx_conosce_gli_stessi_codici_del_server():
 
 def test_componenti_usano_avatar_js():
     # Un solo posto decide immagine o iniziale: nessun componente la ricalcola da sé
-    for name in ("Table.js", "FriendsPanel.js", "ModeModal.js", "QueueOverlay.js"):
+    for name in ("FriendsPanel.js", "ModeModal.js", "QueueOverlay.js"):
         code = (STATIC / "js" / "components" / name).read_text(encoding="utf-8")
         assert "import { Avatar } from './Avatar.js';" in code, name
         assert "charAt(0).toUpperCase()" not in code and "slice(0, 1).toUpperCase()" not in code, name
+    # Al tavolo React (dal lotto 9a al posto di Table.js) lo decide solo SeatAvatar.tsx
+    game = SEAT_AVATAR_TSX.parent
+    assert "import { SeatAvatar } from './SeatAvatar';" in (game / "Table.tsx").read_text(encoding="utf-8")
+    for path in sorted(game.glob("*.tsx")):
+        if path.name != "SeatAvatar.tsx":
+            code = path.read_text(encoding="utf-8")
+            assert "charAt(0).toUpperCase()" not in code and "slice(0, 1).toUpperCase()" not in code, path.name
 
 
 # --- Template: navbar, pannello statistiche, impostazioni ---------------------

@@ -1,12 +1,13 @@
 """P91: i momenti del tavolo finiscono anche se setTimeout scatta in anticipo.
 
 In Chrome setTimeout a volte scatta poco prima del tempo chiesto (misurato: fino a
-circa 0,7 ms, 6 timer su 200). game.js controlla la fine di lanci, pescate,
+circa 0,7 ms, 6 timer su 200). Il tavolo (prima game.js, dal passo 8 tableStore.ts)
+controlla la fine di lanci, pescate,
 distribuzione e pausa delle frasi con performance.now(): un timer in anticipo
 trovava il momento ancora in corso, e i segni restavano sul tavolo (pulsante delle
 frasi spento compreso) fino alla vista successiva; per questo
 test_animazioni_in_fila.py falliva a volte ("pescate finite"). Qui ogni timer della
-pagina scatta apposta EARLY_MS prima (meno del margine TIMER_SLACK_MS di game.js, ma
+pagina scatta apposta EARLY_MS prima (meno del margine TIMER_SLACK_MS di animations.ts, ma
 abbastanza da battere il ritardo normale di Chrome), così il caso non dipende dalla
 fortuna.
 
@@ -25,16 +26,16 @@ import pytest
 from app import create_app
 from app.realtime import table_phrases
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
-from tests.table_ui import table_path
+from tests.spa import table_path
 
 ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"
-GAME = (STATIC / "js" / "pages" / "game.js").read_text(encoding="utf-8")
-THROW_MS = int(re.search(r"const THROW_MS = (\d+);", GAME).group(1))
-DRAW_MS = int(re.search(r"const DRAW_MS = (\d+);", GAME).group(1))
-PAUSE_MS = int(re.search(r"const PHRASE_PAUSE_MS = (\d+);", GAME).group(1))
-BUBBLE_MS = int(re.search(r"const BUBBLE_MS = (\d+);", GAME).group(1))
-SLACK_MS = int(re.search(r"const TIMER_SLACK_MS = (\d+);", GAME).group(1))
+ANIMATIONS = (ROOT / "frontend" / "src" / "game" / "animations.ts").read_text(encoding="utf-8")
+THROW_MS = int(re.search(r"const THROW_MS: number = (\d+);", ANIMATIONS).group(1))
+DRAW_MS = int(re.search(r"const DRAW_MS: number = (\d+);", ANIMATIONS).group(1))
+PAUSE_MS = int(re.search(r"const PHRASE_PAUSE_MS: number = (\d+);", ANIMATIONS).group(1))
+BUBBLE_MS = int(re.search(r"const BUBBLE_MS: number = (\d+);", ANIMATIONS).group(1))
+SLACK_MS = int(re.search(r"const TIMER_SLACK_MS: number = (\d+);", ANIMATIONS).group(1))
 EARLY_MS = 10
 
 EARLY_TIMERS = f"""(() => {{

@@ -22,7 +22,7 @@ from app.realtime import room_manager
 from app.realtime.room import CPU_PLAYER, Player
 from app.sockets import friends_events
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
-from tests.table_ui import table_path
+from tests.spa import table_path
 
 USER_ID = 12
 

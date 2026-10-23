@@ -1,6 +1,7 @@
 """P94: turno da 15 secondi, che parte dopo le pause del tavolo.
 
-- Le pause del server sono le stesse della pagina (js/pages/game.js): un test le confronta.
+- Che le pause del server siano le stesse della pagina lo controlla test_durate_tavolo.py
+  (dal lotto 9a il confronto che stava qui è tutto lì).
 - table_pause dà la pausa giusta per ogni mossa (carta dentro la presa, presa chiusa con e
   senza pescata, mano nuova, mano finita con una calata).
 - Con il server vero, dopo una presa il conto alla rovescia parte solo a pausa finita, e
@@ -10,11 +11,9 @@
 """
 
 import random
-import re
 import threading
 import time
 from dataclasses import replace
-from pathlib import Path
 
 import pytest
 
@@ -31,30 +30,12 @@ from app.realtime.room_manager import create_room, rooms
 from config import BaseConfig
 
 WAIT = 5
-GAME_JS = (Path(__file__).resolve().parents[2] / "app" / "static" / "js" / "pages" / "game.js").read_text(
-    encoding="utf-8")
 
 
 @pytest.fixture(autouse=True)
 def table_pauses(monkeypatch, no_table_pauses):
     """Qui le pause servono: conftest.py le toglie agli altri test della suite."""
     monkeypatch.setattr(room_module, "PAUSE_SCALE", 1)
-
-
-def page_ms(name):
-    return int(re.search(rf"const {name} = (\d+);", GAME_JS).group(1))
-
-
-@pytest.mark.parametrize(("page", "server"), [
-    ("LAST_TRICK_MS", "LAST_TRICK_SECONDS"),
-    ("SUMMARY_MS", "SUMMARY_SECONDS"),
-    ("THROW_MS", "THROW_SECONDS"),
-    ("DRAW_MS", "DRAW_SECONDS"),
-    ("SHUFFLE_MS", "SHUFFLE_SECONDS"),
-    ("DEAL_STEP_MS", "DEAL_STEP_SECONDS"),
-])
-def test_pause_uguali_a_quelle_della_pagina(page, server):
-    assert page_ms(page) == round(getattr(room_module, server) * 1000)
 
 
 def test_turno_da_15_secondi():
@@ -125,7 +106,7 @@ def test_niente_pausa_se_scalata_a_zero(monkeypatch):
 
 @pytest.mark.parametrize(("players", "cards"), [(2, 10), (4, 20)])
 def test_pausa_della_prima_distribuzione(players, cards):
-    # P118: mescolata, una carta ogni DEAL_STEP e il volo dell'ultima, come startDeal di game.js
+    # P118: mescolata, una carta ogni DEAL_STEP e il volo dell'ultima, come startDeal di tableStore.ts
     assert first_deal_pause(players) == pytest.approx(1.3 + (cards - 1) * 0.08 + 0.5)
 
 

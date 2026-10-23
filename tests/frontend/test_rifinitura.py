@@ -17,17 +17,16 @@ import pytest
 
 from app import create_app
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
-from tests.table_ui import table_path
+from tests.spa import table_path
 
 PHONE = (360, 640)
-# TABLE: il tavolo di prova come indirizzo "logico"; l'indirizzo vero lo dà table_path
-# dentro il test (TABLE_UI: tavolo Jinja o React), mai all'importazione del file, dove
-# salterebbe tutto il file senza la SPA
+# TABLE: il tavolo di prova; l'indirizzo passa da table_path dentro il test (che lo salta
+# senza il build della SPA), mai all'importazione del file, dove salterebbe tutto il file
 TABLE = "/game/prova?demo=1v1"
 
 
 def _url(path):
-    """L'indirizzo da aprire: per il tavolo quello scelto da TABLE_UI (tests/table_ui.py)."""
+    """L'indirizzo da aprire: per il tavolo passa da table_path (tests/spa.py)."""
     if path == TABLE:
         return table_path("prova", demo="1v1")
     return path

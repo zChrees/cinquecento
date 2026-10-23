@@ -17,8 +17,7 @@ Una partita vera contro la CPU (P68, non si salva), aperta sul tavolo React
 - lotto 8h: dalla home al tavolo (game:start) e ritorno ("Esci") senza ricaricare la
   pagina, e tornati alla home il numero degli online c'è (home:refresh: il
   collegamento è rimasto aperto, quindi home:status non arriva di nuovo).
-La partita interrotta (P95) la prova table6/test_partita_interrotta.py con
-TABLE_UI=react. Rating e avvisi agli amici non leggono il database (non serve MySQL).
+La partita interrotta (P95) la prova table6/test_partita_interrotta.py. Rating e avvisi agli amici non leggono il database (non serve MySQL).
 Senza browser, o senza il build della SPA, i test si saltano.
 """
 

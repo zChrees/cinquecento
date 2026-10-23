@@ -2,11 +2,12 @@
  * Tutte le durate del tavolo React, in un posto solo (passo 8 della migrazione,
  * docs/MIGRAZIONE-FRONTEND.md, "Piano del passo 8").
  *
- * Sono le stesse costanti di app/static/js/pages/game.js e components/Trick.js
- * (il tavolo Jinja), con gli stessi nomi. Molte devono restare uguali ad altre
- * copie: a quelle del server in app/realtime/room.py (le pause del tavolo, P94) e
- * alle durate delle animazioni nei CSS (css/components/trick.css, hand.css). Fino al
- * passo 9 le copie sono quattro: room.py, game.js, questo file e i CSS.
+ * Sono le costanti che stavano in app/static/js/pages/game.js e components/Trick.js
+ * (il tavolo Jinja, tolto al lotto 9a), con gli stessi nomi. Molte devono restare
+ * uguali ad altre copie: a quelle del server in app/realtime/room.py (le pause del
+ * tavolo, P94) e alle durate delle animazioni nei CSS (css/components/trick.css,
+ * hand.css). Le copie sono tre: room.py, questo file e i CSS (le confronta
+ * tests/sockets/test_durate_tavolo.py, i CSS i test del tavolo).
  *
  * Una costante per riga, sempre nella forma
  *     export const NOME_MS: number = 1500;
@@ -15,8 +16,8 @@
  *
  * Cosa contiene: solo numeri (millisecondi, tranne TICK_SECONDS).
  *
- * DA DOVE ARRIVANO I DATI: scritti a mano qui, copiati da game.js. Li usano i file
- * di frontend/src/game/ (dall'8a solo le frasi; il resto con i lotti 8b–8g).
+ * DA DOVE ARRIVANO I DATI: scritti a mano qui (all'inizio copiati da game.js). Li
+ * usano i file di frontend/src/game/.
  */
 
 // Presa appena chiusa, per quanto resta al centro (P57)
@@ -43,7 +44,7 @@ export const SHUFFLE_MS: number = 1300;
 export const DEAL_STEP_MS: number = 80;
 // Le carte della presa chiusa scivolano via; come trick-away in trick.css (P103)
 export const TRICK_AWAY_MS: number = 1100;
-// Lo stesso ritardo, con il nome di components/Trick.js; uguale a TRICK_AWAY_MS
+// Lo stesso ritardo, con il nome che aveva in components/Trick.js; uguale a TRICK_AWAY_MS
 export const AWAY_DELAY_MS: number = 1100;
 // Margine dei ridisegni di fine animazione: setTimeout a volte scatta in anticipo (P91)
 export const TIMER_SLACK_MS: number = 20;

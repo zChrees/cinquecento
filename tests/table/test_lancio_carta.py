@@ -23,7 +23,7 @@ import pytest
 
 from app import create_app
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
-from tests.table_ui import table_path
+from tests.spa import table_path
 
 ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"
@@ -32,9 +32,9 @@ TURI_CARD = {"suit": "coppe", "rank": 3}
 
 
 def test_durata_del_lancio_uguale_nel_css_e_nella_pagina():
-    game = (STATIC / "js" / "pages" / "game.js").read_text(encoding="utf-8")
+    animations = (ROOT / "frontend" / "src" / "game" / "animations.ts").read_text(encoding="utf-8")
     css = (STATIC / "css" / "components" / "trick.css").read_text(encoding="utf-8")
-    ms = int(re.search(r"const THROW_MS = (\d+);", game).group(1))
+    ms = int(re.search(r"const THROW_MS: number = (\d+);", animations).group(1))
     seconds = float(re.search(r"animation: card-throw ([\d.]+)s", css).group(1))
     assert ms == round(seconds * 1000)
 
@@ -99,7 +99,7 @@ def _turi_plays(browser):
 
 def _thrown_progress(browser):
     """A che punto è il lancio in corso (da 0 a 1), o None se nessuna carta vola.
-    Con il ritardo negativo di Trick.js conta il progresso, non currentTime."""
+    Conta il progresso, non currentTime (il ritardo dell'animazione lo cambia)."""
     return browser.js("""(() => {
       const card = document.querySelector('[data-trick] [data-thrown]');
       const running = card && card.getAnimations().find((a) => a.animationName === 'card-throw');
@@ -164,7 +164,7 @@ def test_la_presa_chiusa_non_riparte_dopo_un_ridisegno(browser, server):
                "{ detail: { phrases: [{ code: 'ciao', text: 'Ciao!' }] } }))")
     # L'uscita verso chi ha preso comincia 1,1 s dopo che la presa si vede, non 1,1 s dopo il ridisegno.
     # Conta quanto manca davvero all'uscita (ritardo meno tempo già passato), non il ritardo scritto:
-    # il tavolo Jinja ricrea la casella con un ritardo più corto, quello React la tiene (lotto 8d)
+    # il tavolo React tiene la casella con il ritardo di partenza (lotto 8d)
     wait = browser.js("""(() => {
       const away = document.querySelector('[data-last-trick] .trick__card').getAnimations()
         .find((a) => a.animationName === 'trick-away');

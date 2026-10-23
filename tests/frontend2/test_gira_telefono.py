@@ -15,12 +15,12 @@ import pytest
 
 from app import create_app
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
-from tests.table_ui import table_path
+from tests.spa import table_path
 
 LANDSCAPE = [(844, 390), (667, 375), (640, 360)]
 NOT_PHONE_LANDSCAPE = [(390, 844), (360, 640), (768, 1024), (1024, 768), (1280, 720)]
-# TABLE: il tavolo di prova come indirizzo "logico"; l'indirizzo vero lo dà table_path
-# dentro il test (TABLE_UI: tavolo Jinja o React), mai all'importazione del file
+# TABLE: il tavolo di prova; l'indirizzo passa da table_path dentro il test (che lo salta
+# senza il build della SPA), mai all'importazione del file
 TABLE = "/game/prova?demo=1v1"
 PAGES = [  # (indirizzo, con il login)
     ("/", True), (TABLE, True), ("/profile/settings", True),

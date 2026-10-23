@@ -20,7 +20,7 @@ import pytest
 from app import create_app
 from app.realtime import table_phrases
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
-from tests.table_ui import table_path
+from tests.spa import table_path
 
 PARTS = r"""(() => {
   const R = (s) => [...document.querySelectorAll(s)].map((e) => {

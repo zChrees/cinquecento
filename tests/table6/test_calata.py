@@ -6,8 +6,9 @@ quando qualcuno cala (last_hand.laid_down, P84) le carte di tutti si vedono per
 LAID_DOWN_MS prima del riepilogo: i ventagli degli altri entrano scoperti nel tavolo,
 interi e dentro lo schermo (scelta di Christian del 04/10), la tua mano è quella del
 momento della calata e al centro c'è "<nome> cala le carte"; se la calata chiude la
-partita, dopo le carte calate arriva il riquadro finale. LAID_DOWN_MS è uguale alla
-pausa del server (LAID_DOWN_SECONDS di app/realtime/room.py, P94).
+partita, dopo le carte calate arriva il riquadro finale. Che LAID_DOWN_MS sia uguale
+alla pausa del server (LAID_DOWN_SECONDS di app/realtime/room.py, P94) lo controlla
+tests/sockets/test_durate_tavolo.py.
 
 Il tavolo si apre nella prova (/game/prova?demo=1v1 o 2v2) in Chrome o Edge senza
 finestra (tests/browser.py), con le viste di app/static/dev/ mandate con l'evento del
@@ -16,7 +17,6 @@ browser "demo:state". Non serve MySQL.
 
 import copy
 import json
-import re
 import time
 from pathlib import Path
 
@@ -24,12 +24,11 @@ import pytest
 
 from app import create_app
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
-from tests.table_ui import table_path
+from tests.spa import table_path
 
 ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"
-GAME_JS = (STATIC / "js" / "pages" / "game.js").read_text(encoding="utf-8")
-ROOM_PY = (ROOT / "app" / "realtime" / "room.py").read_text(encoding="utf-8")
+TABLE_STORE = (ROOT / "frontend" / "src" / "game" / "tableStore.ts").read_text(encoding="utf-8")
 PHONE = (360, 640)
 DESKTOP = (1280, 720)
 
@@ -38,16 +37,10 @@ def _view(mode):
     return json.loads((STATIC / "dev" / f"vista_{mode}.json").read_text(encoding="utf-8"))
 
 
-def test_durata_uguale_alla_pausa_del_server():
-    page = int(re.search(r"const LAID_DOWN_MS = (\d+);", GAME_JS).group(1))
-    server = float(re.search(r"^LAID_DOWN_SECONDS = ([\d.]+)", ROOM_PY, re.MULTILINE).group(1))
-    assert page == server * 1000
-
-
-def test_evento_nel_posto_dei_nomi():
-    events = (STATIC / "js" / "core" / "events.js").read_text(encoding="utf-8")
-    assert "GAME_LAY_DOWN: 'game:lay_down'" in events
-    assert "EVENTS.GAME_LAY_DOWN" in GAME_JS
+def test_il_tavolo_manda_l_evento_della_calata():
+    # Che il nome sia uno degli eventi del contratto lo controllano i tipi di send
+    # (frontend/src/socket/client.ts) quando si compila
+    assert "send('game:lay_down'" in TABLE_STORE
 
 
 # --- Nel browser -------------------------------------------------------------------

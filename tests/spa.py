@@ -62,3 +62,19 @@ def needs_spa():
     """Salta il test se il frontend non è compilato (manca Node o npm ci)."""
     if not os.environ.get("SPA_DIST_DIR"):
         pytest.skip("Frontend non compilato per i test: serve Node e npm ci in frontend/")
+
+
+def table_path(game_id, demo=None):
+    """L'indirizzo del tavolo React da aprire nel test (fino al lotto 9a stava in tests/table_ui.py).
+
+    In parole semplici:
+        table_path("prova", demo="1v1")  →  "/game/prova?demo=1v1"
+        Il tavolo è una pagina della SPA: se il frontend non è compilato il test si
+        salta (needs_spa), invece di aprire una pagina "Frontend non compilato".
+        game_id: il codice della partita, per esempio "prova" o "e5f6a7b8".
+        demo:    facoltativo, "1v1" o "2v2" per la vista finta; None per una partita vera.
+    """
+    needs_spa()
+    if demo is None:
+        return f"/game/{game_id}"
+    return f"/game/{game_id}?demo={demo}"

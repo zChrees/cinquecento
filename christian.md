@@ -22,6 +22,27 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Migrazione, passo 9a — Via il tavolo vecchio (23/10/2026)
+
+- **Branch**: feature/passo-9a-tavolo-vecchio (da `dev` a `d203394`)
+- **File**: cancellati `app/templates/game/table.html`, `app/static/js/pages/game.js`, `app/static/js/components/Table.js`, `Trick.js`, `Scoreboard.js`, `Timer.js`, `SingButtons.js`, `HandSummary.js`, `TablePhrases.js`, `tests/table_ui.py`; modificati `app/blueprints/game/routes.py` (via `?ui=`), `frontend/vite.config.ts` (`GAME_TABLE` senza l'eccezione `ui=jinja`), commenti di `app/realtime/room.py`, `frontend/src/routes.tsx`, `frontend/src/game/animations.ts`; test: `tests/spa.py` (`table_path` nuovo), `sockets/test_durate_tavolo.py`, `sockets/test_turno.py`, `api/test_pagina_tavolo.py`, `api/test_rating_tavolo.py`, `frontend/test_avatar.py`, `test_csp.py`, `test_rifinitura.py`, `test_spa.py`, `frontend2/test_gira_telefono.py`, `table2/test_tavolo_react.py` e 26 file di `table*` (import di `table_path`, durate da `animations.ts`, commenti); questo file
+- **Controlli**: solo i file di test toccati, con pytest: **361 PASS** (64 senza browser: `test_pagina_tavolo.py`, `test_spa.py`, `test_durate_tavolo.py`, `test_turno.py`; 297 nei 32 file del browser, 546 s), nessuno saltato [T]; `ruff check .` pulito, `npx tsc --noEmit` pulito, `npm run build` riuscito. Le sei suite `table*` intere non le ho lanciate (da chiedere a Christian prima del commit, come dice il piano)
+- **Decisioni prese** (Christian, 23/10, le otto scelte del "Piano del passo 9", tutte come la raccomandazione tranne la 8):
+  1. test della pagina vecchia: **portati sulla pagina React o cancellati**, con la tabella "file → perché" all'inizio del 9b;
+  2. confronti del DOM con la pagina Jinja: **tolti**, restano gli altri controlli dei file;
+  3. `Card.js` e `Avatar.js`: i test **leggono le costanti dei file TypeScript come testo**;
+  4. vecchi indirizzi JSON: **404** senza rimandi; logout come **`POST /api/auth/logout`** in JSON;
+  5. **regola unica** della SPA con la pagina React "Pagina non trovata" (codice 200), rotte Flask solo dove il server controlla qualcosa;
+  6. pagine di errore 404 e 500 **Jinja con un `base.html` ridotto**; i `partials/` si tolgono;
+  7. rotte che restano **dove sono oggi**;
+  8. **chi fa cosa: Christian fa tutti i lotti del passo 9**, anche le rotte (9c, 9d) e il giro completo (9e).
+  Nel 9a: **`?ui=` si ignora** come ogni altro parametro (scelta a), invece del 404; **`Hand.js` resta fino al 9b**, perché lo usa la pagina di prova delle carte (`app/static/dev/carte.html`, che usa anche `Card.js`): se ne decide nel 9b.
+- **Come sono stati portati i test** [L]: i confronti delle pause con il server (prima anche in `test_turno.py`, `test_calata.py`, `test_frasi_pagina.py`) stanno tutti in `test_durate_tavolo.py`, che legge solo `animations.ts`; in `test_frasi_pagina.py` "niente HTML e niente copia delle frasi" vale per tutti i file di `frontend/src/game/` (con `dangerouslySetInnerHTML`); in `test_momenti_tavolo.py` "eventi finti solo nella prova" guarda `listenToDemo` di `GamePage.tsx`; i controlli degli eventi di calata e consiglio guardano `tableStore.ts`; in `test_tavolo_react.py` tolti il confronto elemento per elemento e quello delle posizioni con il tavolo Jinja, tenute le varianti (cambiano davvero il tavolo, CSP pulita, risposta a ogni tocco); in `test_pagina_tavolo.py` tolti i test del template, i due controlli nel browser (`--dump-dom`) ora aprono il tavolo React e i CSS del tavolo sono un elenco nel test (`TABLE_CSS`, quello del template tolto). Cancellati senza un sostituto: `test_una_sola_funzione_render` (solo di `game.js`) e il confronto fra i nomi delle costanti di `game.js` e di `animations.ts`.
+- **Diverso dal piano**: `table_path` non è sparito, è passato in `tests/spa.py` senza `TABLE_UI`, perché fa anche saltare il test senza il build della SPA (circa 50 chiamate: scritto a mano in ognuna sarebbe stato più facile sbagliare).
+- **Domande nuove**: nessuna
+- **Punti delicati** (per chi è di turno sui documenti): in `CLAUDE.md` vanno tolti o riscritti i riferimenti a `TABLE_UI`, `tests/table_ui.py`, `?ui=jinja` e a `test_pause_uguali_a_quelle_della_pagina` di `test_turno.py` (ora `test_pause_del_server_uguali_a_quelle_della_pagina` di `test_durate_tavolo.py`); "le durate della pagina stanno in `game.js` e `animations.ts`" diventa solo `animations.ts`. Restano commenti vecchi che citano `pages/game.js` nei CSS del tavolo (`card.css`, `hand.css`, `trick.css`, `table-phrases.css`): non erano nella lista del lotto, si possono sistemare nel 9b. `docs/MIGRAZIONE-FRONTEND.md` va aggiornato con il 9a fatto.
+- **Cosa devono fare gli altri**: **Giuseppe**: dopo il pull `npm run build` in `frontend/` (cambia `vite.config.ts`); il tavolo Jinja e `$env:TABLE_UI` non ci sono più; dal 23/10 tutti i lotti del passo 9 li fa Christian (scelta 8), quindi non serve che tu prenda 9c, 9d o 9e
+
 ### Documenti: aggiornamento del 23/10 e piano del passo 9 (23/10/2026)
 
 - **Branch**: docs/aggiornamento-23-10

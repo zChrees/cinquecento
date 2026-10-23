@@ -7,10 +7,10 @@ senza finestra (--dump-dom), su un server di prova alla porta 5099; se nessuno d
 due è installato quei controlli si saltano. Non serve MySQL: il login è spento
 (LOGIN_DISABLED) tranne nel controllo che lo richiede.
 Passo 8 della migrazione: dal lotto 8h l'indirizzo dà la pagina della SPA (il tavolo
-React), in tutti gli ambienti, con le stesse regole di ?demo=, e la SPA carica gli
-stessi CSS del template del tavolo (il disegno nel browser lo confronta
-tests/table2/test_tavolo_react.py). Il template di prima si vede con ?ui=jinja, fino
-al passo 9: i controlli sull'HTML del template lo aprono così.
+React), in tutti gli ambienti, con le stesse regole di ?demo=. Dal lotto 9a il
+template Jinja non c'è più: ?ui= si ignora come ogni altro parametro (scelta di
+Christian), la SPA carica i CSS che caricava il template, nello stesso ordine, e i
+controlli nel browser aprono il tavolo React (senza il build della SPA si saltano).
 """
 
 import json
@@ -27,10 +27,18 @@ import pytest
 from werkzeug.serving import make_server
 
 from app import create_app
+from tests.spa import table_path
 
 ROOT = Path(__file__).resolve().parents[2]
 DEV = ROOT / "app" / "static" / "dev"
 PORT = 5099
+# TABLE_CSS: i CSS del tavolo, nell'ordine in cui li caricava game/table.html (il
+# template tolto al lotto 9a); la SPA li deve caricare nello stesso ordine
+TABLE_CSS = [
+    "css/components/card.css", "css/components/hand.css", "css/components/table.css",
+    "css/components/trick.css", "css/components/scoreboard.css", "css/components/timer.css",
+    "css/components/hand-summary.css", "css/components/table-phrases.css", "css/pages/game.css",
+]
 BROWSER_PATHS = (
     r"C:\Program Files\Google\Chrome\Application\chrome.exe",
     r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
@@ -65,40 +73,6 @@ def test_senza_login_rimanda_all_accesso():
     assert response.headers["Location"].startswith("/auth/login")
 
 
-@pytest.mark.parametrize("mode", ["1v1", "2v2"])
-def test_pagina_con_vista_finta(client, mode):
-    response = client.get(f"/game/prova?demo={mode}&ui=jinja")
-    assert response.status_code == 200
-    html = _text(response)
-    assert 'data-table data-game-id="prova"' in html
-    assert f'data-demo-url="/static/dev/vista_{mode}.json"' in html
-    assert 'data-page="game"' in html and "page--game" in html
-    # Al tavolo niente navbar
-    assert 'data-part="navbar"' not in html
-    assert '<script type="module" src="/static/js/pages/game.js"></script>' in html
-
-
-def test_pagina_senza_demo_aspetta_la_partita(client):
-    html = _text(client.get("/game/a1b2c3d4?ui=jinja"))
-    assert 'data-game-id="a1b2c3d4"' in html
-    assert "data-demo-url" not in html
-
-
-@pytest.mark.parametrize("path", ["/game/prova?demo=3v3", "/game/prova?demo=", "/game/" + "x" * 65, "/game/ab%20cd"])
-def test_indirizzi_non_validi(client, path):
-    assert client.get(path).status_code == 404
-
-
-def test_viste_finte_solo_in_sviluppo_e_test():
-    app = _app()
-    app.config["ENV_NAME"] = "demo"
-    assert app.test_client().get("/game/prova?demo=1v1&ui=jinja").status_code == 404
-    assert app.test_client().get("/game/prova?ui=jinja").status_code == 200
-
-
-# --- Passo 8: il tavolo React (con ?ui=react dall'8a, sempre dall'8h) -----------
-
-
 @pytest.fixture
 def fake_spa(monkeypatch, tmp_path):
     # Una pagina della SPA finta, così non serve il build (come test_spa.py)
@@ -107,65 +81,43 @@ def fake_spa(monkeypatch, tmp_path):
     monkeypatch.setattr(spa_routes, "dist_dir", lambda: tmp_path)
 
 
-@pytest.mark.parametrize("path", ["/game/prova", "/game/prova?demo=1v1", "/game/a1b2c3d4?demo=2v2",
-                                  "/game/prova?ui=react", "/game/prova?demo=1v1&ui=react",
-                                  "/game/a1b2c3d4?ui=react&demo=2v2"])
-def test_tavolo_react_e_la_pagina_della_spa(client, fake_spa, path):
-    html = _text(client.get(path))
-    assert '<div id="root">' in html and "data-table" not in html
-
-
-@pytest.mark.parametrize("path", ["/game/prova?ui=jinjax", "/game/prova?ui=", "/game/prova?ui=react&demo=3v3",
-                                  "/game/prova?ui=jinja&demo=3v3", "/game/" + "x" * 65 + "?ui=react"])
-def test_tavolo_react_indirizzi_non_validi(client, fake_spa, path):
+@pytest.mark.parametrize("path", ["/game/prova?demo=3v3", "/game/prova?demo=", "/game/" + "x" * 65, "/game/ab%20cd",
+                                  "/game/prova?ui=react&demo=3v3"])
+def test_indirizzi_non_validi(client, fake_spa, path):
     assert client.get(path).status_code == 404
 
 
-def test_tavolo_react_ovunque_ma_viste_finte_solo_in_sviluppo_e_test(fake_spa):
-    # Scelta del 20/10: ?ui=react in tutti gli ambienti, per provarlo dal telefono
+# Dal lotto 9a ?ui= non vuol dire più niente: con qualsiasi valore è un parametro in
+# più, che si ignora (scelta di Christian), come ?pippo=1
+@pytest.mark.parametrize("path", ["/game/prova", "/game/prova?demo=1v1", "/game/a1b2c3d4?demo=2v2",
+                                  "/game/prova?ui=react", "/game/prova?ui=jinja", "/game/prova?ui=jinjax",
+                                  "/game/prova?ui=", "/game/a1b2c3d4?ui=jinja&demo=2v2", "/game/prova?pippo=1"])
+def test_tavolo_e_la_pagina_della_spa(client, fake_spa, path):
+    response = client.get(path)
+    assert response.status_code == 200
+    html = _text(response)
+    assert '<div id="root">' in html and "data-table" not in html
+
+
+def test_tavolo_ovunque_ma_viste_finte_solo_in_sviluppo_e_test(fake_spa):
+    # Scelta del 20/10: il tavolo React in tutti gli ambienti
     app = _app()
     app.config["ENV_NAME"] = "demo"
-    assert app.test_client().get("/game/prova?ui=react").status_code == 200
     assert app.test_client().get("/game/prova").status_code == 200
-    assert app.test_client().get("/game/prova?demo=1v1&ui=react").status_code == 404
+    assert app.test_client().get("/game/prova?ui=jinja").status_code == 200
     assert app.test_client().get("/game/prova?demo=1v1").status_code == 404
 
 
-def test_tavolo_react_senza_login_rimanda_all_accesso(fake_spa):
-    response = _app(login=True).test_client().get("/game/abc123?ui=react")
-    assert response.status_code == 302
-    assert response.headers["Location"].startswith("/auth/login")
-    response = _app(login=True).test_client().get("/game/abc123?ui=jinja")
-    assert response.status_code == 302
-    assert response.headers["Location"].startswith("/auth/login")
-
-
-def test_la_spa_carica_i_css_del_tavolo_nello_stesso_ordine():
-    # frontend/index.html (la <head> della SPA) deve avere i CSS di game/table.html,
-    # nello stesso ordine: il tavolo React usa gli stessi stili
-    template = (ROOT / "app" / "templates" / "game" / "table.html").read_text(encoding="utf-8")
-    wanted = re.findall(r"filename='(css/[^']+)'", template)
+def test_la_spa_carica_i_css_del_tavolo_nello_stesso_ordine(client):
+    # frontend/index.html (la <head> della SPA) deve avere i CSS del tavolo, nello
+    # stesso ordine del template di prima, e ognuno deve esistere
     spa = (ROOT / "frontend" / "index.html").read_text(encoding="utf-8")
     loaded = re.findall(r'href="/static/(css/[^"]+)"', spa)
-    assert len(wanted) == 9
-    assert [name for name in loaded if name in wanted] == wanted
-
-
-def test_css_e_js_del_tavolo_esistono(client):
-    html = _text(client.get("/game/prova?demo=1v1&ui=jinja"))
-    for name in ("card", "hand", "table", "trick", "scoreboard", "timer"):
-        path = f"/static/css/components/{name}.css"
-        assert f'href="{path}"' in html, name
-        assert client.get(path).status_code == 200, name
-    assert client.get("/static/css/pages/game.css").status_code == 200
-    for name in ("Table", "Trick", "Scoreboard", "Timer", "SingButtons"):
-        assert client.get(f"/static/js/components/{name}.js").status_code == 200, name
-
-
-def test_una_sola_funzione_render():
-    code = (ROOT / "app" / "static" / "js" / "pages" / "game.js").read_text(encoding="utf-8")
-    assert code.count("function render(") == 1
-    assert code.count("root.replaceChildren(Table(") == 1
+    assert [name for name in loaded if name in TABLE_CSS] == TABLE_CSS
+    for name in TABLE_CSS:
+        response = client.get(f"/static/{name}")
+        assert response.status_code == 200, name
+        response.close()
 
 
 # --- Il tavolo disegnato nel browser ------------------------------------------
@@ -227,11 +179,12 @@ def server():
 
 
 def _render(server, tmp_path, mode):
+    path = table_path("prova", demo=mode)  # salta il test senza il build della SPA
     browser = _browser()
     result = subprocess.run(
         [browser, "--headless=new", "--disable-gpu", f"--user-data-dir={tmp_path}",
          "--virtual-time-budget=5000", "--window-size=390,844", "--dump-dom",
-         f"{server}/game/prova?demo={mode}&ui=jinja"],
+         f"{server}{path}"],
         capture_output=True, text=True, encoding="utf-8", timeout=60, check=False,
     )
     assert result.returncode == 0, result.stderr[-2000:]

@@ -9,10 +9,10 @@
  * Dal passo 7d la home (/) è HomePage; la home Jinja di prima resta su
  * /vecchia-home (solo sviluppo e test) fino al passo 9.
  * Dal passo 8 il tavolo React è GamePage su /game/:gameId (":gameId" vuol dire
- * "qui un pezzo variabile, che la pagina legge con useParams"). Dal lotto 8h Flask e
- * Vite mandano qui ogni /game/<codice> (GAME_TABLE di vite.config.ts, ?ui= in
- * app/blueprints/game/routes.py), tranne ?ui=jinja, il tavolo Jinja fino al passo 9;
- * dalla home al tavolo e ritorno si va senza ricaricare la pagina (navigate).
+ * "qui un pezzo variabile, che la pagina legge con useParams"). Flask e Vite mandano
+ * qui ogni /game/<codice> (GAME_TABLE di vite.config.ts, app/blueprints/game/routes.py;
+ * dal lotto 9a il tavolo Jinja non c'è più); dalla home al tavolo e ritorno si va
+ * senza ricaricare la pagina (navigate).
  *
  * DA DOVE ARRIVANO I DATI: React Router legge l'indirizzo della barra del
  * browser (window.location) e sceglie la voce di routes con lo stesso path.

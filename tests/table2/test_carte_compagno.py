@@ -23,7 +23,7 @@ import pytest
 
 from app import create_app
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
-from tests.table_ui import table_path
+from tests.spa import table_path
 
 ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"
@@ -52,11 +52,11 @@ def _with_mate(view, cards=MATE, advice=None):
     return view
 
 
-def test_eventi_nel_posto_dei_nomi():
-    events = (STATIC / "js" / "core" / "events.js").read_text(encoding="utf-8")
-    assert "GAME_ADVISE: 'game:advise'" in events and "GAME_ADVICE: 'game:advice'" in events
-    game = (STATIC / "js" / "pages" / "game.js").read_text(encoding="utf-8")
-    assert "EVENTS.GAME_ADVISE" in game and "on(EVENTS.GAME_ADVICE, onAdvice)" in game
+def test_il_tavolo_manda_e_ascolta_il_consiglio():
+    # Dal lotto 9a il tavolo React; che i nomi siano eventi del contratto lo controllano
+    # i tipi di on e send (frontend/src/socket/client.ts) quando si compila
+    store = (ROOT / "frontend" / "src" / "game" / "tableStore.ts").read_text(encoding="utf-8")
+    assert "send('game:advise'" in store and "on('game:advice', onAdvice)" in store
 
 
 # --- Nel browser -------------------------------------------------------------------

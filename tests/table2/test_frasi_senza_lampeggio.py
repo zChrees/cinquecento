@@ -27,7 +27,7 @@ from tests.browser import (
     running_server,
     wait,
 )
-from tests.table_ui import table_path
+from tests.spa import table_path
 
 ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"

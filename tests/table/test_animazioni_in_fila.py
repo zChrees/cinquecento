@@ -5,7 +5,7 @@ Controlla il "Fatto quando" di SCALETTA.md (P78): con "riduci movimento" spento,
 aspetta che quella si posi, e fino ad allora non si vede; (2) dopo una presa le
 carte si pescano una alla volta (DRAW_MS ciascuna), prima chi ha preso e poi gli
 altri in ordine di turno, a partire da quando si è posata la carta che ha chiuso
-la presa. Che le durate di game.js e dei CSS coincidano lo controllano i test di
+la presa. Che le durate di frontend/src/game/animations.ts e dei CSS coincidano lo controllano i test di
 P70 (test_lancio_carta.py, test_carte_avversari.py).
 
 Il tavolo si apre nella prova (/game/prova?demo=2v2) in Chrome o Edge senza
@@ -24,14 +24,14 @@ import pytest
 
 from app import create_app
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
-from tests.table_ui import table_path
+from tests.spa import table_path
 
 ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"
-GAME = (STATIC / "js" / "pages" / "game.js").read_text(encoding="utf-8")
-THROW_MS = int(re.search(r"const THROW_MS = (\d+);", GAME).group(1))
-MY_THROW_MS = int(re.search(r"const MY_THROW_MS = (\d+);", GAME).group(1))  # P99: il lancio della tua carta
-DRAW_MS = int(re.search(r"const DRAW_MS = (\d+);", GAME).group(1))
+ANIMATIONS = (ROOT / "frontend" / "src" / "game" / "animations.ts").read_text(encoding="utf-8")
+THROW_MS = int(re.search(r"const THROW_MS: number = (\d+);", ANIMATIONS).group(1))
+MY_THROW_MS = int(re.search(r"const MY_THROW_MS: number = (\d+);", ANIMATIONS).group(1))  # P99: il lancio della tua carta
+DRAW_MS = int(re.search(r"const DRAW_MS: number = (\d+);", ANIMATIONS).group(1))
 SLACK = 120  # millisecondi tra l'evento mandato e la lettura nel browser
 
 

@@ -23,7 +23,7 @@ import pytest
 
 from app import create_app
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
-from tests.table_ui import table_path
+from tests.spa import table_path
 
 ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"
@@ -33,9 +33,9 @@ CLOSING = {"winner_seat": 1, "cards": [
 
 
 def test_durata_della_mescolata_uguale_nel_css_e_nella_pagina():
-    game = (STATIC / "js" / "pages" / "game.js").read_text(encoding="utf-8")
+    animations = (ROOT / "frontend" / "src" / "game" / "animations.ts").read_text(encoding="utf-8")
     css = (STATIC / "css" / "components" / "trick.css").read_text(encoding="utf-8")
-    ms = int(re.search(r"const SHUFFLE_MS = (\d+);", game).group(1))
+    ms = int(re.search(r"const SHUFFLE_MS: number = (\d+);", animations).group(1))
     seconds = float(re.search(r"animation: deck-riffle ([\d.]+)s", css).group(1))
     assert ms == round(seconds * 1000)
 

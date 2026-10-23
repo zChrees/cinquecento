@@ -30,16 +30,15 @@ const FLASK = 'http://localhost:5000';
 // una pagina nuova della SPA si aggiunge in tutti e due i posti.
 const SPA_PATHS: string[] = ['/', '/auth/login', '/auth/register', '/profile/settings'];
 
-// GAME_TABLE: il tavolo React (passo 8, docs/MIGRAZIONE-FRONTEND.md): dal lotto 8h
-// è ogni /game/<codice>, per esempio /game/e5f6a7b8 o /game/prova?demo=1v1, tranne
-// quello con ?ui=jinja, il tavolo Jinja che fino al passo 9 serve ancora Flask. Non
-// sta in SPA_PATHS perché il codice cambia a ogni partita. È un pezzo di espressione
-// regolare, scritto senza la / iniziale come i nomi di SPA_PATHS dentro flaskPattern():
-//   game/[^/?#]+                  "game/" e il codice (niente /, ? o #), poi
-//   (?:$|#|\?(?!...))             la fine, un #, oppure i parametri, ma solo se tra
-//   (?:[^#]*&)?ui=jinja(?:[&#]|$)  i parametri non c'è ui=jinja (con altri prima o dopo)
-// (in un testo di JavaScript la \ si scrive \\). Lo controlla tests/frontend/test_spa.py.
-const GAME_TABLE: string = 'game/[^/?#]+(?:$|#|\\?(?!(?:[^#]*&)?ui=jinja(?:[&#]|$)))';
+// GAME_TABLE: il tavolo React (passo 8, docs/MIGRAZIONE-FRONTEND.md): è ogni
+// /game/<codice>, per esempio /game/e5f6a7b8 o /game/prova?demo=1v1 (dal lotto 9a
+// il tavolo Jinja non c'è più, quindi nessun /game/ va a Flask). Non sta in SPA_PATHS
+// perché il codice cambia a ogni partita. È un pezzo di espressione regolare, scritto
+// senza la / iniziale come i nomi di SPA_PATHS dentro flaskPattern():
+//   game/[^/?#]+    "game/" e il codice (niente /, ? o #), poi
+//   (?:[?#]|$)      i parametri, un # oppure la fine
+// Lo controlla tests/frontend/test_spa.py.
+const GAME_TABLE: string = 'game/[^/?#]+(?:[?#]|$)';
 
 /**
  * Costruisce l'espressione regolare degli indirizzi da girare a Flask.
@@ -55,8 +54,8 @@ const GAME_TABLE: string = 'game/[^/?#]+(?:$|#|\\?(?!(?:[^#]*&)?ui=jinja(?:[&#]|
  *   (?!...) vuol dire "qui NON deve esserci...": per esempio /auth/login non
  *   va a Flask, /api/auth/login sì. Dopo il nome di una pagina può venire solo /, ?
  *   o la fine dell'indirizzo ([/?]|$), così /auth/loginx andrebbe a Flask.
- *   In più resta a Vite il tavolo React (GAME_TABLE): /game/prova sì,
- *   /game/prova?ui=jinja (il tavolo Jinja, fino al passo 9) va a Flask.
+ *   In più resta a Vite il tavolo React (GAME_TABLE): /game/prova e
+ *   /game/prova?demo=1v1, ma non /game/prova/altro.
  *
  *   Restituisce: il testo dell'espressione; Vite la riconosce come espressione
  *   regolare perché comincia con ^.

@@ -79,16 +79,17 @@ def test_stessi_indirizzi_in_flask_e_in_vite(app):
     ("/game/e5f6a7b8?ui=react&demo=2v2", True),
     ("/game/prova?ui=jinjax", True),
     ("/game/prova?xui=jinja", True),
-    ("/game/prova?ui=jinja", False),
-    ("/game/prova?demo=1v1&ui=jinja", False),
-    ("/game/e5f6a7b8?ui=jinja&demo=2v2", False),
+    ("/game/prova?ui=jinja", True),
+    ("/game/prova?demo=1v1&ui=jinja", True),
+    ("/game/e5f6a7b8?ui=jinja&demo=2v2", True),
     ("/game/prova/altro", False),
     ("/game/", False),
+    ("/gamex/prova", False),
 ])
 def test_vite_tiene_il_tavolo_react(url, react):
     # Passo 8: in sviluppo Vite serve il tavolo React (GAME_TABLE di vite.config.ts,
-    # dentro l'espressione di flaskPattern); dall'8h è ogni /game/<codice>, tranne il
-    # tavolo Jinja (?ui=jinja, fino al passo 9), che va a Flask
+    # dentro l'espressione di flaskPattern): ogni /game/<codice>, con qualsiasi
+    # parametro (dal lotto 9a anche ?ui=jinja: il tavolo Jinja non c'è più)
     code = VITE_CONFIG.read_text(encoding="utf-8")
     found = re.search(r"const GAME_TABLE: string = '([^']+)';", code)
     assert found, "GAME_TABLE non trovato in vite.config.ts"

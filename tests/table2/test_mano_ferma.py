@@ -4,8 +4,8 @@ Il tavolo si ridisegna tutto a ogni vista (P70): il pulsante della carta che era
 il puntatore nasceva abbassato e si rialzava con la transizione di card.css (0,15 s).
 Sul telefono il browser lascia ":hover" sulla carta appena toccata, quindi succedeva
 a ogni vista. Ora il sollevamento al passaggio vale solo con un puntatore vero
-(@media (hover: hover)) e, da computer, la carta sotto il mouse ridisegnata nasce già
-sollevata (card--hover-kept, pages/game.js).
+(@media (hover: hover)) e, da computer, la carta sotto il mouse resta sollevata anche
+dopo un ridisegno (nel tavolo React la carta è sempre la stessa, lotto 8g).
 
 Si controlla, con "riduci movimento" spento, campionando a ogni fotogramma la
 posizione delle carte della mano mentre arrivano viste nuove (evento del browser
@@ -28,7 +28,7 @@ from tests.browser import (
     running_server,
     wait,
 )
-from tests.table_ui import table_path
+from tests.spa import table_path
 
 ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"
@@ -123,9 +123,8 @@ def test_carta_ridisegnata_si_abbassa_quando_il_mouse_esce(browser, server):
     _open(browser, server, DESKTOP)
     _move_mouse(browser, _card_center(browser, 0))
     _renders(browser, 1)
-    # Ridisegnata, la carta è ancora sollevata. Si misura la carta, non la classe
-    # card--hover-kept: il tavolo Jinja ricrea la carta e la rialza con quella classe,
-    # quello React tiene la stessa carta, che resta sotto il mouse da sola (lotto 8g)
+    # Ridisegnata, la carta è ancora sollevata: il tavolo React tiene la stessa carta,
+    # che resta sotto il mouse da sola (lotto 8g)
     lifted = f"new DOMMatrix(getComputedStyle(document.querySelector('{HAND_CARDS}')).transform).m42"
     assert browser.js(lifted) < -5
     _move_mouse(browser, {"x": 640, "y": 300})

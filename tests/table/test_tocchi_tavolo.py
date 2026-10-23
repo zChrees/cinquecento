@@ -19,7 +19,7 @@ import pytest
 
 from app import create_app
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
-from tests.table_ui import table_path
+from tests.spa import table_path
 
 ROOT = Path(__file__).resolve().parents[2]
 GAME_CSS = ROOT / "app" / "static" / "css" / "pages" / "game.css"
@@ -96,7 +96,7 @@ def test_regola_su_ogni_elemento_solo_al_tavolo(browser, server):
     assert browser.js("getComputedStyle(document.querySelector('.card')).touchAction") == "auto"
 
 
-# --- P104: il doppio tocco su iPhone, bloccato da game.js ---------------------------
+# --- P104: il doppio tocco su iPhone, bloccato da GamePage.tsx ----------------------
 
 def _tap(browser, selector):
     point = browser.js(f"""(() => {{ const b = document.querySelector({selector!r}).getBoundingClientRect();

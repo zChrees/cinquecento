@@ -11,7 +11,7 @@ il tavolo ha le carte pronte, ogni carta che compare ha già la sua immagine, su
 Il tavolo si apre nella prova (/game/prova?demo=1v1) in Chrome o Edge senza finestra
 (tests/browser.py); le viste arrivano con l'evento del browser "demo:state". Non
 serve MySQL. Se né Chrome né Edge sono installati i controlli si saltano.
-Passo 8b: con TABLE_UI=react gli stessi controlli valgono per il tavolo React (tests/table_ui.py).
+Dal lotto 9a c'è solo il tavolo React (table_path di tests/spa.py).
 """
 
 import copy
@@ -22,7 +22,7 @@ import pytest
 
 from app import create_app
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
-from tests.table_ui import table_path
+from tests.spa import table_path
 
 ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"

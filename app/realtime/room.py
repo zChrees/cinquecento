@@ -87,7 +87,8 @@ RECONNECT_SECONDS = BaseConfig.RECONNECT_SECONDS
 SING_SHOW_SECONDS = 3  # D15: per quanto la pagina mostra Re e Cavallo cantati
 MODE_OF_PLAYERS = {n: mode for mode, n in MODES.items()}
 
-# P94: pause del tavolo, le stesse di js/pages/game.js (le confronta tests/sockets/test_turno.py).
+# P94: pause del tavolo, le stesse di frontend/src/game/animations.ts (le confronta
+# tests/sockets/test_durate_tavolo.py).
 # Il conto alla rovescia del turno parte dopo la pausa, così i TURN_SECONDS sono tutti giocabili
 LAST_TRICK_SECONDS = 1.5  # LAST_TRICK_MS: presa appena chiusa al centro del tavolo
 SUMMARY_SECONDS = 5  # SUMMARY_MS: riepilogo di fine mano (si chiude anche prima, con "Ok")
@@ -120,7 +121,8 @@ def utc_now():
 
 def deal_seconds(players):
     """Mescolata e distribuzione di una mano: le carte partono una alla volta (DEAL_STEP_MS)
-    e ognuna vola per DRAW_MS (startDeal di js/pages/game.js); in secondi, senza PAUSE_SCALE."""
+    e ognuna vola per DRAW_MS (startDeal di frontend/src/game/tableStore.ts); in secondi,
+    senza PAUSE_SCALE."""
     cards = players * 5  # rules.hand_size: le carte distribuite a inizio mano
     return SHUFFLE_SECONDS + (cards - 1) * DEAL_STEP_SECONDS + DRAW_SECONDS
 

@@ -1,22 +1,20 @@
 """Passo 8a della migrazione: il tavolo React (frontend/src/game/) disegnato da una vista.
 
-Controlla, aprendo la prova (/game/prova?demo=1v1 o 2v2) nel tavolo Jinja (dal lotto 8h
-con &ui=jinja) e poi in quello React, in Chrome o Edge senza finestra (tests/browser.py):
-- la stessa pagina, elemento per elemento (tag, attributi, testi) dentro <main>, per
-  la vista finta e per varie viste mandate con l'evento "demo:state": canti e
-  "Cala le carte", mazzo finito, avversario CPU e scollegato, fine partita a punti e
-  per abbandono, pareggio, nel 2v2 le carte del compagno con il consiglio (anche
-  della CPU compagna) e le frasi (elenco aperto e fumetto);
-- le stesse risposte della prova quando si tocca una carta, un canto o una carta
-  del compagno (riga di stato, carta consigliata);
-- le stesse posizioni delle parti del tavolo sul telefono e da computer;
+Controlla, aprendo la prova (/game/prova?demo=1v1 o 2v2) in Chrome o Edge senza
+finestra (tests/browser.py):
+- la vista finta e varie viste mandate con l'evento "demo:state" (canti e "Cala le
+  carte", mazzo finito, avversario CPU e scollegato, fine partita a punti e per
+  abbandono, pareggio, nel 2v2 le carte del compagno con il consiglio, anche della
+  CPU compagna, e le frasi con l'elenco aperto e il fumetto) cambiano davvero il
+  tavolo, e la CSP non blocca niente;
+- quando si tocca una carta, un canto o una carta del compagno la prova risponde
+  nella riga di stato;
 - senza ?demo=, per una partita che non c'è, il messaggio del server (dal lotto 8b,
-  che si collega); la CSP non blocca niente.
-Le differenze ammesse, che il confronto toglie: il ritardo delle animazioni (il
-tempo da quando la pagina è aperta), l'indirizzo delle immagini scritto per intero o
-no, data-cards-ready (le immagini precaricate, P79: nel tavolo React dal lotto 8b).
-Nel tavolo Jinja le viste nuove fanno partire i "momenti" (P57): le varianti qui
-cambiano solo campi che non ne fanno partire, e "riduci movimento" è acceso.
+  che si collega).
+Fino al lotto 9a qui c'era anche il confronto con il tavolo Jinja, elemento per
+elemento e per posizioni: con il tavolo Jinja tolto non si può più fare (scelta 2 del
+passo 9, di Christian); l'HTML e le posizioni li controllano gli altri test del
+tavolo con i data-*. "Riduci movimento" è acceso.
 Non serve MySQL. Senza browser, o senza il build della SPA, i test si saltano.
 """
 
@@ -33,7 +31,6 @@ from tests.spa import needs_spa
 
 ROOT = Path(__file__).resolve().parents[2]
 DEV = ROOT / "app" / "static" / "dev"
-JINJA = "/game/prova?demo={mode}&ui=jinja"
 REACT = "/game/prova?demo={mode}"
 READY = "document.querySelector('[data-mode]') !== null"
 # Come test_csp.py: registra ogni risorsa bloccata dalla CSP
@@ -42,10 +39,10 @@ RECORD = (
     "document.addEventListener('securitypolicyviolation',"
     " e => window.__csp.push(e.effectiveDirective + ' ' + e.blockedURI));"
 )
-# SIGNATURE: ogni elemento di <main> come "profondità tag attributi | testo proprio".
-# Attributi in ordine alfabetico (React e utils/dom.js li scrivono in ordini diversi);
-# src risolto (img.src: indirizzo intero); style come elenco ordinato di regole, con
-# il numero dei ritardi delle animazioni tolto; data-cards-ready saltato.
+# SIGNATURE: ogni elemento di <main> come "profondità tag attributi | testo proprio",
+# per contare quante varianti cambiano davvero il tavolo. Attributi in ordine
+# alfabetico; src risolto (img.src: indirizzo intero); style come elenco ordinato di
+# regole, con il numero dei ritardi delle animazioni tolto; data-cards-ready saltato.
 SIGNATURE = """(() => {
   const out = [];
   function style(value) {
@@ -66,22 +63,6 @@ SIGNATURE = """(() => {
     }
   }
   walk(document.querySelector('main'), 0);
-  return out;
-})()"""
-# BOXES: i rettangoli delle parti del tavolo, arrotondati al pixel
-BOXES = """(() => {
-  const out = {};
-  const parts = ['.table__top', '[data-leave]', '[data-scoreboard]', '[data-trump-badge]', '.table__center',
-    '[data-trick]', '[data-deck-count]', '.table__me', '[data-phrases-button]', '[data-sing-buttons]',
-    '.table__mine .hand', '[data-table-status]'];
-  for (const seat of document.querySelectorAll('.seat[data-seat]')) parts.push(`.seat[data-seat="${seat.dataset.seat}"]`);
-  for (const fan of document.querySelectorAll('[data-edge-hand]')) parts.push(`[data-edge-hand="${fan.dataset.edgeHand}"]`);
-  for (const part of parts) {
-    const e = document.querySelector(part);
-    if (!e) { out[part] = null; continue; }
-    const r = e.getBoundingClientRect();
-    out[part] = [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)];
-  }
   return out;
 })()"""
 
@@ -189,18 +170,15 @@ def _show(browser, view):
     _dispatch(browser, "demo:state", view)
     browser.wait_js(f"document.querySelector('[data-version]')?.dataset.version === '{view['version']}'",
                     f"vista {view['version']}")
-    # P93: nel tavolo Jinja la scritta "Mazzo finito: ora vedi le carte di …" è un
-    # momento (2,5 s); il tavolo React la mostra dal lotto 8c
+    # P93: la scritta "Mazzo finito: ora vedi le carte di …" è un momento (2,5 s)
     browser.wait_js("document.querySelector('[data-partner-notice]') === null", "scritta del compagno sparita")
 
 
-def _signatures(browser, server, page, mode):
-    """Apre `page` e restituisce le firme di <main> per ogni variante, nell'ordine."""
-    browser.open(f"{server}{page.format(mode=mode)}", 390, 844, READY)
-    # La pagina è davvero quella giusta: la SPA ha <div id="root">, il template game.js
-    react = browser.js("document.getElementById('root') !== null")
-    jinja = browser.js("document.querySelector('script[src$=\"/js/pages/game.js\"]') !== null")
-    assert (react, jinja) == ((True, False) if page == REACT else (False, True))
+def _signatures(browser, server, mode):
+    """Apre la prova e restituisce le firme di <main> per ogni variante, nell'ordine."""
+    browser.open(f"{server}{REACT.format(mode=mode)}", 390, 844, READY)
+    # La pagina è davvero quella della SPA, che ha <div id="root">
+    assert browser.js("document.getElementById('root') !== null") is True
     out = {"inizio": browser.js(SIGNATURE)}
     for name, view, action in VARIANTS[mode](_view(mode)):
         _show(browser, view)
@@ -223,38 +201,16 @@ def _signatures(browser, server, page, mode):
 
 
 @pytest.mark.parametrize("mode", ["1v1", "2v2"])
-def test_stesso_tavolo_della_versione_jinja(browser, server, mode):
-    old = _signatures(browser, server, JINJA, mode)
-    new = _signatures(browser, server, REACT, mode)
-    assert list(new) == list(old)
-    for name in old:
-        assert new[name] == old[name], name
-    # Le varianti hanno cambiato davvero il tavolo (il confronto non è tra pagine vuote)
-    assert len({json.dumps(signature) for signature in old.values()}) >= 5
-
-
-@pytest.mark.parametrize("mode", ["1v1", "2v2"])
-@pytest.mark.parametrize("size", [(360, 640), (1280, 720)])
-def test_stesse_posizioni(browser, server, mode, size):
-    boxes = []
-    for page in (JINJA, REACT):
-        browser.open(f"{server}{page.format(mode=mode)}", *size, READY)
-        _dispatch(browser, "demo:phrases", table_phrases.phrases_event())
-        browser.wait_js("document.querySelector('[data-phrases-button]') !== null", "pulsante delle frasi")
-        # I caratteri dei nomi e dei numeri si scaricano quando il tavolo compare (dopo
-        # la vista): si misura quando sono pronti, e dopo due disegni del browser
-        browser.js("document.fonts.ready.then(() => new Promise((r) => requestAnimationFrame(() => "
-                   "requestAnimationFrame(r))))")
-        browser.wait_js("document.fonts.status === 'loaded'", "caratteri pronti")
-        boxes.append(browser.js(BOXES))
-    assert boxes[1] == boxes[0]
-    assert boxes[0]["[data-trick]"] is not None and boxes[0][".table__mine .hand"] is not None
+def test_le_viste_della_prova_cambiano_il_tavolo(browser, server, mode):
+    # Ogni tocco ha avuto la sua risposta e la CSP non ha bloccato niente (_signatures);
+    # le varianti hanno cambiato davvero il tavolo (non sono tutte la stessa pagina)
+    signatures = _signatures(browser, server, mode)
+    assert len({json.dumps(signature) for signature in signatures.values()}) >= 5
 
 
 def test_senza_demo_partita_che_non_esiste(browser, server):
     # Dal lotto 8b la pagina si collega e manda game:join: per una partita che non c'è
-    # il messaggio "In attesa della partita…" lascia il posto alla risposta del
-    # server, come nel tavolo Jinja (join di game.js)
+    # il messaggio "In attesa della partita…" lascia il posto alla risposta del server
     message = "Questa partita non esiste o è già finita."
     browser.open(f"{server}/game/a1b2c3d4", 390, 844,
                  f"document.querySelector('[data-table-message]')?.textContent === {json.dumps(message)}")

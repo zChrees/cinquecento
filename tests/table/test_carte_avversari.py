@@ -25,7 +25,7 @@ import pytest
 
 from app import create_app
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
-from tests.table_ui import table_path
+from tests.spa import table_path
 
 ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"
@@ -35,9 +35,9 @@ NEW_CARD = {"suit": "denari", "rank": 2}
 
 
 def test_durata_della_pescata_uguale_nel_css_e_nella_pagina():
-    game = (STATIC / "js" / "pages" / "game.js").read_text(encoding="utf-8")
+    animations = (ROOT / "frontend" / "src" / "game" / "animations.ts").read_text(encoding="utf-8")
     css = (STATIC / "css" / "components" / "hand.css").read_text(encoding="utf-8")
-    ms = int(re.search(r"const DRAW_MS = (\d+);", game).group(1))
+    ms = int(re.search(r"const DRAW_MS: number = (\d+);", animations).group(1))
     for name in ("card-draw", "card-room", "card-draw-mine"):
         seconds = float(re.search(rf"animation: {name} ([\d.]+)s", css).group(1))
         assert ms == round(seconds * 1000), name
@@ -200,8 +200,8 @@ def test_un_ridisegno_a_meta_non_fa_ripartire_la_pescata(browser, server):
     # Mario): dopo 1,3 s la sua pescata è avanti, non di nuovo all'inizio
     assert state["lastProgress"] is None or state["lastProgress"] >= 0.2, state
     # La pescata di Turi è già partita. Conta quanto manca davvero (ritardo meno tempo già
-    # passato), non il ritardo scritto: il tavolo Jinja ricrea la carta con il ritardo
-    # negativo, quello React la tiene con il ritardo di partenza (lotto 8d)
+    # passato), non il ritardo scritto: il tavolo React tiene la carta con il ritardo di
+    # partenza (lotto 8d)
     assert state["lastWait"] is None or state["lastWait"] < 0, state
 
 

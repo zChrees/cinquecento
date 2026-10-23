@@ -24,10 +24,11 @@ import pytest
 from app import create_app
 from app.realtime import table_phrases
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
-from tests.table_ui import table_path
+from tests.spa import table_path
 
 ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"
+GAME_SRC = ROOT / "frontend" / "src" / "game"
 PHONE = (360, 640)
 PHRASES = table_phrases.phrases_event()
 LONGEST = max(PHRASES["phrases"], key=lambda phrase: len(phrase["text"]))
@@ -37,6 +38,7 @@ LONGEST = max(PHRASES["phrases"], key=lambda phrase: len(phrase["text"]))
 
 
 def test_css_delle_frasi_nella_pagina_del_tavolo():
+    table_path("prova", demo="1v1")  # salta il test senza il build della SPA
     app = create_app("testing")
     app.config["LOGIN_DISABLED"] = True
     client = app.test_client()
@@ -44,26 +46,21 @@ def test_css_delle_frasi_nella_pagina_del_tavolo():
     html = response.get_data(as_text=True)
     response.close()
     assert 'href="/static/css/components/table-phrases.css"' in html
-    for path in ("/static/css/components/table-phrases.css", "/static/js/components/TablePhrases.js"):
-        response = client.get(path)
-        assert response.status_code == 200, path
-        response.close()
+    response = client.get("/static/css/components/table-phrases.css")
+    assert response.status_code == 200
+    response.close()
 
 
 def test_componente_solo_testo_e_niente_copia_delle_frasi():
-    code = (STATIC / "js" / "components" / "TablePhrases.js").read_text(encoding="utf-8")
-    for forbidden in ("innerHTML", "outerHTML", "insertAdjacentHTML", "document.write"):
-        assert forbidden not in code, forbidden
-    # L'elenco arriva solo dal server (game:phrases): nella pagina non c'è una copia
-    for path in ("components/TablePhrases.js", "pages/game.js", "components/Table.js"):
-        text = (STATIC / "js" / path).read_text(encoding="utf-8")
+    # Dal lotto 9a i file del tavolo React (frontend/src/game/): React scrive il testo
+    # come testo da solo, l'HTML entrerebbe solo con dangerouslySetInnerHTML
+    for path in sorted(GAME_SRC.glob("*.ts*")):
+        code = path.read_text(encoding="utf-8")
+        for forbidden in ("dangerouslySetInnerHTML", "innerHTML", "outerHTML", "insertAdjacentHTML", "document.write"):
+            assert forbidden not in code, (path.name, forbidden)
+        # L'elenco arriva solo dal server (game:phrases): nella pagina non c'è una copia
         for phrase in PHRASES["phrases"]:
-            assert phrase["text"] not in text, (path, phrase["code"])
-
-
-def test_pausa_uguale_al_limite_del_server():
-    code = (STATIC / "js" / "pages" / "game.js").read_text(encoding="utf-8")
-    assert f"const PHRASE_PAUSE_MS = {table_phrases.MIN_INTERVAL_SECONDS * 1000};" in code
+            assert phrase["text"] not in code, (path.name, phrase["code"])
 
 
 # --- Nel browser -------------------------------------------------------------------

@@ -2,7 +2,7 @@
 
 La tua carta parte dal suo posto nella mano, si solleva, vola ad arco verso il centro
 girando un po' e si posa con un piccolo assestamento, in 0,55 s (MY_THROW_MS di
-game.js, card-throw-mine di trick.css); le carte degli avversari restano come prima
+frontend/src/game/animations.ts, card-throw-mine di trick.css); le carte degli avversari restano come prima
 (card-throw, 0,4 s). Il server (P94) continua a usare 0,4 s per la sua pausa: scelta di
 Christian del 05/10/2026 (al massimo 0,15 s di differenza quando chiudi tu la presa).
 P107: la carta di un avversario fa lo stesso movimento in 0,4 s, partendo dal suo
@@ -23,14 +23,14 @@ import pytest
 
 from app import create_app
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
-from tests.table_ui import table_path
+from tests.spa import table_path
 
 ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"
-GAME = (STATIC / "js" / "pages" / "game.js").read_text(encoding="utf-8")
+ANIMATIONS = (ROOT / "frontend" / "src" / "game" / "animations.ts").read_text(encoding="utf-8")
 TRICK_CSS = (STATIC / "css" / "components" / "trick.css").read_text(encoding="utf-8")
-MY_THROW_MS = int(re.search(r"const MY_THROW_MS = (\d+);", GAME).group(1))
-THROW_MS = int(re.search(r"const THROW_MS = (\d+);", GAME).group(1))
+MY_THROW_MS = int(re.search(r"const MY_THROW_MS: number = (\d+);", ANIMATIONS).group(1))
+THROW_MS = int(re.search(r"const THROW_MS: number = (\d+);", ANIMATIONS).group(1))
 SIZES = [(360, 640), (1280, 720)]
 
 MY_CARD = ".trick__card--bottom > [data-thrown]"

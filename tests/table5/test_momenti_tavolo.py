@@ -22,10 +22,11 @@ import pytest
 
 from app import create_app
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
-from tests.table_ui import table_path
+from tests.spa import table_path
 
 ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"
+GAME_SRC = ROOT / "frontend" / "src" / "game"
 PHONE = (360, 640)
 
 
@@ -41,31 +42,36 @@ def _card(suit, rank):
 
 
 def test_css_del_riepilogo_nella_pagina_del_tavolo():
+    table_path("prova", demo="1v1")  # salta il test senza il build della SPA
     client = create_app("testing").test_client()
     client.application.config["LOGIN_DISABLED"] = True
     response = client.get("/game/prova?demo=1v1")
     html = response.get_data(as_text=True)
     response.close()
     assert 'href="/static/css/components/hand-summary.css"' in html
-    for path in ("/static/css/components/hand-summary.css", "/static/js/components/HandSummary.js"):
-        response = client.get(path)
-        assert response.status_code == 200, path
-        response.close()
+    response = client.get("/static/css/components/hand-summary.css")
+    assert response.status_code == 200
+    response.close()
 
 
-def test_componenti_solo_testo():
-    for path in ("components/HandSummary.js", "components/Table.js", "components/Trick.js", "pages/game.js"):
-        code = (STATIC / "js" / path).read_text(encoding="utf-8")
-        for forbidden in ("innerHTML", "outerHTML", "insertAdjacentHTML", "document.write"):
-            assert forbidden not in code, (path, forbidden)
+# Che i componenti del tavolo React scrivano i testi solo come testo lo controlla
+# table5/test_frasi_pagina.py (test_componente_solo_testo_e_niente_copia_delle_frasi),
+# su tutti i file di frontend/src/game/.
 
 
 def test_eventi_finti_solo_nella_prova():
-    code = (STATIC / "js" / "pages" / "game.js").read_text(encoding="utf-8")
-    start = code.index("if (demo) {\n  // Solo nella prova")
-    block = code[start:code.index("} else {", start)]
+    # Dal lotto 9a: gli ascolti demo:* stanno solo in listenToDemo di GamePage.tsx, che
+    # si ferma subito fuori dalla prova (demo === null), prima di ascoltare
+    code = (GAME_SRC / "GamePage.tsx").read_text(encoding="utf-8")
+    start = code.index("function listenToDemo()")
+    guard = code.index("if (demo === null", start)
+    first_listen = code.index("addEventListener('demo:", start)
+    assert guard < first_listen
+    block = code[start:code.index("useEffect(listenToDemo", start)]
     assert "'demo:state'" in block and "'demo:sang'" in block
-    assert code.count("addEventListener('demo:") == 4  # più demo:phrases e demo:phrase (P56)
+    # Quattro ascolti in tutto il tavolo, tutti lì: più demo:phrases e demo:phrase (P56)
+    total = sum(path.read_text(encoding="utf-8").count("addEventListener('demo:") for path in GAME_SRC.glob("*.ts*"))
+    assert total == block.count("addEventListener('demo:") == 4
 
 
 # --- Nel browser -------------------------------------------------------------------
