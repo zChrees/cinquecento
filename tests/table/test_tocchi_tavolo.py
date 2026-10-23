@@ -33,6 +33,8 @@ def test_regole_nel_css_del_tavolo():
     for rule in ("touch-action: manipulation;", "-webkit-touch-callout: none;", "user-select: none;"):
         assert rule in block, rule
     # Lo zoom con due dita resta: nessuna regola lo spegne
+    # La pagina del tavolo è della SPA: la sua <head> è frontend/index.html
+    assert "user-scalable" not in (ROOT / "frontend" / "index.html").read_text(encoding="utf-8")
     assert "user-scalable" not in (ROOT / "app" / "templates" / "base.html").read_text(encoding="utf-8")
     assert "pinch-zoom" not in css
 

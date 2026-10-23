@@ -101,8 +101,9 @@ def test_404_json_nella_forma_del_contratto(client):
 
 def test_pagine_di_errore_senza_navbar(client):
     page = client.get("/pagina-che-non-esiste").get_data(as_text=True)
-    assert 'data-part="navbar"' not in page
-    assert 'name="csrf-token"' in page  # la struttura è quella di base.html
+    assert 'data-part="navbar"' not in page and "<script" not in page
+    # La struttura è quella di base.html, che dal lotto 9b-2 serve solo alle pagine di errore
+    assert 'data-page="error"' in page and "data-rotate-notice" in page
 
 
 @pytest.mark.parametrize("name", ["404.html", "500.html"])

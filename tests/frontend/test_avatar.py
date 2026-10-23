@@ -3,62 +3,42 @@
 Controlla il "Fatto quando" di SCALETTA.md (P43): ogni avatar di
 app/services/avatars.py ha la sua immagine (app/static/img/avatars/<codice>.svg);
 chi non ne ha scelto uno vede l'iniziale; il peso totale è sotto 300 KB.
-Controlla anche che js/components/Avatar.js conosca gli stessi codici (con Node,
-se c'è), e dal passo 8a anche frontend/src/game/SeatAvatar.tsx (la terza copia, per
-il tavolo React), che navbar, pannello statistiche e impostazioni mostrino l'immagine
-(macro templates/partials/avatar.html) e che al tavolo di prova (/game/prova?demo=2v2,
-in Chrome o Edge senza finestra, tests/browser.py) le immagini si carichino e un
-codice fuori elenco mostri l'iniziale (il tavolo React: table_path di tests/spa.py).
-Non serve MySQL.
+Controlla anche che frontend/src/game/SeatAvatar.tsx (l'avatar al tavolo React, dal
+passo 8a) conosca gli stessi codici del server, che i componenti usino Avatar.tsx o
+SeatAvatar.tsx invece di calcolare l'iniziale da sé, che navbar e pannello statistiche
+della home React mostrino l'immagine o l'iniziale, e che al tavolo di prova
+(/game/prova?demo=2v2) le immagini si carichino e un codice fuori elenco mostri
+l'iniziale. Nel browser: Chrome o Edge senza finestra (tests/browser.py); senza
+browser, o senza il build della SPA, quei controlli si saltano.
+Fino al lotto 9b-2 della migrazione c'erano anche js/components/Avatar.js (la sua copia
+dei codici, provata con Node) e la macro templates/partials/avatar.html: tolti con il
+codice vecchio. Avatar.tsx non ha una copia: si fida dei codici che il server ha già
+controllato (P17). Non serve MySQL.
 """
 
-import json
 import re
-import shutil
-import subprocess
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import pytest
-from flask import render_template
 from flask_login import login_user
 
 from app import create_app
 from app.services.avatars import AVATARS
 from tests.browser import TEST_COOKIE, Browser, find_browser, running_server
 from tests.browser import FakeUser as BrowserUser
-from tests.spa import table_path
+from tests.spa import needs_spa, table_path
 
 ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"
 AVATAR_DIR = STATIC / "img" / "avatars"
-AVATAR_JS = STATIC / "js" / "components" / "Avatar.js"
 SEAT_AVATAR_TSX = ROOT / "frontend" / "src" / "game" / "SeatAvatar.tsx"
 SVG_NS = "{http://www.w3.org/2000/svg}"
-
-
-class FakeUser:
-    """Utente con il login per i template (come in test_navbar.py), con un avatar."""
-
-    is_authenticated = True
-
-    def __init__(self, username, avatar=None):
-        self.username = username
-        self.avatar = avatar
-
-    def get_id(self):
-        return "7"
 
 
 @pytest.fixture
 def app():
     return create_app("testing")
-
-
-def _render(app, template, avatar, **context):
-    with app.test_request_context("/"):
-        return render_template(template, current_user=FakeUser("mario", avatar), **context)
-
 
 # --- File delle immagini -----------------------------------------------------
 
@@ -96,52 +76,26 @@ def test_immagini_servite(app):
         response.close()
 
 
-# --- Avatar.js ----------------------------------------------------------------
-
-
-def _node(script):
-    node = shutil.which("node")
-    if node is None:
-        pytest.skip("Node non installato: controllo di Avatar.js saltato")
-    result = subprocess.run(
-        [node, "--input-type=module", "-e", script],
-        capture_output=True, text=True, timeout=30, check=False,
-    )
-    assert result.returncode == 0, result.stderr
-    return json.loads(result.stdout)
-
-
-def test_avatar_js_conosce_gli_stessi_codici_del_server():
-    url = AVATAR_JS.resolve().as_uri()
-    data = _node(
-        f"const m = await import({json.dumps(url)});"
-        "console.log(JSON.stringify({"
-        "codes: m.AVATAR_CODES,"
-        "known: m.avatarUrl('re_coppe'),"
-        "unknown: [m.avatarUrl('cavallo_spade'), m.avatarUrl(null), m.avatarUrl(''), m.avatarUrl('../x')],"
-        "}))"
-    )
-    assert data["codes"] == list(AVATARS)
-    assert data["known"].endswith("/app/static/img/avatars/re_coppe.svg")
-    assert data["unknown"] == [None, None, None, None]
+# --- Copie dell'elenco dei codici ---------------------------------------------
 
 
 def test_seat_avatar_tsx_conosce_gli_stessi_codici_del_server():
     # Passo 8a: la terza copia dell'elenco, per l'avatar al tavolo React (codice fuori
-    # elenco → iniziale, come Avatar.js); si legge come testo, senza Node
+    # elenco → iniziale); si legge come testo, senza Node
     code = SEAT_AVATAR_TSX.read_text(encoding="utf-8")
     found = re.search(r"export const AVATAR_CODES: readonly string\[\] = \[(.*?)\];", code, flags=re.DOTALL)
     assert found, "AVATAR_CODES non trovato in SeatAvatar.tsx"
     assert re.findall(r"'([^']+)'", found.group(1)) == list(AVATARS)
 
 
-def test_componenti_usano_avatar_js():
-    # Un solo posto decide immagine o iniziale: nessun componente la ricalcola da sé
-    for name in ("FriendsPanel.js", "ModeModal.js", "QueueOverlay.js"):
-        code = (STATIC / "js" / "components" / name).read_text(encoding="utf-8")
-        assert "import { Avatar } from './Avatar.js';" in code, name
+def test_componenti_usano_avatar_tsx():
+    # Un solo posto decide immagine o iniziale: nessun componente la ricalcola da sé.
+    # Dal lotto 9b-2 i componenti React: Avatar.tsx fuori dal tavolo, SeatAvatar.tsx al tavolo
+    components = ROOT / "frontend" / "src" / "components"
+    for name in ("FriendRows.tsx", "ModeModal.tsx", "QueueOverlay.tsx", "Navbar.tsx", "StatsSheet.tsx"):
+        code = (components / name).read_text(encoding="utf-8")
+        assert "import { Avatar } from './Avatar';" in code, name
         assert "charAt(0).toUpperCase()" not in code and "slice(0, 1).toUpperCase()" not in code, name
-    # Al tavolo React (dal lotto 9a al posto di Table.js) lo decide solo SeatAvatar.tsx
     game = SEAT_AVATAR_TSX.parent
     assert "import { SeatAvatar } from './SeatAvatar';" in (game / "Table.tsx").read_text(encoding="utf-8")
     for path in sorted(game.glob("*.tsx")):
@@ -150,24 +104,45 @@ def test_componenti_usano_avatar_js():
             assert "charAt(0).toUpperCase()" not in code and "slice(0, 1).toUpperCase()" not in code, path.name
 
 
-# --- Template: navbar, pannello statistiche, impostazioni ---------------------
+# --- Navbar e pannello statistiche, nel browser ------------------------------
 
 
-def test_navbar_e_statistiche_con_l_immagine(app):
-    html = _render(app, "main/index.html", "re_denari")
-    img = ('<span class="avatar avatar--img" data-avatar="re_denari" aria-hidden="true">'
-           '<img class="avatar__img" src="/static/img/avatars/re_denari.svg" alt="" draggable="false" decoding="sync"></span>')
-    assert img in re.search(r'<header class="navbar".*?</header>', html, flags=re.DOTALL).group(0)
-    stats = re.search(r'<dialog class="sheet" id="stats".*?</dialog>', html, flags=re.DOTALL).group(0)
-    assert img.replace('class="avatar avatar--img"', 'class="avatar avatar--big avatar--img"') in stats
+# AVATARS_SHOWN: l'avatar della navbar e quello del pannello statistiche
+AVATARS_SHOWN = """[document.querySelector('[data-part="navbar"] .avatar'), document.querySelector('#stats .avatar')]
+  .map((a) => ({ cls: a.className, code: a.dataset.avatar ?? null, aria: a.getAttribute('aria-hidden'),
+                 text: a.querySelector('img') ? null : a.textContent,
+                 img: a.querySelector('img') ? { cls: a.querySelector('img').className,
+                   src: a.querySelector('img').getAttribute('src'), alt: a.querySelector('img').alt } : null }))"""
 
 
-def test_senza_avatar_resta_l_iniziale(app):
-    html = _render(app, "main/index.html", None)
-    assert '<span class="avatar" aria-hidden="true">M</span>' in html
-    assert '<span class="avatar avatar--big" aria-hidden="true">M</span>' in html
-    assert "img/avatars/" not in html
+def _shown_avatars(tmp_path, avatar):
+    """Gli avatar di navbar e pannello statistiche della home React, per l'utente mario."""
+    needs_spa()
+    user = BrowserUser("mario")
+    user.avatar = avatar
+    with running_server(create_app("testing"), user) as url:
+        browser = Browser(find_browser(), tmp_path / "chrome")
+        try:
+            browser.send("Network.setCookie", name=TEST_COOKIE[0], value=TEST_COOKIE[1], url=url)
+            browser.open(f"{url}/", 390, 844, "document.querySelector('#stats .avatar') !== null"
+                         " && document.querySelector('[data-friends-panel]')?.dataset.connection === 'connected'",
+                         timeout=60)
+            return browser.js(AVATARS_SHOWN)
+        finally:
+            browser.close()
 
+
+def test_navbar_e_statistiche_con_l_immagine(tmp_path):
+    navbar, stats = _shown_avatars(tmp_path, "re_denari")
+    img = {"cls": "avatar__img", "src": "/static/img/avatars/re_denari.svg", "alt": ""}
+    assert navbar == {"cls": "avatar avatar--img", "code": "re_denari", "aria": "true", "text": None, "img": img}
+    assert stats == {"cls": "avatar avatar--big avatar--img", "code": "re_denari", "aria": "true", "text": None, "img": img}
+
+
+def test_senza_avatar_resta_l_iniziale(tmp_path):
+    navbar, stats = _shown_avatars(tmp_path, None)
+    assert navbar == {"cls": "avatar", "code": None, "aria": "true", "text": "M", "img": None}
+    assert stats == {"cls": "avatar avatar--big", "code": None, "aria": "true", "text": "M", "img": None}
 
 def test_impostazioni_ricevono_tutti_gli_avatar(app):
     # Dal passo 6 della migrazione la pagina è della SPA: l'elenco lo dà GET /api/profile/avatars

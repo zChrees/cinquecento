@@ -8,16 +8,18 @@ sulla pagina della SPA con il login (/profile/settings, dal passo 6):
   request_id; accetta, rimuovi con la conferma;
 - la lista si rilegge da sola con friends:changed e con un messaggio di un amico, e
   suonano la richiesta ricevuta e il messaggio (non gli altri motivi né i propri
-  messaggi); l'elenco dei suoni di frontend/src/utils/sounds.ts è quello di sounds.js;
+  messaggi);
 - si chiude con "indietro", Esc, la X e un tocco fuori; dopo un ricaricamento non si
   riapre da solo e "indietro" lo chiude ancora (P34).
 
-Le richieste /friends/... le intercetta il browser e risponde FakeFriendsServer di
-test_pannello_amici.py (dati di app/static/dev/amici_esempio.json), così non serve
+Le richieste /friends/... le intercetta il browser e risponde FakeFriendsServer, qui
+sotto (dati di app/static/dev/amici_esempio.json; fino al lotto 9b-1 stava in
+test_pannello_amici.py), così non serve
 MySQL; la sessione (/api/auth/session) e il tempo reale sono quelli veri del server
 dei test. Senza Chrome o Edge, o senza il build della SPA, i controlli si saltano.
 """
 
+import copy
 import json
 import re
 from pathlib import Path
@@ -28,14 +30,50 @@ from app import create_app
 from app.extensions import socketio
 from app.realtime.events import user_channel
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
-from tests.frontend2.test_pannello_amici import ME, FakeFriendsServer
 from tests.spa import needs_spa
 
 ROOT = Path(__file__).resolve().parents[2]
+EXAMPLE = json.loads((ROOT / "app" / "static" / "dev" / "amici_esempio.json").read_text(encoding="utf-8"))
+ME = 12   # nei dati finti l'utente collegato è Mario, 12
+
+
+class FakeFriendsServer:
+    """Risponde alle richieste /friends/... come P45, partendo da amici_esempio.json."""
+
+    def __init__(self):
+        self.data = copy.deepcopy(EXAMPLE["GET /friends/"])
+        self.calls = []
+
+    def __call__(self, request):
+        method, url = request["method"], request["url"]
+        path = url.split("/friends", 1)[1]
+        body = json.loads(request.get("postData") or "null")
+        self.calls.append({"method": method, "path": path, "body": body,
+                           "csrf": request["headers"].get("X-CSRFToken", "")})
+        if method == "GET" and path == "/":
+            return 200, {"ok": True, "data": self.data}
+        if method == "POST" and path == "/requests":
+            if body["username"] == "Fantasma":
+                return 404, {"ok": False, "error": {"code": "not_found", "message": "Nessun utente con questo username."}}
+            sent = {"user_id": 99, "username": body["username"], "avatar": None, "sent_at": "2026-09-28T18:00:00.000Z"}
+            self.data["requests_out"].insert(0, sent)
+            return 200, {"ok": True, "data": sent}
+        match = re.fullmatch(r"/requests/(\d+)/accept", path)
+        if method == "POST" and match:
+            user_id = int(match.group(1))
+            request_in = next(r for r in self.data["requests_in"] if r["user_id"] == user_id)
+            self.data["requests_in"].remove(request_in)
+            self.data["counters"]["requests_in"] -= 1
+            self.data["friends"].insert(0, {**request_in, "presence": "online", "unread": 0})
+            return 200, {"ok": True, "data": None}
+        match = re.fullmatch(r"/(\d+)", path)
+        if method == "DELETE" and match:
+            self.data["friends"] = [f for f in self.data["friends"] if f["user_id"] != int(match.group(1))]
+            return 200, {"ok": True, "data": None}
+        return 404, {"ok": False, "error": {"code": "not_found", "message": "Non trovato."}}
+
 # PAGE: una pagina della SPA con il login (le impostazioni, dal passo 6)
 PAGE = "/profile/settings"
-SOUNDS_JS = (ROOT / "app" / "static" / "js" / "core" / "sounds.js").read_text(encoding="utf-8")
-SOUNDS_TS = (ROOT / "frontend" / "src" / "utils" / "sounds.ts").read_text(encoding="utf-8")
 # Come test_suoni_menu.py: registra i suoni partiti (anche quelli che il browser non fa sentire)
 RECORD_SOUNDS = (
     "window.__sounds = [];"
@@ -181,17 +219,9 @@ def test_contatore_lista_e_azioni(browser, server, friends):
     assert browser.js("window.__csp") == []
 
 
-def _sound_lists(code):
-    # nome del suono → elenco dei file, dalle righe "  nome: ['file', ...],"
-    found = re.findall(r"^\s+(\w+): \[([^\]]*)\],", code, re.MULTILINE)
-    return {name: re.findall(r"'([^']+)'", files) for name, files in found}
-
-
-def test_suoni_uguali_a_sounds_js():
-    # Fino al passo 9 ci sono due copie dell'elenco: devono restare uguali
-    js = _sound_lists(SOUNDS_JS)
-    assert js and _sound_lists(SOUNDS_TS) == js
-    assert re.search(r"SOUNDS_KEY = '([^']+)'", SOUNDS_TS).group(1) == re.search(r"SOUNDS_KEY = '([^']+)'", SOUNDS_JS).group(1)
+# Fino al lotto 9b-2 qui c'era test_suoni_uguali_a_sounds_js: l'elenco dei suoni esisteva
+# anche in app/static/js/core/sounds.js, tolto con il JavaScript vecchio. I file dei
+# suoni li confronta con l'elenco di sounds.ts table6/test_suoni.py (test_file_dei_suoni_e_licenza).
 
 
 def test_la_lista_si_aggiorna_da_sola_e_suona(browser, server, friends, app):

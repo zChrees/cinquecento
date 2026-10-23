@@ -5,73 +5,21 @@ JavaScript vecchio (FriendsPanel.js, sulla home Jinja /vecchia-home): contatore 
 lista, richiesta di amicizia con il codice CSRF e request_id, accetta e rimuovi,
 "indietro" ed Esc. Da allora quei controlli li fa, sul pannello React,
 tests/frontend2/test_spa_amici.py, e il limite della chat tests/frontend/test_spa_chat.py.
-Qui restano:
-- sul codice vecchio, fino al lotto 9b-2: il pulsante "Amici" collegato al pannello,
-  i CSS del pannello in base.html, componenti che non inseriscono testo come HTML e
-  senza inviti a partita;
-- nel browser, sulle pagine React: niente pannello al tavolo né senza login.
+Al lotto 9b-2 sono andati via, con il codice vecchio, anche i controlli sui suoi file:
+niente testo inserito come HTML lo controlla tests/frontend/test_base.py su tutti i
+file di frontend/src/, niente inviti nel pannello test_spa_amici.py.
+Qui resta, nel browser, sulle pagine React: niente pannello al tavolo né senza login.
 Se né Chrome né Edge sono installati, o manca il build della SPA, i controlli nel
 browser si saltano. Non serve MySQL.
 """
 
-import re
-from pathlib import Path
-
 import pytest
-from flask import render_template
 
 from app import create_app
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
 from tests.spa import table_path
 
-ROOT = Path(__file__).resolve().parents[2]
-STATIC = ROOT / "app" / "static"
 ME = 12   # nei dati finti l'utente collegato è Mario, 12
-
-
-def _render_logged_in(app, path="/"):
-    with app.test_request_context(path):
-        return render_template("main/index.html", current_user=FakeUser("Mario", ME), demo_urls=None, demo_state=None)
-
-
-def _friends_button(html):
-    return re.search(r"<button[^>]*data-friends-button[^>]*>", html, flags=re.DOTALL).group(0)
-
-
-# --- Pagina e file (codice vecchio, fino al lotto 9b-2) ----------------------------
-
-
-def test_pulsante_amici_collegato_al_pannello():
-    app = create_app("testing")
-    button = _friends_button(_render_logged_in(app))
-    assert 'aria-controls="friends"' in button and 'aria-haspopup="dialog"' in button
-    assert 'data-friends-url="/friends/"' in button
-    # La chat finta di P46 non c'è più (P48): nessun indirizzo di dati finti
-    assert "data-chat-demo-url" not in button
-
-
-def test_css_del_pannello_in_base_html():
-    app = create_app("testing")
-    html = _render_logged_in(app)
-    client = app.test_client()
-    for name in ("friends-panel", "chat"):
-        path = f"/static/css/components/{name}.css"
-        assert f'href="{path}"' in html, name
-        response = client.get(path)
-        assert response.status_code == 200, name
-        response.close()
-
-
-def test_componenti_solo_testo_e_niente_inviti():
-    for name in ("FriendsPanel", "ChatWindow"):
-        code = (STATIC / "js" / "components" / f"{name}.js").read_text(encoding="utf-8")
-        for forbidden in ("innerHTML", "outerHTML", "insertAdjacentHTML", "document.write"):
-            assert forbidden not in code, (name, forbidden)
-    panel = (STATIC / "js" / "components" / "FriendsPanel.js").read_text(encoding="utf-8")
-    # Gli inviti a partita stanno solo nella carta-modal della home (decisione di P46)
-    assert "Invita" not in panel and "invite:" not in panel
-    layout = (STATIC / "js" / "core" / "layout.js").read_text(encoding="utf-8")
-    assert "initFriendsPanel(document.querySelector('[data-friends-button]'))" in layout
 
 
 # --- Nel browser -------------------------------------------------------------------

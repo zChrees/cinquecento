@@ -1,11 +1,15 @@
-"""P19: base grafica comune (base.html, CSS di base, finestra di conferma, messaggi).
+"""P19: base grafica comune (la pagina della SPA, base.html delle pagine di errore, CSS di base).
 
 Controlla le regole di SCALETTA.md (P19) e di CLAUDE.md ("Pagine web"):
-meta viewport, un solo script di pagina, risorse esterne solo da Google Fonts
-(elenco in docs/prototipo/LEGGIMI.md), colori scritti a mano solo in
-variables.css e uguali al prototipo, testo mai inserito come HTML, niente
-alert / confirm / prompt.
-Non serve MySQL. Comando (finché P6 non aggiunge il runner): python -m pytest tests/frontend
+meta viewport, un solo script, risorse esterne solo da Google Fonts (elenco in
+docs/prototipo/LEGGIMI.md), colori scritti a mano solo in variables.css e uguali al
+prototipo, testo mai inserito come HTML, niente alert / confirm / prompt.
+Dal lotto 9b-2 della migrazione le pagine sono della SPA: la <head> comune è
+frontend/index.html, il codice è in frontend/src/, e base.html resta solo per le
+pagine di errore (errors/404.html e 500.html). I messaggi del server (flash) li
+disegna FlashList.tsx: li provano test_auth.py (forma) e test_pagine_accesso.py
+(nel browser, con il ruolo giusto); fino al 9b-2 qui c'era partials/flash.html.
+Non serve MySQL.
 """
 
 import re
@@ -13,13 +17,14 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 import pytest
-from flask import flash, render_template
 
 from app import create_app
 
 ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"
 TEMPLATES = ROOT / "app" / "templates"
+SPA_INDEX = ROOT / "frontend" / "index.html"
+SPA_SRC = ROOT / "frontend" / "src"
 VARIABLES = STATIC / "css" / "base" / "variables.css"
 PROTOTYPE_CSS = ROOT / "docs" / "prototipo" / "prototipo.css"
 
@@ -40,11 +45,9 @@ def app():
 
 
 @pytest.fixture
-def home(app):
-    # Dal passo 7d / è della SPA: la home Jinja (base.html) è su /vecchia-home
-    response = app.test_client().get("/vecchia-home")
-    assert response.status_code == 200
-    return response.get_data(as_text=True)
+def spa():
+    """frontend/index.html senza i commenti HTML <!-- ... -->, che non contano."""
+    return re.sub(r"<!--.*?-->", "", SPA_INDEX.read_text(encoding="utf-8"), flags=re.DOTALL)
 
 
 def _strip_css_comments(text):
@@ -70,65 +73,74 @@ def _template_text(path):
 
 
 def _strip_js_comments(code):
-    """Il codice JS senza i commenti /* ... */ e senza le righe di commento // (non tocca "https://")."""
+    """Il codice senza i commenti /* ... */ e senza le righe di commento // (non tocca "https://")."""
     code = re.sub(r"/\*.*?\*/", "", code, flags=re.DOTALL)
     return re.sub(r"^\s*//.*$", "", code, flags=re.MULTILINE)
 
 
-# --- La pagina ---------------------------------------------------------------
+def _sources():
+    """I file TypeScript e React del frontend."""
+    return sorted(path for path in SPA_SRC.rglob("*") if path.suffix in (".ts", ".tsx"))
 
 
-def test_pagina_in_italiano_con_meta_viewport(home):
-    assert '<html lang="it">' in home
-    assert re.search(r'<meta name="viewport" content="width=device-width, initial-scale=1[^"]*">', home)
-    assert "<title>Cinquecento</title>" in home
+# --- La pagina della SPA ---------------------------------------------------------
 
 
-def test_al_massimo_uno_script_di_pagina(home):
-    scripts = re.findall(r"<script\b[^>]*>", home)
-    assert len(scripts) <= 1
-    for tag in scripts:
-        assert 'type="module"' in tag
-        assert re.search(r'src="/static/js/pages/[\w-]+\.js"', tag), tag
+def test_pagina_in_italiano_con_meta_viewport(spa):
+    assert '<html lang="it">' in spa
+    assert re.search(r'<meta name="viewport" content="width=device-width, initial-scale=1[^"]*">', spa)
+    assert "<title>Cinquecento</title>" in spa
 
 
-def test_risorse_esterne_solo_da_google_fonts(home):
-    urls = re.findall(r'(?:href|src)="(https?://[^"]+)"', home)
-    assert urls, "base.html carica font e icone"
+def test_un_solo_script(spa):
+    # Il punto di partenza di React; dopo il build Vite lo sostituisce con il file tradotto
+    scripts = re.findall(r"<script\b[^>]*>", spa)
+    assert scripts == ['<script type="module" src="/src/main.tsx">']
+
+
+def test_risorse_esterne_solo_da_google_fonts(spa):
+    urls = re.findall(r'(?:href|src)="(https?://[^"]+)"', spa)
+    assert urls, "frontend/index.html carica i font"
     for url in urls:
         parts = urlsplit(url)
         assert f"{parts.scheme}://{parts.netloc}" in ALLOWED_ORIGINS, url
 
 
-def test_i_css_della_base_esistono(app, home):
+def test_i_css_della_spa_esistono(app, spa):
     client = app.test_client()
-    # base.html carica 13 CSS: 7 di P19, navbar.css e stats-panel.css (P40),
-    # friends-panel.css e chat.css (P46), banner.css (P33), rotate-notice.css (P116); la home ne aggiunge
-    # altri suoi (P22), che devono esistere anche loro
-    base_css = re.findall(r"url_for\('static', filename='(css/[^']+)'\)", (TEMPLATES / "base.html").read_text(encoding="utf-8"))
-    assert len(base_css) == 13
-    paths = re.findall(r'href="(/static/[^"]+)"', home)
-    css = [path for path in paths if path.startswith("/static/css/")]  # prima ci sono le icone (P42)
-    assert css[:13] == [f"/static/{name}" for name in base_css]
+    paths = re.findall(r'href="(/static/[^"]+)"', spa)
+    assert any(path.startswith("/static/css/base/") for path in paths)
     for path in paths:
         response = client.get(path)
         assert response.status_code == 200, path
         response.close()
 
 
-def test_utente_non_collegato_e_csrf(home):
-    # Contratto 1.5: attributi vuoti senza login, token CSRF sempre presente
-    assert '<body data-user-id="" data-username="" data-avatar="">' in home
-    token = re.search(r'<meta name="csrf-token" content="([^"]*)">', home)
-    assert token and token.group(1)
+def test_senza_login_nessun_utente_e_codice_csrf(app):
+    # Al posto degli attributi data-user-* e del meta csrf-token di base.html (contratto
+    # 1.5), la SPA prende utente e codice CSRF da GET /api/auth/session
+    data = app.test_client().get("/api/auth/session").get_json()["data"]
+    assert data["user"] is None and data["csrf_token"]
 
 
-def test_home_estende_la_base(home):
-    assert 'class="page ' in home and 'data-page="home"' in home
-    assert 'data-stato="ok"' in home
+# --- base.html (solo le pagine di errore) ----------------------------------------
 
 
-# --- Template e script -------------------------------------------------------
+def test_base_ridotta_senza_script_ne_navbar():
+    base = _template_text(TEMPLATES / "base.html")
+    assert '<html lang="it">' in base and 'name="viewport"' in base
+    assert "<script" not in base and "navbar" not in base and "include" not in base
+    # Gli unici template rimasti sono base.html e le due pagine di errore
+    names = [path.relative_to(TEMPLATES).as_posix() for path in _templates()]
+    assert names == ["base.html", "errors/404.html", "errors/500.html"]
+
+
+def test_i_css_di_base_html_esistono(app):
+    client = app.test_client()
+    for name in re.findall(r"filename='(css/[^']+)'", (TEMPLATES / "base.html").read_text(encoding="utf-8")):
+        response = client.get(f"/static/{name}")
+        assert response.status_code == 200, name
+        response.close()
 
 
 def test_pagine_estendono_base_senza_stile_ne_script_scritti_dentro():
@@ -138,25 +150,31 @@ def test_pagine_estendono_base_senza_stile_ne_script_scritti_dentro():
         assert "<style" not in text, name
         assert not re.search(r"<script\b(?![^>]*\bsrc=)", text), f"{name}: script scritto nella pagina"
         assert not re.search(r"\sstyle=", text), f"{name}: attributo style"
-        if name != "base.html" and not name.startswith("partials/"):
+        if name != "base.html":
             assert '{% extends "base.html" %}' in text, name
 
 
-def test_risorse_esterne_solo_in_base_html():
+def test_risorse_esterne_solo_in_base_html_e_nella_spa():
     # Risorse caricate dalla pagina (fogli di stile, script, immagini); i link normali
     # (<a href>, per esempio la licenza nei crediti, P40) sono ammessi
     for path in _templates():
         if path.name == "base.html":
             continue
         assert not re.search(r'(?:<link\b[^>]*\bhref|\bsrc)="https?://', _template_text(path)), path.name
+    for path in _sources():
+        code = _strip_js_comments(path.read_text(encoding="utf-8"))
+        assert not re.search(r"""(?:href|src)=\{?["'`]https?://(?!creativecommons\.org)""", code), path.name
 
 
-def test_js_senza_html_ne_finestre_del_browser():
-    files = sorted((STATIC / "js").rglob("*.js"))
+# --- Il codice -------------------------------------------------------------------
+
+
+def test_codice_senza_html_ne_finestre_del_browser():
+    files = _sources()
     assert files
     for path in files:
         code = _strip_js_comments(path.read_text(encoding="utf-8"))
-        for forbidden in ("innerHTML", "outerHTML", "insertAdjacentHTML", "document.write"):
+        for forbidden in ("dangerouslySetInnerHTML", "innerHTML", "outerHTML", "insertAdjacentHTML", "document.write"):
             assert forbidden not in code, f"{path.name}: {forbidden}"
         assert not re.search(r"(?<![\w.])(?:window\.)?(?:alert|confirm|prompt)\s*\(", code), path.name
 
@@ -179,25 +197,3 @@ def test_colori_uguali_al_prototipo():
     assert prototype
     for name, value in prototype.items():
         assert ours.get(name) == value, name
-
-
-# --- Messaggi del server -----------------------------------------------------
-
-
-def test_messaggi_flash_come_testo(app):
-    with app.test_request_context("/"):
-        flash("<b>Benvenuto</b>", "success")
-        flash("Password sbagliata", "error")
-        flash("Accedi per continuare.", "info")
-        flash("Senza categoria")
-        html = render_template("partials/flash.html")
-    assert "&lt;b&gt;Benvenuto&lt;/b&gt;" in html and "<b>" not in html
-    kinds = re.findall(r'data-flash-kind="(\w+)"', html)
-    assert kinds == ["success", "error", "info", "info"]
-    assert html.count('role="alert"') == 1
-    assert html.count('role="status"') == 3
-
-
-def test_nessun_messaggio_nessun_contenitore(app):
-    with app.test_request_context("/"):
-        assert "data-flash" not in render_template("partials/flash.html")

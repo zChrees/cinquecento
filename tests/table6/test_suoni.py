@@ -1,7 +1,7 @@
 """P103, P109: suoni al tavolo.
 
 I suoni sono file registrati dal vero (Kenney, CC0: app/static/sounds/LICENZA.md),
-suonati con Web Audio da core/sounds.js; il contesto audio si crea all'apertura del tavolo
+suonati con Web Audio da frontend/src/utils/sounds.ts; il contesto audio si crea all'apertura del tavolo
 (P118; mai durante un ridisegno, P109: bloccava la pagina). Ogni suono che parte
 manda sul documento l'evento "cinquecento:sound" con il suo nome, anche quando il
 browser non lo fa sentire: i test ascoltano quello.
@@ -53,9 +53,9 @@ SOUNDS_DIR = STATIC / "sounds"
 
 
 def _sound_files():
-    """I file elencati in SOUNDS di core/sounds.js."""
-    js = (STATIC / "js" / "core" / "sounds.js").read_text(encoding="utf-8")
-    block = js[js.index("export const SOUNDS = {"):]
+    """I file elencati in SOUNDS di frontend/src/utils/sounds.ts (fino al lotto 9b-2 core/sounds.js)."""
+    js = (ROOT / "frontend" / "src" / "utils" / "sounds.ts").read_text(encoding="utf-8")
+    block = js[js.index("export const SOUNDS:"):]  # con i due punti: non SOUNDS_KEY
     block = block[:block.index("};")]
     return set(re.findall(r"'([a-z0-9-]+)'", block.split("{", 1)[1]))
 

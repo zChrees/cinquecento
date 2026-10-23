@@ -1,6 +1,6 @@
 # Carte del gioco: autore e licenza
 
-Le 40 carte che si vedono in partita (P35, 28/09/2026), usate da `js/components/Card.js`. Il dorso non è qui: è `img/cards-bg/dorso.webp` (vedi `img/cards-bg/LICENZA.md`).
+Le 40 carte che si vedono in partita (P35, 28/09/2026), usate da `frontend/src/game/cards.ts`. Il dorso non è qui: è `img/cards-bg/dorso.webp` (vedi `img/cards-bg/LICENZA.md`).
 
 | File | Cosa | Fonte | Licenza |
 |---|---|---|---|

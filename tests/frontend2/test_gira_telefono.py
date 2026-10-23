@@ -4,7 +4,8 @@ Controlla il "Fatto quando" di SCALETTA.md (P116): a misure di telefono in orizz
 (844×390, 667×375, 640×360) l'avviso copre tutta la pagina, su ogni pagina (home,
 tavolo, impostazioni, accesso, registrazione, pagina che non esiste), anche sopra una
 finestra aperta (pannello amici); in verticale, sul tablet e da computer non c'è.
-L'avviso c'è anche nell'HTML di ogni pagina, perché lo aggiunge base.html.
+L'avviso c'è anche nell'HTML di ogni pagina: lo aggiungono frontend/index.html (le pagine
+della SPA) e base.html (le pagine di errore).
 
 Le pagine si aprono in Chrome o Edge senza finestra (tests/browser.py), con un utente di
 prova (un cookie dei soli test) e senza MySQL. Se né Chrome né Edge sono installati i
@@ -56,11 +57,9 @@ def browser(server, tmp_path):
     b.close()
 
 
-# Stesso modulo della pagina (un import dinamico dello stesso indirizzo non ne crea un altro)
-CONNECTED = "import('/static/js/core/socket.js').then((m) => m.isConnected())"
-# Nelle pagine della SPA (passo 6: le impostazioni) lo dice il pannello amici di React
-SPA_CONNECTED = "document.querySelector('[data-friends-panel]')?.dataset.connection === 'connected'"
-SPA_PAGES = ("/", "/profile/settings")  # dal passo 7d anche la home (/) è della SPA
+# Nelle pagine della SPA il collegamento lo dice il pannello amici di React (fino al lotto
+# 9b-2 per le pagine Jinja c'era isConnected() di core/socket.js)
+CONNECTED = "document.querySelector('[data-friends-panel]')?.dataset.connection === 'connected'"
 
 
 def _open(browser, server, path, logged, size):
@@ -73,10 +72,7 @@ def _open(browser, server, path, logged, size):
     if logged and path != TABLE:  # la prova del tavolo non si collega
         # Con il login la pagina si collega al tempo reale: prima di cambiarla o di chiudere il
         # browser si aspetta il collegamento, altrimenti blocca il server del file dopo (P58, P62)
-        connected = CONNECTED
-        if path in SPA_PAGES:
-            connected = SPA_CONNECTED
-        browser.wait_js(connected, f"collegamento al tempo reale ({path})")
+        browser.wait_js(CONNECTED, f"collegamento al tempo reale ({path})")
 
 
 @pytest.mark.parametrize(("path", "logged"), PAGES)

@@ -2,10 +2,15 @@
 
 Controlla il "Fatto quando" di SCALETTA.md (P40): la navbar ha avatar, nome del
 gioco e pulsante amici; ogni pulsante con sola icona ha un'etichetta accessibile;
-il pannello statistiche ha i dati finti, Impostazioni, Esci e i crediti delle
-immagini (D37). Controlla anche che le immagini di app/static/img/cards-bg/
-siano quelle del prototipo e che i file JS importati esistano.
-Non serve MySQL: l'utente con il login è finto, passato direttamente al template.
+il pannello statistiche ha Impostazioni, Esci e i crediti delle immagini (D37), che
+ci sono anche nella finestra "Accedi o registrati" (D39). Controlla anche che le
+immagini di app/static/img/cards-bg/ siano quelle del prototipo.
+Dal lotto 9b-2 della migrazione la navbar è quella React (Navbar.tsx, StatsSheet.tsx,
+LoginPrompt.tsx): la pagina la disegna la SPA nel browser (Chrome o Edge senza
+finestra, tests/browser.py), e i controlli guardano l'HTML che ne esce, lo stesso di
+prima (fino al 9b-2 si leggeva il template della home Jinja). Senza browser, o senza
+il build della SPA, quei controlli si saltano.
+Non serve MySQL: l'utente con il login è finto (running_server con FakeUser).
 """
 
 import hashlib
@@ -14,51 +19,49 @@ import re
 from pathlib import Path
 
 import pytest
-from flask import render_template
 
 from app import create_app
+from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
+from tests.spa import needs_spa
 
 ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"
 CARDS = STATIC / "img" / "cards-bg"
 PROTOTYPE_IMG = ROOT / "docs" / "prototipo" / "img"
 SUITS = ("bastoni", "coppe", "denari", "spade")
+SPA_INDEX = ROOT / "frontend" / "index.html"
+# Pagina pronta: senza login i due pulsanti "Accedi", con il login il pulsante delle
+# statistiche e il collegamento al tempo reale (un test con il login lo aspetta, P58)
+GUEST_READY = "document.querySelectorAll('[data-login-prompt]').length === 2"
+USER_READY = ("document.querySelector('[data-open-stats]') !== null"
+              " && document.querySelector('[data-friends-panel]')?.dataset.connection === 'connected'")
+PAGE_HTML = "document.documentElement.outerHTML"
 
 
-class FakeUser:
-    """Utente con il login, con i nomi che base.html e la navbar leggono (P16)."""
-
-    is_authenticated = True
-
-    def __init__(self, username, avatar=None):
-        self.username = username
-        self.avatar = avatar
-
-    def get_id(self):
-        return "7"
-
-
-@pytest.fixture
-def app():
-    return create_app("testing")
+def _page(tmp_path, username, logged):
+    """L'HTML della home React disegnata nel browser, con o senza il login di `username`."""
+    needs_spa()
+    with running_server(create_app("testing"), FakeUser(username)) as url:
+        browser = Browser(find_browser(), tmp_path / f"chrome-{logged}")
+        try:
+            ready = GUEST_READY
+            if logged:
+                browser.send("Network.setCookie", name=TEST_COOKIE[0], value=TEST_COOKIE[1], url=url)
+                ready = USER_READY
+            browser.open(f"{url}/", 390, 844, ready, timeout=60)
+            return browser.js(PAGE_HTML)
+        finally:
+            browser.close()
 
 
-@pytest.fixture
-def guest_home(app):
-    # Dal passo 7d / è della SPA: la home Jinja (navbar Jinja) è su /vecchia-home
-    response = app.test_client().get("/vecchia-home")
-    assert response.status_code == 200
-    return response.get_data(as_text=True)
+@pytest.fixture(scope="module")
+def guest_home(tmp_path_factory):
+    return _page(tmp_path_factory.mktemp("guest"), "mario", logged=False)
 
 
-def _render_logged_in(app, username):
-    with app.test_request_context("/"):
-        return render_template("main/index.html", current_user=FakeUser(username))
-
-
-@pytest.fixture
-def user_home(app):
-    return _render_logged_in(app, "mario")
+@pytest.fixture(scope="module")
+def user_home(tmp_path_factory):
+    return _page(tmp_path_factory.mktemp("user"), "mario", logged=True)
 
 
 def _navbar(html):
@@ -131,10 +134,11 @@ def test_con_login_avatar_con_iniziale_e_pannello_statistiche(user_home):
     assert user_home.count('id="stats"') == 1
 
 
-def test_nome_utente_inserito_come_testo(app):
-    html = _render_logged_in(app, "<b>x")
-    assert "<b>x" not in html
-    assert "&lt;b&gt;x" in html
+def test_nome_utente_inserito_come_testo(tmp_path):
+    html = _page(tmp_path, "<b>x", logged=True)
+    navbar = _navbar(html)
+    assert "<b>x" not in navbar
+    assert "&lt;b&gt;x" in navbar
 
 
 # --- Pannello statistiche ----------------------------------------------------
@@ -147,7 +151,9 @@ def test_pannello_statistiche_con_impostazioni_esci_e_crediti(user_home):
     # Esci: modulo POST con il token CSRF, non un link
     logout = re.search(r'<form class="sheet__logout" method="post" action="/auth/logout">.*?</form>', sheet, flags=re.DOTALL)
     assert logout, "Esci deve essere un modulo POST"
-    assert re.search(r'<input type="hidden" name="csrf_token" value="[^"]+">', logout.group(0))
+    # Gli attributi in qualsiasi ordine (React scrive value prima di name)
+    hidden = re.search(r"<input\b[^>]*>", logout.group(0)).group(0)
+    assert 'type="hidden"' in hidden and 'name="csrf_token"' in hidden and re.search(r'value="[^"]+"', hidden)
     assert "Esci" in logout.group(0)
     # Crediti delle immagini (D37)
     credits = re.search(r'<p class="sheet__credits".*?</p>', sheet, flags=re.DOTALL).group(0)
@@ -157,18 +163,27 @@ def test_pannello_statistiche_con_impostazioni_esci_e_crediti(user_home):
     assert 'rel="noopener"' in credits
 
 
-def test_crediti_anche_nella_finestra_di_accesso():
+def test_crediti_anche_nella_finestra_di_accesso(tmp_path):
     # D39: chi non ha fatto il login vede le carte nel logo, quindi anche la finestra
     # "Accedi o registrati" ha la riga dei crediti, uguale a quella del pannello
-    code = (STATIC / "js" / "components" / "LoginPrompt.js").read_text(encoding="utf-8")
-    assert "LICENSE_URL = 'https://creativecommons.org/licenses/by-sa/3.0/deed.it'" in code
-    assert "'Immagini delle carte: Matsoftware, '" in code
-    assert "text: 'CC BY-SA 3.0'" in code and "', da Wikimedia Commons'" in code
-    assert "rel: 'noopener'" in code
-    assert "footer: credits()" in code
-    modal = (STATIC / "js" / "components" / "Modal.js").read_text(encoding="utf-8")
-    assert "footer = null" in modal
-    assert re.search(r"el\('div', \{ class: 'dialog__actions' \}, buttons\),\s*footer,", modal)
+    needs_spa()
+    with running_server(create_app("testing"), FakeUser("mario")) as url:
+        browser = Browser(find_browser(), tmp_path / "chrome")
+        try:
+            browser.open(f"{url}/", 390, 844, GUEST_READY, timeout=60)
+            browser.click("[data-login-prompt]")
+            browser.wait_js("document.querySelector('dialog.dialog[open]') !== null", "finestra di accesso")
+            credits = browser.js("""(() => {
+              const d = document.querySelector('dialog.dialog[open]');
+              const link = [...d.querySelectorAll('a')].find((a) => a.textContent === 'CC BY-SA 3.0');
+              return { text: d.textContent.replace(/\\s+/g, ' '), href: link?.href ?? null, rel: link?.rel ?? null };
+            })()""")
+        finally:
+            browser.close()
+    assert "Immagini delle carte: Matsoftware, CC BY-SA 3.0, da Wikimedia Commons" in credits["text"]
+    assert credits["href"] == "https://creativecommons.org/licenses/by-sa/3.0/deed.it"
+    assert credits["rel"] == "noopener"
+
 
 def test_statistiche_dal_server_e_forma_dell_esempio(user_home):
     # P30: il pannello chiede sempre i dati veri (GET /stats/me, provato in
@@ -182,20 +197,7 @@ def test_statistiche_dal_server_e_forma_dell_esempio(user_home):
         assert {"value", "games", "provisional"} <= data["ratings"][mode].keys()
 
 
-# --- Script e stili ----------------------------------------------------------
-
-
-def test_home_carica_home_js_che_avvia_il_layout(app, guest_home):
-    assert re.search(r'<script type="module" src="/static/js/pages/home\.js"></script>', guest_home)
-    home_js = (STATIC / "js" / "pages" / "home.js").read_text(encoding="utf-8")
-    assert "from '../core/layout.js'" in home_js and "initLayout()" in home_js
-
-
-def test_import_js_puntano_a_file_esistenti():
-    files = sorted((STATIC / "js").rglob("*.js"))
-    for path in files:
-        for target in re.findall(r"from '(\.{1,2}/[^']+)'", path.read_text(encoding="utf-8")):
-            assert (path.parent / target).resolve().is_file(), f"{path.name}: {target}"
+# --- Stili -------------------------------------------------------------------
 
 
 def test_variabili_css_usate_esistono():
@@ -207,11 +209,12 @@ def test_variabili_css_usate_esistono():
             assert used in defined or used in local, f"{name}: {used}"
 
 
-def test_css_della_navbar_caricati(app, guest_home):
-    client = app.test_client()
+def test_css_della_navbar_caricati():
+    spa = SPA_INDEX.read_text(encoding="utf-8")
+    client = create_app("testing").test_client()
     for name in ("navbar.css", "stats-panel.css"):
         path = f"/static/css/components/{name}"
-        assert f'href="{path}"' in guest_home
+        assert f'href="{path}"' in spa
         response = client.get(path)
         assert response.status_code == 200
         response.close()
@@ -233,16 +236,17 @@ def test_immagini_uguali_al_prototipo():
     assert "Matsoftware" in licence and "CC BY-SA 3.0" in licence and "Pubblico dominio" in licence
 
 
-def test_immagini_del_logo_raggiungibili(app, guest_home):
-    client = app.test_client()
-    sources = set(re.findall(r'src="(/static/img/cards-bg/[^"]+)"', guest_home))
+def test_immagini_del_logo_raggiungibili(guest_home):
+    client = create_app("testing").test_client()
+    navbar = _navbar(guest_home)
+    sources = set(re.findall(r'src="(/static/img/cards-bg/[^"]+)"', navbar))
     assert sources == {
         "/static/img/cards-bg/dorso.webp",
         "/static/img/cards-bg/cavallo-coppe.webp",
         "/static/img/cards-bg/re-coppe.webp",
     }
-    # Le figure che layout.js mette sulle carte del logo, seme per seme
-    base = re.search(r'data-img-base="([^"]+)"', guest_home).group(1)
+    # Le figure che Logo.tsx mette sulle carte del logo, seme per seme
+    base = re.search(r'data-logo-cards="" data-img-base="([^"]+)"', navbar).group(1)
     assert base == "/static/img/cards-bg/"
     for suit in SUITS:
         for who in ("cavallo", "re"):

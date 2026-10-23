@@ -3,8 +3,8 @@
 Il codice si salva in utenti.avatar (al massimo 30 caratteri) e arriva alle pagine
 come `avatar` (contratto, 1.1); vuoto = iniziale del nome. Il server rifiuta ogni
 codice fuori da questo elenco. Le immagini (P43) sono app/static/img/avatars/<codice>.svg,
-una per codice; js/components/Avatar.js ha una copia dell'elenco (AVATAR_CODES), che
-tests/frontend/test_avatar.py confronta con questo.
+una per codice; frontend/src/game/SeatAvatar.tsx (l'avatar al tavolo) ha una copia
+dell'elenco (AVATAR_CODES), che tests/frontend/test_avatar.py confronta con questo.
 Un codice già scelto da qualcuno non si cambia più: resterebbe nel database.
 """
 

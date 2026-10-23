@@ -3,11 +3,16 @@
 app/static/fonts/material-symbols-rounded.woff2 ha solo le icone elencate in
 app/static/fonts/icone.txt (una per riga, in ordine alfabetico), scaricate da Google
 Fonts con il comando di docs/prototipo/LEGGIMI.md ("Icone"). Controlla: ogni icona
-usata nei template e nel JS è nell'elenco (un'icona nuova va aggiunta all'elenco e il
-font va riscaricato); base.html precarica il font e non chiede più le icone a Google;
-il font arriva dal server; nel browser le icone della home sono disegnate come icone
-(larghe quanto un quadratino) e non come la parola del loro nome.
-Se né Chrome né Edge sono installati il controllo nel browser si salta.
+usata nel frontend React (frontend/src/ e frontend/index.html) e nei template delle
+pagine di errore è nell'elenco (un'icona nuova va aggiunta all'elenco e il font va
+riscaricato), e nell'elenco non ce n'è nessuna in più; la pagina della SPA e base.html
+precaricano il font e non chiedono le icone a Google; il font arriva dal server; nel
+browser le icone della home sono disegnate come icone (larghe quanto un quadratino) e
+non come la parola del loro nome.
+Fino al lotto 9b-2 della migrazione le icone si cercavano nel JavaScript vecchio
+(app/static/js/) e nei template della home Jinja.
+Se né Chrome né Edge sono installati, o manca il build della SPA, il controllo nel
+browser si salta.
 """
 
 import re
@@ -17,26 +22,36 @@ import pytest
 
 from app import create_app
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
+from tests.spa import needs_spa
 
 ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"
 TEMPLATES = ROOT / "app" / "templates"
+SPA_SRC = ROOT / "frontend" / "src"
+SPA_INDEX = ROOT / "frontend" / "index.html"
 FONTS = STATIC / "fonts"
 ICON_LIST = FONTS / "icone.txt"
 FONT_URL = "/static/fonts/material-symbols-rounded.woff2"
 
-# Chiamate con il nome calcolato: i nomi possibili stanno in queste righe di codice
-# (se ne aggiungi una, aggiungi qui da dove prendere i nomi)
+# Icone con il nome calcolato: <span className="icon">{espressione}</span>. I nomi possibili
+# li trova _used() nelle forme icon: 'nome', icon="nome" e nell'elenco ICONS di FlashList.tsx
+# (se ne aggiungi una con un'altra forma, aggiungi anche da dove prendere i nomi)
 DYNAMIC_CALLS = {
-    ("components/ModeModal.js", "look[0]"),   # stato del pulsante "Invita"
-    ("components/ModeModal.js", "name"),      # righe "In breve" della Partita Veloce
-    ("pages/home.js", "MESSAGE_ICONS[kind]"),  # messaggi brevi in basso
-    ("components/FriendsPanel.js", "name"),   # dentro iconButton(): i nomi arrivano da iconButton('…')
+    ("pages/HomePage.tsx", "props.icon"),            # le quattro carte-pulsante (icon="person" / "groups")
+    ("components/FlashList.tsx", "ICONS[flash.kind]"),  # messaggi brevi in basso
+    ("components/ModeModal.tsx", "look.icon"),        # stato del pulsante "Invita"
+    ("components/ModeModal.tsx", "facts[i].icon"),    # righe "In breve"
 }
+# SPAN: un'icona scritta nella pagina, con il nome per esteso (JSX o HTML)
+SPAN = r'<span class(?:Name)?="icon[^"]*"[^>]*>([a-z_]+)</span>'
 
 
 def _listed():
     return ICON_LIST.read_text(encoding="utf-8").split()
+
+
+def _sources():
+    return sorted(path for path in SPA_SRC.rglob("*") if path.suffix in (".ts", ".tsx"))
 
 
 def _used():
@@ -48,23 +63,21 @@ def _used():
 
     for path in TEMPLATES.rglob("*.html"):
         text = re.sub(r"\{#.*?#\}", "", path.read_text(encoding="utf-8"), flags=re.DOTALL)
-        for content in re.findall(r'<span class="icon[^"]*"[^>]*>(.*?)</span>', text, flags=re.DOTALL):
-            names = [content.strip()] if re.fullmatch(r"\s*[a-z_]+\s*", content) else re.findall(r':\s*"([a-z_]+)"', content)
-            assert names, f"{path.name}: icona con un nome che il test non sa leggere: {content!r}"
-            for name in names:
-                add(name, path.name)
+        for name in re.findall(SPAN, text):
+            add(name, path.name)
+    for name in re.findall(SPAN, SPA_INDEX.read_text(encoding="utf-8")):
+        add(name, "index.html")
 
-    for path in (STATIC / "js").rglob("*.js"):
+    for path in _sources():
         code = path.read_text(encoding="utf-8")
-        where = path.relative_to(STATIC / "js").as_posix()
-        for name in re.findall(r"\bicon(?:Button)?\(\s*'([a-z_]+)'", code):
+        where = path.relative_to(SPA_SRC).as_posix()
+        for name in re.findall(SPAN, code):
             add(name, where)
-        if where == "components/ModeModal.js":
-            # righe "In breve" ([icona, testo]) e aspetto del pulsante "Invita" ([icona, testo, etichetta])
-            for name in re.findall(r"\[\s*'([a-z_]+)',\s*[`']", code):
-                add(name, where)
-        if where == "pages/home.js":
-            block = re.search(r"MESSAGE_ICONS = \{(.*?)\}", code).group(1)
+        # icon: 'nome' (elenchi di ModeModal.tsx) e icon="nome" (le carte-pulsante della home)
+        for name in re.findall(r"""\bicon(?::\s*'|=")([a-z_]+)['"]""", code):
+            add(name, where)
+        if where == "components/FlashList.tsx":
+            block = re.search(r"const ICONS[^=]*= \{(.*?)\}", code, flags=re.DOTALL).group(1)
             for name in re.findall(r":\s*'([a-z_]+)'", block):
                 add(name, where)
     return found
@@ -72,11 +85,11 @@ def _used():
 
 def _dynamic_calls():
     calls = set()
-    for path in (STATIC / "js").rglob("*.js"):
+    for path in _sources():
         code = path.read_text(encoding="utf-8")
-        where = path.relative_to(STATIC / "js").as_posix()
-        for args in re.findall(r"(?<!function )\bicon(?:Button)?\(\s*([^'\s][^,)]*)", code):
-            calls.add((where, args.strip()))
+        where = path.relative_to(SPA_SRC).as_posix()
+        for expression in re.findall(r'<span className="icon[^"]*"[^>]*>\{([^}]+)\}</span>', code):
+            calls.add((where, expression.strip()))
     return calls
 
 
@@ -94,7 +107,7 @@ def test_ogni_icona_usata_e_nel_font():
 
 
 def test_nomi_calcolati_conosciuti():
-    # Una chiamata nuova con il nome in una variabile sfuggirebbe a _used()
+    # Un'icona nuova con il nome in una variabile sfuggirebbe a _used()
     assert _dynamic_calls() == DYNAMIC_CALLS
 
 
@@ -103,12 +116,16 @@ def test_nessuna_icona_in_piu():
     assert not unused, f"icone nel font ma non usate: toglile da icone.txt e riscarica il font: {sorted(unused)}"
 
 
-def test_base_precarica_il_font_senza_google():
+def test_le_pagine_precaricano_il_font_senza_google():
     app = create_app("testing")
     client = app.test_client()
-    html = client.get("/vecchia-home").get_data(as_text=True)  # dal passo 7d la home Jinja (base.html) è qui
-    assert "Material+Symbols" not in html
-    assert re.search(rf'<link rel="preload" href="{re.escape(FONT_URL)}" as="font" type="font/woff2" crossorigin>', html)
+    response = client.get("/pagina-che-non-esiste")  # base.html, pagine di errore
+    error_page = response.get_data(as_text=True)
+    response.close()
+    preload = rf'<link rel="preload" href="{re.escape(FONT_URL)}" as="font" type="font/woff2" crossorigin>'
+    for page, html in (("frontend/index.html", SPA_INDEX.read_text(encoding="utf-8")), ("base.html", error_page)):
+        assert "Material+Symbols" not in html, page
+        assert re.search(preload, html), page
     response = client.get(FONT_URL)
     assert response.status_code == 200
     assert response.get_data()[:4] == b"wOF2"
@@ -120,6 +137,7 @@ def test_base_precarica_il_font_senza_google():
 
 @pytest.fixture
 def browser(tmp_path):
+    needs_spa()
     app = create_app("testing")
     with running_server(app, FakeUser("Mario", 12)) as url:
         b = Browser(find_browser(), tmp_path / "chrome")
@@ -130,11 +148,10 @@ def browser(tmp_path):
 
 def test_icone_disegnate_nel_browser(browser):
     b, url = browser
-    # Si aspetta anche il collegamento al tempo reale (1 online), come negli altri test della
-    # home: chiudere a collegamento a metà blocca a volte il server del file dopo. Dal passo 7d
-    # la home Jinja (navbar e pannelli in JS vecchio) è su /vecchia-home
-    b.open(f"{url}/vecchia-home", 390, 844, "document.querySelector('[data-friends-button] .icon') !== null"
-           " && document.querySelector('[data-online-count]')?.textContent === '1'", timeout=60)
+    # Si aspetta anche il collegamento al tempo reale: chiudere a collegamento a metà
+    # blocca a volte il server del file dopo (P58, P62)
+    b.open(f"{url}/", 390, 844, "document.querySelector('[data-friends-button] .icon') !== null"
+           " && document.querySelector('[data-friends-panel]')?.dataset.connection === 'connected'", timeout=60)
     assert b.js("document.fonts.check('24px \"Material Symbols Rounded\"')") is True
     icons = b.js("""[...document.querySelectorAll('.icon')].filter((e) => e.offsetWidth > 0)
         .map((e) => ({name: e.textContent, width: e.offsetWidth,

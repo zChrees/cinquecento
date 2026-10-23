@@ -1,12 +1,11 @@
 {% extends "base.html" %}
 {#
   Pagina "errore del server" (P7): nessun dettaglio tecnico, che va solo nel log.
-  Senza navbar, come la 404. Se nemmeno questa pagina si può mostrare, app/errors.py
-  risponde con una pagina minima.
+  Senza navbar né script, come la 404. Se nemmeno questa pagina si può mostrare,
+  app/errors.py risponde con una pagina minima.
 #}
 
 {% block title %}Errore del server · Cinquecento{% endblock %}
-{% block navbar %}{% endblock %}
 {% block page_class %}page--form{% endblock %}
 {% block page_name %}error{% endblock %}
 

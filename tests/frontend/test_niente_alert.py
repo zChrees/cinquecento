@@ -1,16 +1,17 @@
 """P33: niente alert, confirm e prompt del browser nelle pagine.
 
 Le finestre del browser bloccano la pagina e non seguono lo stile del sito: si
-usano le finestre nella pagina (components/Modal.js, InviteDialog.js). Controlla
-tutto il JS dell'applicazione (non le librerie in js/vendor/) e i template, senza
-i commenti; confirmModal() e simili non contano, perché il nome è diverso.
+usano le finestre nella pagina (components/Modal.tsx, InviteDialog.tsx). Controlla
+tutto il codice del frontend React (frontend/src/, dal lotto 9b-2 della migrazione:
+prima il JavaScript di app/static/js/) e i template, senza i commenti;
+confirmModal() e simili non contano, perché il nome è diverso.
 """
 
 import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-JS = ROOT / "app" / "static" / "js"
+SPA_SRC = ROOT / "frontend" / "src"
 TEMPLATES = ROOT / "app" / "templates"
 
 BROWSER_DIALOG = re.compile(r"(?<![\w.$])(?:window\.|globalThis\.|self\.)?(alert|confirm|prompt)\s*\(")
@@ -31,10 +32,10 @@ def test_l_espressione_trova_le_finestre_del_browser():
     assert _found("confirmModal({ title }); openAlert(); this.prompt(); x.confirm()") == []
 
 
-def test_niente_finestre_del_browser_nel_js():
-    files = [p for p in JS.rglob("*.js") if "vendor" not in p.relative_to(JS).parts]
+def test_niente_finestre_del_browser_nel_codice():
+    files = [p for p in SPA_SRC.rglob("*") if p.suffix in (".ts", ".tsx")]
     assert len(files) > 20
-    found = {p.relative_to(JS).as_posix(): _found(_strip_js_comments(p.read_text(encoding="utf-8"))) for p in files}
+    found = {p.relative_to(SPA_SRC).as_posix(): _found(_strip_js_comments(p.read_text(encoding="utf-8"))) for p in files}
     assert not {name: calls for name, calls in found.items() if calls}
 
 

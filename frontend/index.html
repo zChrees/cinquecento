@@ -6,11 +6,13 @@
   sta in app/static/dist/index.html e la serve Flask (app/blueprints/spa/).
   Niente script né stili scritti qui dentro: la CSP di Flask li bloccherebbe.
 
-  La parte <head> copia quella di app/templates/base.html (P19, P42, D40): icona
-  della scheda, font del testo da Google Fonts (le sole risorse esterne, elencate in
-  docs/prototipo/LEGGIMI.md e permesse dalla CSP), font delle icone del progetto e
-  gli stessi CSS, presi da /static/ così come sono (Vite non li tocca). Se cambia
-  base.html va cambiato anche qui, finché tutte le pagine non sono nella SPA.
+  La parte <head> è quella di tutte le pagine del sito (P19, P42, D40): icona della
+  scheda, font del testo da Google Fonts (le sole risorse esterne, elencate in
+  docs/prototipo/LEGGIMI.md e permesse dalla CSP), font delle icone del progetto e i
+  CSS, presi da /static/ così come sono (Vite non li tocca). Fino al lotto 9b-2 era una
+  copia di app/templates/base.html, che ora serve solo alle pagine di errore (con
+  icona, font e avviso "Gira il telefono" uguali a questi: se cambiano qui, vanno
+  cambiati anche lì).
   I CSS delle pagine (css/pages/) sono quelli delle pagine già nella SPA: accesso e
   registrazione (auth.css, che dal passo 6 tocca .page--form solo se contiene
   .auth), impostazioni (profile.css, solo classi sue) e home (home.css, dal

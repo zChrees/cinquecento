@@ -2,9 +2,12 @@
 
 Controlla il "Fatto quando" di SCALETTA.md (P42): il logo si vede nitido attorno
 ai 40 px di altezza su telefono e computer e il tocco porta alla home; in più
-l'icona della scheda (SVG, con le copie PNG) è collegata in base.html, è un SVG
-valido e usa solo i colori della palette. Il controllo nel browser (Chrome o Edge
-senza finestra, tests/browser.py) si salta se nessuno dei due è installato.
+l'icona della scheda (SVG, con le copie PNG) è collegata nella pagina della SPA
+(frontend/index.html) e in quelle di errore (base.html), è un SVG valido e usa solo i
+colori della palette. Dal lotto 9b-2 il logo è quello React (Logo.tsx), controllato
+nella pagina di accesso; fino ad allora anche nel template della home Jinja.
+I controlli nel browser (Chrome o Edge senza finestra, tests/browser.py) si saltano
+se nessuno dei due è installato o se manca il build della SPA.
 """
 
 import re
@@ -16,6 +19,7 @@ import pytest
 
 from app import create_app
 from tests.browser import Browser, find_browser, running_server
+from tests.spa import needs_spa
 
 ROOT = Path(__file__).resolve().parents[2]
 STATIC = ROOT / "app" / "static"
@@ -33,12 +37,13 @@ def app():
     return create_app("testing")
 
 
-def _home(app):
-    # Dal passo 7d / è della SPA: la home Jinja (base.html e navbar Jinja) è su /vecchia-home
-    response = app.test_client().get("/vecchia-home")
-    html = response.get_data(as_text=True)
+def _heads(app):
+    """Le due <head> del sito: quella della SPA e quella delle pagine di errore (base.html)."""
+    response = app.test_client().get("/pagina-che-non-esiste")
+    error_page = response.get_data(as_text=True)
     response.close()
-    return html
+    return {"frontend/index.html": (ROOT / "frontend" / "index.html").read_text(encoding="utf-8"),
+            "base.html": error_page}
 
 
 def _png_size(path):
@@ -50,14 +55,15 @@ def _png_size(path):
 # --- Icona della scheda --------------------------------------------------------------
 
 
-def test_icone_collegate_in_base_html_e_servite(app):
-    html = _home(app)
+def test_icone_collegate_e_servite(app):
     client = app.test_client()
-    for path, attrs in ICONS.items():
-        link = re.search(rf'<link [^>]*href="/static/{re.escape(path)}"[^>]*>', html)
-        assert link, path
-        for attr in attrs:
-            assert attr in link.group(0), (path, attr)
+    for page, html in _heads(app).items():
+        for path, attrs in ICONS.items():
+            link = re.search(rf'<link [^>]*href="/static/{re.escape(path)}"[^>]*>', html)
+            assert link, (page, path)
+            for attr in attrs:
+                assert attr in link.group(0), (page, path, attr)
+    for path in ICONS:
         response = client.get(f"/static/{path}")
         assert response.status_code == 200, path
         response.close()
@@ -80,17 +86,25 @@ def test_copie_png_con_le_misure_giuste():
 # --- Logo nella navbar ---------------------------------------------------------------
 
 
-def test_logo_porta_alla_home_con_un_nome_accessibile(app):
-    html = _home(app)
-    logo = re.search(r'<a class="logo" href="([^"]+)" aria-label="([^"]+)">', html)
-    assert logo and logo.group(1) == "/"
-    assert logo.group(2) == "Cinquecento, torna alla home"
-    assert '<span class="logo__text">Cinque<b>cento</b></span>' in html
+def test_logo_porta_alla_home_con_un_nome_accessibile(tmp_path):
+    needs_spa()
+    with running_server(create_app("testing")) as url:
+        browser = Browser(find_browser(), tmp_path / "chrome")
+        try:
+            browser.open(f"{url}/auth/login", 390, 844, "document.querySelector('.logo') !== null")
+            logo = browser.js("""(() => { const a = document.querySelector('a.logo');
+              return { href: a.getAttribute('href'), label: a.getAttribute('aria-label'),
+                       text: a.querySelector('.logo__text').outerHTML }; })()""")
+        finally:
+            browser.close()
+    assert logo == {"href": "/", "label": "Cinquecento, torna alla home",
+                    "text": '<span class="logo__text">Cinque<b>cento</b></span>'}
 
 
 @pytest.mark.parametrize(("size", "height"), [((360, 640), (30, 44)), ((1280, 800), (40, 52))],
                          ids=["telefono", "computer"])
 def test_logo_nel_browser(tmp_path, size, height):
+    needs_spa()
     with running_server(create_app("testing")) as url:
         browser = Browser(find_browser(), tmp_path / "chrome")
         try:

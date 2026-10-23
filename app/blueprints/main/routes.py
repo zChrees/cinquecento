@@ -1,22 +1,20 @@
 """Rotte della home (P22).
 
-Dal passo 7d della migrazione la home (/) è una pagina della SPA (HomePage.tsx),
-con gli stessi dati veri; la home Jinja descritta qui sotto resta su /vecchia-home,
-solo in sviluppo e nei test, fino al passo 9.
+Dal passo 7d della migrazione la home (/) è una pagina della SPA (HomePage.tsx);
+la home Jinja di prima (/vecchia-home) è stata tolta al lotto 9b-2.
 
 La home si disegna con i dati che arrivano dal server: numero di giocatori online
-e partita in corso (home:status, P44), coda (P28), amici da invitare (P47).
-Finché quei punti non ci sono, in sviluppo e nei test la pagina usa i dati finti
-di app/static/dev/ (attributi data-demo-*); con ?demo=rientro mostra anche
-l'avviso "Hai una partita in corso". Nella demo vera i dati finti non ci sono.
-Da P82 "giocatori online" non usa più i dati finti.
+e partita in corso (home:status, P44), coda (P28), amici da invitare (P47). In
+sviluppo e nei test, con ?demo=rientro, mostra l'avviso "Hai una partita in corso"
+con i dati finti di app/static/dev/home_esempio.json (li legge api/home.ts); online
+?demo= non c'è.
 
 P82: GET /online dà il numero di giocatori online anche a chi non ha fatto il login
 (contratto 5.1), che non si collega al tempo reale e quindi non riceve home:status.
 Solo il numero, lo stesso di home:status: nessun dato sugli utenti.
 """
 
-from flask import abort, current_app, render_template, request, url_for
+from flask import abort, current_app, request
 
 from app.blueprints.main import bp
 from app.blueprints.spa.routes import spa_page
@@ -25,11 +23,6 @@ from app.realtime.presence import presence
 
 DEMO_ENVS = {"development", "testing"}
 DEMO_STATES = {"rientro"}
-DEMO_FILES = {
-    "home": "dev/home_esempio.json",
-    "friends": "dev/amici_esempio.json",
-    "stats": "dev/statistiche_esempio.json",
-}
 
 
 @bp.get("/")
@@ -47,26 +40,6 @@ def index():
     """
     _check_demo()
     return spa_page()
-
-
-@bp.get("/vecchia-home")
-def old_index():
-    """GET /vecchia-home: la home Jinja di prima (P22), solo in sviluppo e nei test.
-
-    In parole semplici:
-        old_index()
-        Resta fino al passo 9 della migrazione perché i test del JavaScript vecchio
-        (navbar, pannello amici, chat, carta-modal di js/) hanno bisogno di una
-        pagina che li carichi. Altrove risponde 404, come se non esistesse. Al passo
-        9 si cancellano insieme questa rotta, il template e il JavaScript vecchio.
-
-        Restituisce: il template main/index.html, oppure 404.
-    """
-    if current_app.config["ENV_NAME"] not in DEMO_ENVS:
-        abort(404)
-    demo_state = _check_demo()
-    demo_urls = {name: url_for("static", filename=path) for name, path in DEMO_FILES.items()}
-    return render_template("main/index.html", demo_urls=demo_urls, demo_state=demo_state)
 
 
 def _check_demo():
