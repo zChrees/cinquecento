@@ -173,7 +173,7 @@ def spa_app(monkeypatch, build):
     def fake_stats():
         # Passo 5a: le statistiche finte, così il test non ha bisogno del database
         from flask import request
-        if request.path == "/stats/me":
+        if request.path == "/api/stats/me":
             return {"ok": True, "data": STATS_EXAMPLE}
         return None
 
@@ -217,6 +217,41 @@ def test_nel_browser_tempo_reale_con_il_login(spa_server, tmp_path):
         browser.close()
 
 
+def test_esci_manda_la_richiesta_e_ricarica_la_home(spa_server, tmp_path):
+    # Lotto 9c: "Esci" manda POST /api/auth/logout con il codice CSRF nell'intestazione.
+    # La risposta la dà il browser (routes), perché con l'utente finto di running_server
+    # il logout vero non cambierebbe niente: la prima volta un errore del server (il
+    # pulsante si riaccende e si resta nella pagina), la seconda ok (si ricarica la home)
+    calls = []
+
+    def logout(request):
+        calls.append({"method": request["method"], "csrf": request["headers"].get("X-CSRFToken", "")})
+        if len(calls) == 1:
+            return 500, {"ok": False, "error": {"code": "server_error", "message": "Errore del server."}}
+        return 200, {"ok": True, "data": {"redirect": "/"}}
+
+    browser = Browser(find_browser(), tmp_path, routes={"*/api/auth/logout": logout})
+    try:
+        browser.send("Network.setCookie", name=TEST_COOKIE[0], value=TEST_COOKIE[1], url=spa_server)
+        browser.open(f"{spa_server}/profile/settings", 390, 844, ready=CONNECTED)
+        browser.click("[data-open-stats]")
+        browser.wait_js(f"{STATS_OPEN} === '{STATS_EXAMPLE['games']}'", "statistiche nel pannello")
+        # __samePage: sparisce solo se la pagina si ricarica davvero (non con navigate di React)
+        browser.js("window.__samePage = true")
+
+        browser.click("[data-logout]")
+        browser.wait_js("document.querySelector('[data-logout]').disabled === false", "pulsante riacceso dopo l'errore")
+        assert len(calls) == 1
+        assert browser.js("[window.__samePage, location.pathname]") == [True, "/profile/settings"]
+
+        browser.click("[data-logout]")
+        browser.wait_js("window.__samePage === undefined && location.pathname === '/'", "home ricaricata")
+    finally:
+        browser.close()
+    assert [call["method"] for call in calls] == ["POST", "POST"]
+    assert all(call["csrf"] for call in calls), calls
+
+
 # CONNECTED: la pagina è collegata al tempo reale (lo dice il pannello amici, dal passo 6)
 CONNECTED = "document.querySelector('[data-friends-panel]')?.dataset.connection === 'connected'"
 # STATS_OPEN: il pannello statistiche è aperto e mostra le partite giocate
@@ -241,10 +276,12 @@ def test_cornice_con_il_login(spa_server, spa_app, tmp_path):
         browser.wait_js(f"{STATS_OPEN} === '{STATS_EXAMPLE['games']}'", "statistiche nel pannello")
         assert browser.js("document.getElementById('stats-title').textContent") == "Mario"
         assert browser.js("document.querySelector('[data-stat=\"Vittorie\"] dd').textContent") == "55%"
+        # Lotto 9c: Esci non è più un modulo che va al server da solo (niente action
+        # né csrf_token): la richiesta la manda la pagina (test qui sotto)
         logout = browser.js("""(() => { const f = document.querySelector('.sheet__logout');
-          return { action: f.getAttribute('action'), method: f.method,
-                   token: f.querySelector('[name=csrf_token]').value.length > 0 }; })()""")
-        assert logout == {"action": "/auth/logout", "method": "post", "token": True}
+          return { action: f.getAttribute('action'), inputs: f.querySelectorAll('input').length,
+                   button: f.querySelector('[data-logout]') !== null }; })()""")
+        assert logout == {"action": None, "inputs": 0, "button": True}
         browser.click("#stats [data-close]")
         browser.wait_js("!document.getElementById('stats').open", "pannello chiuso")
 

@@ -8,7 +8,7 @@ running_server (FakeUser con il suo id).
 Controlla:
 - la carta-modal della Partita Veloce (1v1 e 2v2) parte da 500 punti e "Giocatore",
   e passa a "CPU"; quella "con un amico" non ha la scelta dell'avversario (P73);
-  "In breve" ha il rating vero (da GET /stats/me: Mario ha 1500 provvisorio);
+  "In breve" ha il rating vero (da GET /api/stats/me: Mario ha 1500 provvisorio);
 - "Gioca" con "Giocatore" apre la schermata di coda (modo, punti, intervallo, secondi);
   "Annulla" e Esc la chiudono e tolgono dalla coda; P105: con l'intervallo allargato la
   schermata resta la stessa e i numeri scorrono;
@@ -181,7 +181,7 @@ def test_carta_modal_con_un_amico(browser, server, mode):
 def test_in_breve_con_il_rating_vero(browser, server):
     _open(browser, server)
     _open_modal(browser, "1v1")
-    # Mario non ha mai giocato: 1500, provvisorio (GET /stats/me)
+    # Mario non ha mai giocato: 1500, provvisorio (GET /api/stats/me)
     browser.wait_js("document.querySelector('.facts').textContent.includes('(1500, provvisorio)')", "rating in In breve")
     assert "Conta per il tuo rating 1v1 (1500, provvisorio)" in browser.js("document.querySelector('.facts').textContent")
     # I punti cambiano la frase sotto

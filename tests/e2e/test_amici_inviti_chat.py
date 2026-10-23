@@ -21,22 +21,22 @@ from tests.e2e.helpers import (
 
 def befriend(sender, receiver, sender_tab, receiver_tab):
     """sender manda la richiesta, receiver accetta: tutti e due ricevono l'avviso."""
-    answer = sender.api("POST", "/friends/requests", {"request_id": request_id(), "username": receiver.username})
+    answer = sender.api("POST", "/api/friends/requests", {"request_id": request_id(), "username": receiver.username})
     assert answer["ok"] is True, answer
     assert answer["data"]["user_id"] == receiver.id
     receiver_tab.wait_for("friends:changed", lambda data: data["reason"] == "request_received")
-    requests_in = receiver.api("GET", "/friends/")["data"]["requests_in"]
+    requests_in = receiver.api("GET", "/api/friends/")["data"]["requests_in"]
     assert [item["user_id"] for item in requests_in] == [sender.id]
     # La stessa richiesta ha la stessa ora nella risposta e nelle liste di tutti e due
-    requests_out = sender.api("GET", "/friends/")["data"]["requests_out"]
+    requests_out = sender.api("GET", "/api/friends/")["data"]["requests_out"]
     assert requests_out == [answer["data"]]
     assert requests_in[0]["sent_at"] == answer["data"]["sent_at"]
-    assert receiver.api("POST", f"/friends/requests/{sender.id}/accept") == {"ok": True}
+    assert receiver.api("POST", f"/api/friends/requests/{sender.id}/accept") == {"ok": True}
     sender_tab.wait_for("friends:changed", lambda data: data["reason"] == "request_accepted")
 
 
 def friend_entry(user, friend_id):
-    friends = user.api("GET", "/friends/")["data"]["friends"]
+    friends = user.api("GET", "/api/friends/")["data"]["friends"]
     return next((item for item in friends if item["user_id"] == friend_id), None)
 
 
@@ -90,15 +90,15 @@ def test_amicizia_chat_e_blocco(users):
     assert too_fast["ok"] is False and too_fast["error"]["code"] == "too_fast"
     assert too_fast["error"]["retry_after"] >= 1
 
-    assert bruno.api("GET", "/friends/")["data"]["counters"]["unread_messages"] == 1
+    assert bruno.api("GET", "/api/friends/")["data"]["counters"]["unread_messages"] == 1
     history = tab_bruno.call("chat:history", {"user_id": anna.id, "before_id": None})
     assert history["ok"] is True
     assert history["data"]["messages"] == [message]
     assert history["data"]["can_write"] is True and history["data"]["has_more"] is False
-    assert bruno.api("GET", "/friends/")["data"]["counters"]["unread_messages"] == 0
+    assert bruno.api("GET", "/api/friends/")["data"]["counters"]["unread_messages"] == 0
 
     # Bruno blocca Anna: l'amicizia finisce e nessuno dei due può più scrivere
-    assert bruno.api("POST", "/friends/blocks", {"request_id": request_id(), "user_id": anna.id}) == {"ok": True}
+    assert bruno.api("POST", "/api/friends/blocks", {"request_id": request_id(), "user_id": anna.id}) == {"ok": True}
     tab_anna.wait_for("friends:changed", lambda data: data["reason"] == "friend_removed")
     assert friend_entry(anna, bruno.id) is None
     # Scrive Bruno, che non ha ancora scritto (Anna sarebbe fermata dal limite di 1 al secondo)
@@ -181,7 +181,7 @@ def test_invito_2v2_coppia_in_coda_e_abbandono(users):
     # Rating: scende ad Anna, sale agli avversari; Bruno resta com'era (D13, P30)
     for tab, mark in zip(tabs, marks, strict=True):
         tab.wait_for("home:status", lambda status: status["resume"] is None, since=mark)
-    stats = {user.username: user.api("GET", "/stats/me")["data"] for user in (anna, bruno, carlo, dora)}
+    stats = {user.username: user.api("GET", "/api/stats/me")["data"] for user in (anna, bruno, carlo, dora)}
     assert stats[anna.username]["losses"] == 1 and stats[anna.username]["ratings"]["2v2"]["games"] == 1
     assert stats[anna.username]["ratings"]["2v2"]["value"] < 1500
     assert stats[bruno.username]["losses"] == 1

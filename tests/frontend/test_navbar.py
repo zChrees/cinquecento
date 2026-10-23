@@ -148,12 +148,14 @@ def test_pannello_statistiche_con_impostazioni_esci_e_crediti(user_home):
     sheet = _stats_dialog(user_home)
     assert "data-animated" in sheet and "data-stats-body" in sheet
     assert 'href="/profile/settings"' in sheet and "Impostazioni" in sheet
-    # Esci: modulo POST con il token CSRF, non un link
-    logout = re.search(r'<form class="sheet__logout" method="post" action="/auth/logout">.*?</form>', sheet, flags=re.DOTALL)
-    assert logout, "Esci deve essere un modulo POST"
-    # Gli attributi in qualsiasi ordine (React scrive value prima di name)
-    hidden = re.search(r"<input\b[^>]*>", logout.group(0)).group(0)
-    assert 'type="hidden"' in hidden and 'name="csrf_token"' in hidden and re.search(r'value="[^"]+"', hidden)
+    # Esci: un pulsante di un modulo, non un link (un altro sito non può far uscire
+    # l'utente). Dal lotto 9c il modulo non va al server da solo: niente action né
+    # campo csrf_token, la richiesta POST /api/auth/logout la manda la pagina
+    # (provata in test_spa.py, test_esci_manda_la_richiesta_e_ricarica_la_home)
+    logout = re.search(r'<form class="sheet__logout">.*?</form>', sheet, flags=re.DOTALL)
+    assert logout, "Esci deve essere un modulo"
+    assert "<input" not in logout.group(0)
+    assert re.search(r'<button\b[^>]*type="submit"[^>]*data-logout=""', logout.group(0))
     assert "Esci" in logout.group(0)
     # Crediti delle immagini (D37)
     credits = re.search(r'<p class="sheet__credits".*?</p>', sheet, flags=re.DOTALL).group(0)
@@ -186,10 +188,10 @@ def test_crediti_anche_nella_finestra_di_accesso(tmp_path):
 
 
 def test_statistiche_dal_server_e_forma_dell_esempio(user_home):
-    # P30: il pannello chiede sempre i dati veri (GET /stats/me, provato in
+    # P30: il pannello chiede sempre i dati veri (GET /api/stats/me, provato in
     # tests/api/test_statistiche.py); il file di esempio resta come riferimento del contratto
     url = re.search(r'data-stats-url="([^"]+)"', user_home).group(1)
-    assert url == "/stats/me"
+    assert url == "/api/stats/me"
     data = json.loads((STATIC / "dev" / "statistiche_esempio.json").read_text(encoding="utf-8"))
     for key in ("games", "wins", "losses", "draws", "win_rate", "ratings"):
         assert key in data, key

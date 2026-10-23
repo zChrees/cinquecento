@@ -14,7 +14,7 @@
  * le decide FriendsPanel.tsx, che le passa in handlers. Tutti i testi degli utenti
  * entrano come testo, mai come HTML (React li mette sempre come testo).
  *
- * DA DOVE ARRIVANO I DATI: overview è la risposta di GET /friends/ (contratto 2.2),
+ * DA DOVE ARRIVANO I DATI: overview è la risposta di GET /api/friends/ (contratto 2.2),
  * chiesta da FriendsPanel.tsx.
  */
 
@@ -376,7 +376,7 @@ function BlockedRow(props: BlockedRowProps): JSX.Element {
 
 // FriendsBodyProps: cosa riceve il contenuto della lista
 interface FriendsBodyProps {
-  // l'ultima risposta di GET /friends/, oppure null se non è ancora arrivata (o è fallita)
+  // l'ultima risposta di GET /api/friends/, oppure null se non è ancora arrivata (o è fallita)
   overview: FriendsList | null;
   // il messaggio d'errore dell'ultima lettura, oppure '' (allora "Caricamento…")
   loadError: string;

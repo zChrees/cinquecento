@@ -1,5 +1,5 @@
 {
-  "_nota": "Risposta di GET /stats/me (campo data). Contratto: docs/CONTRATTO-SOCKET.md, 2.1.",
+  "_nota": "Risposta di GET /api/stats/me (campo data). Contratto: docs/CONTRATTO-SOCKET.md, 2.1.",
   "games": 128,
   "wins": 71,
   "losses": 55,

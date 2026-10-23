@@ -9,7 +9,7 @@ sviluppo e nei test, con ?demo=rientro, mostra l'avviso "Hai una partita in cors
 con i dati finti di app/static/dev/home_esempio.json (li legge api/home.ts); online
 ?demo= non c'è.
 
-P82: GET /online dà il numero di giocatori online anche a chi non ha fatto il login
+P82: GET /api/online (fino al lotto 9c /online, ora 404) dà il numero di giocatori online anche a chi non ha fatto il login
 (contratto 5.1), che non si collega al tempo reale e quindi non riceve home:status.
 Solo il numero, lo stesso di home:status: nessun dato sugli utenti.
 """
@@ -56,6 +56,6 @@ def _check_demo():
     return demo_state
 
 
-@bp.get("/online")
+@bp.get("/api/online")
 def online():
     return ok({"online_count": presence.count()}), 200, {"Cache-Control": "no-store"}

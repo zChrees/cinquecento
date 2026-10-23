@@ -5,6 +5,10 @@ DELETE) mandano il codice CSRF nell'intestazione X-CSRFToken (contratto 1.5).
 Rispondono nella forma del contratto (1.2): {"ok": true, "data": ...} oppure
 {"ok": false, "error": {"code", "message"}} con il codice HTTP della tabella.
 La logica sta in app/services/friend_service.py.
+
+Dal lotto 9c della migrazione (24/10/2026) gli indirizzi sono sotto /api/friends/
+(prefisso in __init__.py), come tutte le rotte di dati; i vecchi /friends/...
+rispondono 404.
 """
 
 import functools

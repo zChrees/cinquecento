@@ -4,20 +4,21 @@
  * StatsPanel.js, con lo stesso HTML (stile in css/components/stats-panel.css).
  *
  * Cosa contiene:
- *   <StatsSheet user={...} csrfToken="..." dialogRef={...} sheet={...} />
+ *   <StatsSheet user={...} dialogRef={...} sheet={...} />
  *   <StatsGrid stats={...} />   la griglia: partite, vinte, perse, vittorie, rating 1v1 e 2v2
  *
- * In fondo: "Impostazioni", "Esci" (un modulo POST con il codice CSRF, non un link:
- * un altro sito non può far uscire l'utente) e i crediti delle immagini.
+ * In fondo: "Impostazioni", "Esci" (POST /api/auth/logout con il codice CSRF, non un
+ * link: un altro sito non può far uscire l'utente) e i crediti delle immagini.
  *
- * DA DOVE ARRIVANO I DATI: GET /stats/me (contratto 2.1), chiesto a ogni apertura
- * del pannello; l'utente e il codice CSRF dalla sessione (useSession, nella navbar).
+ * DA DOVE ARRIVANO I DATI: GET /api/stats/me (contratto 2.1), chiesto a ogni apertura
+ * del pannello; l'utente dalla sessione (useSession, nella navbar); il codice CSRF
+ * lo mette postJson (api/client.ts).
  */
 
 import { useState } from 'react';
 import type { FormEvent, JSX, RefObject } from 'react';
-import { getJson } from '../api/client';
-import type { ModeRating, Stats } from '../types/api';
+import { getJson, postJson } from '../api/client';
+import type { AuthDone, LogoutBody, ModeRating, Stats } from '../types/api';
 import type { UserRef } from '../types/common';
 import { Avatar } from './Avatar';
 import { Credits } from './LoginPrompt';
@@ -76,7 +77,7 @@ function provisionalNote(rating: ModeRating): string {
 
 // StatsGridProps: cosa riceve la griglia
 interface StatsGridProps {
-  // i dati di GET /stats/me
+  // i dati di GET /api/stats/me
   stats: Stats;
 }
 
@@ -110,8 +111,6 @@ export function StatsGrid(props: StatsGridProps): JSX.Element {
 interface StatsSheetProps {
   // l'utente collegato (nome e avatar in cima al pannello)
   user: UserRef;
-  // il codice CSRF per il modulo "Esci"
-  csrfToken: string;
   // il <dialog>: lo disegna questo componente, la navbar lo apre
   dialogRef: RefObject<HTMLDialogElement | null>;
   // le funzioni per chiuderlo con l'animazione (sheet.ts)
@@ -141,14 +140,28 @@ export function StatsSheet(props: StatsSheetProps): JSX.Element {
 
   /**
    * Invio di "Esci": senza rete non parte; al primo invio il pulsante si spegne.
-   * Il modulo lo manda il browser (POST /auth/logout), che poi va alla home.
+   *
+   * In parole semplici:
+   *   Il modulo non va al server da solo (preventDefault): la richiesta
+   *   POST /api/auth/logout la manda postJson, con il codice CSRF. Se va bene si
+   *   ricarica la home (window.location.assign), come faceva il modulo di prima:
+   *   la pagina riparte da zero, senza collegamento né dati dell'utente uscito.
+   *   Se non va (rete caduta, errore del server) il pulsante si riaccende.
    */
-  function handleLogout(event: FormEvent<HTMLFormElement>): void {
+  async function handleLogout(event: FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
     if (!navigator.onLine || leaving) {
-      event.preventDefault();
       return;
     }
     setLeaving(true);
+    // body: nessun dato, solo la richiesta
+    const body: LogoutBody = {};
+    const answer = await postJson<LogoutBody, AuthDone>('/api/auth/logout', body);
+    if (answer.ok) {
+      window.location.assign(answer.data.redirect);
+      return;
+    }
+    setLeaving(false);
   }
 
   /** La X in alto. */
@@ -168,7 +181,7 @@ export function StatsSheet(props: StatsSheetProps): JSX.Element {
       id="stats"
       aria-labelledby="stats-title"
       data-animated=""
-      data-stats-url="/stats/me"
+      data-stats-url="/api/stats/me"
       ref={props.dialogRef}
       onCancel={props.sheet.handleCancel}
       onClick={props.sheet.handleClick}
@@ -188,8 +201,7 @@ export function StatsSheet(props: StatsSheetProps): JSX.Element {
         <a className="sheet__link" href="/profile/settings">
           <span className="icon" aria-hidden="true">settings</span>Impostazioni
         </a>
-        <form className="sheet__logout" method="post" action="/auth/logout" onSubmit={handleLogout}>
-          <input type="hidden" name="csrf_token" value={props.csrfToken} />
+        <form className="sheet__logout" onSubmit={handleLogout}>
           <button className="sheet__link" type="submit" data-logout="" disabled={leaving}>
             <span className="icon" aria-hidden="true">logout</span>Esci
           </button>
@@ -210,7 +222,7 @@ export function StatsSheet(props: StatsSheetProps): JSX.Element {
  *   Le statistiche, oppure null con il messaggio da mostrare al loro posto.
  */
 export async function fetchStats(): Promise<{ stats: Stats | null; message: string }> {
-  const answer = await getJson<Stats>('/stats/me');
+  const answer = await getJson<Stats>('/api/stats/me');
   if (answer.ok) {
     return { stats: answer.data, message: '' };
   }

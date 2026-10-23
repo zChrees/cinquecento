@@ -231,7 +231,7 @@ def _open_modal(browser, server, users, mode):
 
 def _open_card(browser, users, mode):
     """Apre la carta "Gioca con un amico" finché, entro WAIT secondi, non mostra i tre amici
-    veri (la carta disegna la lista che c'è quando si apre, e GET /friends/ può arrivare
+    veri (la carta disegna la lista che c'è quando si apre, e GET /api/friends/ può arrivare
     dopo). Conta il tempo, non i tentativi: senza finestra l'animazione non dura niente."""
     expected = sorted(users[name] for name in FRIENDS)
     rows = f"[...{MODAL}.querySelectorAll('[data-invite-user]')].map((b) => Number(b.dataset.inviteUser))"
@@ -406,15 +406,15 @@ def test_nel_1v1_un_invito_alla_volta(browser, server, users, friends):
 
 def _friends_reads(browser):
     return browser.js("performance.getEntriesByType('resource')"
-                      ".filter((e) => new URL(e.name).pathname === '/friends/').length")
+                      ".filter((e) => new URL(e.name).pathname === '/api/friends/').length")
 
 
 def _wait_friends_reads_quiet(browser, at_least):
-    """Aspetta almeno `at_least` letture di GET /friends/ finite e poi nessuna lettura
+    """Aspetta almeno `at_least` letture di GET /api/friends/ finite e poi nessuna lettura
     nuova per un secondo. La home Jinja contava 6 letture esatte (home e pannello): nella
     home React il numero dipende da chi rilegge la lista, quindi si aspetta la calma."""
     browser.wait_js(f"performance.getEntriesByType('resource')"
-                    f".filter((e) => new URL(e.name).pathname === '/friends/').length >= {at_least}",
+                    f".filter((e) => new URL(e.name).pathname === '/api/friends/').length >= {at_least}",
                     "letture della lista dopo gli avvisi")
     last, since = _friends_reads(browser), time.monotonic()
     deadline = since + WAIT

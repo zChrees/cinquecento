@@ -16,7 +16,7 @@
  * (P115): una richiesta di amicizia ricevuta e un messaggio di un amico.
  *
  * La lista si aggiorna da sola (P47): con friends:presence, friends:changed e
- * chat:message si rilegge GET /friends/, e conta solo la risposta dell'ultima
+ * chat:message si rilegge GET /api/friends/, e conta solo la risposta dell'ultima
  * lettura partita (P63, P65). Anche al ritorno della connessione (P33).
  *
  * Si chiude con la X, con Esc, toccando fuori e con "indietro" del browser o del
@@ -26,7 +26,7 @@
  * aggiunge un altro passo ({ friendsPanel: 'chat' }): "indietro" dalla chat torna
  * alla lista, e chiudere dalla chat torna indietro di due passi.
  *
- * DA DOVE ARRIVANO I DATI: la lista da GET /friends/ (api/friends.ts, contratto 2.2),
+ * DA DOVE ARRIVANO I DATI: la lista da GET /api/friends/ (api/friends.ts, contratto 2.2),
  * chi sei dalla sessione (useSession), gli avvisi dal tempo reale (socket/hooks.ts).
  */
 
@@ -325,7 +325,7 @@ export function FriendsPanel(props: FriendsPanelProps): JSX.Element {
 
   // useState restituisce due cose: il valore attuale e la funzione per cambiarlo,
   // che fa ridisegnare il componente (regole-codice.md, sezione 6).
-  // overview: l'ultima lista arrivata da GET /friends/, oppure null
+  // overview: l'ultima lista arrivata da GET /api/friends/, oppure null
   const [overview, setOverview] = useState<FriendsList | null>(null);
   // loadError: il messaggio dell'ultima lettura fallita, oppure ''
   const [loadError, setLoadError] = useState<string>('');

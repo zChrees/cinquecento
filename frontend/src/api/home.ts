@@ -2,7 +2,7 @@
  * Le richieste HTTP della home (passo 7 della migrazione).
  *
  * Cosa contiene:
- *   fetchOnlineCount()   GET /online: quanti utenti sono collegati (anche senza login, P82)
+ *   fetchOnlineCount()   GET /api/online: quanti utenti sono collegati (anche senza login, P82)
  *   fetchDemoStatus()    l'avviso "Hai una partita in corso" finto di ?demo=rientro
  *   DEMO_RESUME          il valore di ?demo= che lo chiede ('rientro')
  *
@@ -13,7 +13,7 @@
  * Come le funzioni di client.ts, fetchOnlineCount non fallisce mai: la risposta è
  * sempre { ok: true, data } oppure { ok: false, error }, e senza rete 'no_connection'.
  *
- * DA DOVE ARRIVANO I DATI: GET /online da app/blueprints/main/routes.py (contratto
+ * DA DOVE ARRIVANO I DATI: GET /api/online da app/blueprints/main/routes.py (contratto
  * 5.1); i dati finti da app/static/dev/home_esempio.json, che c'è solo in sviluppo
  * e nei test (in main non ci va, P136).
  */
@@ -44,7 +44,7 @@ const DEMO_KEY = 'home:status con partita in corso';
  *   home:status.
  */
 export function fetchOnlineCount(): Promise<Answer<Online>> {
-  return getJson<Online>('/online');
+  return getJson<Online>('/api/online');
 }
 
 /**

@@ -33,7 +33,7 @@
  * compare e sparisce senza animazione.
  *
  * DA DOVE ARRIVANO I DATI: modalità e carta-pulsante da HomePage.tsx; il rating di
- * "In breve" da GET /stats/me e gli amici da GET /friends/ (HomePage.tsx); i testi
+ * "In breve" da GET /api/stats/me e gli amici da GET /api/friends/ (HomePage.tsx); i testi
  * sono scritti qui.
  */
 
@@ -285,7 +285,7 @@ interface ModeModalProps {
   ratings: Ratings | null;
   // P33: false senza connessione ("Gioca" e "Invita" spenti)
   online: boolean;
-  // gli amici (GET /friends/): si invitano quelli online. La lista si prende
+  // gli amici (GET /api/friends/): si invitano quelli online. La lista si prende
   // all'apertura e resta quella (come ModeModal.js)
   friends: Friend[];
   // gli inviti mandati e ancora aperti (li tiene la pagina)

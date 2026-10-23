@@ -39,5 +39,5 @@ def test_coda_2v2_e_partita_intera(users):
     # I due compagni hanno lo stesso esito
     by_team = {}
     for user in players:
-        by_team.setdefault(teams[user.username], []).append(user.api("GET", "/stats/me")["data"]["wins"])
+        by_team.setdefault(teams[user.username], []).append(user.api("GET", "/api/stats/me")["data"]["wins"])
     assert all(len(set(wins)) == 1 for wins in by_team.values())

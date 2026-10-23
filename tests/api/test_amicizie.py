@@ -93,30 +93,30 @@ class Player:
         return response.status_code, response.get_json()
 
     def overview(self):
-        status, body = self.call("GET", "/friends/")
+        status, body = self.call("GET", "/api/friends/")
         assert status == 200 and body["ok"] is True
         return body["data"]
 
     def request(self, username, request_id=None):
-        return self.call("POST", "/friends/requests", {"request_id": request_id or str(uuid.uuid4()), "username": username})
+        return self.call("POST", "/api/friends/requests", {"request_id": request_id or str(uuid.uuid4()), "username": username})
 
     def accept(self, other):
-        return self.call("POST", f"/friends/requests/{other.id}/accept")
+        return self.call("POST", f"/api/friends/requests/{other.id}/accept")
 
     def decline(self, other):
-        return self.call("POST", f"/friends/requests/{other.id}/decline")
+        return self.call("POST", f"/api/friends/requests/{other.id}/decline")
 
     def cancel(self, other):
-        return self.call("DELETE", f"/friends/requests/{other.id}")
+        return self.call("DELETE", f"/api/friends/requests/{other.id}")
 
     def remove(self, other):
-        return self.call("DELETE", f"/friends/{other.id}")
+        return self.call("DELETE", f"/api/friends/{other.id}")
 
     def block(self, user_id, request_id=None):
-        return self.call("POST", "/friends/blocks", {"request_id": request_id or str(uuid.uuid4()), "user_id": user_id})
+        return self.call("POST", "/api/friends/blocks", {"request_id": request_id or str(uuid.uuid4()), "user_id": user_id})
 
     def unblock(self, other):
-        return self.call("DELETE", f"/friends/blocks/{other.id}")
+        return self.call("DELETE", f"/api/friends/blocks/{other.id}")
 
 
 @pytest.fixture
@@ -424,29 +424,29 @@ def test_limite_con_accettazioni_contemporanee(app, mario, nina, toto):
     {"request_id": "r", "username": "x" * 21},
 ])
 def test_richiesta_con_dati_non_validi(app, mario, payload):
-    status, body = mario.call("POST", "/friends/requests", payload)
+    status, body = mario.call("POST", "/api/friends/requests", payload)
     assert (status, body["error"]["code"]) == (400, "invalid_data")
     assert rows(app, "amicizie") == 0
 
 
 @pytest.mark.parametrize("user_id", [None, "3", True, 0, -1, 1.5])
 def test_blocco_con_dati_non_validi(app, mario, user_id):
-    status, body = mario.call("POST", "/friends/blocks", {"request_id": "r", "user_id": user_id})
+    status, body = mario.call("POST", "/api/friends/blocks", {"request_id": "r", "user_id": user_id})
     assert (status, body["error"]["code"]) == (400, "invalid_data")
     assert rows(app, "blocchi") == 0
 
 
 def test_indirizzo_sconosciuto_risponde_in_json(mario):
-    assert_error(mario.call("POST", "/friends/requests/abc/accept"), 404, "not_found")
+    assert_error(mario.call("POST", "/api/friends/requests/abc/accept"), 404, "not_found")
 
 
 # Login e CSRF
 
 
 @pytest.mark.parametrize(("method", "url"), [
-    ("GET", "/friends/"), ("POST", "/friends/requests"), ("POST", "/friends/requests/1/accept"),
-    ("POST", "/friends/requests/1/decline"), ("DELETE", "/friends/requests/1"), ("DELETE", "/friends/1"),
-    ("POST", "/friends/blocks"), ("DELETE", "/friends/blocks/1"),
+    ("GET", "/api/friends/"), ("POST", "/api/friends/requests"), ("POST", "/api/friends/requests/1/accept"),
+    ("POST", "/api/friends/requests/1/decline"), ("DELETE", "/api/friends/requests/1"), ("DELETE", "/api/friends/1"),
+    ("POST", "/api/friends/blocks"), ("DELETE", "/api/friends/blocks/1"),
 ])
 def test_senza_login_not_logged_in(app, method, url):
     response = app.test_client().open(url, method=method, json={"request_id": "r", "username": "Nina"})
@@ -460,10 +460,10 @@ def test_modifiche_solo_con_il_codice_csrf(app, mario, nina):
         # Il codice CSRF lo dà GET /api/auth/session, come alla SPA (dal lotto 9b-1)
         token = mario.client.get("/api/auth/session").get_json()["data"]["csrf_token"]
         payload = {"request_id": "c-1", "username": "Nina"}
-        assert mario.client.post("/friends/requests", json=payload).status_code == 400
-        response = mario.client.post("/friends/requests", json=payload, headers={"X-CSRFToken": token})
+        assert mario.client.post("/api/friends/requests", json=payload).status_code == 400
+        response = mario.client.post("/api/friends/requests", json=payload, headers={"X-CSRFToken": token})
         assert response.status_code == 200
-        assert mario.client.get("/friends/").status_code == 200  # la lettura non lo chiede
+        assert mario.client.get("/api/friends/").status_code == 200  # la lettura non lo chiede
     finally:
         app.config["WTF_CSRF_ENABLED"] = False
 
@@ -475,7 +475,7 @@ def test_lista_con_la_forma_del_file_di_esempio(mario, nina, toto):
     befriend(mario, nina)
     toto.request("Mario")
     data = mario.overview()
-    example = EXAMPLE["GET /friends/"]
+    example = EXAMPLE["GET /api/friends/"]
     assert set(data) == set(example)
     assert set(data["friends"][0]) == set(example["friends"][0])
     assert set(data["requests_in"][0]) == set(example["requests_in"][0])

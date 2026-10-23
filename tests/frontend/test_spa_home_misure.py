@@ -16,7 +16,7 @@ Gli altri controlli di test_pagina_home.py (coda, CPU, scelta dell'avversario, f
 di accesso, avviso di rientro, online al singolare) li fanno già test_spa_home.py,
 test_spa_home_coda.py e test_spa_home_inviti.py; "Gira il telefono" (P116) ha il suo
 file, test_gira_telefono.py.
-Non serve MySQL: GET /friends/ e GET /stats/me li risponde il browser con i dati di
+Non serve MySQL: GET /api/friends/ e GET /api/stats/me li risponde il browser con i dati di
 esempio di app/static/dev/ (Browser.routes), così la lista degli amici da invitare è
 piena come nella home Jinja con i dati finti (la carta più alta).
 Senza browser, o senza il build della SPA, i controlli si saltano.
@@ -46,12 +46,12 @@ MODAL_SIZES = [(1920, 1080), (1440, 900), (1366, 657), (1536, 730), (360, 560), 
 RESUME_SIZES = [(1440, 900), (360, 640), (768, 1024)]
 
 # Risposte finte (forma del contratto: {"ok": true, "data": ...}) con i dati di esempio
-FRIENDS = json.loads((DEV / "amici_esempio.json").read_text(encoding="utf-8"))["GET /friends/"]
+FRIENDS = json.loads((DEV / "amici_esempio.json").read_text(encoding="utf-8"))["GET /api/friends/"]
 STATS = {key: value for key, value in json.loads((DEV / "statistiche_esempio.json").read_text(encoding="utf-8")).items()
          if not key.startswith("_")}
 ROUTES = {
-    "*/friends/": lambda _request: (200, {"ok": True, "data": FRIENDS}),
-    "*/stats/me": lambda _request: (200, {"ok": True, "data": STATS}),
+    "*/api/friends/": lambda _request: (200, {"ok": True, "data": FRIENDS}),
+    "*/api/stats/me": lambda _request: (200, {"ok": True, "data": STATS}),
 }
 
 # Come test_csp.py: registra ogni risorsa bloccata dalla CSP
@@ -142,7 +142,7 @@ def _click(browser, selector):
 
 def _open_modal(browser, kind, mode):
     """Apre la carta-modal. Con un amico aspetta la lista degli amici da invitare: la
-    carta disegna quella che c'è quando si apre, e GET /friends/ può arrivare dopo; se è
+    carta disegna quella che c'è quando si apre, e GET /api/friends/ può arrivare dopo; se è
     ancora vuota la chiude e la riapre (conta il tempo, non i tentativi)."""
     deadline = time.monotonic() + WAIT
     while True:

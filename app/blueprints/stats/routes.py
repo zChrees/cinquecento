@@ -1,6 +1,7 @@
 """Rotte: dati del pannello statistiche (P30; contratto 2.1).
 
-GET /stats/me risponde nella forma del contratto (1.2): {"ok": true, "data": ...};
+GET /api/stats/me (prima del lotto 9c della migrazione /stats/me, ora 404)
+risponde nella forma del contratto (1.2): {"ok": true, "data": ...};
 senza login {"ok": false, "error": {"code": "not_logged_in", ...}} con 401, non il
 rimando alla pagina di accesso (come le rotte degli amici, P45). Si vedono solo le
 proprie statistiche: non c'è un indirizzo per quelle di un altro utente.

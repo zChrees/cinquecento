@@ -1,4 +1,4 @@
-"""P30: pannello statistiche con i dati veri (GET /stats/me, contratto 2.1).
+"""P30: pannello statistiche con i dati veri (GET /api/stats/me, contratto 2.1).
 
 Controlla il "Fatto quando" di SCALETTA.md (P30): dopo partite simulate note, le
 cifre coincidono con quelle attese; un utente vede solo le proprie statistiche; il
@@ -93,7 +93,7 @@ class Player:
             ).scalar()
 
     def stats(self):
-        response = self.client.get("/stats/me")
+        response = self.client.get("/api/stats/me")
         body = response.get_json()
         assert response.status_code == 200 and body["ok"] is True, body
         return body["data"]
@@ -132,7 +132,7 @@ def _rating_in_db(app, player, mode):
 
 
 def test_senza_login_not_logged_in(app):
-    response = app.test_client().get("/stats/me")
+    response = app.test_client().get("/api/stats/me")
     assert response.status_code == 401
     assert response.get_json() == {"ok": False, "error": {"code": "not_logged_in", "message": "Accedi per continuare."}}
 

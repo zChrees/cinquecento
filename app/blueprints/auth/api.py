@@ -1,7 +1,8 @@
 """Rotte JSON di accesso e registrazione per la SPA (passo 4 della migrazione).
 
 Le pagine /auth/login e /auth/register le disegna React (frontend/src/pages/);
-qui ci sono le rotte che quelle pagine chiamano, sotto /api/ come tutte le rotte
+qui ci sono le rotte che quelle pagine chiamano (e, dal lotto 9c, il logout del
+pannello statistiche), sotto /api/ come tutte le rotte
 di dati nuove (DECISIONI.md, 19/10/2026). Rispondono nella forma del contratto
 (1.2): {"ok": true, "data": ...} oppure {"ok": false, "error": {...}}.
 
@@ -9,6 +10,7 @@ Cosa contiene:
     GET  /api/auth/session    codice CSRF, utente collegato (o null) e messaggi da mostrare
     POST /api/auth/login      {"username", "password", "next"} → {"redirect"}
     POST /api/auth/register   {"username", "email", "password", "confirm"} → {"redirect"}
+    POST /api/auth/logout     nessun corpo → {"redirect"} (la home)
 
 Le regole sono quelle di sempre, perché passano dagli stessi moduli
 (forms.py: LoginForm, RegisterForm, con \\Z di P137) e dallo stesso servizio
@@ -25,7 +27,7 @@ DA DOVE ARRIVANO I DATI: dalla SPA (frontend/src/api/client.ts), che li manda in
 """
 
 from flask import flash, get_flashed_messages, request, url_for
-from flask_login import current_user, login_user
+from flask_login import current_user, login_user, logout_user
 from flask_wtf.csrf import generate_csrf
 from werkzeug.datastructures import MultiDict
 
@@ -33,6 +35,7 @@ from app.blueprints.auth import api_bp
 from app.blueprints.auth.forms import LoginForm, RegisterForm
 from app.blueprints.auth.routes import safe_next
 from app.realtime.events import error, ok
+from app.realtime.presence import disconnect_user
 from app.services import auth_service
 from app.services.auth_service import AuthError
 
@@ -155,4 +158,21 @@ def register():
         return error("invalid_data", exc.message, fields={exc.field: [exc.message]}), 400
     login_user(user)
     flash(f"Benvenuto, {user.username}!", "success")
+    return ok({"redirect": url_for("main.index")})
+
+
+@api_bp.post("/logout")
+def logout():
+    """POST /api/auth/logout: esce (il pulsante "Esci" del pannello statistiche).
+
+    In parole semplici:
+        Prima scollega le schede dell'utente dal tempo reale (P32: anche le altre
+        schede smettono di agire come lui; va fatto mentre ha ancora il login),
+        poi toglie il login e risponde con l'indirizzo della home, che la pagina
+        ricarica. Chi non ha il login riceve la stessa risposta: uscire due volte
+        non è un errore. Il codice CSRF lo controlla CSRFProtect, come per le altre POST.
+    """
+    if current_user.is_authenticated:
+        disconnect_user(current_user.id)
+    logout_user()
     return ok({"redirect": url_for("main.index")})

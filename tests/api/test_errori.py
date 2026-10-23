@@ -59,7 +59,7 @@ def app(log_dir):
     def broken():
         raise RuntimeError(SECRET_DETAIL)
 
-    @app.route("/stats/_prova/rotta")
+    @app.route("/api/_prova/rotta")  # dal lotto 9c le rotte JSON sono solo sotto /api/
     def broken_json():
         raise RuntimeError(SECRET_DETAIL)
 
@@ -90,13 +90,28 @@ def test_pagina_inesistente_404(client):
 
 
 def test_404_json_nella_forma_del_contratto(client):
-    for path in ("/stats/non-esiste", "/friends/non-esiste"):
+    for path in ("/api/stats/non-esiste", "/api/friends/non-esiste", "/api/non-esiste"):
         response = client.get(path)
         assert response.status_code == 404
         body = response.get_json()
         assert body["ok"] is False
         assert body["error"]["code"] == "not_found"
         assert body["error"]["message"]
+
+
+# Lotto 9c (scelta 4 del passo 9): le rotte di dati sono tutte sotto /api/; i vecchi
+# indirizzi rispondono 404 con la pagina di errore, non più in JSON, e senza rimandi
+@pytest.mark.parametrize(("method", "path"), [
+    ("get", "/online"), ("get", "/stats/me"), ("get", "/friends/"),
+    ("post", "/friends/requests"), ("post", "/friends/requests/1/accept"),
+    ("post", "/friends/requests/1/decline"), ("delete", "/friends/requests/1"),
+    ("delete", "/friends/1"), ("post", "/friends/blocks"), ("delete", "/friends/blocks/1"),
+    ("post", "/auth/logout"),
+])
+def test_vecchi_indirizzi_json_rispondono_404(client, method, path):
+    response = getattr(client, method)(path)
+    assert response.status_code == 404, path
+    assert 'data-error="404"' in response.get_data(as_text=True), path
 
 
 def test_pagine_di_errore_senza_navbar(client):
@@ -131,7 +146,7 @@ def test_errore_forzato_500_senza_dettagli_e_riga_error_nel_log(client, log_dir)
 
 
 def test_500_json_nella_forma_del_contratto(client):
-    response = client.get("/stats/_prova/rotta")
+    response = client.get("/api/_prova/rotta")
     assert response.status_code == 500
     body = response.get_json()
     assert body["ok"] is False
@@ -266,7 +281,7 @@ def test_password_ed_email_mai_nel_file_di_log(app, client, log_dir, monkeypatch
             pytest.fail(f"Non riesco a usare il database {url.database}: MySQL è acceso?", pytrace=False)
 
     assert accounts.ok(accounts.register(client, "ProvaLog", EMAIL, PASSWORD))
-    client.post("/auth/logout")
+    client.post("/api/auth/logout")
     for _ in range(6):
         accounts.login(client, "ProvaLog", PASSWORD + "-sbagliata")
     accounts.login(client, "ProvaLog", PASSWORD)

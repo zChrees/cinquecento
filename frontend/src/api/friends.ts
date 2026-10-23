@@ -3,14 +3,14 @@
  * TypeScript di api() e withRequestId() di app/static/js/components/FriendsPanel.js.
  *
  * Cosa contiene:
- *   fetchFriends()               GET /friends/: la lista, le richieste, i bloccati, i contatori
- *   sendFriendRequest(username)  POST /friends/requests (con request_id)
- *   acceptRequest(id)            POST /friends/requests/<id>/accept
- *   declineRequest(id)           POST /friends/requests/<id>/decline
- *   cancelRequest(id)            DELETE /friends/requests/<id>
- *   removeFriend(id)             DELETE /friends/<id>
- *   blockUser(id)                POST /friends/blocks (con request_id)
- *   unblockUser(id)              DELETE /friends/blocks/<id>
+ *   fetchFriends()               GET /api/friends/: la lista, le richieste, i bloccati, i contatori
+ *   sendFriendRequest(username)  POST /api/friends/requests (con request_id)
+ *   acceptRequest(id)            POST /api/friends/requests/<id>/accept
+ *   declineRequest(id)           POST /api/friends/requests/<id>/decline
+ *   cancelRequest(id)            DELETE /api/friends/requests/<id>
+ *   removeFriend(id)             DELETE /api/friends/<id>
+ *   blockUser(id)                POST /api/friends/blocks (con request_id)
+ *   unblockUser(id)              DELETE /api/friends/blocks/<id>
  *
  * Per esempio:
  *   const answer = await acceptRequest(31);
@@ -18,8 +18,8 @@
  *
  * Come le funzioni di client.ts, non falliscono mai: la risposta è sempre
  * { ok: true, data } oppure { ok: false, error }, e senza rete 'no_connection'.
- * Le rotte restano /friends/... fino al passo 9 della migrazione, quando si
- * spostano sotto /api/ (DECISIONI.md, 19/10/2026).
+ * Fino al lotto 9c della migrazione le rotte erano /friends/...: ora stanno
+ * sotto /api/ come tutte le rotte di dati (DECISIONI.md, 19/10/2026).
  *
  * DA DOVE ARRIVANO I DATI: da Flask (app/blueprints/friends/routes.py), con il
  * cookie della sessione e il codice CSRF di /api/auth/session (client.ts).
@@ -32,7 +32,7 @@ import { deleteJson, getJson, postJson } from './client';
 import type { Answer } from './client';
 
 // BASE: l'inizio di tutti gli indirizzi degli amici
-const BASE = '/friends';
+const BASE = '/api/friends';
 
 // NoBody: i dati di una richiesta che non ne manda (accetta, rifiuta): un oggetto
 // vuoto, {}. Record<string, never> vuol dire "un oggetto senza nessun campo".

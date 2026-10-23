@@ -31,7 +31,7 @@ def client():
     "/api/auth/session",             # JSON della SPA
     "/static/css/base/variables.css",  # file statico
     "/pagina-che-non-esiste",        # errore 404
-    "/friends/",                     # JSON senza login (401)
+    "/api/friends/",                 # JSON senza login (401)
 ])
 def test_intestazioni_di_sicurezza(client, path):
     response = client.get(path)
@@ -61,27 +61,22 @@ def test_nessuno_script_scritto_nella_pagina(client, path):
 
 
 @pytest.mark.parametrize(("method", "path", "body"), [
-    ("post", "/auth/logout", {}),
-])
-def test_moduli_senza_csrf_rifiutati(client, method, path, body):
-    response = getattr(client, method)(path, data=body)
-    assert response.status_code == 400, path
-
-
-@pytest.mark.parametrize(("method", "path", "body"), [
     ("post", "/api/auth/login", {"username": "Mario", "password": "Password-di-prova-1", "next": ""}),
     ("post", "/api/auth/register", {"username": "Mario", "email": "mario@esempio.it",
                                     "password": "Password-di-prova-1", "confirm": "Password-di-prova-1"}),
-    ("post", "/friends/requests", {"request_id": "abc", "username": "Mario"}),
-    ("post", "/friends/requests/1/accept", None),
-    ("delete", "/friends/1", None),
-    ("post", "/friends/blocks", {"request_id": "abc", "user_id": 1}),
+    ("post", "/api/auth/logout", {}),
+    ("post", "/api/friends/requests", {"request_id": "abc", "username": "Mario"}),
+    ("post", "/api/friends/requests/1/accept", None),
+    ("delete", "/api/friends/1", None),
+    ("post", "/api/friends/blocks", {"request_id": "abc", "user_id": 1}),
     ("post", "/api/profile/delete", {"password": "Password-di-prova-1"}),
     ("post", "/api/profile/avatar", {"avatar": "coppe"}),
 ])
 def test_richieste_json_senza_csrf_rifiutate(client, method, path, body):
     response = getattr(client, method)(path, json=body)
     assert response.status_code == 400, path
+    # dal lotto 9c sono tutte sotto /api/: il rifiuto arriva in JSON (contratto 2.2)
+    assert response.get_json()["error"]["code"] == "invalid_data", path
 
 
 def test_cookie_di_sessione_httponly_e_samesite(client):

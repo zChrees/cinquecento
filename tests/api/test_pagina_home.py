@@ -71,7 +71,7 @@ def test_consigli_del_modal_dal_regolamento():
 
 
 # La home è pronta quando c'è la cascata e "giocatori online" (il numero vero: con il login
-# da home:status, senza da GET /online)
+# da home:status, senza da GET /api/online)
 HOME_READY = ("document.querySelector('[data-bg-cards]')?.children.length > 0"
               " && document.querySelector('[data-online]:not([hidden])') !== null")
 
@@ -172,7 +172,7 @@ ONLINE_TEXT = r"document.querySelector('[data-online]').textContent.replace(/\s+
 
 
 def test_un_giocatore_online_al_singolare(browser, server):
-    # P120: "1 giocatore online", "2 giocatori online" (senza login, il numero di GET /online, P82);
+    # P120: "1 giocatore online", "2 giocatori online" (senza login, il numero di GET /api/online, P82);
     # schede finte di utenti che non esistono (come test_online_senza_login.py).
     # La pagina del test prima (con il login di Mario, utente 7) è ancora aperta e collegata:
     # si apre la home senza login e si aspetta che la sua scheda esca, altrimenti il conto

@@ -7,7 +7,7 @@ Controlla:
   partita in corso"), la cascata di carte dello sfondo e la CSP che non blocca niente
   (fino al lotto 9b-1 qui c'era anche il confronto, elemento per elemento, con la home
   Jinja: tolto con la home Jinja, scelta 2 del passo 9);
-- senza login: il numero degli online da GET /online, nessun collegamento al tempo
+- senza login: il numero degli online da GET /api/online, nessun collegamento al tempo
   reale, una carta-pulsante apre "Accedi o registrati", la CSP non blocca niente;
 - con il login: il numero da home:status ("1 giocatore online", al singolare), una
   carta-pulsante apre la carta-modal, e con ?demo=rientro
@@ -100,7 +100,7 @@ def test_senza_login(browser, server):
     browser.open(f"{server}{PAGE}", 390, 844, READY)
     assert browser.js("document.title") == "Cinquecento"
     assert browser.js("window.__csp") == []
-    # Il numero da GET /online (P82), quello vero del server
+    # Il numero da GET /api/online (P82), quello vero del server
     count = presence.count()
     label = "giocatore online" if count == 1 else "giocatori online"
     assert browser.js("document.querySelector('[data-online-count]').textContent") == str(count)
@@ -109,7 +109,7 @@ def test_senza_login(browser, server):
     # Senza login la pagina non si collega al tempo reale
     browser.js("new Promise((r) => setTimeout(r, 500))")
     requests = browser.js("performance.getEntriesByType('resource').map((e) => e.name)")
-    assert [name for name in requests if name.endswith("/online")], requests
+    assert [name for name in requests if name.endswith("/api/online")], requests
     assert not [name for name in requests if "/socket.io/" in name], requests
     # Una carta-pulsante apre "Accedi o registrati" (P40), non l'avviso del 7a
     browser.click("[data-tile][data-kind='amico'][data-mode='2v2']")

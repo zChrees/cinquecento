@@ -45,7 +45,7 @@ EXAMPLES = {
     ("home_esempio.json", "queue:status 2v2 con due amici"): "ServerEvents['queue:status']",
     ("home_esempio.json", "queue:left"): "ServerEvents['queue:left']",
     ("home_esempio.json", "game:start"): "ServerEvents['game:start']",
-    ("amici_esempio.json", "GET /friends/"): "FriendsList",
+    ("amici_esempio.json", "GET /api/friends/"): "FriendsList",
     ("amici_esempio.json", "friends:presence"): "ServerEvents['friends:presence']",
     ("amici_esempio.json", "friends:changed"): "ServerEvents['friends:changed']",
     ("amici_esempio.json", "invite:received"): "ServerEvents['invite:received']",

@@ -12,7 +12,7 @@ sulla pagina della SPA con il login (/profile/settings, dal passo 6):
 - si chiude con "indietro", Esc, la X e un tocco fuori; dopo un ricaricamento non si
   riapre da solo e "indietro" lo chiude ancora (P34).
 
-Le richieste /friends/... le intercetta il browser e risponde FakeFriendsServer, qui
+Le richieste /api/friends/... le intercetta il browser e risponde FakeFriendsServer, qui
 sotto (dati di app/static/dev/amici_esempio.json; fino al lotto 9b-1 stava in
 test_pannello_amici.py), così non serve
 MySQL; la sessione (/api/auth/session) e il tempo reale sono quelli veri del server
@@ -38,15 +38,15 @@ ME = 12   # nei dati finti l'utente collegato è Mario, 12
 
 
 class FakeFriendsServer:
-    """Risponde alle richieste /friends/... come P45, partendo da amici_esempio.json."""
+    """Risponde alle richieste /api/friends/... come P45, partendo da amici_esempio.json."""
 
     def __init__(self):
-        self.data = copy.deepcopy(EXAMPLE["GET /friends/"])
+        self.data = copy.deepcopy(EXAMPLE["GET /api/friends/"])
         self.calls = []
 
     def __call__(self, request):
         method, url = request["method"], request["url"]
-        path = url.split("/friends", 1)[1]
+        path = url.split("/api/friends", 1)[1]
         body = json.loads(request.get("postData") or "null")
         self.calls.append({"method": method, "path": path, "body": body,
                            "csrf": request["headers"].get("X-CSRFToken", "")})
@@ -110,7 +110,7 @@ def friends():
 
 @pytest.fixture
 def browser(server, friends, tmp_path):
-    b = Browser(find_browser(), tmp_path / "chrome", routes={"*/friends/*": friends})
+    b = Browser(find_browser(), tmp_path / "chrome", routes={"*/api/friends/*": friends})
     b.send("Network.setCookie", name=TEST_COOKIE[0], value=TEST_COOKIE[1], url=server)
     yield b
     b.close()

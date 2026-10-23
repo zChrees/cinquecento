@@ -15,8 +15,8 @@
  *   <Navbar />
  *
  * DA DOVE ARRIVANO I DATI: l'utente dalla sessione (useSession); le statistiche
- * da GET /stats/me, a ogni apertura del pannello (fetchStats di StatsSheet.tsx); il
- * contatore degli amici da FriendsPanel.tsx (GET /friends/).
+ * da GET /api/stats/me, a ogni apertura del pannello (fetchStats di StatsSheet.tsx); il
+ * contatore degli amici da FriendsPanel.tsx (GET /api/friends/).
  */
 
 import { useRef, useState } from 'react';
@@ -145,7 +145,7 @@ export function Navbar(): JSX.Element {
         aria-label={friendsLabel}
         aria-haspopup="dialog"
         aria-controls="friends"
-        data-friends-url="/friends/"
+        data-friends-url="/api/friends/"
         onClick={handleOpenFriends}
       >
         <span className="icon" aria-hidden="true">group</span>
@@ -157,7 +157,6 @@ export function Navbar(): JSX.Element {
       <>
         <StatsSheet
           user={session.user}
-          csrfToken={session.csrfToken}
           dialogRef={statsRef}
           sheet={statsSheet}
           stats={stats}

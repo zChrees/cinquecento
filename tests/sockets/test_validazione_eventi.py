@@ -175,9 +175,10 @@ def test_esci_scollega_tutte_le_schede_ed_esce_dalla_coda(server, new_user):
         assert joined["ok"] is True
         # Dal passo 7d / è della SPA, senza <meta name="csrf-token">: il codice lo dà la sessione
         token = session.get(f"{server['url']}/api/auth/session", timeout=WAIT).json()["data"]["csrf_token"]
-        response = session.post(f"{server['url']}/auth/logout", data={"csrf_token": token},
-                                allow_redirects=False, timeout=WAIT)
-        assert response.status_code == 302
+        # Dal lotto 9c "Esci" è POST /api/auth/logout, con il codice nell'intestazione
+        response = session.post(f"{server['url']}/api/auth/logout", json={},
+                                headers={"X-CSRFToken": token}, timeout=WAIT)
+        assert response.json() == {"ok": True, "data": {"redirect": "/"}}
         for tab in tabs:
             assert tab.gone.wait(WAIT), "la scheda è rimasta collegata dopo Esci"
         _wait_until(lambda: not presence.is_online(user_id), "utente non più online")

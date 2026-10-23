@@ -5,7 +5,7 @@
   (websocket-client, in requirements-dev.txt). Serve i font di Google Fonts da
   una copia fuori dal progetto (FONT_CACHE, scaricata la prima volta: il font
   delle icone pesa circa 5 MB, D40) e può rispondere lui ad altre richieste
-  (per esempio GET /friends/ con i dati di app/static/dev/), così il test non
+  (per esempio GET /api/friends/ con i dati di app/static/dev/), così il test non
   ha bisogno di MySQL.
 - running_server(): il sito sulla porta dei test (5099), con un utente finto che
   risulta collegato solo con il cookie di prova (TEST_COOKIE).
@@ -139,7 +139,7 @@ class Browser:
     """Chrome o Edge senza finestra, pilotato con il protocollo DevTools.
 
     `routes` (facoltativo): {"schema dell'indirizzo": funzione(richiesta) -> (codice, dati JSON)}.
-    Le richieste che corrispondono a uno schema (per esempio "*/friends/*") le
+    Le richieste che corrispondono a uno schema (per esempio "*/api/friends/*") le
     intercetta il browser e risponde la funzione, senza passare dal server.
     """
 
@@ -260,5 +260,5 @@ class Browser:
 
 
 def _matches(pattern, url):
-    """Schema con * come in Fetch.enable ("*/friends/*")."""
+    """Schema con * come in Fetch.enable ("*/api/friends/*")."""
     return fnmatch.fnmatchcase(url, pattern)

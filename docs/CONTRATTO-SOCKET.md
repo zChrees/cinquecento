@@ -69,7 +69,7 @@ Ogni evento che la pagina manda al server riceve **una risposta** (in Socket.IO 
 
 ### 1.3 Richieste che creano qualcosa: `request_id`
 
-Le richieste che **creano** qualcosa portano `request_id`: un testo generato dalla pagina con `crypto.randomUUID()`, **lo stesso per tutti i tentativi della stessa azione** (per esempio se la connessione cade e la pagina rimanda la richiesta). Se il server riceve due volte lo stesso `request_id` dallo stesso utente, non crea un doppione e risponde come la prima volta. Lo portano: `queue:join`, `invite:send`, `chat:send`, `POST /friends/requests`, `POST /friends/blocks`.
+Le richieste che **creano** qualcosa portano `request_id`: un testo generato dalla pagina con `crypto.randomUUID()`, **lo stesso per tutti i tentativi della stessa azione** (per esempio se la connessione cade e la pagina rimanda la richiesta). Se il server riceve due volte lo stesso `request_id` dallo stesso utente, non crea un doppione e risponde come la prima volta. Lo portano: `queue:join`, `invite:send`, `chat:send`, `POST /api/friends/requests`, `POST /api/friends/blocks`.
 
 Le mosse di gioco non lo usano: le protegge `version` (vedi 3.2).
 
@@ -82,19 +82,17 @@ Le mosse di gioco non lo usano: le protegge `version` (vedi 3.2).
 
 ### 1.5 Dati scritti nella pagina dal server
 
-**Pagine della SPA** (dal 19/10/2026, passo 4 della migrazione a React): la pagina è un file statico e non ha questi attributi. Utente collegato, codice CSRF e messaggi da mostrare li chiede con `GET /api/auth/session` (2.3); le richieste che modificano qualcosa mandano lo stesso codice nell'intestazione `X-CSRFToken`.
-
-Pagine Jinja: chi è l'utente la pagina lo sa **senza chiederlo**: `base.html` scrive nel `<body>` gli attributi `data-user-id`, `data-username` e `data-avatar` (vuoti per chi non ha fatto il login), e nell'`<head>` il tag `<meta name="csrf-token" content="...">`. Le richieste HTTP che modificano qualcosa (`POST`, `DELETE`) mandano quel valore nell'intestazione `X-CSRFToken` (protezione CSRF di Flask-WTF).
+Dal lotto 9b-2 della migrazione a React (23/10/2026) **tutte le pagine sono della SPA** (tranne le pagine di errore) e il server non scrive più niente nella pagina: la pagina è un file statico, senza gli attributi `data-user-*` e senza il tag `<meta name="csrf-token">` che `base.html` scriveva fino ad allora. Utente collegato, codice CSRF e messaggi da mostrare la pagina li chiede con `GET /api/auth/session` (2.3); le richieste HTTP che modificano qualcosa (`POST`, `DELETE`) mandano quel codice nell'intestazione `X-CSRFToken` (protezione CSRF di Flask-WTF).
 
 ---
 
 ## 2. Richieste HTTP in JSON
 
-Tutte richiedono il login (tranne `GET /online`, 5.1) e rispondono nella forma di 1.2.
+Tutte stanno sotto **`/api/`** (dal lotto 9c della migrazione, 24/10/2026: prima statistiche, amici e numero degli online erano `/stats/me`, `/friends/...` e `/online`, che ora rispondono 404), richiedono il login (tranne `GET /api/online`, 5.1, e le rotte di accesso, 2.3) e rispondono nella forma di 1.2.
 
 ### 2.1 Statistiche (P30; dati finti per P40)
 
-`GET /stats/me` → `data` come in `statistiche_esempio.json`:
+`GET /api/stats/me` → `data` come in `statistiche_esempio.json`:
 
 | Campo | Significato |
 |---|---|
@@ -108,14 +106,14 @@ Chi non ha mai giocato in una modalità ha `value: 1500`, `games: 0`, `provision
 
 | Richiesta | Corpo | Cosa fa |
 |---|---|---|
-| `GET /friends/` | — | lista amici, richieste e contatori (`data` come `"GET /friends/"` in `amici_esempio.json`) |
-| `POST /friends/requests` | `{"request_id", "username"}` | manda una richiesta a chi ha **esattamente** quello username (D33, maiuscole comprese) |
-| `POST /friends/requests/<user_id>/accept` | — | accetta la richiesta ricevuta da `user_id` |
-| `POST /friends/requests/<user_id>/decline` | — | rifiuta (la richiesta si cancella: si potrà rimandare) |
-| `DELETE /friends/requests/<user_id>` | — | annulla una richiesta mandata |
-| `DELETE /friends/<user_id>` | — | toglie l'amicizia, per tutti e due |
-| `POST /friends/blocks` | `{"request_id", "user_id"}` | blocca l'utente e toglie l'amicizia (D23) |
-| `DELETE /friends/blocks/<user_id>` | — | toglie il blocco |
+| `GET /api/friends/` | — | lista amici, richieste e contatori (`data` come `"GET /api/friends/"` in `amici_esempio.json`) |
+| `POST /api/friends/requests` | `{"request_id", "username"}` | manda una richiesta a chi ha **esattamente** quello username (D33, maiuscole comprese) |
+| `POST /api/friends/requests/<user_id>/accept` | — | accetta la richiesta ricevuta da `user_id` |
+| `POST /api/friends/requests/<user_id>/decline` | — | rifiuta (la richiesta si cancella: si potrà rimandare) |
+| `DELETE /api/friends/requests/<user_id>` | — | annulla una richiesta mandata |
+| `DELETE /api/friends/<user_id>` | — | toglie l'amicizia, per tutti e due |
+| `POST /api/friends/blocks` | `{"request_id", "user_id"}` | blocca l'utente e toglie l'amicizia (D23) |
+| `DELETE /api/friends/blocks/<user_id>` | — | toglie il blocco |
 
 Accettare, rifiutare o togliere una seconda volta la stessa cosa risponde `ok` senza fare niente.
 
@@ -126,9 +124,9 @@ Nella lista, `presence` di un amico è `"online"`, `"in_game"` oppure `"offline"
 - `blocked` è un elenco di `{"user_id", "username", "avatar"}`.
 - Ordine della lista: prima gli amici `online`, poi `in_game`, poi `offline`, e dentro ogni gruppo per username; `requests_in` e `requests_out` dalla richiesta più recente.
 - `counters.unread_messages` conta tutti i messaggi non letti ricevuti, anche da chi non è più amico (la conversazione resta visibile, D24).
-- `POST /friends/requests` risponde con `data` = la richiesta mandata (`{"user_id", "username", "avatar", "sent_at"}`), come un elemento di `requests_out`.
+- `POST /api/friends/requests` risponde con `data` = la richiesta mandata (`{"user_id", "username", "avatar", "sent_at"}`), come un elemento di `requests_out`.
 - Errori: richiesta o blocco verso sé stessi → `invalid_data`; già amici o richiesta già mandata → `already_exists`; l'altro ti ha già mandato una richiesta → `request_from_them`; più di 100 amici (tuoi o suoi) → `limit_reached`; username di un utente che hai bloccato → `blocked`; accettare una richiesta che non c'è → `not_found`. Bloccare di nuovo lo stesso utente risponde `ok`, senza doppioni.
-- Senza login ogni richiesta risponde `not_logged_in` (401) in JSON, non con il rimando alla pagina di accesso. Una richiesta senza il codice CSRF riceve il 400 di Flask-WTF in HTML: per la pagina basta il codice 400. Le rotte sotto `/api/` (2.3) invece rispondono in JSON: `invalid_data` (400), "La pagina è scaduta: ricaricala e riprova.".
+- Senza login ogni richiesta risponde `not_logged_in` (401) in JSON, non con il rimando alla pagina di accesso. Una richiesta senza il codice CSRF riceve `invalid_data` (400) in JSON, "La pagina è scaduta: ricaricala e riprova.", come ogni rotta sotto `/api/` (fino al lotto 9c, con gli indirizzi `/friends/...`, riceveva il 400 di Flask-WTF in HTML).
 - `request_id` (1.3): il server ricorda la risposta per 10 minuti, per utente e per azione.
 
 ### 2.3 Accesso e registrazione della SPA (`/api/auth/`, dal 19/10/2026)
@@ -140,10 +138,11 @@ Rotte JSON delle pagine React `/auth/login` e `/auth/register` (passo 4 della mi
 | `GET /api/auth/session` | — | `{"csrf_token", "user", "flashes"}`: il codice CSRF, l'utente collegato (`{"user_id", "username", "avatar"}`) o `null`, i messaggi lasciati da un'altra pagina (`{"kind", "message"}`, `kind` `"success"`, `"error"` o `"info"`), che si leggono una volta sola; `Cache-Control: no-store` |
 | `POST /api/auth/login` | `{"username", "password", "next"}` | `{"redirect"}`: la pagina chiesta prima (`next`) se è di questo sito, altrimenti `"/"` |
 | `POST /api/auth/register` | `{"username", "email", "password", "confirm"}` | `{"redirect"}` (la home, con "Benvenuto, ...!" tra i messaggi) |
+| `POST /api/auth/logout` | `{}` | `{"redirect"}` (la home, che la pagina ricarica): scollega le schede dell'utente dal tempo reale e toglie il login; senza login risponde lo stesso, senza errore (lotto 9c) |
 
 - Stesse regole e stessi messaggi delle pagine Jinja di prima (moduli di `app/blueprints/auth/forms.py`, tentativi contati per account). `username` del login è il nome utente o l'email.
 - Errori: un campo non valido → `invalid_data` (400) con **`error.fields`**, i messaggi di ogni campo (`{"username": ["..."]}`; anche username o email già usati); un campo che non è un testo o un corpo che non è un oggetto → `invalid_data` senza `fields`; credenziali sbagliate o troppi tentativi → `not_allowed` (403); chi ha già il login riceve `{"redirect": "/"}` senza altri controlli.
-- `POST /auth/login` e `POST /auth/register` (i moduli di prima) rispondono 405; `POST /auth/logout` resta il modulo "Esci" con il campo `csrf_token`.
+- `POST /auth/login` e `POST /auth/register` (i moduli di prima) rispondono 405. `POST /auth/logout`, il modulo "Esci" con il campo `csrf_token`, dal lotto 9c risponde 404: "Esci" usa `POST /api/auth/logout`, con il codice nell'intestazione come le altre.
 
 ### 2.4 Impostazioni della SPA (`/api/profile/`, dal 19/10/2026)
 
@@ -275,7 +274,7 @@ Il 2v2 con gli amici non passa da `queue:join`: la coppia o il gruppo di tre ent
 
 **Senza login** (P82; approvato da Giuseppe e Christian il 05/10/2026) la pagina non si collega al tempo reale, quindi non riceve `home:status`. Il numero lo chiede con una richiesta HTTP, l'unica che **non richiede il login** (eccezione alla regola di 2):
 
-`GET /online` → `{"ok": true, "data": {"online_count": N}}`, lo stesso numero di `home:status`, senza cache (`Cache-Control: no-store`). La home senza login lo chiede all'apertura e poi ogni 15 secondi, solo mentre la scheda è visibile. Il numero finto dei dati di prova non si usa più.
+`GET /api/online` (fino al lotto 9c `GET /online`) → `{"ok": true, "data": {"online_count": N}}`, lo stesso numero di `home:status`, senza cache (`Cache-Control: no-store`). La home senza login lo chiede all'apertura e poi ogni 15 secondi, solo mentre la scheda è visibile. Il numero finto dei dati di prova non si usa più.
 
 ### 5.2 Amici online (P47)
 
@@ -284,7 +283,7 @@ Il 2v2 con gli amici non passa da `queue:join`: la coppia o il gruppo di tre ent
 | `friends:presence` | server → gli amici di chi cambia stato | `{"user_id", "presence"}` (`"online"`, `"in_game"`, `"offline"`) |
 | `friends:changed` | server → l'utente | `{"reason"}`: `"request_received"`, `"request_accepted"`, `"request_declined"`, `"friend_removed"`, `"blocked"` |
 
-Con `friends:changed` la pagina ricarica la lista con `GET /friends/`: così la forma della lista resta una sola. `friends:changed` arriva a tutte le schede **di tutti e due** gli utenti, anche di chi ha fatto il cambiamento (P65: accetta, rifiuta, annulla, togli amicizia), così la home e le altre schede rileggono la lista; `"blocked"` arriva solo a chi blocca o sblocca (chi viene bloccato riceve `"friend_removed"`, e dello sblocco non sa niente).
+Con `friends:changed` la pagina ricarica la lista con `GET /api/friends/`: così la forma della lista resta una sola. `friends:changed` arriva a tutte le schede **di tutti e due** gli utenti, anche di chi ha fatto il cambiamento (P65: accetta, rifiuta, annulla, togli amicizia), così la home e le altre schede rileggono la lista; `"blocked"` arriva solo a chi blocca o sblocca (chi viene bloccato riceve `"friend_removed"`, e dello sblocco non sa niente).
 
 ### 5.3 Inviti a partita (P47, D27)
 

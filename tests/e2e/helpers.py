@@ -246,7 +246,7 @@ def outcome(result, team):
 
 def stats_after(user, result, team, mode, rated):
     """Le statistiche di `user` dopo la sua prima partita: una partita, con l'esito giusto."""
-    answer = user.api("GET", "/stats/me")
+    answer = user.api("GET", "/api/stats/me")
     assert answer["ok"] is True, answer
     stats = answer["data"]
     counts = {"win": 0, "loss": 0, "draw": 0}

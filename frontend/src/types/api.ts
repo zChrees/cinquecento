@@ -1,22 +1,23 @@
 /**
  * Le richieste HTTP in JSON (docs/CONTRATTO-SOCKET.md, sezione 2 e 5.1).
  * Esempi: app/static/dev/statistiche_esempio.json e amici_esempio.json
- * ("GET /friends/"), controllati da tests/frontend/test_tipi.py.
+ * ("GET /api/friends/"), controllati da tests/frontend/test_tipi.py.
  *
  * Cosa contiene:
- *   Stats, ModeRating             GET /stats/me
- *   FriendsList, Friend, ...      GET /friends/
- *   SentRequestBody, BlockBody    i corpi di POST /friends/requests e /friends/blocks
- *   Online                        GET /online
- *   Session, LoginBody,           le rotte /api/auth/ della SPA (passo 4 della migrazione)
- *   RegisterBody, AuthDone
+ *   Stats, ModeRating             GET /api/stats/me
+ *   FriendsList, Friend, ...      GET /api/friends/
+ *   SentRequestBody, BlockBody    i corpi di POST /api/friends/requests e /api/friends/blocks
+ *   Online                        GET /api/online
+ *   Session, LoginBody,           le rotte /api/auth/ della SPA (passo 4 della migrazione;
+ *   RegisterBody, AuthDone,       il logout dal lotto 9c)
+ *   LogoutBody
  *   AvatarList, AvatarBody,       le rotte /api/profile/ delle impostazioni (passo 6)
  *   DeleteAccountBody
  *
  * DA DOVE ARRIVANO I DATI: le rotte dei blueprint stats, friends e main di Flask.
  * Ogni risposta ha la forma di common.ts: OkWithData<Stats> | ErrorResponse.
- * (Dal passo 4 della migrazione le rotte nuove stanno sotto /api/; queste si
- * spostano al passo 9.)
+ * Tutte le rotte stanno sotto /api/: le nuove dal passo 4 della migrazione,
+ * amici, statistiche e online dal lotto 9c (prima /friends/, /stats/me, /online).
  */
 
 import type { UserRef } from './common';
@@ -31,7 +32,7 @@ export interface ModeRating {
   provisional: boolean;
 }
 
-// Stats: i dati di GET /stats/me (il pannello statistiche)
+// Stats: i dati di GET /api/stats/me (il pannello statistiche)
 export interface Stats {
   // partite giocate, vinte, perse, pareggiate (un abbandono è una sconfitta)
   games: number;
@@ -66,7 +67,7 @@ export interface FriendRequest extends UserRef {
   sent_at: string;
 }
 
-// FriendsList: i dati di GET /friends/
+// FriendsList: i dati di GET /api/friends/
 export interface FriendsList {
   // gli amici: prima online, poi in partita, poi scollegati, per nome
   friends: Friend[];
@@ -83,7 +84,7 @@ export interface FriendsList {
   };
 }
 
-// SentRequestBody: il corpo di POST /friends/requests
+// SentRequestBody: il corpo di POST /api/friends/requests
 export interface SentRequestBody {
   // la chiave anti-doppione, la stessa per tutti i tentativi (contratto 1.3)
   request_id: string;
@@ -91,7 +92,7 @@ export interface SentRequestBody {
   username: string;
 }
 
-// BlockBody: il corpo di POST /friends/blocks
+// BlockBody: il corpo di POST /api/friends/blocks
 export interface BlockBody {
   // la chiave anti-doppione (contratto 1.3)
   request_id: string;
@@ -99,7 +100,7 @@ export interface BlockBody {
   user_id: number;
 }
 
-// Online: i dati di GET /online, l'unica richiesta senza login (5.1)
+// Online: i dati di GET /api/online, l'unica richiesta senza login (5.1)
 export interface Online {
   // quanti utenti sono collegati adesso
   online_count: number;
@@ -128,6 +129,10 @@ export interface Session {
   flashes: Flash[];
 }
 
+// LogoutBody: il corpo di POST /api/auth/logout (lotto 9c): un oggetto vuoto, {}.
+// Record<string, never> vuol dire "un oggetto senza nessun campo".
+export type LogoutBody = Record<string, never>;
+
 // LoginBody: il corpo di POST /api/auth/login
 export interface LoginBody {
   // nome utente oppure email (con una @ è un'email, P96)
@@ -148,7 +153,7 @@ export interface RegisterBody {
 }
 
 // AuthDone: la risposta di login e registrazione riusciti, e (passo 6) di
-// "Salva l'avatar" e della cancellazione dell'account
+// "Salva l'avatar" e della cancellazione dell'account, e (lotto 9c) del logout
 export interface AuthDone {
   // dove andare adesso, per esempio '/' (la home)
   redirect: string;

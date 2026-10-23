@@ -1,6 +1,6 @@
 """P82: giocatori online veri nella home anche senza login (contratto 5.1).
 
-- GET /online risponde a tutti, anche senza login, con il solo numero degli utenti
+- GET /api/online (fino al lotto 9c /online) risponde a tutti, anche senza login, con il solo numero degli utenti
   collegati (lo stesso di home:status) e senza cache.
 - Nel browser, senza login: la home mostra il numero vero (anche 0), mai quello finto
   dei dati di prova (24); il numero si aggiorna quando qualcuno entra o esce; con la
@@ -26,7 +26,7 @@ from tests.spa import needs_spa
 FAKE_TABS = [(9001, "p82-a"), (9001, "p82-b"), (9002, "p82-c")]
 DEMO_COUNT = "24"  # il numero finto di app/static/dev/home_esempio.json
 
-# Prima della pagina: timer da 15 s accorciati, ogni numero mostrato e ogni GET /online
+# Prima della pagina: timer da 15 s accorciati, ogni numero mostrato e ogni GET /api/online
 # ricordati, e document.hidden comandabile dal test. React disegna il numero dopo il
 # caricamento: l'osservatore guarda tutta la pagina e ricorda il numero quando cambia
 EARLY = """
@@ -37,7 +37,7 @@ EARLY = """
   window.__onlineRequests = 0;
   const fetchOriginal = window.fetch;
   window.fetch = (url, ...rest) => {
-    if (String(url).endsWith('/online')) window.__onlineRequests += 1;
+    if (String(url).endsWith('/api/online')) window.__onlineRequests += 1;
     return fetchOriginal(url, ...rest);
   };
   window.__hidden = false;
@@ -73,7 +73,7 @@ def fake_tabs():
 def test_numero_degli_online_senza_login(fake_tabs):
     client = create_app("testing").test_client()
     before = presence.count()
-    response = client.get("/online")
+    response = client.get("/api/online")
     assert response.status_code == 200
     assert response.headers["Cache-Control"] == "no-store"
     assert response.get_json() == {"ok": True, "data": {"online_count": before}}
@@ -81,16 +81,16 @@ def test_numero_degli_online_senza_login(fake_tabs):
     # Lo stesso utente con due schede conta una volta (come home:status)
     for user_id, sid in FAKE_TABS:
         presence.add(user_id, sid)
-    assert client.get("/online").get_json()["data"] == {"online_count": before + 2}
+    assert client.get("/api/online").get_json()["data"] == {"online_count": before + 2}
     presence.remove(9001, "p82-a")
-    assert client.get("/online").get_json()["data"] == {"online_count": before + 2}
+    assert client.get("/api/online").get_json()["data"] == {"online_count": before + 2}
     presence.remove(9001, "p82-b")
-    assert client.get("/online").get_json()["data"] == {"online_count": before + 1}
+    assert client.get("/api/online").get_json()["data"] == {"online_count": before + 1}
 
 
 def test_solo_lettura():
     client = create_app("testing").test_client()
-    assert client.post("/online").status_code == 405
+    assert client.post("/api/online").status_code == 405
 
 
 # --- Nel browser ------------------------------------------------------------------

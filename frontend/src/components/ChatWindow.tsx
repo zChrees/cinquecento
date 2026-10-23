@@ -18,7 +18,7 @@
  *
  * DA DOVE ARRIVANO I DATI: la prima pagina di messaggi (history) la chiede
  * FriendsPanel.tsx con chat:history prima di aprire la chat; l'amico dalla lista
- * (GET /friends/); il tuo user_id dalla sessione.
+ * (GET /api/friends/); il tuo user_id dalla sessione.
  */
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';

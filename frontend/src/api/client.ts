@@ -4,7 +4,7 @@
  *
  * Cosa contiene:
  *   loadSession()              GET /api/auth/session, una volta sola per pagina
- *   getJson(indirizzo)         una richiesta GET che risponde in JSON (per esempio /stats/me)
+ *   getJson(indirizzo)         una richiesta GET che risponde in JSON (per esempio /api/stats/me)
  *   postJson(indirizzo, dati)  una richiesta POST in JSON con il codice CSRF
  *   deleteJson(indirizzo)      una richiesta DELETE con il codice CSRF (passo 5b)
  *
@@ -139,11 +139,11 @@ export async function postJson<B, T>(url: string, body: B): Promise<Answer<T>> {
 /**
  * Manda una richiesta DELETE (senza dati) con il codice CSRF.
  *
- * @param {string} url l'indirizzo, per esempio '/friends/31'
+ * @param {string} url l'indirizzo, per esempio '/api/friends/31'
  * @returns {Promise<Answer<T>>} la risposta
  *
  * In parole semplici:
- *   const answer = await deleteJson<null>('/friends/31');
+ *   const answer = await deleteJson<null>('/api/friends/31');
  *   Come postJson, ma per togliere qualcosa (un amico, una richiesta, un blocco:
  *   pannello amici, passo 5b).
  */
@@ -160,7 +160,7 @@ export async function deleteJson<T>(url: string): Promise<Answer<T>> {
  * @returns {Promise<Answer<T>>} la risposta
  *
  * In parole semplici:
- *   sendWithCsrf<T>('DELETE', '/friends/31', null)
+ *   sendWithCsrf<T>('DELETE', '/api/friends/31', null)
  *   Prende il codice CSRF dalla sessione e manda la richiesta; senza rete
  *   restituisce NO_CONNECTION.
  */
@@ -196,11 +196,11 @@ async function sendWithCsrf<T>(method: 'POST' | 'DELETE', url: string, body: str
 /**
  * Chiede dei dati al server con una richiesta GET.
  *
- * @param {string} url l'indirizzo, per esempio '/stats/me'
+ * @param {string} url l'indirizzo, per esempio '/api/stats/me'
  * @returns {Promise<Answer<T>>} la risposta
  *
  * In parole semplici:
- *   const answer = await getJson<Stats>('/stats/me');
+ *   const answer = await getJson<Stats>('/api/stats/me');
  *   Senza rete risponde subito NO_CONNECTION, senza provarci (come fetchStats di
  *   StatsPanel.js); T è il tipo dei dati della risposta, scelto da chi chiama.
  */

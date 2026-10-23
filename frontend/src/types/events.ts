@@ -114,7 +114,7 @@ export interface FriendsPresence {
   presence: Presence;
 }
 
-// FriendsChanged: i dati di friends:changed; la pagina rilegge GET /friends/
+// FriendsChanged: i dati di friends:changed; la pagina rilegge GET /api/friends/
 export interface FriendsChanged {
   reason: 'request_received' | 'request_accepted' | 'request_declined' | 'friend_removed' | 'blocked';
 }

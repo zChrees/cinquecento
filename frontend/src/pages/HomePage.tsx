@@ -11,7 +11,7 @@
  *   registrati" (P40).
  * - Lo sfondo con la cascata di carte (CardBackground).
  * - "giocatori online": con il login da home:status (P44); senza login da
- *   GET /online ogni 15 secondi, solo con la scheda visibile (P82).
+ *   GET /api/online ogni 15 secondi, solo con la scheda visibile (P82).
  * - L'avviso "Hai una partita in corso" con "Rientra" (ResumeBanner), da
  *   home:status, nello stesso spazio di "giocatori online". Con ?demo=rientro
  *   l'avviso è quello dei dati finti (si prova senza una partita vera).
@@ -23,14 +23,14 @@
  *   schermata si chiude con la risposta o con queue:left ("partner_left": un
  *   messaggio dice che il compagno è uscito). Con "CPU" manda cpu:start (P73, P123:
  *   niente coda). game:start porta al tavolo (per ora la pagina Jinja).
- * - "In breve" ha il rating vero, da GET /stats/me.
+ * - "In breve" ha il rating vero, da GET /api/stats/me.
  * - Connessione (P33): senza connessione "Gioca" è spento; se la connessione cade
  *   la schermata di coda si chiude (chi resta senza schede esce dalla coda) e, se
  *   si è ancora in coda da un'altra scheda, al ritorno arriva queue:status e si riapre.
  *
  * Lotto 7c: gli inviti a partita (P47, contratto 5.3).
  * - Con il login una carta "Gioca con un amico" apre la carta-modal con gli amici
- *   online (GET /friends/, riletta con friends:presence e friends:changed: vale solo
+ *   online (GET /api/friends/, riletta con friends:presence e friends:changed: vale solo
  *   l'ultima lettura partita, P65). "Invita" manda invite:send; invite:update
  *   aggiorna la carta; chiudere la carta con inviti aperti manda invite:cancel per
  *   ognuno; "Gioca" dopo l'accettazione manda invite:start (1v1: arriva
@@ -49,8 +49,8 @@
  *
  * DA DOVE ARRIVANO I DATI: chi è collegato da useSession (GET /api/auth/session);
  * home:status, la coda, gli inviti e game:start dal tempo reale (socket/, solo con
- * il login); il rating da GET /stats/me; gli amici da GET /friends/ (api/friends.ts);
- * il numero senza login da GET /online (api/home.ts); i dati finti da
+ * il login); il rating da GET /api/stats/me; gli amici da GET /api/friends/ (api/friends.ts);
+ * il numero senza login da GET /api/online (api/home.ts); i dati finti da
  * app/static/dev/home_esempio.json.
  */
 
@@ -350,7 +350,7 @@ export function HomePage(): JSX.Element {
   const navigate = useNavigate();
   // wasOnline: la pagina è già stata collegata almeno una volta
   const wasOnline: RefObject<boolean> = useRef<boolean>(false);
-  // friends: gli amici (GET /friends/), per la lista da invitare
+  // friends: gli amici (GET /api/friends/), per la lista da invitare
   const [friends, setFriends] = useState<Friend[]>([]);
   // friendsRequest: il numero dell'ultima lettura della lista partita (P65: le
   // risposte possono arrivare in un altro ordine, e vale solo quella dell'ultima)
@@ -407,7 +407,7 @@ export function HomePage(): JSX.Element {
   useEffect(loadDemo, [demo]);
 
   /**
-   * Effetto senza login (P82): chiede il numero degli online a GET /online
+   * Effetto senza login (P82): chiede il numero degli online a GET /api/online
    * all'apertura e poi ogni ONLINE_POLL_MS, solo finché la scheda è visibile;
    * tornando sulla scheda lo richiede subito. Con il login il numero arriva con
    * home:status, e con ?demo=rientro valgono solo i dati finti.
@@ -463,7 +463,7 @@ export function HomePage(): JSX.Element {
   // sa se c'è il login) o se cambia ?demo=
   useEffect(pollOnline, [session.loaded, loggedIn, demo]);
 
-  /** Effetto con il login: chiede il rating per "In breve" (GET /stats/me), una volta. */
+  /** Effetto con il login: chiede il rating per "In breve" (GET /api/stats/me), una volta. */
   function loadRatings(): () => void {
     // active: false se la pagina sparisce prima della risposta
     let active = true;
@@ -812,7 +812,7 @@ export function HomePage(): JSX.Element {
   }
 
   // ------------------------------------------------------------
-  // Amici (GET /friends/)
+  // Amici (GET /api/friends/)
   // ------------------------------------------------------------
 
   /** Rilegge la lista degli amici; vale solo la risposta dell'ultima lettura partita (P65). */

@@ -1,6 +1,6 @@
 {
   "_nota": "Dati degli amici. Le chiavi sono i nomi dei messaggi del contratto (docs/CONTRATTO-SOCKET.md, 2.2 e 5).",
-  "GET /friends/": {
+  "GET /api/friends/": {
     "friends": [
       {
         "user_id": 44,

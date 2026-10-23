@@ -124,7 +124,7 @@ def test_con_i_suoni_spenti_niente(browser, server):
         _emit("friends:changed", {"reason": "request_received"})
         _emit("chat:message", _message(45))
         # La lista degli amici si rilegge dopo friends:changed: a quel punto gli avvisi sono arrivati
-        home.wait_js("performance.getEntriesByType('resource').filter((r) => r.name.endsWith('/friends/')).length >= 2",
+        home.wait_js("performance.getEntriesByType('resource').filter((r) => r.name.endsWith('/api/friends/')).length >= 2",
                      "lista degli amici riletta")
         assert _heard(home) == []
     finally:

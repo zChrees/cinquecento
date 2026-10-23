@@ -2,7 +2,7 @@
 
 - 404 e 500: pagina in italiano basata su base.html, senza navbar (le pagine di errore
   non hanno uno script di pagina, e senza la navbar non si apre). Le richieste JSON
-  (/stats/..., /friends/..., e dal passo 4 della migrazione /api/...) ricevono invece
+  (tutte sotto /api/: dal lotto 9c della migrazione anche amici e statistiche) ricevono invece
   la risposta del contratto (1.2):
   {"ok": false, "error": {"code": "not_found" o "server_error", "message"}}.
 - 500: nessun dettaglio tecnico nella risposta. L'errore con il traceback va nel log
@@ -25,7 +25,7 @@ from app.realtime.events import error
 log = logging.getLogger(__name__)
 
 # Indirizzi delle richieste HTTP in JSON (contratto, sezione 2)
-JSON_PREFIXES = ("/stats/", "/friends/", "/api/")
+JSON_PREFIXES = ("/api/",)
 
 MINIMAL_500 = (
     '<!doctype html><html lang="it"><head><meta charset="utf-8">'

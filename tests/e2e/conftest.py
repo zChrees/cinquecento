@@ -5,7 +5,7 @@
   migrate.py prima di partire. Alla fine il processo si ferma.
 - I test non vedono la memoria del server: passano solo dagli ingressi veri.
   Registrazione e login dai moduli (con il codice CSRF), amici con le rotte HTTP,
-  coda, inviti, chat e partite con Socket.IO, statistiche con GET /stats/me.
+  coda, inviti, chat e partite con Socket.IO, statistiche con GET /api/stats/me.
   Utenti, schede e aiuti per le partite sono in tests/e2e/helpers.py.
 - Ogni test usa utenti nuovi (Utente01, Utente02, …), così rating, amicizie e code
   di un test non toccano quelli degli altri.
@@ -74,7 +74,7 @@ def _wait_until_ready(process, url, output):
             pytest.exit(f"Il server dei test si è fermato all'avvio:\n{output.read_text(encoding='utf-8')}",
                         returncode=1)
         try:
-            if requests.get(f"{url}/online", timeout=1).status_code == 200:
+            if requests.get(f"{url}/api/online", timeout=1).status_code == 200:
                 return
         except requests.ConnectionError:
             pass

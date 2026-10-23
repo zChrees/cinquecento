@@ -2,8 +2,9 @@
 
 Due blueprint nello stesso pacchetto:
 - bp (/auth/...): le pagine /auth/login e /auth/register (dal passo 4 della
-  migrazione le disegna la SPA) e /auth/logout;
-- api_bp (/api/auth/...): le rotte JSON che chiamano le pagine della SPA (api.py).
+  migrazione le disegna la SPA);
+- api_bp (/api/auth/...): le rotte JSON che chiamano le pagine della SPA (api.py),
+  dal lotto 9c anche il logout (POST /api/auth/logout).
 """
 
 from flask import Blueprint

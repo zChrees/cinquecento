@@ -1,7 +1,8 @@
-"""Rotte: pagine di accesso e registrazione, logout (P16; dal passo 4 della migrazione).
+"""Rotte: pagine di accesso e registrazione (P16; dal passo 4 della migrazione).
 
-Indirizzi decisi con P40: /auth/login, /auth/register e /auth/logout, quest'ultimo
-solo in POST con il codice CSRF (il modulo "Esci" della navbar). Dal 19/10/2026 le
+Indirizzi decisi con P40: /auth/login e /auth/register. Il logout era qui
+(POST /auth/logout, un modulo): dal lotto 9c della migrazione è POST /api/auth/logout,
+in JSON, in api.py; il vecchio indirizzo risponde 404. Dal 19/10/2026 le
 due pagine le disegna la SPA (frontend/src/pages/LoginPage.tsx e RegisterPage.tsx):
 qui Flask manda la pagina della SPA, e i dati arrivano alle rotte JSON di api.py.
 Gli indirizzi e i nomi delle rotte (auth.login, auth.register) restano quelli di
@@ -9,12 +10,11 @@ prima, così Flask-Login (login_view) e i link delle altre pagine non cambiano.
 """
 
 from flask import redirect, url_for
-from flask_login import current_user, logout_user
+from flask_login import current_user
 
 from app.blueprints.auth import bp
 from app.blueprints.spa.routes import spa_page
 from app.extensions import login_manager
-from app.realtime.presence import disconnect_user
 from app.services import auth_service
 
 # Sostituisce il segnaposto di app/extensions.py: Flask-Login tiene l'ultimo registrato.
@@ -35,14 +35,6 @@ def register():
     if current_user.is_authenticated:
         return redirect(url_for("main.index"))
     return spa_page()
-
-
-@bp.post("/logout")
-def logout():
-    if current_user.is_authenticated:
-        disconnect_user(current_user.id)  # P32: anche le altre schede smettono di agire come lui
-    logout_user()
-    return redirect(url_for("main.index"))
 
 
 def safe_next(target):
