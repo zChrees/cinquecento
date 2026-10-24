@@ -259,7 +259,9 @@ Proposto da Giuseppe il 24/10; divisione confermata da Christian il 24/10: ognun
 - [x] **2b** — `app/realtime/room.py` — Giuseppe — *24/10 (commit `400116e`)*
 - [x] **2c** — `app/realtime/matchmaking.py` — Giuseppe — *24/10 (commit `088fcd9`)*
 - [x] **2d** — `app/sockets/` (7 file) — Giuseppe — *24/10 (commit `620c9a7`)*
-- [ ] **3** — `app/services/`, `app/repositories/`, `app/models/` — Giuseppe
+- [ ] **3** — `app/services/`, `app/repositories/`, `app/models/` — Giuseppe, in due:
+  - [x] **3a** — rating e partite (`glicko2.py`, `rating_service.py`, `match_service.py`, `stats_service.py`, `rating_repo.py`, `match_repo.py`, `stats_repo.py`, `models/match.py`, `models/rating.py`, gli `__init__.py`) — *24/10 (commit `0695aab`)*
+  - [ ] **3b** — account, amici e chat (`auth_service`, `friend_service`, `chat_service`, `avatars`, `user_repo`, `friend_repo`, `chat_repo`, `models/user.py`, `friendship.py`, `chat_message.py`)
 - [ ] **Sito** — `app/blueprints/` che mancano (`auth/forms.py`, `friends/routes.py`, `stats/routes.py`, gli `__init__.py`); `app/__init__.py`, `app/errors.py`, `app/extensions.py`, `app/checks.py`, `app/logging_config.py` — Christian
 - [ ] **4** — `config.py`, `run.py`, `scripts/` (`backup.py`, `migrate.py`, `ripristina.py`) — Christian
 - [ ] **5** — `app/game/engine/cpu.py`, per ultimo — Giuseppe
