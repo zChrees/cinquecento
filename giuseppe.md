@@ -22,6 +22,19 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### Migrazione, passo 9e — Giro completo delle suite dopo il passo 9 (24/10/2026)
+
+- **Branch**: feature/passo-9e-giro (da `dev` a `0cce805`, dopo il 9d). Lotto di Christian (scelta del 23/10) fatto da Giuseppe, con il suo ok
+- **File**: modificati `tests/conftest.py` (correzione qui sotto) e questo file
+- **Controlli**: `npm run build`, `npx tsc --noEmit` e `ruff check .` puliti. Giro completo con il runner: **1981 PASS in 16 suite, 2 falliti** in `runner`; dopo la correzione `runner` **13 PASS** e `tests/frontend/test_spa.py` **39 PASS** (le pagine della SPA si compilano come prima): in tutto **1983 PASS in 16 suite** [T]. Durata totale 1200 s. Tempi: `runner` 17 s (13), `engine` 73 s (704), `db` 12 s (89), `api` 75 s (307), `services` 9 s (38), `sockets` 156 s (333), `frontend` 163 s (203), `e2e` 20 s (12), `forza` 108 s (2), `frontend2` 96 s (46), `table` 80 s (45), `table2` 78 s (39), `table3` 60 s (50), `table4` 72 s (42), `table5` 76 s (37), `table6` 75 s (23)
+- **Correzione**: `test_conftest_rifiuta_anche_senza_runner` (`produzione` e `database`) falliva **dal passo 4** (19/10, `24a41ec`), quando `conftest.py` ha cominciato a importare `tests.spa` in cima: il test copia solo `conftest.py` in un progetto finto, l'import falliva e pytest usciva con 4 invece del rifiuto (2). Nessuno se n'era accorto perché dall'11/10 non c'era stato un giro completo. Nel progetto vero la protezione funzionava (il file c'è) [D], ma la compilazione della SPA veniva prima dei rifiuti: ora l'import sta dentro `pytest_configure`, **dopo** i due controlli
+- **Suite e tempi**: nessuna suite da unire. Le sei `table*` stanno tra 60 e 80 s, ma unirne due farebbe circa 140–160 s, e `sockets` e `frontend` sono già sopra i 150 s; resta come è
+- **Prova a mano** (su telefono e computer: accesso, home, coda, CPU, inviti, tavolo, chat, impostazioni, pagina "non trovata"): **da fare** da Giuseppe; il 9e si spunta dopo
+- **Decisioni prese**: l'import di `tests.spa` dopo i rifiuti (opzione a, scelta di Giuseppe; scartata la copia di `spa.py` nel progetto finto del test)
+- **Domande nuove**: nessuna
+- **Punti delicati**: in `tests/conftest.py` i rifiuti (`PRODUZIONE`, database) vanno **prima** di ogni altro import del progetto o dei test: un import nuovo in cima fa fallire `test_conftest_rifiuta_anche_senza_runner`
+- **Note per gli altri**: **chi è di turno sui documenti**: `REVIEW.md` e `docs/MIGRAZIONE-FRONTEND.md` (9e, dopo la prova a mano, e il passo 9 chiuso); `CLAUDE.md`: riga "Stato" e Testing (**1983 PASS in 16 suite**, giro del 24/10), punto delicato "Runner (P6)" (qui sopra); poi la riscrittura dei punti delicati prevista dopo il 9e
+
 ### Migrazione, passo 8h — Il cambio: /game/<id> è il tavolo React, dalla home e ritorno senza ricaricare (23/10/2026)
 
 - **Branch**: feature/migrazione-passo8h. Punto di Christian (e pezzo mio di server) fatto da Giuseppe; lista dei file e strada A confermate da Giuseppe il 23/10. **Chiude il passo 8**
