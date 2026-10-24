@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### Commenti e niente zucchero, lotto 5 — app/game/engine/cpu.py (24/10/2026). Chiude i commenti nel Python
+
+- **Branch**: feature/commenti-cpu-5 (da `dev` a `56b85b7`)
+- **File**: modificato `app/game/engine/cpu.py`; questo file
+- **Cosa c'è**: in cima "Cosa contiene", "Da dove arrivano i dati" (room.py → player_view → cpu_move) e un esempio di vista; spiegato perché ogni scelta a caso deve restare nello stesso ordine (semi fissi di `forza` e dei test); "In parole semplici" sopra ogni funzione, anche quelle dentro le funzioni (`key`, `penalty`, `future`, `rank`, `cost`); spiegati `@dataclass` e `field(default_factory=set)`, il minimax di `_exact_gain` e la funzione dentro la funzione, le tuple confrontate un elemento alla volta, `((),) * (TEAMS - 1)`. Tolti i casi di zucchero: tutte le comprehension (liste, insiemi, dizionari) e i generatori dentro `sum`, `max`, `min`, `any`; le otto `lambda` (`_cheapness`, `_strongest_first`, `sing_order`, `cost`; `max(..., key=lambda ...)` di `_ties` e `min(winning_trumps, key=...)` diventati cicli con `>` e `<` stretti, così vince il primo come prima); i dieci `a if c else b`; `[*plays, x]` (ora `list(plays)` e `append`, che accetta anche una tupla come prima), `(*known, *cards)`, `(tuple(gone), *((),) * ...)` (somma di tuple); `winner, _ = ...`, `winner, best = ...`, `king, knight = ...`; `x or moves`, `view.get(...) or ()`; `enumerate` di `_gain` e `_step_gain`. Nomi, firme (le funzioni interne che usano i test) e numeri letti al momento (`SIMULATED_PLAYS`, `MIN_WORLDS`, … con `monkeypatch`) uguali
+- **Stesse mosse, controllato** [T]: uno script fuori dal progetto gioca 16 partite con semi fissi (8 1v1 e 8 2v2, CPU contro giocatore medio, budget ridotto) e fa l'impronta (SHA-256) di tutte le 1282 mosse: **identica prima e dopo** (`162543ec…3c94`)
+- **Controlli**: `ruff check .` pulito, `py_compile`; con il runner `engine` **704 PASS**, `forza` **2 PASS**, `sockets` **333 PASS**; nessuno zucchero rimasto (ricerca) [T]
+- **Decisioni prese**: nessuna nuova
+- **Domande nuove**: nessuna
+- **Punti delicati** (per "CPU (P68…)" o "Commenti e niente zucchero" in `CLAUDE.md`): (1) da Python 3.12 **`sum()` dei numeri con la virgola fa una somma compensata**, più precisa di un ciclo con `+=`: in `_ties` la varianza si somma ancora con `sum()` su una lista costruita con un ciclo; un ciclo a mano cambierebbe l'ultima cifra e, raramente, la mossa (e i risultati di `forza`). Con gli interi non cambia niente; (2) togliendo lo zucchero da `cpu.py` gli elenchi passati a `rng.choice` e `rng.shuffle` devono restare nello stesso ordine, e i `max`/`min` con la `key` diventano cicli con il confronto stretto (vince il primo); un cambiamento si controlla con un'impronta delle mosse a semi fissi, non solo con `forza` (che conta solo le vittorie)
+- **Note per gli altri**: con questo lotto i commenti nel Python sono **tutti fatti** (1a–5 di Giuseppe, "Sito" e 4 di Christian). Da proporre (ognuno nel suo riepilogo): `load_user` di `app/extensions.py` (Christian) e `friend_repo.get_user` (3b) non li chiama nessuno
+
 ### Commenti e niente zucchero, lotto 3b — Account, amici e chat: servizi, repository e modelli (24/10/2026)
 
 - **Branch**: feature/commenti-servizi-3b (da `dev` a `b729ebe`). Chiude il lotto 3
