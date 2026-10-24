@@ -1,7 +1,21 @@
 """create_app(): monta tutte le parti dell'applicazione.
 
-Tutti i collegamenti sono già qui (P4): i punti successivi riempiono i propri
-file e non toccano questo (SCALETTA.md, sezione 3).
+Tutti i collegamenti sono qui dall'inizio (P4): i punti successivi riempiono i
+propri file e non toccano questo (docs/archivio/SCALETTA-2026-09.md, sezione 3).
+Questo file è anche il "pacchetto" app: `from app import create_app` legge da qui.
+
+Cosa contiene:
+    create_app("testing")      l'applicazione Flask pronta, con database, login, CSRF,
+                               tempo reale, pagine di errore, blueprint e intestazioni
+    CSP_DIRECTIVES             le regole della Content Security Policy, una per riga
+    CONTENT_SECURITY_POLICY    le stesse regole in un testo solo, separate da "; "
+    SECURITY_HEADERS           le intestazioni di sicurezza aggiunte a ogni risposta
+    _security_headers(resp)    aggiunge SECURITY_HEADERS a una risposta
+    _register_blueprints(app)  registra tutti i blueprint di app/blueprints/
+
+DA DOVE ARRIVANO I DATI: create_app la chiamano run.py (il server vero) e i test
+che creano un'applicazione (per esempio create_app("testing")); la configurazione
+arriva da config.py e dal file .env.
 """
 
 from flask import Flask
@@ -15,7 +29,21 @@ from config import load_config
 
 
 def create_app(config_name=None):
-    """Crea l'applicazione con la configurazione `config_name` (development, testing, demo)."""
+    """Crea l'applicazione con la configurazione `config_name` (development, testing, demo).
+
+    In parole semplici:
+        app = create_app()            con la configurazione di APP_ENV (o development)
+        app = create_app("testing")   per i test: database cinquecento_test, porta 5099
+        Prima controlla la versione di Python (si ferma con StartupCheckError se è
+        sbagliata), poi collega all'applicazione gli oggetti di extensions.py e
+        registra pagine di errore, blueprint, eventi del tempo reale e intestazioni
+        di sicurezza.
+        Attenzione (punto delicato P24): mai due create_app() nello stesso processo
+        con il tempo reale acceso, perché socketio è un oggetto unico e si ricollega
+        all'ultima applicazione creata.
+
+        Restituisce: l'applicazione Flask.
+    """
     config = load_config(config_name)
     check_python(config.REQUIRED_PYTHON)
 
@@ -24,6 +52,7 @@ def create_app(config_name=None):
 
     configure_logging(app)
 
+    # init_app: gli oggetti creati in extensions.py senza applicazione si collegano a questa
     db.init_app(app)
     login_manager.init_app(app)
     csrf.init_app(app)
@@ -32,6 +61,7 @@ def create_app(config_name=None):
     register_error_handlers(app)
     _register_blueprints(app)
     register_handlers(socketio)
+    # after_request: Flask chiama _security_headers su ogni risposta, prima di mandarla
     app.after_request(_security_headers)
     return app
 
@@ -39,8 +69,9 @@ def create_app(config_name=None):
 # Intestazioni di sicurezza su ogni risposta (P32). La CSP dice al browser da dove può
 # caricare le risorse: script e connessioni (anche il websocket) solo da questo sito,
 # stili anche da Google Fonts, font da fonts.gstatic.com (le sole risorse esterne,
-# caricate da base.html), nessuna cornice. Nei template non ci sono script né stili
-# scritti dentro la pagina; gli stili che il JS imposta con element.style sono ammessi.
+# caricate da frontend/index.html e, per le pagine di errore, da base.html), nessuna
+# cornice. Nelle pagine non ci sono script né stili scritti dentro l'HTML; gli stili
+# che React imposta con style={{ ... }} (cioè element.style) sono ammessi.
 CSP_DIRECTIVES = (
     "default-src 'self'",
     "script-src 'self'",
@@ -63,12 +94,30 @@ SECURITY_HEADERS = {
 
 
 def _security_headers(response):
+    """Aggiunge le intestazioni di sicurezza a una risposta.
+
+    In parole semplici:
+        _security_headers(response)
+        La chiama Flask dopo ogni richiesta (app.after_request in create_app).
+        setdefault aggiunge un'intestazione solo se la risposta non l'ha già: una
+        rotta che ne mette una sua la tiene.
+
+        Restituisce: la stessa risposta, con le intestazioni.
+    """
     for name, value in SECURITY_HEADERS.items():
         response.headers.setdefault(name, value)
     return response
 
 
 def _register_blueprints(app):
+    """Registra nell'applicazione tutti i blueprint di app/blueprints/.
+
+    In parole semplici:
+        _register_blueprints(app)
+        Gli import stanno dentro la funzione: si leggono quando si crea
+        l'applicazione, non appena si importa questo file. "import bp as auth_bp"
+        dà un nome diverso a ogni bp (si chiamano tutti bp nei loro file).
+    """
     from app.blueprints.auth import api_bp as auth_api_bp
     from app.blueprints.auth import bp as auth_bp
     from app.blueprints.friends import bp as friends_bp

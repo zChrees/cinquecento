@@ -22,6 +22,19 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Commenti e niente zucchero, lotto "Sito" — blueprint e file di app/ (24/10/2026)
+
+- **Branch**: feature/commenti-sito (da `dev` a `5fc1678`)
+- **File**: modificati i sette `app/blueprints/*/__init__.py`, `app/blueprints/auth/forms.py`, `app/blueprints/friends/routes.py`, `app/blueprints/stats/routes.py`, `app/__init__.py`, `app/errors.py`, `app/extensions.py`, `app/checks.py`, `app/logging_config.py` (l'elenco del lotto in `REVIEW.md`); questo file
+- **Cosa c'è**: come nei lotti di Giuseppe, in cima a ogni file "Cosa contiene" e da dove arrivano i dati; "In parole semplici" sopra ogni funzione, classe e metodo; spiegati alla prima volta in ogni file i blueprint, i decoratori (`@bp.get`, `@json_endpoint`, `@functools.wraps`, `@login_manager.user_loader`), la closure di `_needs`, le classi che ereditano (`StartupCheckError`, `SafeFormatter`, `_Anomalies`), `try/except/finally`, `with`, `raise ... from None`, `*args, **kwargs` e `**exc.extra` (restano: servono). Tolti i casi di zucchero: il generatore in `any` di `_needs` (ciclo con `return`), la comprehension di `remove_file_handlers`, il generatore di `_dotted`, `a if c else b` in `check_mysql`, `x or y` in `check_python` e `check_mysql_version`, gli spacchettamenti `for a, b in _HIDDEN` e `for h in (handler, web)`. Commenti vecchi aggiornati: la scaletta archiviata, le risorse esterne in `frontend/index.html` e `base.html`, `style={{ ... }}` di React, il segnaposto `load_user` (quello vero lo registra `auth/routes.py`), la pagina 500 minima (`base.html` non legge più l'utente). Nomi, ordine dei controlli e dei messaggi e comportamento uguali
+- **Unica differenza**: `check_python` con `version_info` vuoto (`()`) prima usava la versione di questo Python, ora la tratta come una versione sbagliata; non succede mai (i test passano tuple piene, gli altri niente)
+- **Controlli**: `ruff check .` pulito; nessuno zucchero rimasto nei 15 file (ricerca); suite `api` con il runner **307 PASS**, `e2e` **12 PASS** [T]
+- **Decisioni prese**: nessuna nuova
+- **Domande nuove**: nessuna
+- **Punti delicati**: nessuno nuovo
+- **Restano** (da proporre): `load_user` di `extensions.py` non lo chiama nessuno (si può togliere, sezione 8 di `regole-codice.md`); `app/blueprints/auth/api.py` e forse le altre rotte "già fatte" con la migrazione hanno i commenti ma ancora un po' di zucchero (per esempio la comprehension e `next(iter(...))` di `_field_errors`): da controllare in un lotto piccolo. Prossimo mio: il lotto **4** (`config.py`, `run.py`, `scripts/`)
+- **Cosa devono fare gli altri**: niente
+
 ### Dopo il 9e — via `csrfToken` e i riferimenti al codice vecchio nei commenti (24/10/2026)
 
 - **Branch**: fix/commenti-frontend-codice-vecchio (da `dev` a `d5cf8fc`)
