@@ -15,8 +15,8 @@ P25:
   Il timer continua anche mentre il giocatore di turno è scollegato.
 - Scollegamento: quando la scheda al tavolo di un posto si scollega, il posto risulta
   scollegato e ha RECONNECT_SECONDS per rientrare con game:join; oltre, la partita è
-  persa per abbandono. P138 (R2 di REVIEW.md, cambia la scelta di Antonio del
-  28/09/2026): anche chi non è ancora arrivato al tavolo ha RECONNECT_SECONDS, contati
+  persa per abbandono. P138 (R2 di REVIEW.md): anche chi non è ancora arrivato al
+  tavolo ha RECONNECT_SECONDS, contati
   dall'inizio della partita; intanto la mossa automatica gioca per lui.
 - Abbandono (game:leave, o rientro fuori tempo): la partita finisce subito; nel 2v2
   perde tutta la squadra di chi ha abbandonato (D13). Il motore non conosce
@@ -658,8 +658,8 @@ class Room:
             self._save()
         elif not isinstance(action, SingAction):
             # Dopo ogni carta è un turno nuovo, anche quando tocca di nuovo allo stesso posto
-            # (chi chiude la presa e la vince apre la successiva): prima di P66 il timer
-            # ripartiva solo se cambiava il posto di turno, e in quel caso non ripartiva più
+            # (chi chiude la presa e la vince apre la successiva, P66): il tempo riparte
+            # per ogni carta, non solo quando cambia il posto di turno
             self._start_turn(table_pause(before, self.game))
         # Dopo un canto il turno resta a chi ha cantato: il suo tempo continua a scorrere
 

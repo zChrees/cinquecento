@@ -5,7 +5,7 @@ P68: cpu:start, la partita contro la CPU (P122: anche nel 2v2).
   con `invalid_data`, senza correzioni.
 - queue:join porta `request_id` (contratto 1.3): lo stesso tentativo ripetuto riceve la
   risposta della prima volta (RecentRequests di P45), senza entrare in coda due volte.
-- R7 (24/10/2026): queue:join gira sotto il lock degli inviti, come cpu:start e
+- R7 (REVIEW.md): queue:join gira sotto il lock degli inviti, come cpu:start e
   invite:start, e risponde `busy` anche con un invito aperto.
 - queue:join mette in coda un giocatore singolo, nel 1v1 o nel 2v2 (P29). La coppia
   già formata (l'amico compagno nel 2v2) non passa da qui: entra con invite:start (P47),

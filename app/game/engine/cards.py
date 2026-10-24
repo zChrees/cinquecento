@@ -186,7 +186,7 @@ class Card:
 
             code: il testo del codice, per esempio "coppe-10".
 
-            Nota: nel programma oggi la usano solo i test; la stanza riceve le carte
+            Nota: nel programma la usano solo i test; la stanza riceve le carte
             dal client come {"suit", "rank"} e le converte da sé.
         """
         card = None

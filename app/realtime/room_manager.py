@@ -16,11 +16,11 @@ P88: create_room legge una volta sola il rating di ogni giocatore vero nella mod
 della partita (gli stessi numeri del pannello statistiche, stats_service.stats_of) e
 la stanza lo mette nella vista; serve il contesto di Flask, come per il salvataggio (P26).
 
-R4 (REVIEW.md, 24/10/2026): una stanza finita si toglie dall'elenco FINISHED_ROOM_SECONDS
+R4 (REVIEW.md): una stanza finita si toglie dall'elenco FINISHED_ROOM_SECONDS
 (10 minuti, scelta di Giuseppe) dopo la fine della partita: il tempo di guardare il
-risultato, ricaricare la pagina o rientrare. Prima restava in memoria finché il server non
-si riavviava, e ogni ricerca (create_room, la coda, la home, gli scollegamenti) scorreva
-anche tutte le partite finite. Dopo, chi apre il suo indirizzo riceve not_found
+risultato, ricaricare la pagina o rientrare. Così la memoria non cresce finché il server
+resta acceso, e le ricerche (create_room, la coda, la home, gli scollegamenti) non
+scorrono le partite finite. Dopo, chi apre il suo indirizzo riceve not_found
 ("Questa partita non esiste o è già finita.").
 
 Cosa contiene:

@@ -1,8 +1,7 @@
 """Stato della home (P44, contratto 5.1): home:status {"online_count", "resume"}.
 
-- home:status parte dal server. Dal passo 8h della migrazione (23/10/2026) la home
-  della SPA può anche chiederlo con home:refresh, quando compare con il collegamento
-  già aperto (tornando dal tavolo senza ricaricare): la risposta porta lo stato.
+- home:status parte dal server. La home può anche chiederlo con home:refresh,
+  quando compare con il collegamento già aperto (tornando dal tavolo senza ricaricare): la risposta porta lo stato.
 - Lo riceve ogni scheda appena si collega (connection_events.py) e poi a ogni
   cambiamento: quando un utente entra online o esce (tutti gli utenti collegati) e
   quando una partita finisce (i suoi giocatori: l'avviso di rientro sparisce).

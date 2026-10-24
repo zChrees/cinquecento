@@ -4,7 +4,7 @@ La CPU sceglie guardando **solo la propria vista** (player_view, contratto 3.3) 
 che ricorda delle viste di prima nella stessa mano (CpuMemory: le carte uscite, che ogni
 giocatore al tavolo ha visto). Non vede mai le carte degli altri né il mazzo.
 
-Strategia (D43, decisa il 04/10/2026):
+Strategia (D43):
 - cala le carte appena può (P84, D45);
 - canta sempre quando può: se può cantare più semi, sceglie quale cantare prima come sceglie
   le carte (qui sotto);
@@ -12,14 +12,14 @@ Strategia (D43, decisa il 04/10/2026):
   ancora uscite; Re e Cavallo cantati dall'avversario e non giocati sono per forza in mano
   a lui), gioca ogni mano immaginata fino in fondo per ogni sua mossa possibile e sceglie la
   mossa che in media le fa guadagnare più punti dell'avversario. Nelle mani immaginate
-  tutti giocano come il "giocatore medio" (heuristic_move, la prima CPU del 30/09/2026);
+  tutti giocano come il "giocatore medio" (heuristic_move, regole fisse e senza memoria);
 - quando le carte nascoste sono tutte note (1v1 a mazzo finito: sono quelle in mano
   all'avversario) calcola la mossa migliore in modo esatto, supponendo che anche
   l'avversario giochi al meglio. Nel calcolo esatto chi può cantare canta sempre.
   Nel 2v2 a mazzo finito con al massimo EXACT_MAX_CARDS carte a testa fa il calcolo esatto
   su ogni mano immaginata (P127, D50), invece di giocarla da giocatore medio.
 
-P127 (D50, proposta di Christian del 09/10/2026): quando le mosse migliori valgono quasi
+P127 (D50): quando le mosse migliori valgono quasi
 uguale (sotto la migliore di meno di TIE_SPREAD volte l'incertezza della stima, misurata
 mano immaginata per mano immaginata), non decide il caso:
 - da ultima nella presa gioca la carta con il risultato migliore nella presa (punti della
@@ -30,12 +30,12 @@ mano immaginata per mano immaginata), non decide il caso:
   o il Cavallo e tiene il carico; tra le carte rimaste gioca quella stimata meglio.
 A parità sceglie a caso.
 
-P134 (D51, 10/10/2026), **solo nel 2v2** (scelta di Giuseppe: nel 1v1, dove chi risponde è
+P134 (D51), **solo nel 2v2** (scelta di Giuseppe: nel 1v1, dove chi risponde è
 sempre l'ultimo, la CPU vinceva meno partite): da ultima il risultato della presa conta solo
 le carte degli altri (se la presa è sua guadagna i loro punti; se la perde regala anche la sua
 carta), così su una presa povera scarta una cartina e su una che vale prende con la carta più
 bassa che basta; su una presa che vale meno di TRUMP_WORTH evita l'Asso e il Tre di briscola
-(anche da ultima, aggiunta di Giuseppe) e, non da ultima, le briscole più alte di quella più
+(anche da ultima) e, non da ultima, le briscole più alte di quella più
 bassa che prende.
 
 Il numero di mani immaginate si ricava dalle carte che restano (SIMULATED_PLAYS), non dal
@@ -877,7 +877,7 @@ def _policy(state: HandState, rng: random.Random) -> Action:
     return PlayCardAction(seat, card)
 
 
-# --- Giocatore medio (la prima CPU, 30/09/2026) ------------------------------------
+# --- Giocatore medio (regole fisse, senza memoria) ---------------------------------
 
 
 def heuristic_move(view: dict, rng: random.Random | None = None) -> Action:

@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### C3 — Motore e tempo reale: commenti senza la storia (24/10/2026)
+
+- **Branch**: feature/c3-commenti-senza-storia (da `dev` a `b1d2140`)
+- **File**: modificati `app/game/engine/cpu.py`, `app/game/engine/cards.py`, `app/realtime/room.py`, `app/realtime/room_manager.py`, `app/sockets/home_events.py`, `app/sockets/lobby_events.py`, `app/repositories/friend_repo.py` (elenco di C3 in `docs/MESSA-ONLINE.md`); questo file
+- **Cosa** [L]: ho cercato in `app/game/`, `app/realtime/`, `app/sockets/`, `app/services/`, `app/repositories/` (e `app/models/`) date, "prima era…", "dal passo/lotto…", migrazione, file `.js` e "oggi". Erano pochi casi, perché i lotti dei commenti del 24/10 li avevano già tolti quasi tutti. Ho tolto le date delle decisioni in `cpu.py` (D43, P127, P134, "la prima CPU del 30/09") e in `room_manager.py` (R4) e `lobby_events.py` (R7), "cambia la scelta di Antonio del 28/09" in `room.py` (P138), "prima di P66 il timer…" in `room.py` (riscritto come regola di oggi), "Dal passo 8h della migrazione" in `home_events.py`, "Prima restava in memoria…" in `room_manager.py`, "oggi" in `cards.py`. **Tolto `friend_repo.get_user`**, che non chiamava nessuno, nemmeno i test (insieme alla sua riga in "Cosa contiene"). I codici P, D e R restano (scelta di Christian, C5); restano anche le frasi "scelta di Giuseppe" che spiegano una regola ancora valida
+- **Controlli**: suite `engine` con il runner **704 PASS**; `tests/api/test_amicizie.py` con pytest **65 PASS**; `ruff` pulito [T]. Gli altri file hanno cambiato solo commenti
+- **Decisioni prese**: nessuna
+- **Domande nuove**: nessuna
+- **Punti delicati**: nessuno nuovo
+- **Note per gli altri**: **Chi è di turno**: C3 si può spuntare in `REVIEW.md` ("Resta da proporre: `friend_repo.get_user`" è fatto). Per C4 aspetto C1 e C2 di Christian
+
 ### R7 — Coda, CPU e inviti sotto lo stesso lock (24/10/2026)
 
 - **Branch**: fix/r7-coda-inviti-lock (da `dev` a `71fa9d6`)

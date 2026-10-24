@@ -10,7 +10,6 @@ Cosa contiene:
     PENDING, ACCEPTED              i due stati di una riga di amicizie
     utc_now()                      l'ora di adesso in UTC, al secondo
     lock_users(7, 8)               blocca le righe dei due utenti fino alla fine della transazione
-    get_user(7)                    l'utente numero 7 (oggi non la usa nessuno)
     get_pair(7, 8)                 la riga di amicizie tra 7 e 8, o None
     add_request(7, 8)              la richiesta di 7 a 8
     accept(row)                    la richiesta diventa amicizia
@@ -76,17 +75,6 @@ def lock_users(*user_ids):
         sa.select(User.id).where(User.id.in_(ids)).order_by(User.id).with_for_update()
     )
     return set(rows.scalars())
-
-
-def get_user(user_id):
-    """L'utente con quel numero, o None.
-
-    In parole semplici:
-        get_user(7)
-        Nota: oggi non la chiama nessuno (si usa user_repo.get_by_id): si può proporre
-        di toglierla (regole-codice.md, sezione 8).
-    """
-    return db.session.get(User, user_id)
 
 
 def get_pair(a, b):
