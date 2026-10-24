@@ -7,6 +7,15 @@ La pagina si collega alla stanza con i socket (P24); in sviluppo e nei test, con
 Dal passo 8 della migrazione (docs/MIGRAZIONE-FRONTEND.md) il tavolo è della SPA
 (frontend/src/game/); dal lotto 9a (23/10/2026) il tavolo Jinja non c'è più, e ?ui=
 è un parametro qualsiasi, che si ignora come gli altri (scelta di Christian).
+
+Cosa contiene:
+    GAME_ID      il codice ammesso di una stanza: lettere, numeri, _ e -, al massimo 64
+    DEMO_VIEWS   le viste finte della prova, per esempio "1v1" → "dev/vista_1v1.json"
+    DEMO_ENVS    dove vale ?demo= ({"development", "testing"})
+    GET /game/<game_id>   table: il tavolo (SPA), solo con il login
+
+DA DOVE ARRIVANO I DATI: l'indirizzo lo manda il server con game:start (o "Rientra"
+della home); chi è collegato lo dice Flask-Login (current_user).
 """
 
 import re
@@ -25,6 +34,9 @@ DEMO_VIEWS = {"1v1": "dev/vista_1v1.json", "2v2": "dev/vista_2v2.json"}
 DEMO_ENVS = {"development", "testing"}
 
 
+# Due decoratori, letti dal basso: @login_required (di Flask-Login) controlla il login
+# prima di chiamare la funzione; @bp.get dice a Flask a quale indirizzo risponde.
+# <game_id> nell'indirizzo arriva alla funzione come parametro.
 @bp.get("/<game_id>")
 @login_required
 def table(game_id):

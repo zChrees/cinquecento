@@ -49,8 +49,18 @@ def login_needed(fn):
         nella forma del contratto, come json_endpoint di friends/routes.py.
     """
 
+    # @functools.wraps(fn): wrapper prende il nome di fn, che Flask usa per
+    # distinguere le rotte
     @functools.wraps(fn)
     def wrapper(*args, **kwargs):
+        """La funzione che Flask chiama al posto della rotta.
+
+        In parole semplici:
+            wrapper(*args, **kwargs)
+            *args, **kwargs: i parametri che Flask passa alla rotta, qualunque siano,
+            passati così come sono a fn. Senza login risponde not_logged_in (401) e
+            la rotta non parte.
+        """
         if not current_user.is_authenticated:
             return error("not_logged_in"), 401
         return fn(*args, **kwargs)

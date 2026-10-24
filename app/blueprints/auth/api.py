@@ -79,12 +79,27 @@ def _field_errors(form):
         dentro error.fields; error.message è il primo errore, da mostrare se la
         pagina non sa a quale campo riferirlo.
     """
-    fields = {name: list(messages) for name, messages in form.errors.items() if messages}
-    first = next(iter(fields.values()))[0]
+    # fields: nome del campo → elenco dei suoi messaggi, solo per i campi con errori;
+    # first: il primo messaggio del primo campo (i campi sono nell'ordine del modulo)
+    fields = {}
+    first = None
+    for name, messages in form.errors.items():
+        if not messages:
+            continue
+        fields[name] = list(messages)
+        if first is None:
+            first = messages[0]
     return error("invalid_data", first, fields=fields), 400
 
 
 def _bad_body():
+    """La risposta invalid_data per un corpo che non va.
+
+    In parole semplici:
+        _bad_body()  →  ({"ok": False, "error": {"code": "invalid_data", ...}}, 400)
+        La usano login e register quando _body restituisce None (corpo che non è un
+        oggetto JSON, o un campo che non è un testo).
+    """
     return error("invalid_data", "Dati non validi."), 400
 
 
@@ -102,8 +117,14 @@ def session():
     if current_user.is_authenticated:
         user = {"user_id": current_user.id, "username": current_user.username, "avatar": current_user.avatar}
     flashes = []
-    for category, message in get_flashed_messages(with_categories=True):
-        kind = category if category in FLASH_KINDS else "info"
+    # get_flashed_messages(with_categories=True): coppie (categoria, messaggio),
+    # per esempio ("success", "Account cancellato.")
+    for flashed in get_flashed_messages(with_categories=True):
+        category = flashed[0]
+        message = flashed[1]
+        kind = "info"
+        if category in FLASH_KINDS:
+            kind = category
         flashes.append({"kind": kind, "message": message})
     return ok({"csrf_token": generate_csrf(), "user": user, "flashes": flashes}), 200, NO_STORE
 

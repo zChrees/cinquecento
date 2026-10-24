@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Commenti e niente zucchero, chiusura del "Sito" — le rotte fatte con la migrazione (24/10/2026)
+
+- **Branch**: feature/commenti-rotte-migrazione (da `dev` a `6ccb9d9`)
+- **File**: modificati `app/blueprints/auth/api.py`, `auth/routes.py`, `profile/api.py`, `profile/routes.py`, `main/routes.py`, `game/routes.py`; questo file. `spa/routes.py` era già a posto
+- **Cosa c'è**: le rotte "già fatte" con la migrazione avevano i commenti ma non tutto: in `auth/api.py` tolti la comprehension e `next(iter(...))` di `_field_errors` (ciclo che prende anche il primo messaggio, stesso risultato), `a if c else b` e lo spacchettamento delle coppie dei messaggi in `session`; aggiunti "Cosa contiene" e da dove arrivano i dati a `auth/routes.py`, `profile/routes.py`, `main/routes.py`, `game/routes.py`; "In parole semplici" a `login`, `register`, `online`, `_bad_body` e `wrapper` di `profile/api.py`; spiegati i decoratori (`@bp.get`, `@login_required`, `@functools.wraps`). Comportamento uguale
+- **Controlli**: `ruff check .` pulito; suite `api` con il runner **307 PASS** [T]
+- **Decisioni prese**: nessuna nuova
+- **Domande nuove**: nessuna
+- **Punti delicati**: nessuno nuovo
+- **Note**: con questo lotto la parte di Christian del lavoro sui commenti nel Python è finita ("Sito" e 4). Restano a Giuseppe il **3b** e il **5** (`cpu.py`). Da proporre: togliere `load_user` di `app/extensions.py`, che non chiama nessuno
+- **Cosa devono fare gli altri**: niente
+
 ### Commenti e niente zucchero, lotto 4 — config.py, run.py e scripts/ (24/10/2026)
 
 - **Branch**: feature/commenti-config-script (da `dev` a `8b686e0`)

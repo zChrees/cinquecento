@@ -12,6 +12,16 @@ con i dati finti di app/static/dev/home_esempio.json (li legge api/home.ts); onl
 P82: GET /api/online (fino al lotto 9c /online, ora 404) dà il numero di giocatori online anche a chi non ha fatto il login
 (contratto 5.1), che non si collega al tempo reale e quindi non riceve home:status.
 Solo il numero, lo stesso di home:status: nessun dato sugli utenti.
+
+Cosa contiene:
+    DEMO_ENVS, DEMO_STATES   dove vale ?demo= e con quali valori ({"rientro"})
+    GET /                    index: la home (SPA)
+    _check_demo()            controlla ?demo= (404 se non è ammesso)
+    GET /api/online          online: {"online_count": 3}
+
+DA DOVE ARRIVANO I DATI: il browser apre /; GET /api/online la chiede la home senza
+login ogni 15 secondi (pollOnline di frontend/src/pages/HomePage.tsx); il numero
+lo dà app/realtime/presence.py.
 """
 
 from flask import abort, current_app, request
@@ -58,4 +68,11 @@ def _check_demo():
 
 @bp.get("/api/online")
 def online():
+    """GET /api/online: il numero dei giocatori online, anche senza login (P82).
+
+    In parole semplici:
+        online()  →  {"ok": true, "data": {"online_count": 3}}
+        Cache-Control: no-store dice al browser di non salvare la risposta: il
+        numero cambia di continuo.
+    """
     return ok({"online_count": presence.count()}), 200, {"Cache-Control": "no-store"}

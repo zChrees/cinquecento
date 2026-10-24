@@ -7,6 +7,16 @@ due pagine le disegna la SPA (frontend/src/pages/LoginPage.tsx e RegisterPage.ts
 qui Flask manda la pagina della SPA, e i dati arrivano alle rotte JSON di api.py.
 Gli indirizzi e i nomi delle rotte (auth.login, auth.register) restano quelli di
 prima, così Flask-Login (login_view) e i link delle altre pagine non cambiano.
+
+Cosa contiene:
+    GET /auth/login            login: la pagina di accesso (SPA)
+    GET /auth/register         register: la pagina di registrazione (SPA)
+    safe_next("/game/abc")     l'indirizzo dove tornare dopo il login, solo se è di questo sito
+    e registra il vero user_loader di Flask-Login (auth_service.load_user, P16)
+
+DA DOVE ARRIVANO I DATI: il browser apre /auth/login (anche da Flask-Login, con
+?next=, quando una pagina vuole il login); safe_next la usa login di api.py con il
+next mandato dalla SPA.
 """
 
 from flask import redirect, url_for
@@ -21,9 +31,17 @@ from app.services import auth_service
 login_manager.user_loader(auth_service.load_user)
 
 
+# @bp.get("/login") è un "decoratore": dice a Flask che la funzione qui sotto risponde
+# alle richieste GET a /login del blueprint (con il prefisso, /auth/login).
 @bp.get("/login")
 def login():
-    """GET /auth/login: la pagina di accesso (SPA); chi ha già il login va alla home."""
+    """GET /auth/login: la pagina di accesso (SPA); chi ha già il login va alla home.
+
+    In parole semplici:
+        login()
+        Con il login rimanda alla home (redirect, 302); senza, risponde con la
+        pagina della SPA (spa_page), e React disegna il modulo.
+    """
     if current_user.is_authenticated:
         return redirect(url_for("main.index"))
     return spa_page()
@@ -31,7 +49,12 @@ def login():
 
 @bp.get("/register")
 def register():
-    """GET /auth/register: la pagina di registrazione (SPA); chi ha già il login va alla home."""
+    """GET /auth/register: la pagina di registrazione (SPA); chi ha già il login va alla home.
+
+    In parole semplici:
+        register()
+        Come login, per la pagina di registrazione.
+    """
     if current_user.is_authenticated:
         return redirect(url_for("main.index"))
     return spa_page()
