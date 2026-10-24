@@ -22,11 +22,22 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: aggiornamento del 24/10 notte, C4 e O3 (24/10/2026)
+
+- **Branch**: docs/aggiornamento-24-10-c4 (da `dev` a `dab9b79`); di turno sui documenti: io
+- **File**: modificati `REVIEW.md`, `DECISIONI.md`, `CLAUDE.md`; questo file (anche il numero dei file del riepilogo del tavolo, che diceva 25 invece di 20)
+- **Riepiloghi letti**: `christian.md` "C4 (la mia parte)" e "C4 (fine)"; `giuseppe.md` "O3 (R6)" e "C4 (parte di Giuseppe)"; `antonio.md` niente di nuovo
+- **Cosa c'è**: in `REVIEW.md` C4 spuntato (le tre parti), O3 e R6 spuntati (con il rischio residuo del doppio salvataggio); in `DECISIONI.md` i nomi nuovi dei test (C4) e le **tre scelte di O3, confermate da me**: attese 2, 5, 15, 30, 60 s, si riprovano solo `OperationalError` e `InterfaceError`, gli avvisi di fine partita dopo il primo tentativo; in `CLAUDE.md` i nomi nuovi dei file di test nei punti delicati e nella sezione Testing, il punto delicato "Salvataggio (P26)" (non più sotto il lock, `wait_saved` nei test, i thread del salvataggio e O4) e la riga "Stato" (fase 0: resta C6; fase 1: fatto O3; riepiloghi registrati fino a "C4 (fine)" e "C4 (parte di Giuseppe)")
+- **Controlli**: nessun test (solo documenti)
+- **Decisioni prese**: confermate le tre scelte di O3
+- **Domande nuove**: nessuna
+- **Cosa devono fare gli altri**: **Giuseppe**: le tue tre scelte di O3 vanno bene; C4 è chiuso (le `table*` le ho fatte io, le nostre divisioni erano diverse); dopo il pull `npm run build`
+
 ### C4 (fine) — Le sei suite del tavolo senza la storia (24/10/2026)
 
 - **Branch**: feature/c4-test-tavolo (da `dev` a `0120642`)
 - **Perché io**: Giuseppe aveva diviso C4 in un altro modo (a me anche le `table*`), io per area (le `table*` a lui): così non le aveva fatte nessuno. Scelta mia (24/10): le faccio io, e C4 si chiude
-- **File** (solo commenti e docstring): 14 file con frasi da riscrivere in `table`…`table6` e 11 solo per "di SCALETTA.md (Pn)" → "di Pn"; questo file
+- **File** (solo commenti e docstring): 20 file di `table`…`table6` (14 con frasi da riscrivere, 6 solo per "di SCALETTA.md (Pn)" → "di Pn"); questo file
 - **Cosa c'è**: tolti "passo 8a/8b della migrazione", "lotto 8c/8d/8f/8g/8h/9a", "Fino al lotto 9a qui c'era il confronto con il tavolo Jinja…", "(fino all'8g con ?ui=react)", le date delle scelte ("Christian del 05/10/2026", "decisione del 04/10/2026", "R4 (24/10/2026)"), "P70 (primo/secondo/terzo lotto)"; dove serviva la frase dice com'è oggi (React tiene la carta con il ritardo di partenza, `useStartDelay`). Restano le spiegazioni dei difetti che i test proteggono (per esempio "Prima di P70… la presa entrava nel…" in `test_grafica_tavolo.py`). I nomi `test_tavolo_react.py` e `test_tavolo_react_partita.py` restano (non erano nel punto: "react" lì dice "il tavolo", non "dopo la migrazione"; da rinominare se vuoi)
 - **Controlli**: `ruff check .` pulito; raccolta senza errori (`table` 45, `table2` 39, `table3` 50, `table4` 42, `table5` 37, `table6` 24); con il runner `table` **45**, `table2` **39**, `table3` **50**, `table4` **42**, `table5` **37**, `table6` **24**: **237 PASS** in 571 s, nessun FAIL [T]
 - **Decisioni prese**: le `table*` le faccio io

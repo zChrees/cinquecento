@@ -177,7 +177,7 @@ Si spunta solo dopo l'ok dell'utente, il commit e il merge in `dev`, come nella 
 - [x] R3 — suite dei test più corte (16 suite) — *P139, 11/10 (commit `704713d`)*
 - [x] R4 — stanze finite tolte dalla memoria — *Giuseppe, 24/10 (commit `71fa9d6`): tolte 10 minuti dopo la fine (`FINISHED_ROOM_SECONDS`); a partita finita il tavolo non mostra "interrotta"*
 - [ ] R5 — `legal.lay_down` — rischio residuo (regola di D45): da citare nella relazione
-- [ ] R6 — secondo tentativo del salvataggio — dopo la consegna (limite noto)
+- [x] R6 — secondo tentativo del salvataggio — *Giuseppe, 24/10 (O3, commit `ec807e7`): il salvataggio gira in un thread a parte, fuori dal lock della stanza, e riprova fino a 6 volte (2, 5, 15, 30, 60 s) se MySQL non risponde; scelte confermate da Christian. Rischio residuo: un commit confermato con la connessione caduta prima della risposta si scriverebbe due volte (servirebbe una chiave unica, migrazione nuova)*
 - [x] R7 — coda, CPU e inviti sotto lo stesso lock — *Giuseppe, 24/10 (commit `40f2cc0`): `queue:join` sotto `invites.lock`, `busy` con un invito aperto, `queue:left` a chi non torna in coda*
 - [ ] R8 — cookie `Secure` con ngrok — dopo la consegna (va legato a una variabile del `.env`, altrimenti con la Wi-Fi il login non funziona)
 - [ ] R9 — sessione revocabile — dopo la consegna (serve una colonna nuova)
@@ -278,10 +278,10 @@ Piano di Christian del 24/10 (D21 chiusa: VPS, gestito da Christian). Cinque fas
 - [x] **C1** — frontend: commenti di `frontend/src/` e dei CSS senza la storia; classi CSS ed esportazioni non usate cercate con tre script, nessuna da togliere — Christian — *24/10 (commit `311f9ad`)*
 - [x] **C2** — sito: commenti di `app/blueprints/`, `app/__init__.py`, `app/errors.py`, `config.py` senza la storia (anche il commento del matchmaking, che diceva i valori vecchi) — Christian — *24/10 (commit `c80939a`)*
 - [x] **C3** — motore e tempo reale: commenti senza la storia; via `friend_repo.get_user` — Giuseppe — *24/10 (commit `9466576`)*
-- [ ] **C4** — test: commenti e docstring senza la storia; `test_spa_*.py` rinominati senza "spa", controllando chi li importa — Christian e Giuseppe, ognuno le sue suite (C1–C3 sono in `dev`)
+- [x] **C4** — test: commenti e docstring senza la storia; gli otto `test_spa_*.py` rinominati (per esempio `test_spa.py` → `test_frontend_servito.py`, `test_spa_home.py` → `test_home.py`) — Giuseppe `engine`, `sockets`, `services`, `e2e`, `forza`, `db` e i file comuni (commit `64a4f32`), Christian `api`, `frontend`, `frontend2` (commit `0120642`) e le sei `table*` (commit `dab9b79`) — *24/10*
 - [x] **C5** — `README.md` e `docs/prototipo/LEGGIMI.md` sul frontend React, con la sezione "I codici P, D e R nei commenti" (commit `122781d`); `MIGRAZIONE-FRONTEND.md` e `DEMO.md` in `docs/archivio/` (`…-2026-10.md`), via `scripts/pianifica_backup.ps1` e `tests/db/test_demo.py`, commenti di `frontend/index.html` (sfuggito a C1), `tsconfig.json`, `vite.config.ts` e dei template di errore (commit `8528f5e`) — Christian — *24/10*
 - [ ] **C6** — `CLAUDE.md`: riscrittura dei punti delicati e delle parti "Stack", "Pagine", "Dipendenze" — chi è di turno sui documenti (attende C4)
 
-**Fase 1 — Codice pronto per la produzione**: [ ] O1 (configurazione `production`, R8) · [ ] O2 (gunicorn, R12) · [ ] O3 (R6) · [ ] O4 (spegnimento ordinato) · [ ] O5 (`/api/health`)
+**Fase 1 — Codice pronto per la produzione**: [ ] O1 (configurazione `production`, R8) · [ ] O2 (gunicorn, R12) · [x] O3 (R6, Giuseppe, 24/10, commit `ec807e7`) · [ ] O4 (spegnimento ordinato) · [ ] O5 (`/api/health`)
 
 **Fase 2 — Il server** (Christian): [ ] S1–S7 · **Fase 3 — Online per gli amici**: [ ] A1–A3 · **Fase 4 — Prima del pubblico**: [ ] P1–P6 del piano (non sono i P della scaletta)
