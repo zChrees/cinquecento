@@ -1,6 +1,6 @@
 """P56: frasi del tavolo nella pagina (pulsante, elenco, fumetto).
 
-Controlla il "Fatto quando" di SCALETTA.md (P56): a 360 px l'elenco delle frasi sta
+Controlla il "Fatto quando" di P56: a 360 px l'elenco delle frasi sta
 sullo schermo e il fumetto non copre le carte in mano; il pulsante con sola icona ha
 un'etichetta accessibile; il componente non usa innerHTML con dati esterni. In più:
 pulsante spento per 3 secondi dopo l'invio, fumetto che sparisce, Esc e tocco fuori
@@ -52,7 +52,7 @@ def test_css_delle_frasi_nella_pagina_del_tavolo():
 
 
 def test_componente_solo_testo_e_niente_copia_delle_frasi():
-    # Dal lotto 9a i file del tavolo React (frontend/src/game/): React scrive il testo
+    # I file del tavolo (frontend/src/game/): React scrive il testo
     # come testo da solo, l'HTML entrerebbe solo con dangerouslySetInnerHTML
     for path in sorted(GAME_SRC.glob("*.ts*")):
         code = path.read_text(encoding="utf-8")

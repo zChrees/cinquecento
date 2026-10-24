@@ -1,6 +1,6 @@
 """P87: "Esci", tabellone e punti della mano in vetro scuro.
 
-Controlla il "Fatto quando" di SCALETTA.md (P87): "Esci", il tabellone (da computer)
+Controlla il "Fatto quando" di P87: "Esci", il tabellone (da computer)
 e i punti della mano hanno lo stile scelto da Christian (vetro scuro: fondo
 semitrasparente con i colori --glass di variables.css, sfocatura, bordo sottile,
 scritte senza rilievo), si leggono bene (contrasto almeno 4,5:1, calcolato sul

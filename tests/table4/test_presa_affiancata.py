@@ -1,6 +1,6 @@
 """P76: presa con le carte a croce, senza coprirsi, e la carta che vince evidenziata.
 
-Controlla il "Fatto quando" di SCALETTA.md (P76): su telefono e computer le carte
+Controlla il "Fatto quando" di P76: su telefono e computer le carte
 della presa (in corso e appena chiusa, P57) non si coprono e il tavolo non scorre;
 la carta evidenziata è sempre quella di trick.winning_seat (P75) e il segno si
 sposta quando una carta nuova la supera; il segno non è solo un colore (la carta è

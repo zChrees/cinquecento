@@ -5,7 +5,7 @@ il puntatore nasceva abbassato e si rialzava con la transizione di card.css (0,1
 Sul telefono il browser lascia ":hover" sulla carta appena toccata, quindi succedeva
 a ogni vista. Ora il sollevamento al passaggio vale solo con un puntatore vero
 (@media (hover: hover)) e, da computer, la carta sotto il mouse resta sollevata anche
-dopo un ridisegno (nel tavolo React la carta è sempre la stessa, lotto 8g).
+dopo un ridisegno (React tiene la stessa carta).
 
 Si controlla, con "riduci movimento" spento, campionando a ogni fotogramma la
 posizione delle carte della mano mentre arrivano viste nuove (evento del browser
@@ -53,7 +53,7 @@ def test_sollevamento_al_passaggio_solo_con_un_puntatore_vero():
     start = css.index("@media (hover: hover) {")
     block = css[start:css.index("}\n}", start)]
     assert "button.card:not(:disabled):hover" in block
-    # Fuori dal blocco la regola del passaggio non c'è più
+    # Fuori dal blocco la regola del passaggio non c'è
     assert css.count("button.card:not(:disabled):hover") == 1
 
 
@@ -123,8 +123,8 @@ def test_carta_ridisegnata_si_abbassa_quando_il_mouse_esce(browser, server):
     _open(browser, server, DESKTOP)
     _move_mouse(browser, _card_center(browser, 0))
     _renders(browser, 1)
-    # Ridisegnata, la carta è ancora sollevata: il tavolo React tiene la stessa carta,
-    # che resta sotto il mouse da sola (lotto 8g)
+    # Ridisegnata, la carta è ancora sollevata: React tiene la stessa carta, che resta
+    # sotto il mouse da sola
     lifted = f"new DOMMatrix(getComputedStyle(document.querySelector('{HAND_CARDS}')).transform).m42"
     assert browser.js(lifted) < -5
     _move_mouse(browser, {"x": 640, "y": 300})

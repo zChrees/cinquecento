@@ -1,4 +1,4 @@
-"""Passo 8a della migrazione: il tavolo React (frontend/src/game/) disegnato da una vista.
+"""P21: il tavolo (frontend/src/game/) disegnato da una vista.
 
 Controlla, aprendo la prova (/game/prova?demo=1v1 o 2v2) in Chrome o Edge senza
 finestra (tests/browser.py):
@@ -9,12 +9,10 @@ finestra (tests/browser.py):
   tavolo, e la CSP non blocca niente;
 - quando si tocca una carta, un canto o una carta del compagno la prova risponde
   nella riga di stato;
-- senza ?demo=, per una partita che non c'è, il messaggio del server (dal lotto 8b,
-  che si collega).
-Fino al lotto 9a qui c'era anche il confronto con il tavolo Jinja, elemento per
-elemento e per posizioni: con il tavolo Jinja tolto non si può più fare (scelta 2 del
-passo 9, di Christian); l'HTML e le posizioni li controllano gli altri test del
-tavolo con i data-*. "Riduci movimento" è acceso.
+- senza ?demo=, per una partita che non c'è, il messaggio del server (la pagina si
+  collega).
+L'HTML e le posizioni li controllano gli altri test del tavolo con i data-*.
+"Riduci movimento" è acceso.
 Non serve MySQL. Senza browser, o senza il build della SPA, i test si saltano.
 """
 
@@ -209,7 +207,7 @@ def test_le_viste_della_prova_cambiano_il_tavolo(browser, server, mode):
 
 
 def test_senza_demo_partita_che_non_esiste(browser, server):
-    # Dal lotto 8b la pagina si collega e manda game:join: per una partita che non c'è
+    # La pagina si collega e manda game:join: per una partita che non c'è
     # il messaggio "In attesa della partita…" lascia il posto alla risposta del server
     message = "Questa partita non esiste o è già finita."
     browser.open(f"{server}/game/a1b2c3d4", 390, 844,

@@ -1,6 +1,6 @@
 """P80: da computer le frasi del tavolo si aprono in un pannello sul lato destro.
 
-Controlla il "Fatto quando" di SCALETTA.md (P80): a 1280×720 e 1440×900 (e da
+Controlla il "Fatto quando" di P80: a 1280×720 e 1440×900 (e da
 1024 px), con l'elenco aperto, la presa, il mazzo, la tua mano e le carte degli
 avversari restano visibili e cliccabili; per scelta di Christian, nel 2v2 il
 pannello copre solo l'avversario di destra mentre è aperto. Il pannello sta sul
@@ -95,7 +95,7 @@ def test_da_computer_le_frasi_in_un_pannello_a_destra(browser, server, mode, siz
 
     # Niente di quello che serve per giocare sta sotto il pannello
     # P100: nel 1v1 il mazzo sta sotto "Frasi" e il pannello aperto lo copre (scelta di
-    # Christian del 05/10/2026: la briscola resta nel tondo in alto, P102)
+    # Christian: la briscola resta nel tondo in alto, P102)
     covered_ok = {"seat-right", "fan-right"} if mode == "2v2" else {"deck", "deckCount"}
     for name, rects in parts.items():
         if name in covered_ok:

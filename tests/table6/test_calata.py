@@ -1,6 +1,6 @@
 """P85: "Cala le carte" al tavolo (D45).
 
-Controlla il "Fatto quando" di SCALETTA.md (P85): il pulsante compare solo quando la
+Controlla il "Fatto quando" di P85: il pulsante compare solo quando la
 vista lo permette (legal.lay_down) e, premuto, manda la richiesta una volta sola;
 quando qualcuno cala (last_hand.laid_down, P84) le carte di tutti si vedono per
 LAID_DOWN_MS prima del riepilogo: i ventagli degli altri entrano scoperti nel tavolo,

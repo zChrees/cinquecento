@@ -1,6 +1,6 @@
-"""P70 (terzo lotto): mescolata e distribuzione a inizio mano.
+"""P70: mescolata e distribuzione a inizio mano.
 
-Controlla quanto chiesto dopo la prova sul telefono (SCALETTA.md, P70) e deciso da
+Controlla quanto chiesto dopo la prova sul telefono (P70) e deciso da
 Christian: a ogni mano nuova le carte restano nascoste finché si vedono l'ultima
 presa e il riepilogo; poi il mazzo si mescola e le carte partono una alla volta, a
 giro dal giocatore dopo il mazziere; fino alla fine un tocco sulle proprie carte non

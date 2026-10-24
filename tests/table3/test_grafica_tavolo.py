@@ -1,6 +1,6 @@
 """P71: grafica del tavolo dopo la prova sul telefono.
 
-Controlla il "Fatto quando" di SCALETTA.md (P71); P102 e P108 (cambiano P77): la
+Controlla il "Fatto quando" di P71; P102 e P108 (cambiano P77): la
 briscola si vede solo in alto a destra, con Cavallo e Re del seme a ventaglio (sul
 telefono simmetrici a "Esci" e alti come lui, da computer a sinistra del tabellone),
 non più sopra il mazzo; a mazzo finito al posto del mazzo resta uno spazio vuoto
@@ -14,8 +14,8 @@ docs/prototipo/LEGGIMI.md.
 Il tavolo si apre nella prova (/game/prova?demo=1v1 o 2v2) in Chrome o Edge senza
 finestra (tests/browser.py); il test gli manda viste e frasi con gli eventi del
 browser "demo:state" e "demo:phrases". Non serve MySQL. Se né Chrome né Edge sono
-installati i controlli nel browser si saltano, come senza il build della SPA (dal
-lotto 9a c'è solo il tavolo React: table_path di tests/spa.py).
+installati i controlli nel browser si saltano, come senza il build della SPA
+(table_path di tests/spa.py).
 """
 
 import copy
@@ -56,9 +56,9 @@ def browser(server, tmp_path):
 def _open(browser, server, mode, size=PHONE):
     browser.open(f"{server}{table_path('prova', demo=mode)}", *size, "document.querySelector('[data-mode]') !== null")
     _dispatch(browser, "demo:phrases", table_phrases.phrases_event())
-    # I caratteri dei nomi si scaricano quando il tavolo compare (nel tavolo React
-    # dopo il primo disegno): senza aspettarli, una misura presa prima e una dopo
-    # differivano di 1-2 px a caso (test_meno_carte_in_mano_niente_si_sposta, 8c)
+    # I caratteri dei nomi si scaricano quando il tavolo compare (dopo il primo
+    # disegno): senza aspettarli, una misura presa prima e una dopo differiscono di
+    # 1-2 px a caso (test_meno_carte_in_mano_niente_si_sposta)
     browser.js("document.fonts.ready.then(() => true)")
 
 

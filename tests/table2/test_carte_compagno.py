@@ -1,6 +1,6 @@
 """P93: carte del compagno scoperte e consiglio al tavolo (D46).
 
-Controlla il "Fatto quando" di SCALETTA.md (P93): quando la vista ha le carte del
+Controlla il "Fatto quando" di P93: quando la vista ha le carte del
 compagno (partner_hand, P92) il suo ventaglio in alto si scopre (un po' più grande
 di quello coperto) e per un momento c'è la scritta "Mazzo finito: ora vedi le carte
 di …"; il ventaglio non copre la presa né avatar e nome del compagno, che si sposta
@@ -53,7 +53,7 @@ def _with_mate(view, cards=MATE, advice=None):
 
 
 def test_il_tavolo_manda_e_ascolta_il_consiglio():
-    # Dal lotto 9a il tavolo React; che i nomi siano eventi del contratto lo controllano
+    # Che i nomi siano eventi del contratto lo controllano
     # i tipi di on e send (frontend/src/socket/client.ts) quando si compila
     store = (ROOT / "frontend" / "src" / "game" / "tableStore.ts").read_text(encoding="utf-8")
     assert "send('game:advise'" in store and "on('game:advice', onAdvice)" in store

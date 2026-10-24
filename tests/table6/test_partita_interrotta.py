@@ -1,4 +1,4 @@
-"""P95: partita interrotta dal riavvio del server (decisione del 04/10/2026).
+"""P95: partita interrotta dal riavvio del server.
 
 Le partite in corso stanno solo in memoria: se il server si riavvia, la pagina del
 tavolo si ricollega da sola, manda game:join e il server risponde not_found. Prima
@@ -12,10 +12,10 @@ la stanza si toglie dall'elenco (come se il server fosse ripartito senza) e il s
 chiude il collegamento della pagina come un calo di rete (P33): la pagina si ricollega
 e trova la partita sparita. Rating e avvisi agli amici non leggono il database (non
 serve MySQL).
-R4 (24/10/2026): a partita finita la stanza si toglie 10 minuti dopo; se la pagina mostra
+R4: a partita finita la stanza si toglie 10 minuti dopo; se la pagina mostra
 ancora il risultato, lo stesso not_found non fa comparire il riquadro.
 Chrome o Edge senza finestra (tests/browser.py); senza browser il test si salta.
-Dal lotto 9a c'è solo il tavolo React (table_path di tests/spa.py).
+Senza il build della SPA il test si salta (table_path di tests/spa.py).
 """
 
 import time

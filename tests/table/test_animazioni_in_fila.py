@@ -1,6 +1,6 @@
 """P78: animazioni in fila al tavolo.
 
-Controlla il "Fatto quando" di SCALETTA.md (P78): con "riduci movimento" spento,
+Controlla il "Fatto quando" di P78: con "riduci movimento" spento,
 (1) due lanci vicini non partono insieme: la carta arrivata mentre un'altra vola
 aspetta che quella si posi, e fino ad allora non si vede; (2) dopo una presa le
 carte si pescano una alla volta (DRAW_MS ciascuna), prima chi ha preso e poi gli

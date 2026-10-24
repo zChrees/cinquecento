@@ -11,7 +11,7 @@ il tavolo ha le carte pronte, ogni carta che compare ha già la sua immagine, su
 Il tavolo si apre nella prova (/game/prova?demo=1v1) in Chrome o Edge senza finestra
 (tests/browser.py); le viste arrivano con l'evento del browser "demo:state". Non
 serve MySQL. Se né Chrome né Edge sono installati i controlli si saltano.
-Dal lotto 9a c'è solo il tavolo React (table_path di tests/spa.py).
+Senza il build della SPA si saltano (table_path di tests/spa.py).
 """
 
 import copy

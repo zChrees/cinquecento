@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### C4 (fine) — Le sei suite del tavolo senza la storia (24/10/2026)
+
+- **Branch**: feature/c4-test-tavolo (da `dev` a `0120642`)
+- **Perché io**: Giuseppe aveva diviso C4 in un altro modo (a me anche le `table*`), io per area (le `table*` a lui): così non le aveva fatte nessuno. Scelta mia (24/10): le faccio io, e C4 si chiude
+- **File** (solo commenti e docstring): 14 file con frasi da riscrivere in `table`…`table6` e 11 solo per "di SCALETTA.md (Pn)" → "di Pn"; questo file
+- **Cosa c'è**: tolti "passo 8a/8b della migrazione", "lotto 8c/8d/8f/8g/8h/9a", "Fino al lotto 9a qui c'era il confronto con il tavolo Jinja…", "(fino all'8g con ?ui=react)", le date delle scelte ("Christian del 05/10/2026", "decisione del 04/10/2026", "R4 (24/10/2026)"), "P70 (primo/secondo/terzo lotto)"; dove serviva la frase dice com'è oggi (React tiene la carta con il ritardo di partenza, `useStartDelay`). Restano le spiegazioni dei difetti che i test proteggono (per esempio "Prima di P70… la presa entrava nel…" in `test_grafica_tavolo.py`). I nomi `test_tavolo_react.py` e `test_tavolo_react_partita.py` restano (non erano nel punto: "react" lì dice "il tavolo", non "dopo la migrazione"; da rinominare se vuoi)
+- **Controlli**: `ruff check .` pulito; raccolta senza errori (`table` 45, `table2` 39, `table3` 50, `table4` 42, `table5` 37, `table6` 24); con il runner `table` **45**, `table2` **39**, `table3` **50**, `table4` **42**, `table5` **37**, `table6` **24**: **237 PASS** in 571 s, nessun FAIL [T]
+- **Decisioni prese**: le `table*` le faccio io
+- **Domande nuove**: nessuna
+- **Punti delicati**: nessuno nuovo
+- **Cosa devono fare gli altri**: **Giuseppe**: niente, C4 è chiuso (le divisioni erano diverse: le `table*` le ho fatte io)
+
 ### C4 (la mia parte) — Test senza la storia, `test_spa_*.py` rinominati (24/10/2026)
 
 - **Branch**: feature/c4-test-christian (da `dev` a `1077fd1`)

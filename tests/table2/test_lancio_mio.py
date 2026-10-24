@@ -2,9 +2,8 @@
 
 La tua carta parte dal suo posto nella mano, si solleva, vola ad arco verso il centro
 girando un po' e si posa con un piccolo assestamento, in 0,55 s (MY_THROW_MS di
-frontend/src/game/animations.ts, card-throw-mine di trick.css); le carte degli avversari restano come prima
-(card-throw, 0,4 s). Il server (P94) continua a usare 0,4 s per la sua pausa: scelta di
-Christian del 05/10/2026 (al massimo 0,15 s di differenza quando chiudi tu la presa).
+frontend/src/game/animations.ts, card-throw-mine di trick.css); le carte degli avversari volano in 0,4 s
+(card-throw). Il server (P94) usa 0,4 s per la sua pausa: scelta di Christian (al massimo 0,15 s di differenza quando chiudi tu la presa).
 P107: la carta di un avversario fa lo stesso movimento in 0,4 s, partendo dal suo
 ventaglio coperto (grande come le sue carte e girata come il ventaglio).
 

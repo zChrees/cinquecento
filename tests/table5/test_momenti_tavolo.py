@@ -1,6 +1,6 @@
 """P57: momenti del tavolo (ultima presa, riepilogo di fine mano, carte del canto).
 
-Controlla il "Fatto quando" di SCALETTA.md (P57): a 360 px ultima presa,
+Controlla il "Fatto quando" di P57: a 360 px ultima presa,
 riepilogo e carte del canto stanno nello schermo e non coprono le carte in mano;
 le carte del canto spariscono dopo show_seconds; il testo entra sempre come testo;
 i tre momenti hanno i loro marcatori data-*. P69: a fine mano, finché si vedono
@@ -60,7 +60,7 @@ def test_css_del_riepilogo_nella_pagina_del_tavolo():
 
 
 def test_eventi_finti_solo_nella_prova():
-    # Dal lotto 9a: gli ascolti demo:* stanno solo in listenToDemo di GamePage.tsx, che
+    # Gli ascolti demo:* stanno solo in listenToDemo di GamePage.tsx, che
     # si ferma subito fuori dalla prova (demo === null), prima di ascoltare
     code = (GAME_SRC / "GamePage.tsx").read_text(encoding="utf-8")
     start = code.index("function listenToDemo()")

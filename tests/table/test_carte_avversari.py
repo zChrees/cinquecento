@@ -1,6 +1,6 @@
-"""P70 (secondo lotto): carte degli avversari dal bordo dello schermo e pescata.
+"""P70: carte degli avversari dal bordo dello schermo e pescata.
 
-Controlla quanto chiesto dopo la prova sul telefono (SCALETTA.md, P70): le carte
+Controlla quanto chiesto dopo la prova sul telefono (P70): le carte
 coperte degli avversari sono un ventaglio agganciato al bordo dello schermo dal
 loro lato, per metà fuori; quello in alto sta dietro la barra con "Esci" e il
 punteggio; i ventagli non coprono avatar e nomi, né presa, mazzo e la tua mano;
@@ -200,8 +200,8 @@ def test_un_ridisegno_a_meta_non_fa_ripartire_la_pescata(browser, server):
     # Mario): dopo 1,3 s la sua pescata è avanti, non di nuovo all'inizio
     assert state["lastProgress"] is None or state["lastProgress"] >= 0.2, state
     # La pescata di Turi è già partita. Conta quanto manca davvero (ritardo meno tempo già
-    # passato), non il ritardo scritto: il tavolo React tiene la carta con il ritardo di
-    # partenza (lotto 8d)
+    # passato), non il ritardo scritto: React tiene la carta con il ritardo di partenza
+    # (useStartDelay)
     assert state["lastWait"] is None or state["lastWait"] < 0, state
 
 

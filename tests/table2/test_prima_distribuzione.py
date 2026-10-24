@@ -1,6 +1,6 @@
 """P118: mescolata e distribuzione anche alla prima mano della partita.
 
-Controlla il "Fatto quando" di SCALETTA.md (P118) dal lato della pagina: alla prima vista
+Controlla il "Fatto quando" di P118 dal lato della pagina: alla prima vista
 di una partita appena cominciata (prima mano, nessuna carta giocata né canto, turno ancora
 pieno) il mazzo si mescola e le carte arrivano una alla volta, con i suoni; chi ricarica la
 pagina nella stessa scheda, o arriva a partita cominciata, non rivede la distribuzione.

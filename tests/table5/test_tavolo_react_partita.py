@@ -1,7 +1,7 @@
-"""Passo 8b della migrazione: il tavolo React (frontend/src/game/tableStore.ts) gioca una partita vera.
+"""P24, P25: il tavolo (frontend/src/game/tableStore.ts) gioca una partita vera.
 
-Una partita vera contro la CPU (P68, non si salva), aperta sul tavolo React
-(/game/<codice>; fino all'8g con ?ui=react) in Chrome o Edge senza finestra
+Una partita vera contro la CPU (P68, non si salva), aperta sul tavolo
+(/game/<codice>) in Chrome o Edge senza finestra
 (tests/browser.py). Controlla:
 - la pagina si collega, manda game:join e disegna la vista del server, con le
   immagini delle carte pronte (data-cards-ready, P79) e senza avviso di connessione;
@@ -11,10 +11,10 @@ Una partita vera contro la CPU (P68, non si salva), aperta sul tavolo React
   la partita continua; "Esci" la chiude per abbandono e torna alla home (P25);
 - aprendo la stessa partita in un altro browser, questo si ferma con "Questa partita è
   aperta in un'altra scheda o su un altro dispositivo." (game:replaced, D14);
-- lotto 8f: l'elenco delle frasi arriva dal server (game:phrases); una frase scelta va
+- l'elenco delle frasi arriva dal server (game:phrases); una frase scelta va
   al server (game:send_phrase), il fumetto torna con game:phrase e il pulsante resta
   spento per la pausa (P56);
-- lotto 8h: dalla home al tavolo (game:start) e ritorno ("Esci") senza ricaricare la
+- dalla home al tavolo (game:start) e ritorno ("Esci") senza ricaricare la
   pagina, e tornati alla home il numero degli online c'è (home:refresh: il
   collegamento è rimasto aperto, quindi home:status non arriva di nuovo).
 La partita interrotta (P95) la prova table6/test_partita_interrotta.py. Rating e avvisi agli amici non leggono il database (non serve MySQL).

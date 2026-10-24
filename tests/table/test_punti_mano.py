@@ -1,6 +1,6 @@
 """P72: i punti della mano in corso al tavolo (D44).
 
-Controlla il "Fatto quando" di SCALETTA.md (P72) con le scelte di D44: i tuoi punti
+Controlla il "Fatto quando" di P72 con le scelte di D44: i tuoi punti
 (nel 2v2 quelli della tua squadra) stanno sopra la tua mano, accanto al seme della
 briscola; quelli degli avversari una volta sola, a sinistra dell'avatar
 dell'avversario in alto (1v1) o sopra il giocatore a sinistra (2v2); il numero cambia con

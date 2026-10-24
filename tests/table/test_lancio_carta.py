@@ -1,6 +1,6 @@
-"""P70 (primo lotto): lancio della carta e carte che diventano bianche per un attimo.
+"""P70: lancio della carta e carte che diventano bianche per un attimo.
 
-Controlla quanto chiesto dopo la prova sul telefono (SCALETTA.md, P70): la carta
+Controlla quanto chiesto dopo la prova sul telefono (P70): la carta
 appena giocata vola al suo posto sul tavolo; finché vola, un tocco sulle proprie
 carte non gioca niente; un ridisegno a metà volo non fa ripartire l'animazione, né
 l'uscita della presa chiusa; a ogni ridisegno le immagini delle carte sono le stesse
@@ -164,7 +164,7 @@ def test_la_presa_chiusa_non_riparte_dopo_un_ridisegno(browser, server):
                "{ detail: { phrases: [{ code: 'ciao', text: 'Ciao!' }] } }))")
     # L'uscita verso chi ha preso comincia 1,1 s dopo che la presa si vede, non 1,1 s dopo il ridisegno.
     # Conta quanto manca davvero all'uscita (ritardo meno tempo già passato), non il ritardo scritto:
-    # il tavolo React tiene la casella con il ritardo di partenza (lotto 8d)
+    # React tiene la casella con il ritardo di partenza (useStartDelay)
     wait = browser.js("""(() => {
       const away = document.querySelector('[data-last-trick] .trick__card').getAnimations()
         .find((a) => a.animationName === 'trick-away');
