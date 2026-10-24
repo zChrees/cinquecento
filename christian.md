@@ -22,6 +22,16 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: piano della messa online, D21 chiusa (24/10/2026)
+
+- **Branch**: docs/piano-messa-online (da `dev` a `36ba9a7`)
+- **File**: nuovo `docs/MESSA-ONLINE.md`; modificati `DECISIONI.md`, `DA-DECIDERE.md`, `CLAUDE.md`; questo file
+- **Cosa c'è**: il piano per portare Cinquecento online, in cinque fasi con i punti divisi tra i tre (fase 0 pulizia C1–C6, fase 1 codice O1–O5, fase 2 server S1–S7, fase 3 amici A1–A3, fase 4 pubblico P1–P6); i punti di Antonio li fa Giuseppe finché Antonio non torna
+- **Decisioni prese** (Christian, 24/10): **VPS** (chiude D21), gestito da me; prima solo per gli amici, poi pubblico; il budget non è un problema; prima la **pulizia generale** (fase 0); i test `test_spa_*.py` si rinominano; i codici P, D e R nei commenti restano, con una riga nel `README.md` che li spiega (opzione c); `docs/MESSA-ONLINE.md` non va in `main`
+- **Domande nuove**: **D55** (nome di dominio, prima di S5) e **D56** (servizio per le email, solo per la fase 4)
+- **Controlli**: nessun test (solo documenti)
+- **Cosa devono fare gli altri**: **Giuseppe**: leggi `docs/MESSA-ONLINE.md`; i tuoi punti sono C3 e C4 (le tue suite) nella fase 0, O2, O3 e O4 nella fase 1, P1–P3 e P5–P6 nella fase 4 (quelli di Antonio finché non torna)
+
 ### Documenti: aggiornamento del 24/10 notte, migrazione chiusa e commenti nel Python finiti (24/10/2026)
 
 - **Branch**: docs/aggiornamento-24-10-notte (da `dev` a `40f2cc0`)
