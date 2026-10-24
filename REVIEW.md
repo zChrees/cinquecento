@@ -243,5 +243,23 @@ Un passo per branch, nell'ordine del piano (sezione 4). **Christian** fa il fron
   - [x] **9b-2** — via tutto `app/static/js/`, `main/index.html`, i `partials/`, `/vecchia-home` e la pagina di prova delle carte; `base.html` solo per le pagine di errore; test rifatti sul codice nuovo; corretto un import rotto dal 9b-1 in `test_spa_amici.py` — Christian — *23/10 (commit `c8a2dbf`)*
   - [x] *Test a parte*: `checkCard` e `cardName` di `cards.ts` eseguiti con Node (tornano gli 11 controlli persi nel 9b-2) — Christian — *23/10 (commit `f737d85`)*
   - [x] **9c** — rotte JSON sotto `/api/` (`/api/online`, `/api/stats/me`, `/api/friends/...`, `POST /api/auth/logout` in JSON; vecchi indirizzi 404; `JSON_PREFIXES` solo `/api/`), contratto (1.5 riscritta, 2, 2.3, 5.1, 5.2), esempi e chiamate della SPA; "Esci" ricarica la home — Christian — *24/10 (commit `d1e32bf`)*
-  - [ ] **9d** — regola unica della SPA, pagina React "non trovata", via `SPA_PATHS` — Christian
-  - [ ] **9e** — giro completo delle suite (con le sei `table*`), `ruff`, `tsc`, build, prova a mano — Christian
+  - [x] **9d** — regola unica della SPA nel gestore del 404 (GET e HEAD fuori da `/api/`, `/static/`, `/socket.io`), pagina React "non trovata" con la navbar, `/` in fondo rimandata (302), `caseSensitive` in React; via `SPA_PATHS` e `GAME_TABLE` (al loro posto `NOT_SPA` e `FLASK_PATHS`) — Christian — *24/10 (commit `0cce805`)*
+  - [ ] **9e** — giro completo delle suite (con le sei `table*`), `ruff`, `tsc`, build, prova a mano
+    - [x] giro completo: **1983 PASS in 16 suite**; corretti due test di `runner` rotti dal passo 4 (import di `tests.spa` in `conftest.py` dopo i rifiuti) — Giuseppe, con l'ok di Christian — *24/10 (commit `d1cca95`)*
+    - [ ] prova a mano su telefono e computer (accesso, home, coda, CPU, inviti, tavolo, chat, impostazioni, "Esci", pagina "non trovata") — **Christian** (24/10: la fa lui, non Giuseppe)
+  - [ ] *Dopo il 9e*: riscrittura dei punti delicati di `CLAUDE.md` che citano il codice vecchio; i commenti del frontend e dei CSS che citano file tolti (`FriendsPanel.js`, `js/components/…`) e `csrfToken` di `SessionContext.tsx` non usato — Christian
+
+### Commenti e niente zucchero nel Python (`regole-codice.md`, dal 24/10/2026)
+
+Proposto da Giuseppe il 24/10; divisione confermata da Christian il 24/10: ognuno la sua parte, così nessuno tocca i file dell'altro. Un lotto per branch; nomi, ordine e comportamento uguali; solo i test della parte toccata. Esempi di file già fatti: `app/realtime/invites.py`, `app/blueprints/auth/api.py`.
+
+- [x] **1a** — motore, i file piccoli (`app/game/engine/` tranne `game.py`, `lay_down.py`, `views.py`, `cpu.py`) — Giuseppe — *24/10 (commit `c61725d`)*
+- [x] **1b** — motore: `game.py`, `lay_down.py`, `views.py` — Giuseppe — *24/10 (commit `7d22c95`)*
+- [x] **2a** — tempo reale, i file piccoli di `app/realtime/` — Giuseppe — *24/10 (commit `44f684a`)*
+- [x] **2b** — `app/realtime/room.py` — Giuseppe — *24/10 (commit `400116e`)*
+- [x] **2c** — `app/realtime/matchmaking.py` — Giuseppe — *24/10 (commit `088fcd9`)*
+- [x] **2d** — `app/sockets/` (7 file) — Giuseppe — *24/10 (commit `620c9a7`)*
+- [ ] **3** — `app/services/`, `app/repositories/`, `app/models/` — Giuseppe
+- [ ] **Sito** — `app/blueprints/` che mancano (`auth/forms.py`, `friends/routes.py`, `stats/routes.py`, gli `__init__.py`); `app/__init__.py`, `app/errors.py`, `app/extensions.py`, `app/checks.py`, `app/logging_config.py` — Christian
+- [ ] **4** — `config.py`, `run.py`, `scripts/` (`backup.py`, `migrate.py`, `ripristina.py`) — Christian
+- [ ] **5** — `app/game/engine/cpu.py`, per ultimo — Giuseppe

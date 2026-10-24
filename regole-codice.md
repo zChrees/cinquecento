@@ -1,6 +1,6 @@
 # Regole per scrivere e commentare il codice
 
-Queste regole valgono per ogni file del progetto che si commenta o si riscrive. Lo scopo è che **Christian, Giuseppe e Antonio**, che sono principianti, capiscano ogni riga e sappiano spiegarla a un colloquio di lavoro. Il file di esempio, già scritto così, è `app/static/js/components/Hand.js`.
+Queste regole valgono per ogni file del progetto che si commenta o si riscrive. Lo scopo è che **Christian, Giuseppe e Antonio**, che sono principianti, capiscano ogni riga e sappiano spiegarla a un colloquio di lavoro. Il primo file di esempio era `app/static/js/components/Hand.js`, tolto il 23/10/2026 con il JavaScript vecchio (lotto 9b-2): gli esempi qui sotto vengono da lì e restano validi come forma. Oggi gli esempi da guardare sono i file di `frontend/src/` (per React e TypeScript) e, per il Python, `app/blueprints/auth/api.py` o `app/realtime/invites.py` (aggiornamento del 24/10/2026).
 
 Sono state decise da Christian il 19/10/2026.
 
@@ -120,7 +120,7 @@ Si scrive tutto nella forma più esplicita, quella più vicina al C.
 | valori predefiniti nella firma `function f(a, b = 1, { c = [] } = {})` | parametri semplici `function f(a, b, options)`; dentro, un `if (b === undefined) { b = 1; }` per ciascuno |
 | `Boolean(x)` per trasformare in vero/falso | `let ok = false; if (x) { ok = true; }` |
 
-`hasValue(value)` restituisce `false` se il valore è `null` o `undefined`, `true` altrimenti (anche per `0` e `''`). Sta in `app/static/js/utils/dom.js` e si importa da lì (`import { hasValue } from '../utils/dom.js';`), senza ricopiarla (D52, 19/10/2026).
+`hasValue(value)` restituisce `false` se il valore è `null` o `undefined`, `true` altrimenti (anche per `0` e `''`). Stava in `app/static/js/utils/dom.js` (D52, 19/10/2026), tolto al 9b-2 (23/10/2026). Nel TypeScript si scrive il controllo esplicito `value !== null && value !== undefined` (per esempio `present` di `frontend/src/game/tableStore.ts`).
 
 ### Python
 
@@ -131,7 +131,10 @@ Si scrive tutto nella forma più esplicita, quella più vicina al C.
 | `a if cond else b` | `if cond: ... else: ...` |
 | `lambda x: ...` | una funzione con `def` e un nome |
 | walrus `:=` | l'assegnazione su una riga a parte |
-| spacchettamenti complicati (`*args`, `**kwargs` dove non servono, `a, *b = ...`) | assegnazioni una per una |
+| spacchettamenti complicati (`*args`, `**kwargs` dove non servono, `a, *b = ...`, `a, b = tupla`, `(*a, b)`) | assegnazioni una per una; per allungare una tupla, una somma di tuple (`state.sings + (done,)`) |
+| catene di confronti `0 <= x < n` | due confronti con `and` |
+
+Restano, spiegati con un commento (lotti 1a–2d di Giuseppe, 24/10/2026): `*args, **kwargs` dove servono davvero (per esempio il decoratore `handler`, che avvolge gestori con parametri diversi); l'asterisco `*` tra i parametri, che obbliga a passarli con il nome; i valori predefiniti dei parametri (`rules=MARIANNA`, `rng=None`); `for a, b in d.items()` (lo chiede `ruff`, `PLC0206`); funzioni normali come `sorted`, `min(a, b)`, `itertools.product`. Al posto dello zucchero, quando `ruff` segnala `PLR1730` o `PERF402`, si usano `min(a, b)` con due valori e `lista.extend(tupla)`, non un `# noqa`.
 
 ### Cosa resta
 
@@ -223,7 +226,7 @@ export function Hand(props: HandProps): JSX.Element {
 
 - **Nomi** di funzioni, variabili esportate, file, classi CSS, attributi `data-*`, eventi: i test e gli altri file li usano.
 - **Il comportamento**: commentare e semplificare non deve cambiare niente di quello che vede l'utente.
-- **I punti che i test leggono come testo**, per esempio il primo testo di ogni elenco in `ModeModal.js` (nome dell'icona), le durate in `game.js` confrontate con il CSS, `Card.js` eseguito con Node, i commenti di `favicon.svg` senza doppio trattino, `pianifica_backup.ps1` solo ASCII. I "Punti delicati" sono elencati in `CLAUDE.md`.
+- **I punti che i test leggono come testo**, per esempio i nomi delle icone nei file di `frontend/src/` (`test_icone.py`), le durate in `frontend/src/game/animations.ts` confrontate con il CSS e con `room.py`, `cards.ts` eseguito con Node (solo `import type`, niente `enum`), i commenti di `favicon.svg` senza doppio trattino, `pianifica_backup.ps1` solo ASCII. I "Punti delicati" sono elencati in `CLAUDE.md`.
 - **Le regole di sicurezza** (CSP): niente `onclick=` o `style="..."` nell'HTML, niente `setAttribute("style", …)` nel JS.
 
 ## 8. Semplificazioni
@@ -234,16 +237,18 @@ export function Hand(props: HandProps): JSX.Element {
 ## 9. Come si lavora
 
 - **Un lotto alla volta** (un gruppo di file legati), su un branch creato da `dev`.
-- **Il JavaScript di adesso** (`app/static/js/`) non si commenta più: verrà sostituito dal frontend React, che si scrive già con queste regole (decisione del 19/10/2026 in `DECISIONI.md`). Fa eccezione `Hand.js`, già fatto come esempio. Il Python si commenta come scritto sopra.
+- **Il JavaScript vecchio** (`app/static/js/`) non esiste più dal 23/10/2026 (lotto 9b-2): il frontend React si scrive già con queste regole. Il Python si commenta come scritto sopra, a lotti, con la divisione confermata da Christian il 24/10/2026 (`REVIEW.md`, "Commenti e niente zucchero nel Python").
 - **I file degli altri due** si toccano solo con il loro ok. Le aree sono: Giuseppe motore e tempo reale, Antonio account, dati e amici, Christian interfaccia e documenti.
 - Dopo ogni lotto si lanciano **solo i test della parte toccata**. Le suite complete si lanciano solo su richiesta.
 - Se si cambiano solo i commenti, basta controllare che il file sia ancora valido (`node --check` per il JS, `python -m py_compile` per il Python).
 - Fine riga **CRLF** (tranne gli script `.sh`, che restano LF).
 - **Nessun commit, merge o push senza l'ok esplicito**, chiesto ogni volta.
 
-## 10. Casi non ancora decisi
+## 10. Decoratori, classi e altri costrutti
 
-Se ne incontra uno, ci si ferma e si chiede:
+Deciso da Giuseppe il 24/10/2026 (lotto 1a):
 
-- i **decoratori** di Python (`@app.route`, `@handler`, `@property`): servono a Flask e non si possono togliere, ma va deciso come spiegarli;
-- **classi**, `with` e `try/except` in Python, `async`/`await` e le `Promise` in JavaScript: sono costrutti veri, non zucchero, ma vanno spiegati bene.
+- i **decoratori** di Python (`@app.route`, `@handler`, `@property`, `@classmethod`, `@dataclass(frozen=True)`, `@functools.lru_cache`, `@functools.wraps`) **restano**, e ognuno si spiega con un commento **la prima volta che compare in un file**: cosa fa e perché serve;
+- lo stesso vale per **classi**, `with` e `try/except`: sono costrutti veri, non zucchero, e si spiegano la prima volta in ogni file.
+
+Ancora da decidere (se ne incontra uno, ci si ferma e si chiede): `async`/`await` e le `Promise` in TypeScript.

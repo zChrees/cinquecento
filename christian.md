@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: aggiornamento del 24/10 sera, 9d e giro del 9e, lotti dei commenti nel Python (24/10/2026)
+
+- **Branch**: docs/aggiornamento-24-10-sera (da `dev` a `620c9a7`)
+- **File**: modificati `CLAUDE.md`, `REVIEW.md`, `DECISIONI.md`, `docs/MIGRAZIONE-FRONTEND.md`, `regole-codice.md`; questo file
+- **Riepiloghi letti**: `christian.md` "Migrazione, passo 9d"; `giuseppe.md` dal "passo 9e" al "lotto 2d" (sette); `antonio.md` niente di nuovo
+- **Cosa c'è**: 9d spuntato; 9e diviso in giro completo (fatto da Giuseppe, 1983 PASS in 16 suite) e prova a mano (**la faccio io**, non Giuseppe); in `REVIEW.md` la sezione nuova "Commenti e niente zucchero nel Python" con i lotti fatti (1a–2d) e la divisione di quelli che restano; in `DECISIONI.md` le scelte del 9d, del 9e e dei commenti nel Python (decoratori, divisione); in `CLAUDE.md` riga "Stato", Testing (1983 PASS, tempi delle suite), punti delicati "Runner (P6)" (import dopo i rifiuti), "SPA e migrazione" (regola unica al posto di `SPA_PATHS` e `GAME_TABLE`) e uno nuovo "Commenti e niente zucchero nel Python"; in `regole-codice.md` gli esempi (via `Hand.js` e `hasValue`), le forme Python che restano e la sezione 10 (decoratori decisi)
+- **Controlli**: nessun test (solo documenti)
+- **Decisioni prese**: divisione dei lotti dei commenti nel Python come proposta da Giuseppe; la prova a mano del passo 9 la faccio io
+- **Domande nuove**: nessuna
+- **Punti delicati**: quelli del 9d e del 9e e dei lotti di Giuseppe, registrati in `CLAUDE.md`
+- **Cosa devono fare gli altri**: **Giuseppe**: la prova a mano del 9e la faccio io (non farla anche tu); la divisione dei lotti va bene, puoi partire con il 3 dopo il pull di questi documenti
+
 ### Migrazione, passo 9d — Regola unica della SPA e pagina "non trovata" (24/10/2026)
 
 - **Branch**: feature/passo-9d-spa (da `dev` a `58f0a08`)
