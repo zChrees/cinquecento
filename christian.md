@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: aggiornamento del 24/10 notte, fase 0 (24/10/2026)
+
+- **Branch**: docs/aggiornamento-24-10-fase0 (da `dev` a `8528f5e`); di turno sui documenti: io
+- **File**: modificati `REVIEW.md`, `DECISIONI.md`, `CLAUDE.md`; questo file
+- **Riepiloghi letti**: `christian.md` da "C1" a "C5 (resto)" (cinque, con "Dove si riparte"); `giuseppe.md` "C3"; `antonio.md` niente di nuovo
+- **Cosa c'è**: in `REVIEW.md` la sezione nuova "Messa online" con i punti di tutte le fasi (C1, C2, C3, C5 spuntati; C4 e C6 aperti), `friend_repo.get_user` fatto (C3), la riscrittura dei documenti "dopo il 9e" passata a C5 (fatta) e C6, il titolo della sezione della migrazione con il percorso nuovo; in `DECISIONI.md` la scelta di C5 (archivio con la data nel nome, README senza la demo); in `CLAUDE.md` la riga "Stato" (fase 0, riepiloghi registrati fino a "C5 (resto)" e "C3", prossimo C4), i due rimandi al piano della migrazione portati in `docs/archivio/`, via il punto delicato "Demo (P38)" (script e test tolti). Il resto dei punti delicati è C6
+- **Controlli**: nessun test (solo documenti)
+- **Decisioni prese**: quella di C5, registrata
+- **Domande nuove**: nessuna
+- **Cosa devono fare gli altri**: **Giuseppe**: C1 e C2 sono in `dev`, puoi fare la tua parte di C4 (le tue suite); dopo il pull `npm run build`
+
 ### C5 (resto) — Archivio, via la demo su Windows, commenti di `frontend/index.html` (24/10/2026)
 
 - **Branch**: docs/c5-archivio (da `dev` a `122781d`)

@@ -197,7 +197,7 @@ Si spunta solo dopo l'ok dell'utente, il commit e il merge in `dev`, come nella 
   - *Fatto*: sul PC di Giuseppe i passi 1–9 di `docs/DEMO.md`, con i tre "Fatto quando" provati [T]. La prova generale (passi 11 e 12) **non si fa più**: dal 19/10 non c'è più la demo, il PC di Giuseppe serve per lo sviluppo (`DECISIONI.md`, Progetto e tempi).
   - *Fatto quando*: nella cartella della demo c'è il file `PRODUZIONE` (`Test-Path PRODUZIONE` → `True`: da P136 in `main` non ci sono i test, quindi il rifiuto del runner non si prova lì); il backup pianificato produce un file; un ripristino di prova su `cinquecento_test` funziona.
 
-### Migrazione del frontend (`docs/MIGRAZIONE-FRONTEND.md`, dal 19/10/2026)
+### Migrazione del frontend (`docs/archivio/MIGRAZIONE-FRONTEND-2026-10.md`, dal 19/10/2026, chiusa il 24/10)
 
 Un passo per branch, nell'ordine del piano (sezione 4). **Christian** fa il frontend (`frontend/`) e la rotta di ogni pagina nuova in `app/blueprints/spa/routes.py`; **Giuseppe** fa le parti del backend scritte sotto ogni passo. Un passo con pezzi di tutti e due si chiude quando ci sono entrambi. **Dal 20/10 Giuseppe può fare anche i pezzi di Christian** (scelta di Christian), prima dei suoi punti.
 
@@ -248,7 +248,7 @@ Un passo per branch, nell'ordine del piano (sezione 4). **Christian** fa il fron
     - [x] giro completo: **1983 PASS in 16 suite**; corretti due test di `runner` rotti dal passo 4 (import di `tests.spa` in `conftest.py` dopo i rifiuti) — Giuseppe, con l'ok di Christian — *24/10 (commit `d1cca95`)*
     - [x] prova a mano su telefono e computer (accesso, home, coda, CPU, inviti, tavolo, chat, impostazioni, "Esci", pagina "non trovata", più le novità del 24/10: carta-modal, R4, CPU, script) — **Christian** — *24/10, tutto bene*
   - [x] *Dopo il 9e*: i commenti del frontend e dei CSS che citano file tolti e `csrfToken` di `SessionContext.tsx` non usato — Christian — *24/10 (commit `5fc1678`)*; poi via `load_user`, la regola `card--hover-kept` e i file vecchi nei commenti dei test — *24/10 (commit `98f5764`)*
-  - [ ] *Dopo il 9e*: riscrittura dei punti delicati di `CLAUDE.md` che citano il codice vecchio, e degli altri documenti ("Stack", "Pagine", "Dipendenze" di `CLAUDE.md`, `docs/prototipo/LEGGIMI.md`, `README.md`) — chi è di turno sui documenti
+  - [x] *Dopo il 9e*: riscrittura dei punti delicati di `CLAUDE.md` che citano il codice vecchio, e degli altri documenti — passata alla fase 0 della messa online: `README.md` e `docs/prototipo/LEGGIMI.md` fatti con **C5**, `CLAUDE.md` ("Stack", "Pagine", "Dipendenze", punti delicati) è **C6** (sezione qui sotto)
   - [x] *Correzione* (Giuseppe, trovata nella sua prova a mano): carta-modal della Partita Veloce, "Gioca" sulla cornice a certe misure; spazi più stretti sotto i 760 px di carta, soglie in rem — *24/10 (commit `b729ebe`), approvata da Christian*
 
 ### Commenti e niente zucchero nel Python (`regole-codice.md`, dal 24/10/2026)
@@ -267,4 +267,21 @@ Proposto da Giuseppe il 24/10; divisione confermata da Christian il 24/10: ognun
 - [x] **Sito** — `app/blueprints/` che mancano (`auth/forms.py`, `friends/routes.py`, `stats/routes.py`, gli `__init__.py`); `app/__init__.py`, `app/errors.py`, `app/extensions.py`, `app/checks.py`, `app/logging_config.py` — Christian — *24/10 (commit `8b686e0`); in più le rotte fatte con la migrazione (`auth/api.py`, `auth/routes.py`, `profile/`, `main/`, `game/routes.py`), commit `b9d16f7`*
 - [x] **4** — `config.py`, `run.py`, `scripts/` (`backup.py`, `migrate.py`, `ripristina.py`) — Christian — *24/10 (commit `6ccb9d9`)*
 - [x] **5** — `app/game/engine/cpu.py`, per ultimo — Giuseppe — *24/10 (commit `af9a16a`; stesse mosse di prima, controllate con un'impronta a semi fissi)*
-- Resta da proporre: `friend_repo.get_user` non lo chiama nessuno (Giuseppe)
+- [x] `friend_repo.get_user`, che non chiamava nessuno, tolto — Giuseppe, con C3 — *24/10 (commit `9466576`)*
+
+### Messa online (`docs/MESSA-ONLINE.md`, dal 24/10/2026)
+
+Piano di Christian del 24/10 (D21 chiusa: VPS, gestito da Christian). Cinque fasi; i punti di Antonio li fa Giuseppe finché Antonio non torna. Qui lo stato dei punti, nel piano il cosa e i file.
+
+**Fase 0 — Pulizia generale** (niente cambia per chi gioca; per la fase 0 Christian ha dato l'ok a commit, merge e push senza chiederlo ogni volta, 24/10)
+
+- [x] **C1** — frontend: commenti di `frontend/src/` e dei CSS senza la storia; classi CSS ed esportazioni non usate cercate con tre script, nessuna da togliere — Christian — *24/10 (commit `311f9ad`)*
+- [x] **C2** — sito: commenti di `app/blueprints/`, `app/__init__.py`, `app/errors.py`, `config.py` senza la storia (anche il commento del matchmaking, che diceva i valori vecchi) — Christian — *24/10 (commit `c80939a`)*
+- [x] **C3** — motore e tempo reale: commenti senza la storia; via `friend_repo.get_user` — Giuseppe — *24/10 (commit `9466576`)*
+- [ ] **C4** — test: commenti e docstring senza la storia; `test_spa_*.py` rinominati senza "spa", controllando chi li importa — Christian e Giuseppe, ognuno le sue suite (C1–C3 sono in `dev`)
+- [x] **C5** — `README.md` e `docs/prototipo/LEGGIMI.md` sul frontend React, con la sezione "I codici P, D e R nei commenti" (commit `122781d`); `MIGRAZIONE-FRONTEND.md` e `DEMO.md` in `docs/archivio/` (`…-2026-10.md`), via `scripts/pianifica_backup.ps1` e `tests/db/test_demo.py`, commenti di `frontend/index.html` (sfuggito a C1), `tsconfig.json`, `vite.config.ts` e dei template di errore (commit `8528f5e`) — Christian — *24/10*
+- [ ] **C6** — `CLAUDE.md`: riscrittura dei punti delicati e delle parti "Stack", "Pagine", "Dipendenze" — chi è di turno sui documenti (attende C4)
+
+**Fase 1 — Codice pronto per la produzione**: [ ] O1 (configurazione `production`, R8) · [ ] O2 (gunicorn, R12) · [ ] O3 (R6) · [ ] O4 (spegnimento ordinato) · [ ] O5 (`/api/health`)
+
+**Fase 2 — Il server** (Christian): [ ] S1–S7 · **Fase 3 — Online per gli amici**: [ ] A1–A3 · **Fase 4 — Prima del pubblico**: [ ] P1–P6 del piano (non sono i P della scaletta)
