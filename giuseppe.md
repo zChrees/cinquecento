@@ -22,6 +22,19 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### Commenti e niente zucchero, lotto 2c — Tempo reale: matchmaking.py (24/10/2026)
+
+- **Branch**: feature/commenti-realtime-2c (da `dev` a `400116e`)
+- **File**: modificati `app/realtime/matchmaking.py`; questo file
+- **Cosa c'è**: "Cosa contiene" e da dove arrivano i dati in cima; "In parole semplici" sopra ogni funzione, con la ricerca della partita migliore (`_best_match`), le squadre bilanciate (`itertools.product`, lo xor `^`) e il thread delle code (`threading.Event`) spiegati; tolti i 38 casi di zucchero (comprehension, generatori in `sum`/`any`/`all`/`next`, `a if c else b`, `(first, *group)`, `[user, *amici]`, `zip(*teams)`, le due `lambda` di `sorted`). Restano `sorted`, `itertools.combinations`, `itertools.permutations` e `itertools.product` (funzioni normali). Ordine delle voci, delle candidate e delle squadre, somme dei rating e scelta della partita uguali a prima; i numeri dell'intervallo restano letti al momento (i test li cambiano)
+- **Funzioni nuove, piccole**: `_joined_at` (la chiave per ordinare le voci, al posto di `lambda e: e.joined_at`) e la funzione interna `closeness` di `_best_match` (al posto dell'altra `lambda`)
+- **Unica differenza**: `Entry._side_of` con un utente che non è nella voce lanciava `StopIteration` (da `next`), ora `ValueError`; non succede mai (la chiamano solo `partner_of` e `opponents_of`, con un utente della voce)
+- **Controlli**: suite `sockets` **333 PASS** (con i test della coda 1v1 e 2v2 e degli inviti), `e2e` **12 PASS**, `test_spa_home_coda.py` + `test_spa_home_inviti.py` **23 PASS**; `ruff check .` pulito; nessuno zucchero rimasto (ricerca con `rg`) [T]
+- **Decisioni prese**: nessuna nuova
+- **Domande nuove**: nessuna
+- **Punti delicati**: nessuno nuovo
+- **Note per gli altri**: nessuna. Prossimo: lotto 2d, `app/sockets/`
+
 ### Commenti e niente zucchero, lotto 2b — Tempo reale: room.py; divisione dei lotti che restano (24/10/2026)
 
 - **Branch**: feature/commenti-realtime-2b (da `dev` a `44f684a`)
