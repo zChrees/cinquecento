@@ -219,9 +219,7 @@ def test_contatore_lista_e_azioni(browser, server, friends):
     assert browser.js("window.__csp") == []
 
 
-# Fino al lotto 9b-2 qui c'era test_suoni_uguali_a_sounds_js: l'elenco dei suoni esisteva
-# anche in app/static/js/core/sounds.js, tolto con il JavaScript vecchio. I file dei
-# suoni li confronta con l'elenco di sounds.ts table6/test_suoni.py (test_file_dei_suoni_e_licenza).
+# I file dei suoni li confronta con l'elenco di sounds.ts table6/test_suoni.py (test_file_dei_suoni_e_licenza).
 
 
 def test_la_lista_si_aggiorna_da_sola_e_suona(browser, server, friends, app):

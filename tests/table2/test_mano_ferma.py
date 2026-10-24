@@ -130,7 +130,6 @@ def test_carta_ridisegnata_si_abbassa_quando_il_mouse_esce(browser, server):
     _move_mouse(browser, {"x": 640, "y": 300})
     wait(lambda: browser.js(f"new DOMMatrix(getComputedStyle(document.querySelector('{HAND_CARDS}')).transform).m42") == 0,
          3, "carta tornata giù")
-    assert browser.js("document.querySelectorAll('.card--hover-kept').length") == 0
 
 
 def test_sul_telefono_la_carta_toccata_non_si_alza(browser, server):

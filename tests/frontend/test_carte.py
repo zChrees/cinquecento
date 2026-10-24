@@ -10,8 +10,7 @@ costanti si leggono come testo (scelta 3 del passo 9), senza Node. I controlli s
 comportamento di checkCard (una carta fuori elenco si rifiuta, le 40 si accettano) e
 di cardName eseguono cards.ts con Node, che dalla versione 24 toglie da solo i tipi
 di TypeScript (cards.ts ha solo "import type", quindi non serve compilarlo); senza
-Node si saltano. Fino al 9b-2 si eseguiva Card.js, e c'era anche la pagina di prova
-delle carte (app/static/dev/carte.html), tolta con il JavaScript vecchio.
+Node si saltano.
 """
 
 import json

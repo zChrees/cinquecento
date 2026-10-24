@@ -12,7 +12,7 @@ Cosa contiene:
     GET /auth/login            login: la pagina di accesso (SPA)
     GET /auth/register         register: la pagina di registrazione (SPA)
     safe_next("/game/abc")     l'indirizzo dove tornare dopo il login, solo se è di questo sito
-    e registra il vero user_loader di Flask-Login (auth_service.load_user, P16)
+    e registra lo user_loader di Flask-Login (auth_service.load_user, P16)
 
 DA DOVE ARRIVANO I DATI: il browser apre /auth/login (anche da Flask-Login, con
 ?next=, quando una pagina vuole il login); safe_next la usa login di api.py con il
@@ -27,7 +27,8 @@ from app.blueprints.spa.routes import spa_page
 from app.extensions import login_manager
 from app.services import auth_service
 
-# Sostituisce il segnaposto di app/extensions.py: Flask-Login tiene l'ultimo registrato.
+# user_loader: la funzione che Flask-Login chiama a ogni richiesta per leggere l'utente
+# collegato dal numero salvato nel cookie della sessione
 login_manager.user_loader(auth_service.load_user)
 
 

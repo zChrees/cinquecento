@@ -51,7 +51,7 @@ def test_il_controllo_trova_le_regole():
     """Il controllo di sopra vale qualcosa solo se trova davvero le regole :hover."""
     found = {(path, " ".join(selector.split())) for path, selector, _ in hover_rules()}
     assert ("components/button.css", ".icon-btn:hover") in found
-    assert ("components/card.css", "button.card:not(:disabled):hover, button.card:not(:disabled).card--hover-kept") in found
+    assert ("components/card.css", "button.card:not(:disabled):hover") in found
     assert len(found) >= 20
 
 

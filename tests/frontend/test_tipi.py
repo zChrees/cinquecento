@@ -8,8 +8,7 @@ elenco (per esempio un seme 'cuori') fanno fallire il controllo: lo provano due 
 che rompono apposta un esempio.
 
 Poi: ogni chiave degli esempi ha il suo tipo (un esempio nuovo non resta senza
-controllo); i nomi degli eventi sono quelli che il server ascolta e manda (dal lotto
-9b-2; prima quelli di app/static/js/core/events.js); i codici
+controllo); i nomi degli eventi sono quelli che il server ascolta e manda; i codici
 di errore quelli del server (ERRORS di app/realtime/events.py); ogni evento della
 pagina ha la sua risposta in ClientAnswers.
 
@@ -208,8 +207,7 @@ def _server_events(pattern):
 
 
 def test_nomi_degli_eventi_come_quelli_del_server():
-    # Dal lotto 9b-2 il confronto è con il server, non più con app/static/js/core/events.js:
-    # la pagina manda solo gli eventi che il server ascolta (socketio.on_event) e riceve
+    # Il confronto è con il server: la pagina manda solo gli eventi che il server ascolta (socketio.on_event) e riceve
     # quelli che il server manda (emit)
     listened = _server_events(r"""on_event\(\s*["']([a-z_]+:[a-z_]+)["']""")
     sent = _server_events(r"""emit\(\s*["']([a-z_]+:[a-z_]+)["']""")

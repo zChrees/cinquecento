@@ -1,7 +1,6 @@
 """P46 con la chat vera di P48: finestra chat nel pannello amici (P128, molti messaggi).
 
-Fino al lotto 9b-1 della migrazione questo file provava la chat del JavaScript vecchio
-(sulla home Jinja, /vecchia-home): i suoi controlli (campo visibile a 360 px e limiti,
+I controlli della chat (campo visibile a 360 px e limiti,
 non letti azzerati, fuoco dopo "Invia", doppio clic, "indietro", pochi messaggi in
 fondo, trascinamento) li fa ora tests/frontend/test_spa_chat.py sulla chat React. Qui
 resta, sulla home React (/), quello che lì non c'è: con molti messaggi l'elenco scorre

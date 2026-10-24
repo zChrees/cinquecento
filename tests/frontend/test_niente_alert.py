@@ -2,8 +2,7 @@
 
 Le finestre del browser bloccano la pagina e non seguono lo stile del sito: si
 usano le finestre nella pagina (components/Modal.tsx, InviteDialog.tsx). Controlla
-tutto il codice del frontend React (frontend/src/, dal lotto 9b-2 della migrazione:
-prima il JavaScript di app/static/js/) e i template, senza i commenti;
+tutto il codice del frontend React (frontend/src/) e i template, senza i commenti;
 confirmModal() e simili non contano, perché il nome è diverso.
 """
 

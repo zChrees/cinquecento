@@ -4,8 +4,7 @@ Il tavolo si ridisegna tutto a ogni vista (P70). Prima di P119, a ogni lancio,
 pescata o frase: le carte del canto (e le scritte delle carte calate e delle carte
 del compagno) rifacevano l'entrata da trasparenti, e le immagini degli avatar e
 della briscola nell'angolo erano nuove, quindi per un attimo vuote. Ora le entrate
-riprendono dal tempo già passato e le immagini sono le stesse del disegno di prima
-(reuseCardImages di Card.js).
+riprendono dal tempo già passato e le immagini sono le stesse del disegno di prima.
 
 Controlla fotogramma per fotogramma, nel 1v1 e nel 2v2, sul telefono e da computer,
 mentre arrivano un canto, un lancio e altri ridisegni: le carte del canto restano

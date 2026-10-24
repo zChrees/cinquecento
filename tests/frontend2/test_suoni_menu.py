@@ -12,7 +12,7 @@ La home si apre in Chrome o Edge senza finestra (tests/browser.py) con l'utente 
 collegato al tempo reale; gli avvisi li manda il server vero (socketio.emit sul canale
 dell'utente), come farebbero friend_service, chat e inviti. Non serve MySQL. Se né Chrome
 né Edge sono installati, o manca il build della SPA, i controlli nel browser si saltano.
-Si apre la home React (/); fino al lotto 9b-1 era la home Jinja (/vecchia-home), con sounds.js.
+Si apre la home React (/).
 """
 
 import json

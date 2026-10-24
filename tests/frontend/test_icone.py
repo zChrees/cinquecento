@@ -9,8 +9,6 @@ riscaricato), e nell'elenco non ce n'è nessuna in più; la pagina della SPA e b
 precaricano il font e non chiedono le icone a Google; il font arriva dal server; nel
 browser le icone della home sono disegnate come icone (larghe quanto un quadratino) e
 non come la parola del loro nome.
-Fino al lotto 9b-2 della migrazione le icone si cercavano nel JavaScript vecchio
-(app/static/js/) e nei template della home Jinja.
 Se né Chrome né Edge sono installati, o manca il build della SPA, il controllo nel
 browser si salta.
 """

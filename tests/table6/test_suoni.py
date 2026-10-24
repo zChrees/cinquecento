@@ -53,7 +53,7 @@ SOUNDS_DIR = STATIC / "sounds"
 
 
 def _sound_files():
-    """I file elencati in SOUNDS di frontend/src/utils/sounds.ts (fino al lotto 9b-2 core/sounds.js)."""
+    """I file elencati in SOUNDS di frontend/src/utils/sounds.ts."""
     js = (ROOT / "frontend" / "src" / "utils" / "sounds.ts").read_text(encoding="utf-8")
     block = js[js.index("export const SOUNDS:"):]  # con i due punti: non SOUNDS_KEY
     block = block[:block.index("};")]

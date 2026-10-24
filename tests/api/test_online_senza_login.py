@@ -10,8 +10,7 @@
 Non serve MySQL: chi è online lo sa presence.py, in memoria; i test aggiungono e
 tolgono schede finte (utenti 9001 e 9002, che non esistono).
 Se né Chrome né Edge sono installati, o manca il build della SPA, i controlli nel
-browser si saltano. Fino al lotto 9b-1 si provava la home Jinja (home.js); da allora
-la home React, su /.
+browser si saltano. Si prova la home React, su /.
 """
 
 import json

@@ -10,9 +10,7 @@ della home React mostrino l'immagine o l'iniziale, e che al tavolo di prova
 (/game/prova?demo=2v2) le immagini si carichino e un codice fuori elenco mostri
 l'iniziale. Nel browser: Chrome o Edge senza finestra (tests/browser.py); senza
 browser, o senza il build della SPA, quei controlli si saltano.
-Fino al lotto 9b-2 della migrazione c'erano anche js/components/Avatar.js (la sua copia
-dei codici, provata con Node) e la macro templates/partials/avatar.html: tolti con il
-codice vecchio. Avatar.tsx non ha una copia: si fida dei codici che il server ha già
+Avatar.tsx non ha una copia: si fida dei codici che il server ha già
 controllato (P17). Non serve MySQL.
 """
 

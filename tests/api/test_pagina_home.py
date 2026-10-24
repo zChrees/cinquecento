@@ -1,7 +1,6 @@
 """P22: home (carte-pulsante, carta-modal, online, sfondo): i controlli rimasti qui.
 
-Fino al lotto 9b-1 della migrazione questo file provava la home Jinja (/vecchia-home):
-da allora quasi tutti i suoi controlli li fanno, sulla home React (/), i file
+Quasi tutti i controlli della home li fanno, sulla home React (/), i file
 tests/frontend2/test_spa_home.py (pagina, ?demo=, senza e con il login, rientro),
 tests/frontend/test_spa_home_misure.py (la home non scorre, sfondo, carta-modal che
 contiene tutto) e tests/frontend/test_spa_home_coda.py (coda, CPU, connessione persa).

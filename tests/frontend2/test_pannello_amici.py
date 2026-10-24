@@ -1,10 +1,8 @@
 """P46: pannello amici.
 
-Fino al lotto 9b-1 della migrazione questo file provava nel browser il pannello del
-JavaScript vecchio (FriendsPanel.js, sulla home Jinja /vecchia-home): contatore e
-lista, richiesta di amicizia con il codice CSRF e request_id, accetta e rimuovi,
-"indietro" ed Esc. Da allora quei controlli li fa, sul pannello React,
-tests/frontend2/test_spa_amici.py, e il limite della chat tests/frontend/test_spa_chat.py.
+I controlli del pannello nel browser (contatore e lista, richiesta di amicizia con il
+codice CSRF e request_id, accetta e rimuovi, "indietro" ed Esc) li fa, sul pannello
+React, tests/frontend2/test_spa_amici.py, e il limite della chat tests/frontend/test_spa_chat.py.
 Al lotto 9b-2 sono andati via, con il codice vecchio, anche i controlli sui suoi file:
 niente testo inserito come HTML lo controlla tests/frontend/test_base.py su tutti i
 file di frontend/src/, niente inviti nel pannello test_spa_amici.py.

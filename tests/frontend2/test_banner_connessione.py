@@ -9,8 +9,7 @@ Controlla: "Connessione persa" in cima alla pagina, "Gioca" e "Invia" spenti, al
 ritorno avviso tolto, pulsanti di nuovo attivi e messaggi arrivati nel frattempo nella
 chat aperta; lo scollegamento deciso dal server ("Esci" da un'altra scheda, P32) con
 "Ricarica"; l'avviso al primo collegamento solo se ci mette più di 3 secondi.
-Si apre la home React (/), con l'avviso di ConnectionBanner.tsx; fino al lotto 9b-1 era la
-home Jinja (/vecchia-home) con core/socket.js. Se né Chrome né Edge sono installati, o
+Si apre la home React (/), con l'avviso di ConnectionBanner.tsx. Se né Chrome né Edge sono installati, o
 manca il build della SPA, i controlli nel browser si saltano.
 """
 

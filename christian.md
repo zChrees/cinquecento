@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Pulizie: via `load_user`, `card--hover-kept` e i file vecchi nei commenti dei test (24/10/2026)
+
+- **Branch**: fix/pulizie-codice-vecchio (da `dev` a `71fa9d6`)
+- **File**: `app/extensions.py` (via il segnaposto `load_user`), `app/blueprints/auth/routes.py` (commento); `app/static/css/components/card.css` (via `card--hover-kept`); test: `frontend/test_hover.py` e `table2/test_mano_ferma.py` (i controlli su quella classe) e i commenti di 20 file di `tests/`; questo file
+- **Cosa c'è** (scelte di Christian, 24/10): (1) `load_user` di `extensions.py` non lo chiamava nessuno: Flask-Login tiene un solo `user_loader`, e quello vero lo registra `auth/routes.py` (`auth_service.load_user`), che `create_app()` importa sempre; (2) la regola `button.card:not(:disabled).card--hover-kept` di `card.css` non valeva più, perché la classe non la mette nessuno dall'8g; (3) nei docstring e nei commenti dei test tolti i riferimenti ai file vecchi (`… .js`, `app/static/js/`, `/vecchia-home`), tenendo dove sono finiti i controlli. Restano, perché sono veri: `test_impostazioni.py` che controlla che `profile.js` non ci sia più, `vite.js` (il programma di Vite) e le chiamate come `browser.js(...)`
+- **Controlli**: `ruff check .` pulito; raccolta dei 22 file di test toccati senza errori (148 test); `test_hover.py` + `test_mano_ferma.py` **7 PASS**; suite `api` **307 PASS**, `e2e` **12 PASS** [T]
+- **Decisioni prese** (Christian, 24/10): via `load_user`; via le regole CSS e i riferimenti non usati
+- **Domande nuove**: nessuna
+- **Punti delicati**: lo `user_loader` di Flask-Login c'è solo se si importa `app/blueprints/auth/routes.py` (lo fa `create_app()`): un'applicazione creata senza i blueprint non riconoscerebbe nessun utente
+- **Cosa devono fare gli altri**: niente (`friend_repo.get_user`, che non usa nessuno, è di Giuseppe)
+
 ### Commenti e niente zucchero, chiusura del "Sito" — le rotte fatte con la migrazione (24/10/2026)
 
 - **Branch**: feature/commenti-rotte-migrazione (da `dev` a `6ccb9d9`)

@@ -2,7 +2,7 @@
 
 Controlla:
 - / c'è ovunque e accetta solo ?demo=rientro, che vale solo in sviluppo e nei test
-  (altrove 404); /prova-home e /vecchia-home non ci sono più;
+  (altrove 404);
 - nel browser, a 390×844 e 1280×720, anche con ?demo=rientro (l'avviso "Hai una
   partita in corso"), la cascata di carte dello sfondo e la CSP che non blocca niente
   (fino al lotto 9b-1 qui c'era anche il confronto, elemento per elemento, con la home
@@ -163,7 +163,7 @@ def test_carta_inclinata_sotto_il_mouse(browser, server):
     browser.send("Input.dispatchMouseEvent", type="mouseMoved", x=x, y=y)
     tilt = f"document.querySelector({json.dumps(tile)}).style.getPropertyValue('--ry')"
     assert browser.js(tilt) == ""
-    # Senza: verso destra e in alto, come initTilt di home.js (10 gradi al massimo)
+    # Senza: verso destra e in alto (10 gradi al massimo)
     browser.send("Emulation.setEmulatedMedia", features=[{"name": "prefers-reduced-motion", "value": "no-preference"}])
     browser.send("Input.dispatchMouseEvent", type="mouseMoved", x=x - 1, y=y)
     browser.wait_js(f"{tilt} !== ''", "carta inclinata")

@@ -57,8 +57,7 @@ def browser(server, tmp_path):
     b.close()
 
 
-# Nelle pagine della SPA il collegamento lo dice il pannello amici di React (fino al lotto
-# 9b-2 per le pagine Jinja c'era isConnected() di core/socket.js)
+# Nelle pagine della SPA il collegamento lo dice il pannello amici di React
 CONNECTED = "document.querySelector('[data-friends-panel]')?.dataset.connection === 'connected'"
 
 

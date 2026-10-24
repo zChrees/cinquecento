@@ -12,9 +12,7 @@ copia lato pagina è una sola, frontend/src/game/animations.ts. Questo file cont
 - ogni riga di animations.ts che non è un commento ha la forma
   "export const NOME_MS: number = 1500;", quella che i test leggono.
 I file si leggono come testo: non serve né il server, né MySQL, né Node.
-Fino al lotto 9a qui c'era anche app/static/js/pages/game.js, e gli stessi confronti
-stavano anche in test_turno.py, table6/test_calata.py e table5/test_frasi_pagina.py:
-ora sono tutti qui.
+Tutti i confronti delle durate stanno qui.
 """
 
 import re

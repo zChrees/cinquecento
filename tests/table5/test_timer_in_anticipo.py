@@ -1,7 +1,7 @@
 """P91: i momenti del tavolo finiscono anche se setTimeout scatta in anticipo.
 
 In Chrome setTimeout a volte scatta poco prima del tempo chiesto (misurato: fino a
-circa 0,7 ms, 6 timer su 200). Il tavolo (prima game.js, dal passo 8 tableStore.ts)
+circa 0,7 ms, 6 timer su 200). Il tavolo (tableStore.ts)
 controlla la fine di lanci, pescate,
 distribuzione e pausa delle frasi con performance.now(): un timer in anticipo
 trovava il momento ancora in corso, e i segni restavano sul tavolo (pulsante delle

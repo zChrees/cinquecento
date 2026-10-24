@@ -1,9 +1,8 @@
 """Passo 7c della migrazione: gli inviti a partita nella home React (dal passo 7d su /;
 prima /prova-home).
 
-Gli stessi casi di test_invito_ricevuto.py (P47) e test_inviti_2v2.py (P59, P65, P83),
-che provano la home Jinja (dal passo 7d su /vecchia-home), sulla home React: stesso HTML, stesse classi e stessi
-data-* di ModeModal.js (carta "Gioca con un amico") e InviteDialog.js (invito ricevuto).
+Gli inviti (P47, P59, P65, P83) nella carta "Gioca con un amico" (ModeModal.tsx) e
+nell'invito ricevuto (InviteDialog.tsx).
 
 Nel browser (Chrome o Edge senza finestra, tests/browser.py), con il server vero e il
 database dei test, svuotato e ricreato qui con migrate.py (la SPA legge i dati veri).
@@ -22,9 +21,8 @@ Controlla:
 - P83: invito accettato e carta chiusa, l'amico lo sa; l'invitato che perde la rete
   non resta ad aspettare;
 - la CSP non blocca niente.
-Differenze dalla home Jinja: la carta-modal e la finestra dell'invito chiuse non ci
-sono nella pagina (null); il collegamento si legge da [data-friends-panel]
-(data-connection="connected"), non da core/socket.js.
+La carta-modal e la finestra dell'invito chiuse non ci sono nella pagina (null); il
+collegamento si legge da [data-friends-panel] (data-connection="connected").
 Senza browser, o senza il build della SPA, i controlli si saltano.
 """
 

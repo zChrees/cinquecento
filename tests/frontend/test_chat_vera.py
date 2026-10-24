@@ -6,8 +6,7 @@ Mario e Giulia sono amici e hanno 55 messaggi. Controlla: gli ultimi 50 in ordin
 "Messaggi precedenti" carica gli altri 5, un messaggio con tag resta testo, un
 messaggio arrivato mentre la chat è aperta compare da solo, e dopo un blocco la chat
 dice "Bloccato" e chiude la scrittura (scelta di Giuseppe).
-Si apre la home React (/); fino al lotto 9b-1 era la home Jinja (/vecchia-home), con
-FriendsPanel.js e ChatWindow.js. La casella è "controllata" da React: il testo si
+Si apre la home React (/). La casella è "controllata" da React: il testo si
 scrive con Input.insertText dopo il fuoco, non con .value = ... (React non lo vedrebbe).
 Se né Chrome né Edge sono installati, o manca il build della SPA, i controlli si saltano.
 """
