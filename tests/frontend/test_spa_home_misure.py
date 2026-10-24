@@ -41,8 +41,13 @@ WAIT = 10
 # orizzontale (844×390, 667×375), dove la pagina è coperta dall'avviso "Gira il telefono"
 NO_SCROLL_SIZES = [(360, 640), (375, 667), (390, 844), (412, 915), (768, 1024),
                    (1280, 720), (1440, 900), (1920, 1080)]
-MODAL_SIZES = [(1920, 1080), (1440, 900), (1366, 657), (1536, 730), (360, 560), (360, 640),
-               (390, 844), (412, 915)]
+# 1600×742 e 1600×760 (24/10/2026): portatili con la carta alta tra 700 e 740 px, dove nella
+# Partita Veloce 1v1 "Gioca" finiva sopra la cornice (con "Lo sapevi?" e "Avversario" insieme);
+# 1058×695: la finestra di Giuseppe con DevTools aperto (carta 655 × 400 px), dove con il rating
+# "provvisorio" su due righe "Gioca" toccava la cornice (con "In breve" e "Avversario");
+# 360×800: il telefono con la carta più stretta (328 px) e alta 760 px, con tutte le parti
+MODAL_SIZES = [(1920, 1080), (1440, 900), (1366, 657), (1536, 730), (1600, 742), (1600, 760),
+               (1058, 695), (360, 560), (360, 640), (360, 800), (390, 844), (412, 915)]
 RESUME_SIZES = [(1440, 900), (360, 640), (768, 1024)]
 
 # Risposte finte (forma del contratto: {"ok": true, "data": ...}) con i dati di esempio
@@ -105,6 +110,9 @@ MEASURE_MODAL = """(() => {
 
 FRAME = 14   # cornice doppia della faccia: 10 px dal bordo più 4 px di spessore
 EPS = 0.5
+# PLAY_GAP: lo spazio minimo tra "Gioca" e la linea interna della cornice (24/10/2026): un
+# pulsante che tocca la linea si vede come sovrapposto, anche se resta dentro
+PLAY_GAP = 10
 
 
 @pytest.fixture(scope="module")
@@ -216,10 +224,54 @@ def test_sfondo_dietro_a_titoli_e_carte(browser, server):
 def test_la_carta_modal_contiene_tutto(browser, server, size):
     width, height = size
     _open(browser, f"{server}/", width, height)
+    _check_modals(browser, f"{width}x{height}")
+
+
+# 24/10/2026: con il rating 1v1 "provvisorio" (tutti gli account nuovi) la riga di "In
+# breve" va a capo, e "Gioca" finiva sopra la cornice (1058×695). Si prova anche con un
+# carattere più grande nel browser ("Dimensioni carattere": Grande = 18px, Molto grande =
+# 20px), che rende più alte le scritte in rem: si ottiene come lo fa il browser, cambiando
+# la misura di base della pagina (1rem)
+FONT_SCALES = ("100%", "112.5%", "125%")
+PROVISIONAL_1V1 = {"value": 1503, "games": 3, "provisional": True}
+# LONGEST_TIP: il consiglio più lungo di "Lo sapevi?" (TIPS di ModeModal.tsx), su tre righe:
+# il consiglio cambia a caso a ogni apertura, e il test prova sempre il caso peggiore
+LONGEST_TIP = "Per cantare servono Re e Cavallo dello stesso seme, nel tuo turno e prima di giocare la carta."
+# Le parti della Partita Veloce si vedono con la carta più alta di queste misure (con il
+# carattere normale): le stesse di prima del 24/10/2026, quando "Gioca" sulla cornice si è
+# corretto stringendo gli spazi, senza togliere parti
+TIP_FROM = 700
+FACTS_FROM = 640
+
+
+@pytest.mark.parametrize("scale", FONT_SCALES)
+@pytest.mark.parametrize("size", MODAL_SIZES, ids=lambda s: f"{s[0]}x{s[1]}")
+def test_la_carta_modal_contiene_tutto_con_il_rating_provvisorio(browser, server, size, scale):
+    width, height = size
+    stats = json.loads(json.dumps(STATS))
+    stats["ratings"]["1v1"] = PROVISIONAL_1V1
+    browser.routes["*/api/stats/me"] = lambda _request: (200, {"ok": True, "data": stats})
+    try:
+        _open(browser, f"{server}/", width, height)
+        browser.js(f"document.documentElement.style.fontSize = {json.dumps(scale)}")
+        _check_modals(browser, f"{width}x{height} con il carattere al {scale}",
+                      longest_tip=True, font_scale=float(scale.rstrip("%")) / 100)
+    finally:
+        browser.routes["*/api/stats/me"] = ROUTES["*/api/stats/me"]
+        browser.js("document.documentElement.style.fontSize = ''")
+
+
+def _check_modals(browser, size_text, longest_tip=False, font_scale=None):
+    """Apre le quattro carte-modal e controlla che ognuna contenga tutto, nell'ordine.
+    Con longest_tip mette in "Lo sapevi?" il consiglio più lungo; con font_scale controlla
+    anche quali parti della Partita Veloce si vedono (TIP_FROM, FACTS_FROM)."""
     for kind, mode in TILES:
         _open_modal(browser, kind, mode)
+        if longest_tip:
+            browser.js("document.querySelector('.mode-modal__tip p span').textContent = "
+                       f"{json.dumps(LONGEST_TIP)}")
         m = browser.js(MEASURE_MODAL)
-        where = f"{kind} {mode} a {width}x{height}"
+        where = f"{kind} {mode} a {size_text}"
         face = m["face"]
         assert face["top"] >= -EPS and face["bottom"] <= m["vh"] + EPS, where
         assert face["left"] >= -EPS and face["right"] <= m["vw"] + EPS, where
@@ -235,5 +287,14 @@ def test_la_carta_modal_contiene_tutto(browser, server, size):
             assert part["left"] >= inner["left"] - EPS and part["right"] <= inner["right"] + EPS, (where, part)
         for before, after in zip(m["parts"], m["parts"][1:]):
             assert before["bottom"] <= after["top"] + EPS, (where, before["name"], after["name"])
+        play = m["parts"][names.index("btn btn--primary btn--big")]
+        gap = inner["bottom"] - play["bottom"]
+        assert gap >= PLAY_GAP - EPS, f"{where}: sotto Gioca restano {gap:.1f} px prima della cornice"
+        if kind == "veloce" and font_scale is not None:
+            card = (face["bottom"] - face["top"]) / font_scale
+            assert ("mode-modal__tip" in names) == (card > TIP_FROM + EPS), \
+                f"{where}: carta di {card:.0f} px, 'Lo sapevi?' {'sì' if 'mode-modal__tip' in names else 'no'}"
+            assert ("mode-modal__facts" in names) == (card > FACTS_FROM + EPS), \
+                f"{where}: carta di {card:.0f} px, 'In breve' {'sì' if 'mode-modal__facts' in names else 'no'}"
         assert not _overlap(m["close"], m["title"]), f"{where}: la X copre il titolo"
         _close_modal(browser)

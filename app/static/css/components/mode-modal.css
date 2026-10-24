@@ -454,21 +454,45 @@
  * - Partita Veloce: prima "Lo sapevi?", poi "In breve", poi la descrizione;
  * - con un amico la descrizione sparisce prima, per lasciare spazio alla lista.
  * Queste regole stanno DOPO quelle normali delle stesse parti, così le sostituiscono.
+ * Le soglie sono in rem (24/10/2026), come le scritte: chi ha scelto nel browser un
+ * carattere più grande ("Dimensioni carattere": Grande) ha le scritte più alte, e le
+ * parti spariscono prima nella stessa misura. Con il carattere normale 1rem = 16px,
+ * quindi le soglie valgono quanto i pixel scritti accanto. In px fissi "Gioca"
+ * finiva sopra la cornice (Partita Veloce 1v1 con il rating "provvisorio" su due righe).
  */
-@container carta (max-height: 700px) {
+@container carta (max-height: 43.75rem) { /* 700px con il carattere normale (16px) */
   .mode-modal__tip {
     display: none;
   }
 }
 
 /* P73: nella Partita Veloce 1v1 c'è anche "Avversario": "In breve" sparisce prima */
-@container carta (max-height: 640px) {
+@container carta (max-height: 40rem) { /* 640px con il carattere normale (16px) */
   .mode-modal:has([data-opponent]:not([hidden])) .mode-modal__facts {
     display: none;
   }
 }
 
-@container carta (max-height: 600px) {
+/*
+ * Partita Veloce con la riga "Avversario" / "Gioca con" (24/10/2026): con "Lo sapevi?" su
+ * tre righe e il rating "provvisorio" il contenuto non ci stava e "Gioca" finiva sopra la
+ * cornice (fino a 40 px, carta di 702 px). Si stringono solo gli spazi, così restano le
+ * stesse parti di prima. :where() non conta nella forza del selettore: le regole qui
+ * sotto per le carte più basse (600px, 420px) cambiano ancora spazi e margini
+ */
+@container carta (max-height: 47.5rem) { /* 760px con il carattere normale (16px) */
+  :where(.mode-modal:has([data-opponent]:not([hidden]))) .mode-modal__body {
+    gap: 10px;
+    padding-top: 26px;
+  }
+
+  :where(.mode-modal:has([data-opponent]:not([hidden]))) .mode-modal__tip {
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+}
+
+@container carta (max-height: 37.5rem) { /* 600px con il carattere normale (16px) */
   .mode-modal__body {
     gap: 12px;
     padding-top: 30px;
@@ -476,20 +500,20 @@
   }
 }
 
-@container carta (max-height: 560px) {
+@container carta (max-height: 35rem) { /* 560px con il carattere normale (16px) */
   .mode-modal[data-kind="amico"] .mode-modal__desc,
   .invite__hint {
     display: none;
   }
 }
 
-@container carta (max-height: 540px) {
+@container carta (max-height: 33.75rem) { /* 540px con il carattere normale (16px) */
   .mode-modal__facts {
     display: none;
   }
 }
 
-@container carta (max-height: 480px) {
+@container carta (max-height: 30rem) { /* 480px con il carattere normale (16px) */
   .mode-modal__desc {
     display: none;
   }
@@ -499,7 +523,7 @@
   }
 }
 
-@container carta (max-height: 420px) {
+@container carta (max-height: 26.25rem) { /* 420px con il carattere normale (16px) */
   .mode-modal__body {
     gap: 10px;
     padding: 22px 26px 20px;
