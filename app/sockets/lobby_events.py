@@ -5,6 +5,8 @@ P68: cpu:start, la partita contro la CPU (P122: anche nel 2v2).
   con `invalid_data`, senza correzioni.
 - queue:join porta `request_id` (contratto 1.3): lo stesso tentativo ripetuto riceve la
   risposta della prima volta (RecentRequests di P45), senza entrare in coda due volte.
+- R7 (24/10/2026): queue:join gira sotto il lock degli inviti, come cpu:start e
+  invite:start, e risponde `busy` anche con un invito aperto.
 - queue:join mette in coda un giocatore singolo, nel 1v1 o nel 2v2 (P29). La coppia
   già formata (l'amico compagno nel 2v2) non passa da qui: entra con invite:start (P47),
   che chiama matchmaker.join_pair.
@@ -22,6 +24,7 @@ P68: cpu:start, la partita contro la CPU (P122: anche nel 2v2).
 Cosa contiene:
     on_join(data)        queue:join, entra in coda
     on_leave(data)       queue:leave, esce dalla coda
+    _join_queue(...)     l'ingresso in coda sotto il lock degli inviti (R7)
     on_cpu_start(data)   cpu:start, partita contro la CPU
     register(socketio)   registra i tre gestori
 
@@ -121,9 +124,28 @@ def on_join(data=None):
 
     def join_queue():
         """L'ingresso vero in coda (lo chiama recent.run, se il tentativo è nuovo)."""
-        return matchmaker.join(app, user, mode, target_score, sid)
+        return _join_queue(app, user, mode, target_score, sid)
 
     return recent.run(user.id, "queue:join", request_id, join_queue)
+
+
+def _join_queue(app, user, mode, target_score, sid):
+    """L'ingresso in coda, sotto il lucchetto degli inviti (R7 di REVIEW.md).
+
+    In parole semplici:
+        _join_queue(app, user, mode, target_score, sid)
+        Come cpu:start e invite:start, gira con invites.lock preso: così queue:join e
+        cpu:start mandati insieme da due schede passano uno alla volta, e il secondo vede
+        quello che ha fatto il primo (in partita o in coda: busy). Prima queue:join
+        controllava "non in partita" senza lucchetto, e l'utente poteva finire in coda e
+        in partita insieme. Con un invito aperto (mandato o ricevuto) risponde busy, come
+        dice il contratto (busy: "in partita, in coda o ha un invito in sospeso").
+        Restituisce lo stato della coda (matchmaker.join).
+    """
+    with invites.lock:
+        if invites.open_of(user.id) is not None:
+            raise EventError("busy", "Hai un invito aperto: annullalo prima di cercare una partita.")
+        return matchmaker.join(app, user, mode, target_score, sid)
 
 
 @handler

@@ -22,6 +22,19 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### R7 — Coda, CPU e inviti sotto lo stesso lock (24/10/2026)
+
+- **Branch**: fix/r7-coda-inviti-lock (da `dev` a `71fa9d6`)
+- **File**: modificati `app/sockets/lobby_events.py`, `app/realtime/matchmaking.py` (elenco di R7); nuovo `tests/sockets/test_coda_lock_inviti.py`; questo file
+- **Il difetto** [L]: `cpu:start` e `invite:start` controllano "libero" sotto `invites.lock`, `queue:join` no: due schede che mandano insieme `cpu:start` e `queue:join` potevano mettere l'utente in coda e in partita insieme; quando la coda lo abbinava `create_room` rifiutava, gli altri tornavano in coda e la sua voce spariva senza `queue:left` (la pagina restava "in coda"). E `queue:join` riusciva anche con un invito aperto
+- **Correzione**: (1) `queue:join` passa da `_join_queue` di `lobby_events.py`, che gira con `invites.lock` preso (come `cpu:start`) e risponde `busy` "Hai un invito aperto: annullalo prima di cercare una partita." con un invito aperto, mandato o ricevuto (il contratto dice già: `busy` = "in partita, in coda o ha un invito in sospeso"); (2) in `_start_game` di `matchmaking.py`, se `create_room` rifiuta, la voce che non torna in coda riceve `queue:left`: `"cancelled"` chi è già in partita, `"partner_left"` il compagno di coppia o di gruppo. L'ordine dei lucchetti resta "prima inviti, poi coda ed elenco delle stanze", come in `invite:start`. Nella home normale non cambia niente di visibile (chi invita chiude la carta-modal, e così annulla gli inviti, prima di poter toccare la Partita Veloce; chi riceve ha la finestra dell'invito davanti): conta con due schede
+- **Test** (`test_coda_lock_inviti.py`, 3): `queue:join` con un invito ricevuto e con uno mandato → `busy`; il test tiene `invites.lock`, `queue:join` aspetta, intanto il test crea la partita (come `cpu:start`) e alla fine `queue:join` risponde `busy` e l'utente non è in coda; Primo in coda entra in partita per un'altra via, la coda lo abbina con Secondo: Primo riceve `queue:left` "cancelled" e Secondo torna in coda. Senza le correzioni falliscono tutti e tre [T]
+- **Controlli**: con il runner `sockets` **339 PASS** (336 + 3), `api` **307 PASS**, `e2e` **12 PASS**; con pytest `test_spa_home_coda.py` **12 PASS**; `ruff` pulito [T]
+- **Decisioni prese**: nessuna nuova (lo spec di R7 in `REVIEW.md` e il contratto, `busy`)
+- **Domande nuove**: nessuna
+- **Punti delicati** (per "Coda (P28, P29)" e "Inviti (P47)" in `CLAUDE.md`): (1) `queue:join` gira sotto `invites.lock` come `cpu:start` e `invite:start`: un ingresso nuovo in coda o in partita va messo sotto lo stesso lucchetto, prendendolo **prima** di quelli della coda e dell'elenco delle stanze; (2) `invite:accept` controlla ancora "libero" (`_check_free`) fuori dal lucchetto: con `queue:join` sotto il lucchetto un invito accettato si vede, ma un controllo nuovo prima di una scrittura va dentro il lucchetto
+- **Note per gli altri**: **Chi è di turno**: R7 si può spuntare in `REVIEW.md`. Resta R6 (secondo tentativo del salvataggio)
+
 ### R4 — Le stanze finite si tolgono dalla memoria (24/10/2026)
 
 - **Branch**: fix/r4-stanze-finite (da `dev` a `af9a16a`)

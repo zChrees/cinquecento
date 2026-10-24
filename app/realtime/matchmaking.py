@@ -784,7 +784,9 @@ class Matchmaker:
             Si mescolano le squadre (quale comincia) e i giocatori dentro ogni squadra
             (chi siede dove), poi si alternano: posti 0 e 2 una squadra, 1 e 3 l'altra.
             Se create_room rifiuta (qualcuno è già entrato in partita per un'altra via),
-            gli altri tornano in coda.
+            gli altri tornano in coda. R7: chi non ci torna riceve queue:left, "cancelled"
+            chi è già in partita e "partner_left" il suo compagno di coppia o di gruppo;
+            prima la sua voce spariva in silenzio e la pagina restava "in coda".
         """
         rng = secrets.SystemRandom()
         teams = []
@@ -804,13 +806,21 @@ class Matchmaker:
             # Qualcuno è entrato in partita per un'altra via: gli altri tornano in coda
             log.warning("Partita dalla coda non creata: utenti %s", list(match.user_ids))
             for entry in match.entries:
-                free = True
+                # busy: chi della voce è già in una partita
+                busy = []
                 for user_id in entry.user_ids:
                     if find_room_of_user(user_id) is not None:
-                        free = False
-                        break
-                if free:
+                        busy.append(user_id)
+                if len(busy) == 0:
                     self.queue.requeue(entry)
+                    continue
+                # R7: la voce non torna in coda, e le sue pagine lo devono sapere
+                for user_id in entry.user_ids:
+                    if user_id in busy:
+                        reason = "cancelled"
+                    else:
+                        reason = "partner_left"
+                    socketio.emit("queue:left", {"reason": reason}, to=user_channel(user_id))
             return
         seat_ids = []
         for player in seats:
