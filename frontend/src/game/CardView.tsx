@@ -115,7 +115,7 @@ interface CardViewProps {
 export function CardView(props: CardViewProps): JSX.Element {
   // style: il ritardo dell'animazione resta quello di quando è cominciata
   const style = useSteadyStyle(props.style);
-  // className: le classi, quelle di sempre e poi quelle in più
+  // className: le classi, prima quelle di ogni carta e poi quelle in più
   let className = `card card--${props.card.suit}`;
   if (props.extraClass !== '') {
     className = `${className} ${props.extraClass}`;

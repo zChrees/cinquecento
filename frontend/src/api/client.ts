@@ -1,12 +1,12 @@
 /**
- * Le richieste HTTP della SPA (passo 4 della migrazione): le rotte JSON di Flask
+ * Le richieste HTTP della SPA: le rotte JSON di Flask
  * sotto /api/ (DECISIONI.md, 19/10/2026).
  *
  * Cosa contiene:
  *   loadSession()              GET /api/auth/session, una volta sola per pagina
  *   getJson(indirizzo)         una richiesta GET che risponde in JSON (per esempio /api/stats/me)
  *   postJson(indirizzo, dati)  una richiesta POST in JSON con il codice CSRF
- *   deleteJson(indirizzo)      una richiesta DELETE con il codice CSRF (passo 5b)
+ *   deleteJson(indirizzo)      una richiesta DELETE con il codice CSRF
  *
  * Per esempio:
  *   const answer = await postJson<LoginBody, AuthDone>('/api/auth/login', body);
@@ -145,7 +145,7 @@ export async function postJson<B, T>(url: string, body: B): Promise<Answer<T>> {
  * In parole semplici:
  *   const answer = await deleteJson<null>('/api/friends/31');
  *   Come postJson, ma per togliere qualcosa (un amico, una richiesta, un blocco:
- *   pannello amici, passo 5b).
+ *   pannello amici).
  */
 export async function deleteJson<T>(url: string): Promise<Answer<T>> {
   return sendWithCsrf<T>('DELETE', url, null);

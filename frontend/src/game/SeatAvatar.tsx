@@ -11,7 +11,7 @@
  * codici validi), al tavolo un codice fuori elenco mostra l'iniziale:
  * i giocatori arrivano anche dalle viste finte di app/static/dev/, dove
  * Giulia ha 'cavallo_spade', che non c'è. Per questo qui c'è una copia dell'elenco
- * (scelta del 20/10/2026, passo 8a): l'altra è in app/services/avatars.py;
+ * (scelta del 20/10/2026): l'altra è in app/services/avatars.py;
  * tests/frontend/test_avatar.py controlla che siano uguali. Un codice nuovo va
  * aggiunto in tutti e due i posti.
  *

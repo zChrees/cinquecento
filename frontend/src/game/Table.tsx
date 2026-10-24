@@ -22,8 +22,8 @@
  * La pagina non calcola regole: le carte giocabili sono legal.play, i canti
  * legal.sing e la calata legal.lay_down. I "momenti" del tavolo (presa appena
  * chiusa, riepilogo, canti, carte calate, lanci, P57 e P70) arrivano già decisi in
- * `moments`: qui si disegnano soltanto. Nel lotto 8a la pagina li lascia vuoti
- * (NO_MOMENTS); li riempiono i lotti 8b–8e.
+ * `moments`: qui si disegnano soltanto (GamePage.tsx parte da NO_MOMENTS e li
+ * riempie dallo store).
  *
  * DA DOVE ARRIVANO I DATI (la catena delle chiamate):
  *   1. il server manda la vista con game:state (nella prova, la vista finta di
@@ -142,7 +142,7 @@ export interface TableMoments {
   advice: Advice | null;
 }
 
-// NO_MOMENTS: nessun momento da mostrare (la prima vista, e tutto il lotto 8a)
+// NO_MOMENTS: nessun momento da mostrare (per esempio alla prima vista)
 export const NO_MOMENTS: TableMoments = {
   lastTrick: null,
   lastTrickFor: 0,
@@ -540,8 +540,8 @@ function Result(props: ResultProps): JSX.Element | null {
       <h2>{title}</h2>
       <p>{text}</p>
       {summary}
-      {/* discover="none": senza, React Router aggiunge l'attributo data-discover, che il
-          template Jinja non ha (lo stesso HTML, lotto 8h) */}
+      {/* discover="none": senza, React Router aggiunge l'attributo data-discover, che
+          qui non serve */}
       <Link className="btn btn--primary" to="/" discover="none">Torna alla home</Link>
     </div>
   );

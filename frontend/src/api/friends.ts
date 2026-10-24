@@ -17,8 +17,7 @@
  *
  * Come le funzioni di client.ts, non falliscono mai: la risposta è sempre
  * { ok: true, data } oppure { ok: false, error }, e senza rete 'no_connection'.
- * Fino al lotto 9c della migrazione le rotte erano /friends/...: ora stanno
- * sotto /api/ come tutte le rotte di dati (DECISIONI.md, 19/10/2026).
+ * Le rotte stanno sotto /api/friends/, come tutte le rotte di dati sotto /api/.
  *
  * DA DOVE ARRIVANO I DATI: da Flask (app/blueprints/friends/routes.py), con il
  * cookie della sessione e il codice CSRF di /api/auth/session (client.ts).

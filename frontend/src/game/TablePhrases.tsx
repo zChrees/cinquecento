@@ -13,8 +13,8 @@
  * la pagina (GamePage.tsx).
  *
  * Fuoco e scorrimento dell'elenco restano dopo un ridisegno da soli (P110): React
- * tiene gli stessi elementi. Le
- * entrate di elenco e fumetto hanno il ritardo fermo (useStartDelay, lotto 8f).
+ * tiene gli stessi elementi. Le entrate di elenco e fumetto hanno il ritardo
+ * fermo (useStartDelay).
  *
  * DA DOVE ARRIVANO I DATI: l'elenco da game:phrases (nella prova dall'evento
  * demo:phrases), il fumetto da game:phrase (nella prova demo:phrase).

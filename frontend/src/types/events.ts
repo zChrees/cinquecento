@@ -10,9 +10,8 @@
  *   e i tipi dei dati: QueueStatus, Invite, ChatMessage, ...
  *
  * DA DOVE ARRIVANO I DATI: gli eventi del server li mandano app/sockets/ e
- * app/realtime/ (socketio.emit); quelli della pagina partiranno da
- * frontend/src/socket/ (passo 3), che userà questi elenchi per controllare nome
- * ed eventi: un nome sbagliato o un dato mancante diventa un errore di
+ * app/realtime/ (socketio.emit); quelli della pagina partono da
+ * frontend/src/socket/, che usa questi elenchi per controllare nome ed eventi: un nome sbagliato o un dato mancante diventa un errore di
  * TypeScript invece di un errore nel browser.
  *
  * Gli elenchi sono "interface" con il nome dell'evento come chiave: per
@@ -206,7 +205,7 @@ export interface ClientEvents {
   'queue:join': { request_id: string; mode: Mode; target_score: TargetScore };
   // nessun dato: un oggetto vuoto
   'queue:leave': Record<string, never>;
-  // dal 23/10/2026 (passo 8h): la home chiede lo stato quando compare con il collegamento già aperto
+  // la home chiede lo stato quando compare con il collegamento già aperto
   'home:refresh': Record<string, never>;
   'cpu:start': { request_id: string; target_score: TargetScore; mode: Mode };
   'invite:send': { request_id: string; user_id: number; mode: Mode; target_score: TargetScore };

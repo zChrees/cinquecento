@@ -1,5 +1,5 @@
 /**
- * Pagina "non trovata" (lotto 9d della migrazione): la disegna React per ogni
+ * Pagina "non trovata": la disegna React per ogni
  * indirizzo che non è una sua pagina. Flask manda la SPA per ogni indirizzo senza
  * rotta fuori da /api/, /static/ e /socket.io (regola unica, spa_fallback di
  * app/blueprints/spa/routes.py), quindi chi sbaglia indirizzo arriva qui.

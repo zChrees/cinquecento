@@ -4,7 +4,7 @@
  * Cosa contiene:
  *   router   l'oggetto che main.tsx passa a <RouterProvider>
  *
- * Dal lotto 9d (regola unica) Flask manda la SPA per ogni indirizzo senza rotta
+ * Flask manda la SPA per ogni indirizzo senza rotta
  * fuori da /api/, /static/ e /socket.io (spa_fallback di app/blueprints/spa/routes.py),
  * e Vite fa lo stesso in sviluppo: un indirizzo che non è qui sotto lo disegna
  * NotFoundPage ("Pagina non trovata"). Una pagina nuova della SPA si aggiunge qui;

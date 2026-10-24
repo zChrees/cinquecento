@@ -1,17 +1,17 @@
 /**
- * La pagina delle impostazioni (P17, passo 6 della migrazione): /profile/settings.
+ * La pagina delle impostazioni (P17): /profile/settings.
  * (Stile in css/pages/profile.css, più layout.css, form.css e button.css).
  *
  * Cosa contiene:
  *   <SettingsPage />   tre parti:
  *   - Avatar: la griglia con "Iniziale" e gli avatar del set; "Salva l'avatar" lo
- *     salva e ricarica la pagina con "Avatar salvato." (come prima);
+ *     salva e ricarica la pagina con "Avatar salvato.";
  *   - Suoni (P103, P115): l'interruttore, che salva subito la scelta nel browser
  *     (utils/sounds.ts) e non passa dal server;
  *   - Cancella l'account: una finestra nella pagina chiede la password; se il server
  *     la accetta l'utente esce e va alla home con "Account cancellato...".
  * Senza connessione niente parte: compare la finestra "Nessuna connessione". Gli
- * errori del server compaiono in basso, come i messaggi di prima. I pulsanti si
+ * errori del server compaiono in basso, nell'elenco dei messaggi. I pulsanti si
  * spengono finché non arriva la risposta (niente doppio clic).
  *
  * DA DOVE ARRIVANO I DATI: chi sei (nome e avatar attuale) dalla sessione
@@ -194,7 +194,7 @@ export function SettingsPage(): JSX.Element {
   }
 
   /**
-   * Invio nella casella della password = "Cancella l'account" (come prima).
+   * Invio nella casella della password = "Cancella l'account".
    * Il pulsante rosso lo trova nella finestra che contiene la casella.
    */
   function handlePasswordKeyDown(event: KeyboardEvent<HTMLInputElement>): void {

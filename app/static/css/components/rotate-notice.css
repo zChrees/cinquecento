@@ -1,5 +1,5 @@
 /*
- * P116: avviso "Gira il telefono in verticale" (partials/rotate_notice.html), su tutte
+ * P116: avviso "Gira il telefono in verticale" (in frontend/index.html e base.html), su tutte
  * le pagine. Si vede solo su un telefono in orizzontale: schermo più largo che alto e
  * alto al massimo 500 px (i telefoni in orizzontale sono alti 360-430 px; tablet e
  * computer almeno 600). Copre tutta la pagina, che sotto va avanti (una partita in

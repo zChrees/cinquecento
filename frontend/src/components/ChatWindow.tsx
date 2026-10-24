@@ -1,5 +1,5 @@
 /**
- * La chat con un amico (P46, P48, passo 5c della migrazione): si apre dentro il
+ * La chat con un amico (P46, P48): si apre dentro il
  * pannello amici, al posto della lista (stile in
  * css/components/chat.css).
  *

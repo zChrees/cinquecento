@@ -1,5 +1,5 @@
 /**
- * Le richieste HTTP della home (passo 7 della migrazione).
+ * Le richieste HTTP della home.
  *
  * Cosa contiene:
  *   fetchOnlineCount()   GET /api/online: quanti utenti sono collegati (anche senza login, P82)
@@ -24,7 +24,7 @@ import { getJson } from './client';
 import type { Answer } from './client';
 
 // DEMO_RESUME: ?demo=rientro mostra l'avviso di rientro con i dati finti
-// (come la home Jinja: DEMO_STATES di app/blueprints/main/routes.py)
+// (i valori ammessi sono DEMO_STATES di app/blueprints/main/routes.py)
 export const DEMO_RESUME = 'rientro';
 
 // DEMO_URL e DEMO_KEY: il file dei dati finti della home e la voce con la

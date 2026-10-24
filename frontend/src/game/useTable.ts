@@ -1,5 +1,5 @@
 /**
- * Il tavolo dentro React (passo 8 della migrazione): avvia lo store del tavolo
+ * Il tavolo dentro React: avvia lo store del tavolo
  * (tableStore.ts) quando la pagina compare, lo ferma quando sparisce, e
  * restituisce la sua fotografia, ridisegnando la pagina a ogni cambio.
  *
@@ -24,7 +24,7 @@ import type { TableSnapshot } from './tableStore';
  *
  * @param {string} gameId il codice della partita, per esempio 'e5f6a7b8'
  * @param {string | null} demo il valore di ?demo=, oppure null fuori dalla prova
- * @param {() => void} home la funzione che torna alla home (passo 8h: navigate, senza ricaricare)
+ * @param {() => void} home la funzione che torna alla home (navigate, senza ricaricare)
  * @returns {TableSnapshot}
  *
  * In parole semplici:

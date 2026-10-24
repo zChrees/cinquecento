@@ -1,6 +1,6 @@
 /**
- * Aprire e chiudere una finestra <dialog> della navbar (pannello statistiche, e
- * dal passo 5b il pannello amici), con l'animazione di uscita.
+ * Aprire e chiudere una finestra <dialog> della navbar (pannello statistiche e
+ * pannello amici), con l'animazione di uscita.
  *
  * Cosa contiene:
  *   const sheet = sheetControls(dialogRef);

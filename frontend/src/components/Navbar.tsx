@@ -1,13 +1,12 @@
 /**
- * La navbar delle pagine della SPA (P40), con lo stesso HTML di
- * app/templates/partials/navbar.html (stile in components/navbar.css).
+ * La navbar delle pagine della SPA (P40; stile in components/navbar.css).
  *
  * - Senza login: icona generica e "Accedi", il logo, "Amici"; avatar e amici aprono
- *   la finestra "Accedi o registrati per giocare" (passo 4).
+ *   la finestra "Accedi o registrati per giocare".
  * - Con il login: avatar e nome, che aprono il pannello statistiche (StatsSheet);
- *   il logo; "Amici" con il contatore, che apre il pannello amici (FriendsPanel, passo 5b).
+ *   il logo; "Amici" con il contatore, che apre il pannello amici (FriendsPanel).
  *   Solo con il login la pagina si collega al tempo reale: per questo anche l'avviso
- *   di connessione (ConnectionBanner, P33) sta qui (dal passo 6; prima nella pagina di prova).
+ *   di connessione (ConnectionBanner, P33) sta qui.
  * - Finché non si sa chi è collegato (la sessione non è ancora arrivata) i due
  *   pulsanti ci sono ma non si vedono: così chi ha il login non vede per un attimo "Accedi".
  *

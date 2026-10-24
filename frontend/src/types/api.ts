@@ -8,16 +8,15 @@
  *   FriendsList, Friend, ...      GET /api/friends/
  *   SentRequestBody, BlockBody    i corpi di POST /api/friends/requests e /api/friends/blocks
  *   Online                        GET /api/online
- *   Session, LoginBody,           le rotte /api/auth/ della SPA (passo 4 della migrazione;
- *   RegisterBody, AuthDone,       il logout dal lotto 9c)
+ *   Session, LoginBody,           le rotte /api/auth/: sessione, accesso, registrazione
+ *   RegisterBody, AuthDone,       e uscita
  *   LogoutBody
- *   AvatarList, AvatarBody,       le rotte /api/profile/ delle impostazioni (passo 6)
+ *   AvatarList, AvatarBody,       le rotte /api/profile/ delle impostazioni
  *   DeleteAccountBody
  *
  * DA DOVE ARRIVANO I DATI: le rotte dei blueprint stats, friends e main di Flask.
  * Ogni risposta ha la forma di common.ts: OkWithData<Stats> | ErrorResponse.
- * Tutte le rotte stanno sotto /api/: le nuove dal passo 4 della migrazione,
- * amici, statistiche e online dal lotto 9c (prima /friends/, /stats/me, /online).
+ * Tutte le rotte stanno sotto /api/.
  */
 
 import type { UserRef } from './common';
@@ -106,12 +105,12 @@ export interface Online {
   online_count: number;
 }
 
-// --- Accesso e registrazione (/api/auth/, passo 4 della migrazione) --------
+// --- Accesso e registrazione (/api/auth/) ---------------------------------
 
 // FlashKind: il tipo di un messaggio lasciato dal server con flash()
 export type FlashKind = 'success' | 'error' | 'info';
 
-// Flash: un messaggio da mostrare in basso (come partials/flash.html), per
+// Flash: un messaggio da mostrare in basso (FlashList.tsx), per
 // esempio { kind: 'success', message: 'Account cancellato.' }
 export interface Flash {
   kind: FlashKind;
@@ -129,7 +128,7 @@ export interface Session {
   flashes: Flash[];
 }
 
-// LogoutBody: il corpo di POST /api/auth/logout (lotto 9c): un oggetto vuoto, {}.
+// LogoutBody: il corpo di POST /api/auth/logout: un oggetto vuoto, {}.
 // Record<string, never> vuol dire "un oggetto senza nessun campo".
 export type LogoutBody = Record<string, never>;
 
@@ -152,14 +151,14 @@ export interface RegisterBody {
   confirm: string;
 }
 
-// AuthDone: la risposta di login e registrazione riusciti, e (passo 6) di
-// "Salva l'avatar" e della cancellazione dell'account, e (lotto 9c) del logout
+// AuthDone: la risposta di login e registrazione riusciti, di "Salva l'avatar",
+// della cancellazione dell'account e del logout
 export interface AuthDone {
   // dove andare adesso, per esempio '/' (la home)
   redirect: string;
 }
 
-// --- Impostazioni (/api/profile/, passo 6 della migrazione) ------------------
+// --- Impostazioni (/api/profile/) -------------------------------------------
 
 // AvatarChoice: un avatar che si può scegliere
 export interface AvatarChoice {

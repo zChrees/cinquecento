@@ -7,8 +7,7 @@
  * `--${string}` vuol dire "due trattini e poi qualunque testo". React le scrive
  * con element.style.setProperty, che la CSP permette.
  *
- * Il blocco stava in components/CardBackground.tsx (passo 7a); dal passo 8 sta qui
- * perché serve a tutto il frontend, anche al tavolo (--i e --n dei ventagli,
+ * Sta in un file a parte perché serve a tutto il frontend, anche al tavolo (--i e --n dei ventagli,
  * --timer-left dell'anello del tempo). Un file .d.ts contiene solo tipi: non
  * produce codice. L'import qui sotto lo rende un "modulo", così "declare module"
  * aggiunge un campo al tipo di React invece di sostituirlo.

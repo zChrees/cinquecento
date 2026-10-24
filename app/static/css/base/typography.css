@@ -1,11 +1,11 @@
 /*
  * Testo, icone e accessibilità (P19, dal prototipo P52).
  * Fredoka per titoli e numeri, Nunito per il resto (da Google Fonts, caricati solo in
- * base.html; elenco in docs/prototipo/LEGGIMI.md), icone Material Symbols Rounded.
+ * frontend/index.html e, per le pagine di errore, in base.html; elenco in docs/prototipo/LEGGIMI.md), icone Material Symbols Rounded.
  */
 
 /* Icone (D40): font nel progetto con solo le icone di fonts/icone.txt, riempite, spessore
-   500 (le varianti sono fisse nel file). base.html lo precarica. */
+   500 (le varianti sono fisse nel file). frontend/index.html e base.html lo precaricano. */
 @font-face {
   font-family: "Material Symbols Rounded";
   font-style: normal;

@@ -169,7 +169,7 @@ interface LastTrickProps {
  *   <LastTrick lastTrick={view.last_trick} positionOf={...} winnerText="Prendi tu" shownFor={200} thrown={{}} />
  *   Disegna <div class="trick trick--closed trick--to-bottom" data-last-trick>
  *   con le carte e la scritta di chi prende. Quando e per quanto si vede lo decide
- *   la pagina (dal lotto 8c).
+ *   la pagina.
  */
 export function LastTrick(props: LastTrickProps): JSX.Element {
   const winner = props.lastTrick.winner_seat;

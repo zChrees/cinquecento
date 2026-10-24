@@ -8,7 +8,7 @@
  * Per ogni squadra: i punti delle carte prese, dei canti e il totale della mano;
  * sotto, il punteggio della partita. La tua squadra è sempre la prima colonna. Si
  * usa in due posti: sopra il centro del tavolo a inizio della mano nuova (con
- * "Ok", dal lotto 8c), e dentro il riquadro di fine partita (senza "Ok").
+ * "Ok"), e dentro il riquadro di fine partita (senza "Ok").
  *
  * DA DOVE ARRIVANO I DATI: dalla vista del server (last_hand, scores, players).
  */
@@ -85,7 +85,7 @@ export function HandSummary(props: HandSummaryProps): JSX.Element {
     const done = teams[i];
     const isMine = done.team === mine;
     // className: solo la colonna della tua squadra ha la classe; per le altre
-    // undefined, cioè nessun attributo class (come prima)
+    // undefined, cioè nessun attributo class
     let className: string | undefined = undefined;
     if (isMine) {
       className = 'hand-summary__mine';

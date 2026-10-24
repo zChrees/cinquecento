@@ -45,7 +45,7 @@ function imageOf(who: string, suit: string): string {
  *   <Logo />
  *   Disegna il link alla home con le due carte e la scritta. Le carte si girano
  *   cambiando le loro classi direttamente nel DOM (is-flipping, is-front), non
- *   con lo stato di React: così il logo non si ridisegna a ogni girata, come prima.
+ *   con lo stato di React: così il logo non si ridisegna a ogni girata.
  */
 export function Logo(): JSX.Element {
   // markRef: il <span> con le due carte, che React mette in markRef.current dopo

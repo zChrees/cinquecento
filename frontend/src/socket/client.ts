@@ -1,6 +1,5 @@
 /**
- * La connessione in tempo reale della SPA (passo 3 della migrazione;
- * P23, contratto 1.4), con i tipi del contratto (types/events.ts).
+ * La connessione in tempo reale della SPA (P23, contratto 1.4), con i tipi del contratto (types/events.ts).
  *
  * Cosa contiene:
  *   connect()                     apre la connessione, una sola per scheda
@@ -24,10 +23,9 @@
  * Flask (vite.config.ts). Si collega solo chi ha fatto il login: il cookie della
  * sessione va con la connessione (withCredentials).
  *
- * Cosa NON c'è qui: l'avviso in cima alla pagina
- * ("Connessione persa: riprovo…", P33). È un pezzo dell'interfaccia: si rifà
- * come componente React con la cornice delle pagine (passo 5), leggendo lo stato
- * da useConnection.
+ * Cosa NON c'è qui: l'avviso in cima alla pagina ("Connessione persa: riprovo…",
+ * P33). È un pezzo dell'interfaccia: lo disegna components/ConnectionBanner.tsx,
+ * leggendo lo stato da useConnection.
  */
 
 import { io } from 'socket.io-client';

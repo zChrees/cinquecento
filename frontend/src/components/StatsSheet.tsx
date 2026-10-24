@@ -143,8 +143,7 @@ export function StatsSheet(props: StatsSheetProps): JSX.Element {
    * In parole semplici:
    *   Il modulo non va al server da solo (preventDefault): la richiesta
    *   POST /api/auth/logout la manda postJson, con il codice CSRF. Se va bene si
-   *   ricarica la home (window.location.assign), come faceva il modulo di prima:
-   *   la pagina riparte da zero, senza collegamento né dati dell'utente uscito.
+   *   ricarica la home (window.location.assign): la pagina riparte da zero, senza collegamento né dati dell'utente uscito.
    *   Se non va (rete caduta, errore del server) il pulsante si riaccende.
    */
   async function handleLogout(event: FormEvent<HTMLFormElement>): Promise<void> {

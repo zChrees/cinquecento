@@ -61,7 +61,7 @@ export function Credits(): JSX.Element {
  * In parole semplici:
  *   <LoginPrompt onDone={handleDone} />
  *   Se si sceglie un pulsante, la pagina va a quell'indirizzo (un caricamento
- *   vero, come prima); altrimenti chiama props.onDone.
+ *   vero della pagina); altrimenti chiama props.onDone.
  */
 export function LoginPrompt(props: LoginPromptProps): JSX.Element {
   /** La finestra si è chiusa: value è l'indirizzo scelto, oppure null. */

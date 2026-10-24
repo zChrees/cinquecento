@@ -1,6 +1,6 @@
 /**
- * Pagina di accesso, /auth/login (P16, P96, P125; passo 4 della migrazione; stile
- * in css/pages/auth.css e components/form.css).
+ * Pagina di accesso, /auth/login (P16, P96, P125; stile in
+ * css/pages/auth.css e components/form.css).
  *
  * Cosa contiene:
  *   <LoginPage />
@@ -12,7 +12,7 @@
  *   - se il server accetta, la pagina va all'indirizzo che risponde (la pagina
  *     chiesta prima, ?next=, o la home);
  *   - un errore di un campo va sotto il campo, gli altri (credenziali sbagliate,
- *     troppi tentativi) in basso, come i messaggi di prima.
+ *     troppi tentativi) in basso, nell'elenco dei messaggi (FlashList).
  *
  * DA DOVE ARRIVANO I DATI: quello che scrive l'utente; la risposta da
  * POST /api/auth/login (app/blueprints/auth/api.py).

@@ -1,5 +1,5 @@
 /**
- * Gli hook di React per il tempo reale (passo 3 della migrazione).
+ * Gli hook di React per il tempo reale.
  *
  * Un hook è una funzione di React che un componente chiama in cima, a ogni
  * disegno, per "agganciarsi" a qualcosa che sta fuori (qui: la connessione).

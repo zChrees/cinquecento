@@ -18,9 +18,9 @@ import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, JSX, RefObject } from 'react';
 
 // Le variabili CSS (--x, --dur, ...) dentro style={{ ... }}: TypeScript le conosce
-// grazie a types/css.d.ts (dal passo 8; prima il blocco stava qui).
+// grazie a types/css.d.ts.
 
-// IMG_BASE: la cartella delle immagini dello sfondo (data-img-base, come prima)
+// IMG_BASE: la cartella delle immagini dello sfondo (data-img-base)
 const IMG_BASE = '/static/img/cards-bg/';
 
 // RESIZE_DELAY_MS: dopo un cambio di misura della finestra, quanto aspettare prima

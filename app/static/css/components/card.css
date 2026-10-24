@@ -44,7 +44,7 @@ button.card {
  * il browser lascia ":hover" sulla carta appena toccata, e il tavolo, che si
  * ridisegna a ogni vista, la faceva abbassare e rialzare ("lampeggiare").
  * Da computer la carta sotto il mouse resta sollevata anche quando il tavolo si
- * ridisegna: React tiene la stessa carta (lotto 8g).
+ * ridisegna: React tiene la stessa carta.
  */
 @media (hover: hover) {
   button.card:not(:disabled):hover {

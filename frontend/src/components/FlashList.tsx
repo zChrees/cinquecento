@@ -1,7 +1,6 @@
 /**
- * I messaggi in basso (P19): la versione React di app/templates/partials/flash.html,
- * con lo stesso HTML (stile in app/static/css/base/layout.css: compaiono in basso
- * e spariscono da soli).
+ * I messaggi in basso (P19; stile in app/static/css/base/layout.css: compaiono in
+ * basso e spariscono da soli).
  *
  * Cosa contiene:
  *   <FlashList flashes={[{ kind: 'error', message: 'Credenziali non valide.' }]} />

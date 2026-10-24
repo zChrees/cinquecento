@@ -1,6 +1,5 @@
 /**
- * Pagina di registrazione, /auth/register (P16, P61, P125; passo 4 della
- * migrazione; stile in
+ * Pagina di registrazione, /auth/register (P16, P61, P125; stile in
  * css/pages/auth.css e components/form.css).
  *
  * Cosa contiene:

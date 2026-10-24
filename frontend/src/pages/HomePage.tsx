@@ -1,9 +1,8 @@
 /**
- * La home (P22), passo 7 della migrazione (stile in css/pages/home.css e
- * css/components/card-background.css). Dal lotto 7d è la home vera, su /; la home
- * Jinja di prima resta su /vecchia-home (solo sviluppo e test) fino al passo 9.
+ * La home (P22), su / (stile in css/pages/home.css e
+ * css/components/card-background.css).
  *
- * Lotto 7a: la parte "ferma" della home.
+ * La parte "ferma" della home:
  * - Le quattro carte-pulsante (Partita Veloce e Gioca con un amico, 1v1 e 2v2),
  *   che con il mouse si inclinano verso il puntatore. Senza login aprono "Accedi o
  *   registrati" (P40).
@@ -13,20 +12,21 @@
  * - L'avviso "Hai una partita in corso" con "Rientra" (ResumeBanner), da
  *   home:status, nello stesso spazio di "giocatori online". Con ?demo=rientro
  *   l'avviso è quello dei dati finti (si prova senza una partita vera).
- * Lotto 7b: la Partita Veloce.
+ *
+ * La Partita Veloce:
  * - Con il login una carta della Partita Veloce apre la carta-modal (ModeModal).
  *   "Gioca" con "Giocatore" manda queue:join (con un request_id per clic) e apre
  *   la schermata di coda (QueueOverlay), che si aggiorna con queue:status (anche
  *   dalle altre schede dello stesso utente); "Annulla" manda queue:leave e la
  *   schermata si chiude con la risposta o con queue:left ("partner_left": un
  *   messaggio dice che il compagno è uscito). Con "CPU" manda cpu:start (P73, P123:
- *   niente coda). game:start porta al tavolo (per ora la pagina Jinja).
+ *   niente coda). game:start porta al tavolo.
  * - "In breve" ha il rating vero, da GET /api/stats/me.
  * - Connessione (P33): senza connessione "Gioca" è spento; se la connessione cade
  *   la schermata di coda si chiude (chi resta senza schede esce dalla coda) e, se
  *   si è ancora in coda da un'altra scheda, al ritorno arriva queue:status e si riapre.
  *
- * Lotto 7c: gli inviti a partita (P47, contratto 5.3).
+ * Gli inviti a partita (P47, contratto 5.3):
  * - Con il login una carta "Gioca con un amico" apre la carta-modal con gli amici
  *   online (GET /api/friends/, riletta con friends:presence e friends:changed: vale solo
  *   l'ultima lettura partita, P65). "Invita" manda invite:send; invite:update
@@ -109,7 +109,7 @@ type TileKind = 'veloce' | 'amico';
 
 // ModeTileProps: cosa riceve una carta-pulsante
 interface ModeTileProps {
-  // la sezione: 'veloce' o 'amico' (data-kind, come prima)
+  // la sezione: 'veloce' o 'amico' (data-kind)
   kind: TileKind;
   // la modalità: '1v1' o '2v2' (data-mode)
   mode: Mode;
@@ -264,7 +264,7 @@ function HomeListener(props: HomeListenerProps): null {
   const onStatus = props.onStatus;
 
   /**
-   * Effetto (passo 8h, contratto 5.1): con il collegamento aperto chiede lo stato
+   * Effetto (contratto 5.1): con il collegamento aperto chiede lo stato
    * della home (home:refresh). home:status arriva solo al collegamento e ai
    * cambiamenti: tornando dal tavolo senza ricaricare la pagina il collegamento è
    * già aperto, e senza questa richiesta mancherebbero il numero degli online e
@@ -344,7 +344,7 @@ export function HomePage(): JSX.Element {
   const joining: RefObject<boolean> = useRef<boolean>(false);
   // starting: è arrivato game:start, si sta andando al tavolo
   const starting: RefObject<boolean> = useRef<boolean>(false);
-  // navigate: cambia pagina dentro la SPA, senza ricaricare (passo 8h: verso il tavolo)
+  // navigate: cambia pagina dentro la SPA, senza ricaricare (verso il tavolo)
   const navigate = useNavigate();
   // wasOnline: la pagina è già stata collegata almeno una volta
   const wasOnline: RefObject<boolean> = useRef<boolean>(false);
@@ -371,7 +371,7 @@ export function HomePage(): JSX.Element {
   const [incoming, setIncoming] = useState<IncomingInvite | null>(null);
   const incomingRef: RefObject<IncomingInvite | null> = useRef<IncomingInvite | null>(null);
 
-  /** Effetto: il titolo della scheda (prima lo scriveva base.html). */
+  /** Effetto: il titolo della scheda. */
   function setTitle(): void {
     document.title = 'Cinquecento';
   }
@@ -864,7 +864,7 @@ export function HomePage(): JSX.Element {
 
   /**
    * game:start: si va al tavolo (solo un indirizzo /game/... di questo sito). Dal
-   * passo 8h senza ricaricare la pagina (navigate di React Router): il tavolo è una
+   * senza ricaricare la pagina (navigate di React Router): il tavolo è una
    * pagina della SPA e il collegamento al tempo reale resta aperto.
    */
   function handleGameStart(start: GameStart): void {
@@ -1043,7 +1043,7 @@ export function HomePage(): JSX.Element {
     prompt = <LoginPrompt onDone={handlePromptDone} />;
   }
 
-  // demoState: data-demo-state="rientro" come nella home Jinja, solo con i dati finti
+  // demoState: data-demo-state="rientro", solo con i dati finti
   let demoState: string | undefined = undefined;
   if (demo) {
     demoState = DEMO_RESUME;

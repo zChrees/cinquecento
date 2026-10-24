@@ -1,5 +1,5 @@
 /**
- * Il contenuto della lista del pannello amici (P46, passo 5b della migrazione):
+ * Il contenuto della lista del pannello amici (P46):
  * richieste ricevute, amici divisi per stato, richieste mandate, bloccati (stile
  * in css/components/friends-panel.css).
  *

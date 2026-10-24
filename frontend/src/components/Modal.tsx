@@ -43,7 +43,7 @@ interface ModalProps {
   // il testo sotto il titolo; '' per niente
   message: string;
   // un pezzo in più sotto il testo (per esempio il campo della password per
-  // cancellare l'account, passo 6), oppure null. Se un suo elemento ha
+  // cancellare l'account), oppure null. Se un suo elemento ha
   // data-autofocus, all'apertura il fuoco va lì invece che sul primo pulsante
   content: JSX.Element | null;
   // i pulsanti, nell'ordine in cui compaiono (il principale per ultimo); il primo

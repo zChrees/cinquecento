@@ -1,13 +1,11 @@
 /**
- * I suoni (P103, P109, P113, P115, P118; passo 5c della
- * migrazione). File dei pacchetti
- * Kenney, licenza CC0: dettagli in app/static/sounds/LICENZA.md.
+ * I suoni (P103, P109, P113, P115, P118). File dei pacchetti Kenney, licenza CC0: dettagli in app/static/sounds/LICENZA.md.
  *
  * Cosa contiene:
  *   preloadSounds(true)        scarica i file e crea subito il contesto audio (una volta per pagina)
  *   playSound('message', 0)    suona subito; playSound('draw', 500) tra 500 ms
  *   soundsEnabled()            true se i suoni sono accesi
- *   setSoundsEnabled(false)    li spegne (l'interruttore delle impostazioni, passo 6)
+ *   setSoundsEnabled(false)    li spegne (l'interruttore delle impostazioni)
  *   SOUNDS                     nome del suono → file (lo confronta con i file
  *                              MP3 tests/table6/test_suoni.py)
  *

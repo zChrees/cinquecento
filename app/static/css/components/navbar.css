@@ -158,7 +158,7 @@
  * Avatar: l'immagine del set (P43) o l'iniziale (o l'icona per chi non ha fatto
  * il login). Le regole .avatar--img e .avatar__img valgono per ogni avatar
  * (anche .mini-avatar degli elenchi e .avatar-choice__face delle impostazioni):
- * questo file è caricato da base.html in tutte le pagine.
+ * questo file è caricato da frontend/index.html in tutte le pagine.
  */
 .avatar {
   display: inline-grid;

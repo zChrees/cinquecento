@@ -159,7 +159,7 @@
     display: inline;
   }
 
-  /* P101: al bordo destro della tua riga (.table__me, larga al massimo 560 px e centrata), come prima */
+  /* P101: al bordo destro della tua riga (.table__me, larga al massimo 560 px e centrata) */
   .phrases-menu {
     right: calc((100% - min(100%, 560px)) / 2);
   }

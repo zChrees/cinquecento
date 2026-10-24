@@ -2,8 +2,8 @@
  * Pannello amici (P46), dal prototipo di P52 (docs/prototipo/prototipo.css,
  * ".drawer" e seguenti): a tutto schermo su telefono, laterale da destra su
  * tablet e computer. Lo crea components/FriendsPanel.tsx; la chat dentro il
- * pannello è in chat.css. Caricato da base.html: il pannello si apre da ogni
- * pagina con la navbar.
+ * pannello è in chat.css. Caricato da frontend/index.html: il pannello si apre da
+ * ogni pagina con la navbar.
  */
 
 .drawer {

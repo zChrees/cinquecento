@@ -1,8 +1,5 @@
 /**
- * Tutte le durate del tavolo React, in un posto solo (passo 8 della migrazione,
- * docs/MIGRAZIONE-FRONTEND.md, "Piano del passo 8").
- *
- * Sono le durate del tavolo. Molte devono restare
+ * Tutte le durate del tavolo, in un posto solo. Molte devono restare
  * uguali ad altre copie: a quelle del server in app/realtime/room.py (le pause del
  * tavolo, P94) e alle durate delle animazioni nei CSS (css/components/trick.css,
  * hand.css). Le copie sono tre: room.py, questo file e i CSS (le confronta
@@ -10,8 +7,7 @@
  *
  * Una costante per riga, sempre nella forma
  *     export const NOME_MS: number = 1500;
- * perché i test le leggono con un'espressione regolare (il confronto con room.py
- * è il pezzo di Giuseppe del passo 8, dopo l'8a).
+ * perché i test le leggono con un'espressione regolare.
  *
  * Cosa contiene: solo numeri (millisecondi, tranne TICK_SECONDS).
  *

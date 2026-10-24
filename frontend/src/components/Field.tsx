@@ -1,7 +1,6 @@
 /**
  * Un campo di un modulo (P16, P19): etichetta, casella, regole sotto la casella
- * ed errori. Ha lo stesso HTML della macro field() delle pagine Jinja di accesso
- * e registrazione di prima (stile in app/static/css/components/form.css).
+ * ed errori (stile in app/static/css/components/form.css).
  *
  * Cosa contiene:
  *   <Field name="username" label="Username" type="text" autoComplete="username"
@@ -16,7 +15,7 @@ import type { ChangeEvent, JSX } from 'react';
 // FieldProps: cosa riceve il componente
 interface FieldProps {
   // il nome del campo, lo stesso del server: 'username', 'email', 'password', 'confirm'.
-  // È anche l'id della casella, come nelle pagine di prima (i test lo usano)
+  // È anche l'id della casella (i test lo usano)
   name: string;
   // l'etichetta, per esempio 'Nome utente o email'
   label: string;

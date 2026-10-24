@@ -1,7 +1,6 @@
 /**
- * La cornice delle pagine con un modulo (accesso e registrazione, passo 4 della
- * migrazione): la navbar, il <main> con le classi di prima e i messaggi in basso.
- * Prende il posto di base.html con page_class "page--form".
+ * La cornice delle pagine con un modulo (accesso e registrazione): la navbar, il
+ * <main class="page page--form"> e i messaggi in basso.
  *
  * Cosa contiene:
  *   <FormPage name="login" title="Accedi · Cinquecento" flashes={...}>...</FormPage>
@@ -25,7 +24,7 @@ let flashesTaken = false;
 
 // FormPageProps: cosa riceve il componente
 interface FormPageProps {
-  // il nome della pagina, in data-page di <main> (come prima: 'login', 'register')
+  // il nome della pagina, in data-page di <main> ('login', 'register')
   name: string;
   // il titolo della scheda del browser
   title: string;
@@ -48,7 +47,7 @@ interface FormPageProps {
  *   messaggi; quando compare cambia il titolo della scheda.
  */
 export function FormPage(props: FormPageProps): JSX.Element {
-  /** Effetto: il titolo della scheda (prima lo scriveva il template). */
+  /** Effetto: il titolo della scheda. */
   function setTitle(): void {
     document.title = props.title;
   }

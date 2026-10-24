@@ -1,11 +1,7 @@
 /**
- * Il ritardo di un'animazione, che resta fermo finché l'animazione è la stessa
- * (lotti 8c e 8d della migrazione, "Rischi principali" del piano del passo 8).
+ * Il ritardo di un'animazione, che resta fermo finché l'animazione è la stessa.
  *
- * Perché serve: il tavolo di prima (Jinja, tolto al 9a) ricreava tutti gli elementi a ogni
- * ridisegno, quindi ogni volta dava all'animazione il tempo già passato come
- * ritardo negativo (P70, P119) e l'animazione riprendeva dal punto giusto. React
- * invece tiene lo stesso elemento tra un disegno e l'altro: l'animazione continua
+ * Perché serve: React tiene lo stesso elemento tra un disegno e l'altro: l'animazione continua
  * da sola, e cambiarle il ritardo a metà la sposterebbe in avanti. Per questo il
  * ritardo si tiene quello del disegno in cui l'animazione è cominciata.
  *

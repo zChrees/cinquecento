@@ -5,7 +5,7 @@
  * descrizione, punti per vincere (150, 300, 500), la scelta tra un giocatore e la
  * CPU, "In breve", "Lo sapevi?" e "Gioca".
  *
- * Con un amico (lotto 7c) al posto di "In breve", della scelta della CPU e di "Lo
+ * Con un amico al posto di "In breve", della scelta della CPU e di "Lo
  * sapevi?" c'è la lista degli amici online da invitare. Nel 1v1 un invito alla
  * volta; nel 2v2 fino a MAX_INVITES['2v2'] amici (P59), e "Gioca" si accende
  * appena uno ha accettato. Mentre c'è un invito aperto i punti sono fermi, perché

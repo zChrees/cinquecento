@@ -1,6 +1,5 @@
 /**
- * Chi è collegato, per tutta la SPA (passo 5 della migrazione): prende il posto
- * di current_user nei template Jinja e degli attributi data-user-* di base.html.
+ * Chi è collegato, per tutta la SPA.
  *
  * Cosa contiene:
  *   <SessionProvider>...</SessionProvider>   chiede la sessione una volta e la passa giù

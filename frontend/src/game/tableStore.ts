@@ -1,8 +1,7 @@
 /**
- * Lo stato del tavolo React (passo 8 della migrazione): uno "store", cioè un
+ * Lo stato del tavolo: uno "store", cioè un
  * oggetto che tiene i dati della pagina e avvisa chi lo ascolta quando cambiano.
- * Lo store è una scelta di Christian del 20/10/2026 ("Piano del passo 8"); React
- * lo legge con useSyncExternalStore (useTable.ts) e ridisegna a ogni cambio.
+ * React lo legge con useSyncExternalStore (useTable.ts) e ridisegna a ogni cambio.
  *
  * Cosa contiene:
  *   startTable('e5f6a7b8', null)     avvia il tavolo (partita vera o prova); restituisce la funzione per fermarlo
@@ -17,7 +16,7 @@
  *   dealing, dealMoments, dealRoundKey, tablePaused       la distribuzione e le pause del tavolo
  *   demoState(dati), demoSang(dati), demoPhrases(dati), demoPhrase(dati)  gli eventi della prova
  *
- * Partita vera (lotto 8b): si collega, manda game:join (anche dopo ogni
+ * Partita vera: si collega, manda game:join (anche dopo ogni
  * riconnessione: il server rimanda la vista attuale) e a ogni game:state tiene la
  * vista nuova; una più vecchia (version minore) si ignora. Le mosse partono con la
  * version della vista su cui si è deciso; finché non arriva la risposta carte e
@@ -30,7 +29,7 @@
  * è scollegato scendono da soli, ogni secondo.
  * Prova (?demo=): niente server; vista finta ed eventi demo:*.
  *
- * Momenti del tavolo (lotto 8c, P57), decisi confrontando
+ * Momenti del tavolo (P57), decisi confrontando
  * la vista nuova con quella di prima (mai alla prima vista):
  *   - presa appena chiusa (last_trick cambiato nella stessa mano): resta al centro
  *     per LAST_TRICK_MS, o finché qualcuno gioca la prima carta della presa nuova;
@@ -44,21 +43,21 @@
  *     c'è la scritta "Mazzo finito: ora vedi le carte di …";
  *   - canto (game:sang, D15; demo:sang nella prova): Re e Cavallo accanto a chi ha
  *     cantato per show_seconds, e la frase nella riga di stato;
- *   - lancio (lotto 8d, P70): ogni carta che arriva sul tavolo (anche quella che
+ *   - lancio (P70): ogni carta che arriva sul tavolo (anche quella che
  *     chiude la presa o la mano) vola al suo posto in THROW_MS (la tua in
  *     MY_THROW_MS, P99), partendo da dove stava (P107, throwStart); P78: in fila,
  *     una quando si è posata la precedente; finché vola non se ne gioca un'altra;
- *   - pescata (lotto 8d, P70): quando il mazzo cala nella stessa mano, ognuno pesca
+ *   - pescata (P70): quando il mazzo cala nella stessa mano, ognuno pesca
  *     a turno partendo da chi ha preso, una carta alla volta (DRAW_MS), dopo che si
  *     è posata la carta che ha chiuso la presa (P78).
- *   - distribuzione (lotto 8e, P70): a ogni mano nuova le carte restano nascoste
+ *   - distribuzione (P70): a ogni mano nuova le carte restano nascoste
  *     finché si vedono l'ultima presa e il riepilogo; poi il mazzo si mescola
  *     (SHUFFLE_MS) e le carte partono una alla volta, dal giocatore dopo il mazziere
  *     (DEAL_STEP_MS); P118: alla prima vista anche la prima mano, una volta per scheda;
  *   - pause (P132): finché c'è uno dei momenti qui sopra il tempo del turno non
  *     scende e l'anello resta pieno e fermo (tablePaused, settle).
  *
- * Frasi (P56, D24) e suoni (P103, P109), lotto 8f: l'elenco arriva con game:phrases
+ * Frasi (P56, D24) e suoni (P103, P109): l'elenco arriva con game:phrases
  * a ogni game:join, una frase parte con game:send_phrase e il fumetto arriva con
  * game:phrase. Ogni momento ha il suo suono (carta che si posa, pescata, presa,
  * calata, canto, frase, mescolata e carte distribuite, vittoria o sconfitta), più
@@ -315,8 +314,8 @@ let generation = 0;
 let timers: number[] = [];
 // stops: le funzioni che smettono di ascoltare (socket, stato, load)
 let stops: (() => void)[] = [];
-// homeOf: la funzione della pagina che torna alla home (passo 8h: navigate di React
-// Router, senza ricaricare). La passa startTable; prima vale la home con un caricamento
+// homeOf: la funzione della pagina che torna alla home (navigate di React Router,
+// senza ricaricare). La passa startTable; prima vale la home con un caricamento
 let homeOf: () => void = loadHome;
 
 /** Torna alla home ricaricando la pagina: solo se il tavolo non ha ancora ricevuto la funzione della pagina. */
@@ -325,7 +324,7 @@ function loadHome(): void {
 }
 
 /**
- * Torna alla home (passo 8h): ferma il tavolo (timer, ticchettio, suoni programmati,
+ * Torna alla home: ferma il tavolo (timer, ticchettio, suoni programmati,
  * ascolti) e chiede alla pagina di cambiare indirizzo, senza ricaricare.
  */
 function goHome(): void {
@@ -334,7 +333,7 @@ function goHome(): void {
   go();
 }
 
-// P103, suoni del turno (lotto 8f): il tuo turno già annunciato, quello che aspetta
+// P103, suoni del turno: il tuo turno già annunciato, quello che aspetta
 // la fine delle pause, e il numero dei tic programmati (sale quando si annullano:
 // un tic con il numero vecchio non suona). Non sono nella fotografia perché non si
 // disegnano
@@ -346,7 +345,7 @@ let resultPending = false;
 
 /**
  * Un suono tra `ms` millisecondi (subito se 0 o meno), con un timer che stopTable
- * ferma: chiudendo il tavolo, i suoni programmati non suonano più (lotto 8f).
+ * ferma: chiudendo il tavolo, i suoni programmati non suonano più.
  *
  * @param {SoundName} name il suono, per esempio 'card'
  * @param {number} ms tra quanti millisecondi
@@ -489,7 +488,8 @@ function answerText(answer: OkEmpty | ErrorResponse | NoConnection): string {
  *   senza connessione o a fine mano (P69: finché si vedono l'ultima presa della
  *   mano, le carte calate e il riepilogo) legal diventa vuoto: nessuna carta e
  *   nessun canto accesi.
- *   Le pause del tavolo (P132) arrivano con i lotti 8d-8e: per ora il turno scende subito.
+ *   Il tempo del turno scende solo da quando il tavolo ha finito le pause (P132,
+ *   turnClockAt): durante le pause resta pieno.
  */
 export function viewForTable(current: TableSnapshot, now: number): GameView | null {
   const view = current.view;
@@ -532,7 +532,7 @@ export function viewForTable(current: TableSnapshot, now: number): GameView | nu
   return shown;
 }
 
-// --- I momenti del tavolo (P57, lotto 8c) ------------------------------------------------
+// --- I momenti del tavolo (P57) ---------------------------------------------------------
 
 /**
  * La mano sta finendo: si vedono l'ultima presa della mano (con il riepilogo che
@@ -679,7 +679,7 @@ function showLaidDown(d: TableSnapshot, laid: LaidDown): void {
   later(hide, LAID_DOWN_MS);
 }
 
-// --- Lanci e pescate (P70, P78, P99, P107, lotto 8d) -------------------------------------
+// --- Lanci e pescate (P70, P78, P99, P107) -----------------------------------------------
 
 /** "Riduci movimento" è acceso: niente lanci né pescate animati (i tempi restano gli stessi). */
 function reducedMotion(): boolean {
@@ -941,7 +941,7 @@ function noticeDraws(previous: GameView, next: GameView, d: TableSnapshot): void
   later(redraw, start - now + steps * DRAW_MS + TIMER_SLACK_MS);
 }
 
-// --- Distribuzione e pause del tavolo (P70, P118, P132, lotto 8e) -------------------------
+// --- Distribuzione e pause del tavolo (P70, P118, P132) -----------------------------------
 
 // HIDDEN: "parte tra molto": la carta resta nascosta finché la distribuzione non comincia
 const HIDDEN = -1e6;
@@ -1565,8 +1565,8 @@ function startGame(): void {
   stops.push(onStatus(onConnection));
   connect();
   update({ connection: getStatus() });
-  // La connessione c'è già (per esempio arrivando dalla home senza ricaricare, dal
-  // lotto 8h): onStatus non avvisa, quindi game:join parte subito
+  // La connessione c'è già (per esempio arrivando dalla home senza ricaricare):
+  // onStatus non avvisa, quindi game:join parte subito
   if (isConnected()) {
     join();
   }
@@ -1602,7 +1602,7 @@ async function join(): Promise<void> {
   }
   // R4: 10 minuti dopo la fine il server toglie la stanza dalla memoria. Se a quel punto
   // la pagina mostra ancora il risultato e si ricollega, not_found non vuol dire
-  // "interrotta": il risultato resta e si torna alla home con "Esci", come prima
+  // "interrotta": il risultato resta e si torna alla home con "Esci"
   if (snapshot.view !== null && snapshot.view.status === 'finished' && answer.error.code === 'not_found') {
     return;
   }
@@ -1913,7 +1913,7 @@ function pausePhrases(ms: number): void {
 
 /**
  * Una frase scelta. Nella prova mostra subito il proprio fumetto, senza server, e
- * spegne il pulsante per PHRASE_PAUSE_MS. Nella partita vera (lotto 8f) la manda con
+ * spegne il pulsante per PHRASE_PAUSE_MS. Nella partita vera la manda con
  * game:send_phrase: il fumetto arriva con game:phrase, che il server rimanda a tutti
  * (anche a te); dopo l'invio il pulsante resta spento PHRASE_PAUSE_MS, o i
  * retry_after secondi di too_fast. Si mandano anche a partita finita, per i saluti.

@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### C1 — Pulizia del frontend: commenti senza la storia della migrazione (24/10/2026)
+
+- **Branch**: feature/c1-pulizia-frontend (da `dev` a `b1d2140`)
+- **File**: i commenti di 44 file di `frontend/src/` e di 10 CSS di `app/static/css/` (`base/layout.css`, `base/typography.css`, `components/card.css`, `friends-panel.css`, `navbar.css`, `rotate-notice.css`, `table-phrases.css`, `pages/auth.css`); questo file
+- **Cosa c'è** (fase 0 di `docs/MESSA-ONLINE.md`): tolti dai commenti "passo N della migrazione", "lotto 8c", "dal 9d", "come prima", "la versione React di …", "stesso HTML della pagina Jinja", i rimandi ai template e ai `partials/` che non ci sono più; dove serviva, il commento dice com'è oggi (per esempio le risorse caricate da `frontend/index.html`, i messaggi in `FlashList.tsx`, l'avviso di connessione in `ConnectionBanner.tsx`). Corretti anche tre commenti **sbagliati**: `viewForTable` diceva che le pause del tavolo "arrivano con i lotti 8d-8e: per ora il turno scende subito" (le pause ci sono, `turnClockAt`); l'intestazione di `HomePage.tsx` diceva che la home Jinja "resta su /vecchia-home fino al passo 9" e che game:start porta "per ora alla pagina Jinja"; `Table.tsx` diceva che `NO_MOMENTS` vale "per tutto il lotto 8a". I codici P, D e R restano (scelta del 24/10)
+- **Codice morto**: cercato con tre script (fuori dal progetto): (1) le 322 classi dei CSS nel frontend, in `index.html` e nei template: le 36 non trovate come testo sono tutte modificatori con il nome calcolato (`seat--${position}`, `banner--${kind}`, …), quindi usate; (2) id e attributi dei selettori CSS: tutti usati; (3) le esportazioni di `frontend/src/` che nessun altro file importa: tutte usate nel loro file (alcune esportate per i test che le leggono). Niente da togliere: **C1 cambia solo commenti**
+- **Controlli**: `npx tsc --noEmit` pulito; con pytest `test_icone.py`, `test_avatar.py`, `test_carte.py`, `test_hover.py`, `test_base.py`, `test_tipi.py`, `test_niente_alert.py`, `test_logo.py`, `test_spa.py` (compila la SPA), `test_spa_chat.py`, `sockets/test_durate_tavolo.py`, `table6/test_suoni.py` **144 PASS** [T]
+- **Decisioni prese**: nessuna nuova
+- **Domande nuove**: nessuna
+- **Punti delicati**: nessuno nuovo
+- **Cosa devono fare gli altri**: niente (dopo il pull `npm run build`)
+
 ### Documenti: piano della messa online, D21 chiusa (24/10/2026)
 
 - **Branch**: docs/piano-messa-online (da `dev` a `36ba9a7`)

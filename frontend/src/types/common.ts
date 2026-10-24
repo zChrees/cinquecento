@@ -63,7 +63,7 @@ export interface ErrorInfo {
   // solo con 'too_fast': i secondi da aspettare prima di riprovare. Il ? vuol
   // dire "può mancare": con gli altri codici il campo non c'è (vale undefined)
   retry_after?: number;
-  // solo nelle rotte /api/auth/ con un modulo (passo 4): gli errori di ogni campo,
+  // solo nelle rotte /api/auth/ con un modulo: gli errori di ogni campo,
   // per esempio { username: ['Lo username deve avere da 3 a 20 caratteri.'] }.
   // Record<string, string[]> è "un oggetto con chiavi di testo e, per ogni
   // chiave, un elenco di testi"

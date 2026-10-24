@@ -10,7 +10,7 @@
  *   sameCard(a, b)                true se sono la stessa carta
  *   throwKey({ suit: 'coppe', rank: 10 })   'coppe-10'
  *   faceUrl(card), BACK_URL, FIGURE_BASE    gli indirizzi delle immagini
- *   preloadCardImages()           scarica subito tutte le immagini del tavolo (P79, dal lotto 8b)
+ *   preloadCardImages()           scarica subito tutte le immagini del tavolo (P79)
  *
  * DA DOVE ARRIVANO I DATI: le carte arrivano dal server dentro la vista di gioco
  * (types/view.ts); i componenti di frontend/src/game/ chiamano queste funzioni

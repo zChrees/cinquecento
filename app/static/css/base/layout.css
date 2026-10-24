@@ -35,7 +35,7 @@ body {
 }
 
 /*
- * Pagine della SPA (frontend/index.html, migrazione a React): React disegna dentro
+ * Pagine della SPA (frontend/index.html): React disegna dentro
  * <div id="root">. "display: contents" fa sparire il div dal disegno, così navbar,
  * <main> e messaggi restano come figli di <body> per le regole qui sopra.
  */
@@ -78,7 +78,7 @@ body {
 }
 
 /*
- * Messaggi del server (partials/flash.html): in basso, al centro, sopra tutto.
+ * Messaggi del server (FlashList.tsx): in basso, al centro, sopra tutto.
  * Spariscono da soli dopo qualche secondo (anche con "riduci movimento", senza
  * animazione).
  */

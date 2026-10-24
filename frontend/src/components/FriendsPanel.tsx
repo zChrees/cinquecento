@@ -1,5 +1,5 @@
 /**
- * Il pannello amici (P46, passi 5b e 5c della migrazione): si apre da "Amici" nella
+ * Il pannello amici (P46): si apre da "Amici" nella
  * navbar. Su telefono è a tutto schermo, su computer laterale (stile in
  * css/components/friends-panel.css).
  *
@@ -887,8 +887,7 @@ export function FriendsPanel(props: FriendsPanelProps): JSX.Element {
   }
 
   // <> ... </>: un contenitore che non diventa un elemento della pagina.
-  // data-connection: lo stato della connessione al tempo reale, per i test (dal
-  // passo 6, al posto della pagina di prova): il pannello c'è in ogni pagina della
+  // data-connection: lo stato della connessione al tempo reale, per i test: il pannello c'è in ogni pagina della
   // SPA con il login, quindi un test può aspettare data-connection="connected"
   return (
     <>

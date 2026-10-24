@@ -1,7 +1,7 @@
 /**
  * Avatar di un utente (P43): l'immagine del set o, per chi non ne ha scelto uno,
- * l'iniziale del nome. È la versione React della macro partials/avatar.html, con
- * lo stesso HTML (stile in css/components/navbar.css, che vale per tutti gli avatar).
+ * l'iniziale del nome (stile in css/components/navbar.css, che vale per tutti gli
+ * avatar).
  *
  * Cosa contiene:
  *   <Avatar username="Giulia" avatar="re_coppe" className="avatar" />

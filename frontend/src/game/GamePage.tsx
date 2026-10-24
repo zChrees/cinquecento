@@ -1,7 +1,5 @@
 /**
- * La pagina del tavolo React: /game/<codice> (passo 8 della migrazione,
- * docs/MIGRAZIONE-FRONTEND.md, "Piano del passo 8"). Disegna <main class="page
- * page--game">, il titolo nascosto e <div class="table" data-table data-game-id ...> con dentro il tavolo.
+ * La pagina del tavolo: /game/<codice>. Disegna <main class="page page--game">, il titolo nascosto e <div class="table" data-table data-game-id ...> con dentro il tavolo.
  *
  * Cosa contiene:
  *   <GamePage />   (routes.tsx, indirizzo /game/:gameId)
@@ -15,7 +13,7 @@
  *     telefono (P112);
  *   - l'avviso di connessione (P33), solo nella partita vera;
  *   - la finestra "Vuoi uscire dalla partita?" (P25);
- *   - il blocco del doppio tocco su iPhone (P104, P133, lotto 8g).
+ *   - il blocco del doppio tocco su iPhone (P104, P133).
  * Al tavolo niente navbar: tutto lo schermo va al gioco.
  *
  * DA DOVE ARRIVANO I DATI (la catena delle chiamate):
@@ -73,8 +71,8 @@ function GoneNotice(): JSX.Element {
     <div className="table__gone panel" data-game-gone="" role="alert">
       <h2>La partita è stata interrotta</h2>
       <p>Il server si è riavviato o la partita non esiste più.</p>
-      {/* discover="none": senza, React Router aggiunge l'attributo data-discover, che il
-          template Jinja non ha (lo stesso HTML, lotto 8h) */}
+      {/* discover="none": senza, React Router aggiunge l'attributo data-discover, che
+          qui non serve */}
       <Link className="btn btn--primary" to="/" discover="none">Torna alla home</Link>
     </div>
   );
@@ -103,12 +101,12 @@ function momentsOf(table: TableSnapshot, now: number): TableMoments {
     return moments;
   }
   const ending = handEnding(table);
-  // P70: le carte in volo e le pescate in corso (lotto 8d)
+  // P70: le carte in volo e le pescate in corso
   moments.thrown = flying(table, now);
   const drawn = drawing(table, now);
   moments.drawnSeats = drawn.seats;
   moments.drawnCards = drawn.cards;
-  // P70, P118: la distribuzione (lotto 8e)
+  // P70, P118: la distribuzione
   moments.deal = dealMoments(table, now);
   moments.dealRound = dealRoundKey(table);
   moments.lastTrick = table.lastTrick;
@@ -369,7 +367,7 @@ export function GamePage(): JSX.Element {
   }
   // demo: il valore di ?demo= ('1v1', '2v2'), oppure null nella partita vera
   const demo = search.get('demo');
-  // navigate: cambia pagina dentro la SPA, senza ricaricare (passo 8h)
+  // navigate: cambia pagina dentro la SPA, senza ricaricare
   const navigate = useNavigate();
   /** Torna alla home senza ricaricare: lo store la chiama dopo "Esci", a fine partita, ... */
   function goHome(): void {
@@ -405,7 +403,7 @@ export function GamePage(): JSX.Element {
   /**
    * Effetto nella prova: gli eventi demo:* sull'elemento [data-table]. Lo store li
    * riceve dentro flushSync, che fa ridisegnare React subito, prima di tornare a chi
-   * ha mandato l'evento: come il tavolo Jinja, così un test che manda una vista e
+   * ha mandato l'evento: così un test che manda una vista e
    * poi guarda la pagina trova già il disegno nuovo.
    */
   function listenToDemo(): (() => void) | undefined {
@@ -472,7 +470,7 @@ export function GamePage(): JSX.Element {
         return;
       }
       closePhrases();
-      // il fuoco torna al pulsante, come prima
+      // il fuoco torna al pulsante delle frasi
       const button = document.querySelector<HTMLElement>('[data-phrases-button]');
       if (button !== null) {
         button.focus();

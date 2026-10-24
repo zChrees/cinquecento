@@ -1,5 +1,5 @@
 /**
- * Le richieste HTTP della pagina delle impostazioni (passo 6 della migrazione):
+ * Le richieste HTTP della pagina delle impostazioni:
  * le rotte JSON di app/blueprints/profile/api.py.
  *
  * Cosa contiene:
