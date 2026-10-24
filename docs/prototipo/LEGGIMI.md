@@ -1,6 +1,6 @@
 # Prototipo della home (P52)
 
-Prototipo statico della home, scritto da Claude il 27/09/2026 seguendo il prompt dell'utente, con la palette scelta: **Carretto siciliano**, su un **panno verde da tavolo** (ritocco dello stesso giorno). Serve **solo come riferimento grafico**: il server non lo usa.
+Prototipo statico della home, scritto da Claude il 27/09/2026 seguendo il prompt dell'utente, con la palette scelta: **Carretto siciliano**, su un **panno verde da tavolo** (ritocco dello stesso giorno). Serve **solo come riferimento grafico**: il server non lo usa. Le pagine vere sono il frontend React di `frontend/src/`, con gli stessi CSS rifatti in `app/static/css/`.
 
 ## Come si apre
 
@@ -76,7 +76,7 @@ La **navbar è completamente trasparente**: niente fondo, sfocatura né ombra so
 
 **Passandoci sopra** (o arrivandoci con la tastiera) avatar e amici si alzano un po'; l'**avatar** si ingrandisce, si inclina e il suo anello giallo si illumina; l'**icona degli amici** oscilla come un saluto e il contatore rimbalza.
 
-**Logo**: due carte vere a ventaglio, di dorso (lo stesso dorso della cascata), che si aprono un po' passandoci sopra con il mouse. **Ogni tanto si girano**: dopo 3 secondi di dorso ruotano in 3D (la seconda un attimo dopo la prima, 0,9 s ciascuna, sollevandosi un po') e mostrano **Cavallo e Re dello stesso seme**; restano scoperte circa 2,6 secondi e tornano sul dorso; al giro dopo tocca al seme successivo (coppe → denari → spade → bastoni → di nuovo coppe). Le figure si cambiano mentre si vede il dorso e sono precaricate, così il giro non scatta; con "riduci movimento" le carte restano ferme sul dorso. Script in `prototipo.js`, parte "Logo". Accanto alle carte, il nome in due toni: "Cinque" color crema e "cento" giallo, in Fredoka. È **in risalto**: lettere con un **leggero rilievo** e **bordi netti** (Fredoka 700; lo spessore è di 1,5 px, fatto di tre strati pieni a mezzo pixel l'uno dall'altro, più scuri della lettera: bruno per "Cinque", ambra per "cento"; poi una linea scura netta alla base e un'ombra morbida corta e leggera, che non sfuma i bordi) e un alone scuro morbido dietro, che lo stacca dal panno e dalle carte che passano. Misura: nome 1,7 rem su telefono e 2,2 rem su computer; anche a 360 px restano circa 25 px di spazio da avatar e amici. È solo CSS: nessuna immagine. Il logo definitivo in SVG resta per P42.
+**Logo**: due carte vere a ventaglio, di dorso (lo stesso dorso della cascata), che si aprono un po' passandoci sopra con il mouse. **Ogni tanto si girano**: dopo 3 secondi di dorso ruotano in 3D (la seconda un attimo dopo la prima, 0,9 s ciascuna, sollevandosi un po') e mostrano **Cavallo e Re dello stesso seme**; restano scoperte circa 2,6 secondi e tornano sul dorso; al giro dopo tocca al seme successivo (coppe → denari → spade → bastoni → di nuovo coppe). Le figure si cambiano mentre si vede il dorso e sono precaricate, così il giro non scatta; con "riduci movimento" le carte restano ferme sul dorso. Script in `prototipo.js`, parte "Logo". Accanto alle carte, il nome in due toni: "Cinque" color crema e "cento" giallo, in Fredoka. È **in risalto**: lettere con un **leggero rilievo** e **bordi netti** (Fredoka 700; lo spessore è di 1,5 px, fatto di tre strati pieni a mezzo pixel l'uno dall'altro, più scuri della lettera: bruno per "Cinque", ambra per "cento"; poi una linea scura netta alla base e un'ombra morbida corta e leggera, che non sfuma i bordi) e un alone scuro morbido dietro, che lo stacca dal panno e dalle carte che passano. Misura: nome 1,7 rem su telefono e 2,2 rem su computer; anche a 360 px restano circa 25 px di spazio da avatar e amici. È solo CSS: nessuna immagine. Il logo delle pagine vere è `frontend/src/components/Logo.tsx` (con l'icona della scheda di P42).
 
 ## Animazioni
 
@@ -116,7 +116,7 @@ Controllato il 27/09/2026 a 360×640, 375×667, 390×844, 412×915, 768×1024, 8
 
 - Nel 2v2 "Gioca con un amico" l'amico invitato è il **compagno di squadra**; gli avversari arrivano dal matchmaking. Nel 1v1 l'amico invitato è l'avversario.
 - Si invita un amico alla volta; gli amici "In partita" non compaiono tra quelli invitabili.
-- Solo tema chiaro: il tema scuro è rimandato alla fine della scaletta (P53).
+- Solo tema chiaro: il tema scuro non c'è.
 
 ## Immagini e licenze
 
@@ -139,7 +139,7 @@ Da ricordare per le pagine vere: le immagini CC BY-SA richiedono una **riga di c
 
 ### Icone (D40)
 
-Nelle pagine vere il font delle icone non arriva da Google: è il file `app/static/fonts/material-symbols-rounded.woff2`, con **solo le icone usate** (elencate in `app/static/fonts/icone.txt`, una per riga, in ordine alfabetico), riempite e con spessore 500. Pesa circa 6 KB invece di 5,4 MB e `base.html` lo precarica, così le icone compaiono subito. `tests/frontend/test_icone.py` segnala un'icona usata nel codice che manca nel file, o una nel file che non si usa più.
+Nelle pagine vere il font delle icone non arriva da Google: è il file `app/static/fonts/material-symbols-rounded.woff2`, con **solo le icone usate** (elencate in `app/static/fonts/icone.txt`, una per riga, in ordine alfabetico), riempite e con spessore 500. Pesa circa 6 KB invece di 5,4 MB e `frontend/index.html` lo precarica (anche `app/templates/base.html`, per le pagine di errore), così le icone compaiono subito. `tests/frontend/test_icone.py` cerca le icone usate in `frontend/src/` e nei template, e segnala un'icona usata che manca nel file, o una nel file che non si usa più.
 
 Per aggiungere un'icona (i nomi sono quelli di [fonts.google.com/icons](https://fonts.google.com/icons)):
 
@@ -160,6 +160,6 @@ Per aggiungere un'icona (i nomi sono quelli di [fonts.google.com/icons](https://
 ## Cose che le pagine vere NON riprendono
 
 - I parametri `?apri=` e l'accettazione automatica dell'invito dopo 2 secondi.
-- Il codice dello sfondo, che nelle pagine vere va nel componente `js/components/CardBackground.js` (P22); le immagini vanno in `app/static/img/cards-bg/` già con P40, perché le usa anche il logo.
+- Il codice dello sfondo, che nelle pagine vere è il componente `frontend/src/components/CardBackground.tsx` (P22); le immagini stanno in `app/static/img/cards-bg/`, perché le usa anche il logo.
 - I dati finti (Mario, 24 online, amici, messaggi, rating): nelle pagine vere arrivano dal server.
-- Lo script classico: le pagine vere usano moduli ES, che però non partono aprendo un file con un doppio clic.
+- Lo script classico: le pagine vere sono scritte in React e TypeScript e compilate da Vite, quindi non si aprono con un doppio clic su un file.

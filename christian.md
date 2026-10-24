@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### C5 (in parte) — README e LEGGIMI sul frontend React (24/10/2026)
+
+- **Branch**: docs/c5-readme-leggimi (da `dev` a `c80939a`)
+- **File**: modificati `README.md`, `docs/prototipo/LEGGIMI.md`; questo file. **Solo questi due di C5** (scelta mia: non sono di turno sui documenti): restano a chi è di turno lo spostamento di `docs/MIGRAZIONE-FRONTEND.md` e `docs/DEMO.md` in `docs/archivio/` e la rimozione di `scripts/pianifica_backup.ps1` e `tests/db/test_demo.py`
+- **Cosa c'è**: nel `README.md` la tabella "Tecnologie" con React + TypeScript + Vite (via il JavaScript "vanilla" e la riga "in arrivo"); l'albero delle cartelle con `frontend/src/` diviso per cartella, via `app/static/js/` e i template delle pagine (restano solo quelli di errore), `app/static/dist/`, le rotte `/api/` dei blueprint, le suite `frontend2` e `table`–`table6`, `tests/spa.py` e `accounts.py`; installazione e test senza "frontend nuovo" e "pagine di adesso" (Vite gira a Flask `/api/`, `/static/`, `/socket.io`; giro completo circa venti minuti); "Come lavoriamo" con `REVIEW.md`, `docs/MESSA-ONLINE.md` e `docs/archivio/`; **la sezione nuova "I codici P, D e R nei commenti"** (P = punto del piano, D = decisione o domanda aperta, R = finding della revisione; solo in `dev`). Tolti anche i rimandi a `docs/DEMO.md` e `pianifica_backup.ps1`, che vanno via con il resto di C5. In `LEGGIMI.md` solo le parti sulle pagine vere: `CardBackground.tsx`, `Logo.tsx`, il font delle icone precaricato da `frontend/index.html` (e `base.html` per gli errori), le pagine compilate da Vite, il tema scuro che non c'è; la descrizione del prototipo resta com'è
+- **Controlli**: nessun test (solo documenti; i test citano `LEGGIMI.md` solo nei commenti)
+- **Decisioni prese**: nessuna nuova (la riga sui codici P, D e R era la scelta c del 24/10)
+- **Domande nuove**: nessuna
+- **Punti delicati**: `frontend/index.html` ha ancora nel commento in cima `docs/MIGRAZIONE-FRONTEND.md` e "Fino al lotto 9b-2…": sfuggito a C1 (non sta in `frontend/src/`); da sistemare con lo spostamento del documento
+- **Cosa devono fare gli altri**: **chi è di turno**: il resto di C5 (archivio, `pianifica_backup.ps1`, `test_demo.py`)
+
 ### C2 — Sito: commenti senza la storia (24/10/2026)
 
 - **Branch**: feature/c2-commenti-sito (da `dev` a `10c1026`)

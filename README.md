@@ -47,8 +47,7 @@ Il regolamento completo è in [docs/REGOLE-GIOCO.md](docs/REGOLE-GIOCO.md).
 
 | Parte | Tecnologia | Versione |
 |---|---|---|
-| Pagine | HTML, CSS, JavaScript "vanilla" (senza framework, con i moduli nativi `import`/`export`) | — |
-| Pagine nuove (in arrivo) | React + TypeScript, compilati con Vite, come SPA (una sola pagina HTML): si passa una pagina alla volta ([piano](docs/MIGRAZIONE-FRONTEND.md)) | Node **24.19.0**; librerie fissate in `frontend/package.json` |
+| Pagine | HTML, CSS, **React + TypeScript**, compilati con **Vite** come SPA (una sola pagina HTML; poi è React, nel browser, a disegnare ogni pagina) | Node **24.19.0**; librerie fissate in `frontend/package.json` |
 | Server | Python + Flask | Python **3.14** (3.14.4) |
 | Tempo reale | Flask-SocketIO (WebSocket: collegamento sempre aperto tra pagina e server) | versioni fissate in `requirements.txt` |
 | Account | Flask-Login, Flask-WTF | idem |
@@ -61,7 +60,7 @@ Il server è **autoritativo**: le regole stanno solo lì, la pagina manda soltan
 
 ## Struttura delle cartelle
 
-Il **motore di gioco** (`app/game/engine/`) è Python puro: non sa niente di Flask, del database o della rete, e si può testare da solo. Il resto è diviso in livelli: gli **ingressi** (`blueprints/` per le pagine, `sockets/` per il tempo reale) ricevono le richieste, i **services** contengono la logica, i **repositories** sono l'unico punto che parla con MySQL.
+Il **motore di gioco** (`app/game/engine/`) è Python puro: non sa niente di Flask, del database o della rete, e si può testare da solo. Il resto è diviso in livelli: gli **ingressi** (`blueprints/` per le pagine e le richieste HTTP, `sockets/` per il tempo reale) ricevono le richieste, i **services** contengono la logica, i **repositories** sono l'unico punto che parla con MySQL.
 
 ```
 cinquecento/
@@ -74,16 +73,25 @@ cinquecento/
 ├── run.py                     avvio del server
 ├── config.py                  configurazioni: sviluppo, test, demo
 │
-├── frontend/                  il frontend nuovo (React + TypeScript + Vite)
+├── frontend/                  il frontend (React + TypeScript + Vite)
 │   ├── package.json           librerie JavaScript, a versione fissa
 │   ├── vite.config.ts         server di sviluppo con il proxy verso Flask, build in app/static/dist/
 │   ├── index.html             l'unica pagina HTML della SPA
-│   └── src/                   main.tsx (avvio), routes.tsx (indirizzi), pages/ (le pagine)
+│   └── src/
+│       ├── main.tsx           avvio di React
+│       ├── routes.tsx         gli indirizzi e la pagina di ciascuno
+│       ├── pages/             le pagine: home, accesso, registrazione, impostazioni, "non trovata"
+│       ├── components/        navbar, pannelli statistiche e amici, chat, carta-modal, finestre…
+│       ├── game/              il tavolo di gioco (stato in tableStore.ts, un file per componente)
+│       ├── socket/            il collegamento in tempo reale (Socket.IO)
+│       ├── api/               le richieste HTTP al server (/api/...)
+│       ├── session/           chi ha fatto il login
+│       ├── types/             i tipi dei dati del contratto con il server
+│       └── utils/             suoni, "riduci movimento", chiavi anti-doppione
 │
 ├── docs/
 │   ├── REGOLE-GIOCO.md        regolamento del gioco (riferimento unico)
-│   ├── CONTRATTO-SOCKET.md    eventi scambiati tra pagine e server, formato della "vista"
-│   ├── DEMO.md                installazione della demo, backup e giorno della demo
+│   ├── CONTRATTO-SOCKET.md    eventi e richieste HTTP tra pagine e server, formato della "vista"
 │   └── prototipo/             prototipo approvato della home, riferimento grafico
 │
 ├── migrations/
@@ -93,15 +101,14 @@ cinquecento/
 │   ├── setup_db.sql           crea database e utente MySQL (una volta sola)
 │   ├── migrate.py             applica le migrazioni mancanti
 │   ├── backup.py              backup del database
-│   ├── ripristina.py          ripristino di un backup
-│   └── pianifica_backup.ps1   backup automatico giornaliero (demo)
+│   └── ripristina.py          ripristino di un backup
 │
 ├── app/
 │   ├── __init__.py            create_app(): monta tutte le parti dell'applicazione
 │   ├── extensions.py          oggetti condivisi (database, login, socket)
 │   ├── checks.py              controllo delle versioni di Python e MySQL all'avvio
 │   ├── logging_config.py      configurazione dei log
-│   ├── errors.py              pagine e messaggi di errore
+│   ├── errors.py              risposte di errore (JSON, SPA o pagina di errore)
 │   │
 │   ├── game/engine/           MOTORE DI GIOCO (Python puro)
 │   │   ├── cards.py           carte, semi, valori, forza
@@ -136,14 +143,14 @@ cinquecento/
 │   │   ├── friends_events.py  amici online, inviti
 │   │   └── chat_events.py     messaggi della chat
 │   │
-│   ├── blueprints/            ingressi delle pagine (sottili), uno per argomento
-│   │   ├── main/              home
-│   │   ├── auth/              registrazione, login, logout
-│   │   ├── profile/           impostazioni: avatar, suoni e cancellazione dell'account
+│   ├── blueprints/            ingressi HTTP (sottili), uno per argomento
+│   │   ├── main/              home, numero di giocatori online (/api/online)
+│   │   ├── auth/              registrazione, login, logout (/api/auth/...)
+│   │   ├── profile/           impostazioni: avatar e cancellazione dell'account (/api/profile/...)
 │   │   ├── game/              tavolo di gioco
-│   │   ├── stats/             dati del pannello statistiche
-│   │   ├── friends/           richieste di amicizia e lista amici
-│   │   └── spa/               pagine del frontend nuovo (index.html del build)
+│   │   ├── stats/             dati del pannello statistiche (/api/stats/me)
+│   │   ├── friends/           richieste di amicizia e lista amici (/api/friends/...)
+│   │   └── spa/               la pagina della SPA (index.html del build) per ogni indirizzo del sito
 │   │
 │   ├── services/              logica applicativa
 │   │   ├── auth_service.py
@@ -166,24 +173,15 @@ cinquecento/
 │   │   ├── friendship.py      richieste di amicizia, amicizie e blocchi
 │   │   └── chat_message.py
 │   │
-│   ├── templates/             pagine HTML (Jinja2)
-│   │   ├── base.html          struttura comune a tutte le pagine
-│   │   ├── partials/          navbar, avatar, messaggi, avviso "Gira il telefono"
-│   │   ├── errors/            404, 500
-│   │   └── main/  auth/  profile/  game/
+│   ├── templates/             solo le pagine di errore (Jinja2): base.html, errors/404.html e 500.html
 │   │
 │   └── static/
 │       ├── css/
 │       │   ├── base/          reset, variabili (colori, spazi), tipografia, layout
 │       │   ├── components/    un file per componente (carta, navbar, chat…)
 │       │   └── pages/         un file per pagina
-│       ├── js/
-│       │   ├── core/          layout comune (navbar, pannelli), socket, suoni, nomi degli eventi
-│       │   ├── components/    un file per componente (Card.js, Table.js, FriendsPanel.js…)
-│       │   ├── pages/         un file per pagina (è l'unico script caricato dalla pagina)
-│       │   ├── utils/         funzioni di utilità per il DOM
-│       │   └── vendor/        librerie esterne a versione fissa (client Socket.IO)
-│       ├── dev/               dati di esempio e pagina di prova delle carte (solo in dev)
+│       ├── dist/              il frontend compilato da `npm run build` (non è su git)
+│       ├── dev/               dati di esempio del contratto, per la prova del tavolo e i test (solo in dev)
 │       ├── fonts/             font delle icone (solo le icone usate, elenco in icone.txt)
 │       ├── sounds/            suoni del tavolo e del menu, con la loro licenza
 │       └── img/
@@ -194,28 +192,33 @@ cinquecento/
 │
 └── tests/                     (solo in dev)
     ├── esegui_tutti.py        runner: lancia tutte le suite in sicurezza
-    ├── conftest.py            impostazioni comuni dei test
+    ├── conftest.py            impostazioni comuni dei test (compila anche il frontend, in una cartella temporanea)
     ├── browser.py             aiuti per i test che aprono le pagine in Chrome o Edge
+    ├── spa.py  accounts.py    aiuti per il frontend compilato e per gli account di prova
     ├── runner/                test del runner stesso
     ├── engine/                test del motore di gioco
     ├── db/                    test di migrazioni e backup
     ├── api/                   test delle pagine e degli account (via HTTP)
     ├── services/              test di salvataggio partite e rating
     ├── sockets/               test del tempo reale con client simulati
-    ├── frontend/              prove nel browser: home, accesso, amici, chat, impostazioni
+    ├── frontend/  frontend2/  prove nel browser: home, accesso, amici, chat, impostazioni
     ├── e2e/                   partite complete dall'inizio alla fine, con il server vero
     ├── forza/                 prove di forza della CPU contro un giocatore "medio"
-    └── table/  table2/  table3/   il tavolo di gioco nel browser: momenti, animazioni, grafica
+    └── table/ … table6/       il tavolo di gioco nel browser: momenti, animazioni, grafica, suoni
 ```
 
-Nel branch `dev`, dove lavora il gruppo, ci sono anche i test (`tests/`, `requirements-dev.txt`), i dati di esempio di `app/static/dev/` e i documenti di lavoro (scaletta, decisioni, domande aperte, riepiloghi): vedi "Come lavoriamo".
+Nel branch `dev`, dove lavora il gruppo, ci sono anche i test (`tests/`, `requirements-dev.txt`), i dati di esempio di `app/static/dev/` e i documenti di lavoro (decisioni, domande aperte, riepiloghi, piani): vedi "Come lavoriamo".
+
+### I codici P, D e R nei commenti
+
+Nei commenti del codice e nei documenti compaiono codici come **P45**, **D16** o **R7**. Rimandano ai documenti di lavoro del gruppo, che stanno solo nel branch `dev`: **P** è un punto del piano di lavoro (per esempio P45 = le richieste di amicizia), **D** una decisione presa, con data e motivo, in `DECISIONI.md` (o una domanda ancora aperta in `DA-DECIDERE.md`), **R** un finding della revisione del codice in `REVIEW.md`. Servono a ritrovare il perché di una regola; per leggere il codice non serve aprirli.
 
 ## Installazione (Windows)
 
-Questi passi servono per installare il progetto sul proprio PC e farlo girare in `localhost`. L'installazione della **demo**, con dati veri e raggiungibile dagli altri, ha una guida a parte: [docs/DEMO.md](docs/DEMO.md).
+Questi passi servono per installare il progetto sul proprio PC e farlo girare in `localhost`.
 
 **Cosa serve prima**
-- **Python 3.14.4**, **MySQL Server 8.0**, **Node.js 24.19.0** e **Git**, installati a mano (passi 1–3 e 5). Node serve a compilare il frontend nuovo (`frontend/`).
+- **Python 3.14.4**, **MySQL Server 8.0**, **Node.js 24.19.0** e **Git**, installati a mano (passi 1–3 e 5). Node serve a compilare il frontend (`frontend/`).
 - Per i test (solo nel branch `dev`): **Google Chrome** o **Microsoft Edge** (i test che aprono le pagine nel browser li usano senza finestra; se mancano, quei test si saltano). Senza Node, o senza `npm ci` in `frontend/`, i test che lo usano si saltano.
 - **Internet** la prima volta che lanci i test: i font di Google si scaricano una volta sola, in una cartella temporanea.
 
@@ -244,13 +247,13 @@ I comandi qui sotto sono per **PowerShell**, lanciati dalla cartella del progett
    npm run build
    cd ..
    ```
-   `npm ci` installa le versioni esatte di `package-lock.json` nella cartella `frontend/node_modules` (come `pip install` nella `.venv`); `npm run build` controlla i tipi e scrive le pagine compilate in `app/static/dist/`. Tutte e due le cartelle non vanno su git. Va rifatto `npm run build` dopo ogni `git pull` che cambia `frontend/`; senza, le pagine nuove rispondono "Frontend non compilato".
+   `npm ci` installa le versioni esatte di `package-lock.json` nella cartella `frontend/node_modules` (come `pip install` nella `.venv`); `npm run build` controlla i tipi e scrive le pagine compilate in `app/static/dist/`. Tutte e due le cartelle non vanno su git. Va rifatto `npm run build` dopo ogni `git pull` che cambia `frontend/` (e prima `npm ci`, se cambia `package-lock.json`); senza il build, le pagine rispondono "Frontend non compilato".
 6. **Configura**: copia il modello e genera la chiave segreta:
    ```
    copy .env.example .env
    python -c "import secrets; print(secrets.token_hex(32))"
    ```
-   Apri `.env` con un editor di testo e incolla dopo `SECRET_KEY=` la riga stampata dal secondo comando. Gli altri valori vanno bene così; la password del database arriva al passo 7. Con `HOST=127.0.0.1` il sito si apre solo da questo PC: per aprirlo da altri dispositivi (`HOST=0.0.0.0`) usa `APP_ENV=demo`, mai `development`, che accende il debugger di Werkzeug (dalla rete permetterebbe di eseguire comandi sul PC, protetto solo da un PIN); per la demo vera c'è [docs/DEMO.md](docs/DEMO.md). Il file `.env` contiene segreti: non va mai su git (è già in `.gitignore`), e conviene tenerne una copia fuori dal progetto.
+   Apri `.env` con un editor di testo e incolla dopo `SECRET_KEY=` la riga stampata dal secondo comando. Gli altri valori vanno bene così; la password del database arriva al passo 7. Con `HOST=127.0.0.1` il sito si apre solo da questo PC: per aprirlo da altri dispositivi (`HOST=0.0.0.0`) usa `APP_ENV=demo`, mai `development`, che accende il debugger di Werkzeug (dalla rete permetterebbe di eseguire comandi sul PC, protetto solo da un PIN). Il file `.env` contiene segreti: non va mai su git (è già in `.gitignore`), e conviene tenerne una copia fuori dal progetto.
 7. **Prepara il database** (una volta sola). Il comando chiede la password di `root`:
    ```
    & "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p --table -e "source scripts/setup_db.sql"
@@ -265,7 +268,7 @@ I comandi qui sotto sono per **PowerShell**, lanciati dalla cartella del progett
    python scripts/migrate.py
    ```
 8. **Avvia**: `python run.py`, poi apri `http://localhost:5000` e registra un account. All'avvio il programma controlla di avere Python 3.14 e MySQL 8.0, e se qualcosa manca lo scrive e si ferma: per esempio "errore MySQL 1045" vuol dire che `DB_USER` o `DB_PASSWORD` nel `.env` non sono giusti. Per spegnerlo: Ctrl+C nel terminale.
-   **Per lavorare al frontend nuovo** accendi anche Vite, in un secondo terminale: `cd frontend`, poi `npm run dev`, e apri `http://localhost:5173` invece della 5000. Vite serve le pagine React e le aggiorna a ogni salvataggio senza ricaricare; tutto il resto (pagine di adesso, login, tempo reale) lo gira a Flask sulla 5000, che deve restare acceso. Le pagine React sono accesso, registrazione e impostazioni (per esempio `http://localhost:5173/profile/settings`).
+   **Per lavorare al frontend** accendi anche Vite, in un secondo terminale: `cd frontend`, poi `npm run dev`, e apri `http://localhost:5173` invece della 5000. Vite serve le pagine React e le aggiorna a ogni salvataggio senza ricaricare; le richieste al server (`/api/`, `/static/`, il tempo reale `/socket.io`) le gira a Flask sulla 5000, che deve restare acceso. `npx tsc --noEmit`, sempre in `frontend/`, controlla i tipi.
 9. Se hai scaricato `dev`, **controlla con i test** che sia tutto a posto (sezione qui sotto): devono risultare tutti PASS.
 
 ## Test
@@ -278,7 +281,7 @@ python tests/esegui_tutti.py engine     una sola suite (il nome è la cartella i
 ruff check .                            controllo del codice (deve dire "All checks passed!")
 ```
 
-Le suite sono le cartelle di `tests/`: `runner`, `engine`, `db`, `api`, `services`, `sockets`, `frontend`, `e2e`, e poi `forza`, `table`, `table2` e `table3`. I test provano il programma vero dall'esterno quando possono: avviano il server, simulano più giocatori collegati insieme e aprono le pagine nel browser. Il giro completo dura circa un quarto d'ora; ogni suite ha al massimo 240 secondi. Alla fine il runner stampa una riga per suite (PASS o FAIL, con il numero di controlli) ed esce con 0 se è tutto PASS, 1 se c'è almeno un FAIL e 2 se si rifiuta di partire.
+Le suite sono le cartelle di `tests/`: `runner`, `engine`, `db`, `api`, `services`, `sockets`, `frontend`, `e2e`, e poi `forza`, `frontend2` e le sei del tavolo, da `table` a `table6`. I test provano il programma vero dall'esterno quando possono: avviano il server, simulano più giocatori collegati insieme e aprono le pagine nel browser; il frontend lo compilano da soli, in una cartella temporanea. Il giro completo dura circa venti minuti; ogni suite ha al massimo 240 secondi. Alla fine il runner stampa una riga per suite (PASS o FAIL, con il numero di controlli) ed esce con 0 se è tutto PASS, 1 se c'è almeno un FAIL e 2 se si rifiuta di partire.
 
 Prima di lanciarli:
 - chiudi le schede del browser aperte sul sito: una scheda collegata può disturbare i test del tempo reale;
@@ -291,13 +294,14 @@ I test usano **solo** il database `cinquecento_test` e la porta 5099. Si rifiuta
 
 Il progetto è diviso tra **Giuseppe** (motore di gioco e tempo reale), **Antonio** (account, dati, amici) e **Christian** (interfaccia e documenti); il lavoro è stato fatto con l'aiuto di Claude Code.
 
-- Branch permanenti: `main` (produzione: la versione per la demo e la presentazione, con i soli file del sito) e `dev` (lavoro e integrazione del gruppo).
-- Il lavoro è diviso in **punti** (P1, P2, …), elencati nella scaletta (dall'11/10/2026 archiviata; i punti aperti sono in `REVIEW.md`). Per ogni punto si crea un **branch nuovo da `dev` aggiornato**, si modificano **solo i file indicati nel punto**, si testa e, **solo dopo l'ok** di chi lavora, si fanno commit, merge fast-forward in `dev` e push.
+- Branch permanenti: `main` (produzione: la versione del sito, con i soli file che servono a farlo funzionare) e `dev` (lavoro e integrazione del gruppo).
+- Il lavoro è diviso in **punti** (P1, P2, …; per la messa online C, O, S, A), elencati nei piani di lavoro; i punti e i finding aperti sono in `REVIEW.md`. Per ogni punto si crea un **branch nuovo da `dev` aggiornato**, si modificano **solo i file indicati nel punto**, si testa e, **solo dopo l'ok** di chi lavora, si fanno commit, merge fast-forward in `dev` e push.
 - Finito un punto, ognuno scrive il riepilogo nel proprio file (`christian.md`, `giuseppe.md`, `antonio.md`); i documenti condivisi li aggiorna, a fine giornata, chi il gruppo sceglie.
 
 I documenti di lavoro stanno solo nel branch `dev`:
-- [REVIEW.md](https://github.com/zChrees/cinquecento/blob/dev/REVIEW.md): la code review finale e, in fondo, i punti ancora aperti (è il tracker attivo);
-- [docs/archivio/SCALETTA-2026-09.md](https://github.com/zChrees/cinquecento/blob/dev/docs/archivio/SCALETTA-2026-09.md): la scaletta del progetto, archiviata (cosa fare, in che ordine, quali file tocca ogni punto, chi lo fa);
+- [REVIEW.md](https://github.com/zChrees/cinquecento/blob/dev/REVIEW.md): la code review e, in fondo, i punti ancora aperti (è il tracker attivo);
+- [docs/MESSA-ONLINE.md](https://github.com/zChrees/cinquecento/blob/dev/docs/MESSA-ONLINE.md): il piano per portare il sito online, a fasi;
+- [docs/archivio/](https://github.com/zChrees/cinquecento/tree/dev/docs/archivio): i piani chiusi, tra cui la scaletta del progetto (cosa fare, in che ordine, quali file tocca ogni punto, chi lo fa);
 - [DECISIONI.md](https://github.com/zChrees/cinquecento/blob/dev/DECISIONI.md): cosa è già stato deciso e perché;
 - [DA-DECIDERE.md](https://github.com/zChrees/cinquecento/blob/dev/DA-DECIDERE.md): domande aperte;
 - [CLAUDE.md](https://github.com/zChrees/cinquecento/blob/dev/CLAUDE.md): regole di lavoro complete (git, test, convenzioni del codice).
@@ -305,8 +309,7 @@ I documenti di lavoro stanno solo nel branch `dev`:
 ## Documenti
 
 - [docs/REGOLE-GIOCO.md](docs/REGOLE-GIOCO.md): regolamento del gioco
-- [docs/CONTRATTO-SOCKET.md](docs/CONTRATTO-SOCKET.md): eventi tra pagine e server, formato dei dati
-- [docs/DEMO.md](docs/DEMO.md): installazione della demo, backup e giorno della demo
+- [docs/CONTRATTO-SOCKET.md](docs/CONTRATTO-SOCKET.md): eventi e richieste HTTP tra pagine e server, formato dei dati
 - [docs/prototipo/LEGGIMI.md](docs/prototipo/LEGGIMI.md): prototipo della home, risorse esterne e font
 
 ## Crediti
