@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### Commenti e niente zucchero, lotto 2d — app/sockets/ (24/10/2026). Chiude il lotto 2
+
+- **Branch**: feature/commenti-sockets-2d (da `dev` a `088fcd9`)
+- **File**: modificati `app/sockets/` `__init__.py`, `connection_events.py`, `chat_events.py`, `home_events.py`, `lobby_events.py`, `game_events.py`, `friends_events.py`; questo file
+- **Cosa c'è**: in cima a ogni file "Cosa contiene" e da dove arrivano i dati (i file della pagina che mandano gli eventi); "In parole semplici" sopra ogni gestore e funzione, con `@handler`, le funzioni interne passate a `room.run` e `_get_current_object` spiegati; tolti i casi di zucchero: le `lambda` passate a `recent.run` e a `_engine_errors` sono diventate funzioni interne con un nome (stesso momento di esecuzione), più comprehension, generatori, `a if c else b`, `[a, *b]`, `with x if c else y`, `0 < len(x) <= n` e gli spacchettamenti `a, b = ...`. Ordine dei controlli (e quindi dei messaggi di errore) e comportamento uguali; in `notify_presence` la preparazione del contesto resta dentro il `try`
+- **Controlli**: suite `sockets` **333 PASS**, `e2e` **12 PASS**; nel browser `test_spa_home_coda.py`, `test_spa_home_inviti.py`, `test_chat_vera.py`, `test_tavolo_react_partita.py` **31 PASS**; `ruff check .` pulito; nessuno zucchero rimasto in `app/sockets/` (ricerca con `rg`) [T]
+- **Decisioni prese**: nessuna nuova
+- **Domande nuove**: nessuna
+- **Punti delicati**: nessuno nuovo
+- **Note per gli altri**: con il 2d `app/realtime/` e `app/sockets/` sono finiti. Prossimo per Giuseppe: lotto 3 (`app/services/`, `app/repositories/`, `app/models/`); la divisione con Christian è nel riepilogo del 2b
+
 ### Commenti e niente zucchero, lotto 2c — Tempo reale: matchmaking.py (24/10/2026)
 
 - **Branch**: feature/commenti-realtime-2c (da `dev` a `400116e`)

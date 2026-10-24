@@ -8,6 +8,17 @@
   quando una partita finisce (i suoi giocatori: l'avviso di rientro sparisce).
 - `resume` è la partita in corso dell'utente (find_room_of_user, P24) oppure null.
 Nei log solo numeri di utente.
+
+Cosa contiene:
+    home_status(user_id)        lo stato della home di un utente
+    send_status(user_ids)       home:status a quegli utenti
+    broadcast_status(exclude)   home:status a tutti gli utenti collegati
+    on_refresh(data)            home:refresh, lo stato nella risposta
+    register(socketio)          registra home:refresh e l'avviso di fine partita
+
+DA DOVE ARRIVANO I DATI: connection_events.py chiama home_status e broadcast_status al
+collegamento e allo scollegamento; la stanza chiama _game_finished a fine partita
+(finish_listeners di room.py); la home React manda home:refresh.
 """
 
 from flask_login import current_user
@@ -21,6 +32,14 @@ from app.realtime.room_manager import find_room_of_user
 
 
 def home_status(user_id):
+    """Lo stato della home di un utente.
+
+    In parole semplici:
+        home_status(7)
+        Restituisce per esempio {"online_count": 3, "resume": {"game_id": "abc",
+        "url": "/game/abc", "mode": "1v1", "target_score": 300}}; resume è None se
+        l'utente non ha una partita in corso.
+    """
     room = find_room_of_user(user_id)
     resume = None
     if room is not None:
@@ -34,20 +53,44 @@ def home_status(user_id):
 
 
 def send_status(user_ids):
-    """home:status a tutte le schede di quegli utenti."""
+    """home:status a tutte le schede di quegli utenti.
+
+    In parole semplici:
+        send_status([7, 12])
+        Ognuno riceve il suo stato (resume è diverso per ognuno).
+    """
     for user_id in user_ids:
         socketio.emit("home:status", home_status(user_id), to=user_channel(user_id))
 
 
 def broadcast_status(exclude=None):
-    """home:status a tutti gli utenti collegati (è cambiato il numero di utenti online)."""
-    send_status(u for u in presence.online_users() if u != exclude)
+    """home:status a tutti gli utenti collegati (è cambiato il numero di utenti online).
 
-
-def _game_finished(user_ids, _app):
+    In parole semplici:
+        broadcast_status(exclude)
+        exclude: facoltativo, un utente da saltare (chi si è appena collegato, che
+        riceve già il suo home:status da on_connect).
+    """
+    user_ids = []
+    for user_id in presence.online_users():
+        if user_id != exclude:
+            user_ids.append(user_id)
     send_status(user_ids)
 
 
+def _game_finished(user_ids, _app):
+    """A fine partita i giocatori ricevono lo stato nuovo (l'avviso di rientro sparisce).
+
+    In parole semplici:
+        _game_finished(user_ids, _app)
+        La chiama la stanza (finish_listeners). _app non serve qui: il trattino basso
+        davanti dice che il parametro c'è solo perché tutti gli avvisi lo ricevono.
+    """
+    send_status(user_ids)
+
+
+# @handler (app/realtime/events.py): controlla login e limite di frequenza e
+# trasforma quello che il gestore restituisce nella risposta del contratto
 @handler
 def on_refresh(data=None):
     """home:refresh: lo stato della home di chi lo chiede, nella risposta.
@@ -62,7 +105,13 @@ def on_refresh(data=None):
 
 
 def register(socketio):
-    """home:refresh dalla pagina; a fine partita i giocatori ricevono lo stato nuovo."""
+    """home:refresh dalla pagina; a fine partita i giocatori ricevono lo stato nuovo.
+
+    In parole semplici:
+        register(socketio)
+        _game_finished si aggiunge a finish_listeners una volta sola (se create_app
+        si chiama più volte, come nei test, non si raddoppia).
+    """
     socketio.on_event("home:refresh", on_refresh)
     if _game_finished not in room_module.finish_listeners:
         room_module.finish_listeners.append(_game_finished)

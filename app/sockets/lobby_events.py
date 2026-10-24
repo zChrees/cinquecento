@@ -18,8 +18,19 @@ P68: cpu:start, la partita contro la CPU (P122: anche nel 2v2).
   pagina le riconosce da `cpu`. `busy` se l'utente è già in coda, in partita o ha un
   invito aperto. Gira sotto il lock degli inviti, come invite:start: un invito non si
   apre mentre la partita parte.
+
+Cosa contiene:
+    on_join(data)        queue:join, entra in coda
+    on_leave(data)       queue:leave, esce dalla coda
+    on_cpu_start(data)   cpu:start, partita contro la CPU
+    register(socketio)   registra i tre gestori
+
+DA DOVE ARRIVANO I DATI: dalla carta-modal della Partita Veloce nella home
+(frontend/src/components/ModeModal.tsx e HomePage.tsx), che manda request_id, mode e
+target_score.
 """
 
+# replace: una copia di una dataclass "congelata" con alcuni campi cambiati
 from dataclasses import replace
 
 from flask import current_app, request
@@ -36,6 +47,7 @@ from config import BaseConfig
 REQUEST_ID_MAX = 100
 MODES = ("1v1", "2v2")
 
+# recent: le risposte date di recente, per chiave anti-doppione (request_id)
 recent = RecentRequests()
 
 # P122 (D49): i posti delle CPU per modalità, con i nomi; il giocatore vero è al posto 0
@@ -46,8 +58,18 @@ CPU_NAMES = {
 
 
 def _join_data(data):
-    """`request_id`, `mode` e `target_score`, comuni a queue:join e cpu:start (P122)."""
-    request_id, target_score = _request(data)
+    """`request_id`, `mode` e `target_score`, comuni a queue:join e cpu:start (P122).
+
+    In parole semplici:
+        _join_data(data)
+        data: quello che ha mandato la pagina, per esempio
+              {"request_id": "a1b2", "mode": "1v1", "target_score": 300}.
+        Restituisce i tre valori controllati, in una tupla (request_id, mode, target_score);
+        un valore non valido si rifiuta con invalid_data.
+    """
+    checked = _request(data)
+    request_id = checked[0]
+    target_score = checked[1]
     mode = data.get("mode")
     if not isinstance(mode, str) or mode not in MODES:
         raise EventError("invalid_data", "Modalità non valida.")
@@ -55,11 +77,19 @@ def _join_data(data):
 
 
 def _request(data):
-    """`request_id` e `target_score`."""
+    """`request_id` e `target_score`.
+
+    In parole semplici:
+        _request(data)
+        request_id: un testo da 1 a REQUEST_ID_MAX caratteri (la chiave anti-doppione).
+        target_score: un intero tra i punteggi ammessi (TARGET_SCORES di config.py);
+        True e False si rifiutano anche se in Python sono numeri.
+        Restituisce la tupla (request_id, target_score).
+    """
     if not isinstance(data, dict):
         raise EventError("invalid_data", "Richiesta non valida.")
     request_id = data.get("request_id")
-    if not isinstance(request_id, str) or not 1 <= len(request_id) <= REQUEST_ID_MAX:
+    if not isinstance(request_id, str) or len(request_id) < 1 or len(request_id) > REQUEST_ID_MAX:
         raise EventError("invalid_data", "Richiesta non valida.")
     target_score = data.get("target_score")
     if (not isinstance(target_score, int) or isinstance(target_score, bool)
@@ -68,37 +98,84 @@ def _request(data):
     return request_id, target_score
 
 
+# @handler (app/realtime/events.py): controlla login e limite di frequenza e
+# trasforma quello che il gestore restituisce nella risposta del contratto
 @handler
 def on_join(data=None):
-    request_id, mode, target_score = _join_data(data)
-    user, sid, app = current_user._get_current_object(), request.sid, current_app._get_current_object()
-    return recent.run(user.id, "queue:join", request_id,
-                      lambda: matchmaker.join(app, user, mode, target_score, sid))
+    """queue:join: entra nella coda della Partita Veloce.
+
+    In parole semplici:
+        Controlla i dati, poi chiede a recent di eseguire join_queue una volta sola per
+        quel request_id: lo stesso tentativo ripetuto (doppio clic, rete lenta) riceve
+        la stessa risposta. Restituisce lo stato della coda (queue:status).
+    """
+    checked = _join_data(data)
+    request_id = checked[0]
+    mode = checked[1]
+    target_score = checked[2]
+    # _get_current_object: l'utente e l'app veri, non i "segnaposto" di Flask, che
+    # funzionano solo durante la richiesta
+    user = current_user._get_current_object()
+    sid = request.sid
+    app = current_app._get_current_object()
+
+    def join_queue():
+        """L'ingresso vero in coda (lo chiama recent.run, se il tentativo è nuovo)."""
+        return matchmaker.join(app, user, mode, target_score, sid)
+
+    return recent.run(user.id, "queue:join", request_id, join_queue)
 
 
 @handler
 def on_leave(data=None):
-    """Annulla: risponde ok anche se l'utente non era in coda (contratto 4)."""
+    """Annulla: risponde ok anche se l'utente non era in coda (contratto 4).
+
+    In parole semplici:
+        queue:leave non ha dati; con una coppia esce anche il compagno (partner_left).
+    """
     matchmaker.leave(current_user.id)
 
 
 @handler
 def on_cpu_start(data=None):
-    """Partita contro la CPU (P68, P122): risponde ok con `{"game_id"}`."""
-    request_id, mode, target_score = _join_data(data)
+    """Partita contro la CPU (P68, P122): risponde ok con `{"game_id"}`.
+
+    In parole semplici:
+        Come on_join, con la stessa chiave anti-doppione; la partita la crea _start_cpu.
+    """
+    checked = _join_data(data)
+    request_id = checked[0]
+    mode = checked[1]
+    target_score = checked[2]
     user = current_user._get_current_object()
-    return recent.run(user.id, "cpu:start", request_id, lambda: _start_cpu(user, mode, target_score))
+
+    def start():
+        """La partita vera (la chiama recent.run, se il tentativo è nuovo)."""
+        return _start_cpu(user, mode, target_score)
+
+    return recent.run(user.id, "cpu:start", request_id, start)
 
 
 def _start_cpu(user, mode, target_score):
+    """Crea la partita contro la CPU: l'utente al posto 0, le CPU agli altri.
+
+    In parole semplici:
+        _start_cpu(user, mode, target_score)
+        Per ogni posto di CPU_NAMES[mode], in ordine (sorted), una copia di CPU_PLAYER
+        con il suo nome. Con il lucchetto degli inviti: chi è in coda o ha un invito
+        aperto non può iniziare. Restituisce {"game_id": "..."}.
+    """
     names = CPU_NAMES[mode]
-    players = [Player.of(user)] + [replace(CPU_PLAYER, username=names[seat]) for seat in sorted(names)]
+    players = [Player.of(user)]
+    for seat in sorted(names):
+        players.append(replace(CPU_PLAYER, username=names[seat]))
     with invites.lock:
         if user.id in matchmaker.queue:
             raise EventError("busy", "Sei già in coda: annulla la ricerca prima di giocare contro la CPU.")
         if invites.open_of(user.id) is not None:
             raise EventError("busy", "Hai un invito aperto: annullalo prima di giocare contro la CPU.")
         try:
+            # tuple(names): i posti delle CPU, cioè le chiavi del dizionario, per esempio (1,)
             room = create_room(players, mode, target_score, rated=False, cpu_seats=tuple(names))
         except RoomError:
             raise EventError("busy", "Sei già in partita.") from None
@@ -106,6 +183,7 @@ def _start_cpu(user, mode, target_score):
 
 
 def register(socketio):
+    """Registra i gestori di queue:join, queue:leave e cpu:start."""
     socketio.on_event("queue:join", on_join)
     socketio.on_event("queue:leave", on_leave)
     socketio.on_event("cpu:start", on_cpu_start)

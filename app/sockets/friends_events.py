@@ -20,10 +20,22 @@ Amici online (friends:presence {"user_id", "presence"}): agli amici collegati di
 entra online, esce, comincia o finisce una partita (notify_presence). friends:changed
 lo manda friend_service.py dopo ogni cambiamento di amicizie e blocchi.
 Nei log solo numeri di utente.
+
+Cosa contiene:
+    notify_presence(user_ids, app)   friends:presence agli amici collegati
+    on_send, on_accept, on_decline, on_cancel, on_start
+                                     un gestore per ogni evento degli inviti
+    register(socketio)               registra i gestori e gli avvisi di inizio e fine partita
+
+DA DOVE ARRIVANO I DATI: dalla home React (frontend/src/pages/HomePage.tsx, con la
+carta-modal "Gioca con un amico" e la finestra dell'invito ricevuto, InviteDialog.tsx),
+che manda user_id (l'amico), mode, target_score, request_id o invite_id.
 """
 
 import logging
 import secrets
+
+# nullcontext: un "with" che non fa niente, quando non serve entrare nell'app Flask
 from contextlib import nullcontext
 
 from flask import current_app, has_app_context, request
@@ -43,6 +55,7 @@ from config import BaseConfig
 
 log = logging.getLogger(__name__)
 
+# recent: le risposte date di recente, per chiave anti-doppione (request_id)
 recent = friend_service.RecentRequests()
 INVITE_ID_MAX = 64
 
@@ -52,11 +65,25 @@ INVITE_ID_MAX = 64
 
 def notify_presence(user_ids, app=None):
     """friends:presence agli amici collegati di quegli utenti. Serve il database: dentro
-    Flask si usa l'app corrente, da un thread quella data; senza nessuna delle due non fa niente."""
+    Flask si usa l'app corrente, da un thread quella data; senza nessuna delle due non fa niente.
+
+    In parole semplici:
+        notify_presence([7])
+        notify_presence(user_ids, app)
+        user_ids: gli utenti il cui stato è cambiato (online, offline, in partita).
+        app:      facoltativo, l'applicazione Flask; la passa la stanza, che chiama da
+                  un thread fuori da una richiesta.
+        Per ogni utente, ogni suo amico collegato riceve {"user_id", "presence"}.
+    """
     if app is None and not has_app_context():
         return
     try:
-        with app.app_context() if app is not None else nullcontext():
+        # context: con un'app data si "entra" in quella; dentro Flask non serve (nullcontext)
+        if app is not None:
+            context = app.app_context()
+        else:
+            context = nullcontext()
+        with context:
             for user_id in user_ids:
                 data = {"user_id": user_id, "presence": friend_service.presence(user_id)}
                 for friend in friend_repo.friends_of(user_id):
@@ -68,6 +95,13 @@ def notify_presence(user_ids, app=None):
 
 
 def _game_changed(user_ids, app):
+    """Inizio o fine di una partita: gli amici dei giocatori vedono lo stato nuovo.
+
+    In parole semplici:
+        _game_changed(user_ids, app)
+        La chiama la stanza (start_listeners e finish_listeners di room.py), da un
+        thread a parte; senza app (stanza creata fuori da Flask) non fa niente.
+    """
     if app is not None:
         notify_presence(user_ids, app)
 
@@ -76,6 +110,12 @@ def _game_changed(user_ids, app):
 
 
 def _send_update(invite):
+    """invite:update a chi ha invitato e a chi è stato invitato.
+
+    In parole semplici:
+        _send_update(invite)
+        La chiama invites a ogni cambio di stato (è il suo on_change, qui sotto).
+    """
     data = {"invite_id": invite.invite_id, "status": invite.status}
     for player in (invite.sender, invite.recipient):
         socketio.emit("invite:update", data, to=user_channel(player.user_id))
@@ -85,19 +125,29 @@ invites.on_change = _send_update
 
 
 def _is_int(value):
+    """True se `value` è un intero vero (True e False, che in Python sono anche numeri, no)."""
     return isinstance(value, int) and not isinstance(value, bool)
 
 
 def _invite_id(data):
+    """Il codice dell'invito mandato dalla pagina, controllato (un testo da 1 a INVITE_ID_MAX caratteri)."""
     if not isinstance(data, dict):
         raise EventError("invalid_data", "Richiesta non valida.")
     invite_id = data.get("invite_id")
-    if not isinstance(invite_id, str) or not 0 < len(invite_id) <= INVITE_ID_MAX:
+    if not isinstance(invite_id, str) or len(invite_id) == 0 or len(invite_id) > INVITE_ID_MAX:
         raise EventError("invalid_data", "Invito non valido.")
     return invite_id
 
 
 def _send_data(data):
+    """I dati di invite:send, controllati.
+
+    In parole semplici:
+        _send_data(data)
+        data: per esempio {"request_id": "a1b2", "user_id": 12, "mode": "1v1", "target_score": 300}.
+        Restituisce la tupla (request_id, user_id, mode, target_score); un valore non
+        valido si rifiuta con invalid_data.
+    """
     if not isinstance(data, dict):
         raise EventError("invalid_data", "Richiesta non valida.")
     request_id = friend_service.check_request_id(data.get("request_id"))
@@ -114,13 +164,29 @@ def _send_data(data):
 
 
 def _check_free(user_id, name=None):
-    """busy se l'utente è in partita o in coda (gli inviti aperti li controlla invites)."""
+    """busy se l'utente è in partita o in coda (gli inviti aperti li controlla invites).
+
+    In parole semplici:
+        _check_free(user_id, name)
+        name: facoltativo, il nome dell'amico, per il messaggio; senza (o vuoto) il
+        messaggio parla a chi ha fatto la richiesta.
+    """
     if find_room_of_user(user_id) is not None or user_id in matchmaker.queue:
-        raise EventError("busy", f"{name} sta già giocando o è in coda." if name
-                         else "Sei già in partita o in coda.")
+        if name:
+            message = f"{name} sta già giocando o è in coda."
+        else:
+            message = "Sei già in partita o in coda."
+        raise EventError("busy", message)
 
 
 def _send(me, other_id, mode, target_score):
+    """Manda l'invito, dopo i controlli: amicizia, amico collegato, tutti e due liberi.
+
+    In parole semplici:
+        _send(me, other_id, mode, target_score)
+        me: l'utente che invita. other_id: il numero dell'amico.
+        L'amico riceve invite:received; chi invita riceve l'invito nella risposta.
+    """
     if other_id == me.id:
         raise EventError("invalid_data", "Non puoi invitare te stesso.")
     row = friend_repo.get_pair(me.id, other_id)
@@ -139,15 +205,34 @@ def _send(me, other_id, mode, target_score):
     return data
 
 
+# @handler (app/realtime/events.py): controlla login e limite di frequenza e
+# trasforma quello che il gestore restituisce nella risposta del contratto
 @handler
 def on_send(data=None):
-    request_id, other_id, mode, target_score = _send_data(data)
+    """invite:send: invita un amico.
+
+    In parole semplici:
+        Lo stesso request_id ripetuto riceve la stessa risposta (recent.run), senza
+        mandare due inviti.
+    """
+    checked = _send_data(data)
+    request_id = checked[0]
+    other_id = checked[1]
+    mode = checked[2]
+    target_score = checked[3]
+    # _get_current_object: l'utente vero, non il "segnaposto" di Flask-Login
     me = current_user._get_current_object()
-    return recent.run(me.id, "invite:send", request_id, lambda: _send(me, other_id, mode, target_score))
+
+    def send():
+        """L'invito vero (lo chiama recent.run, se il tentativo è nuovo)."""
+        return _send(me, other_id, mode, target_score)
+
+    return recent.run(me.id, "invite:send", request_id, send)
 
 
 @handler
 def on_accept(data=None):
+    """invite:accept: l'invitato accetta (deve essere libero: non in partita né in coda)."""
     invite_id = _invite_id(data)
     _check_free(current_user.id)
     invites.accept(invite_id, current_user.id)
@@ -155,11 +240,13 @@ def on_accept(data=None):
 
 @handler
 def on_decline(data=None):
+    """invite:decline: l'invitato rifiuta."""
     invites.decline(_invite_id(data), current_user.id)
 
 
 @handler
 def on_cancel(data=None):
+    """invite:cancel: chi ha invitato annulla."""
     invites.cancel(_invite_id(data), current_user.id)
 
 
@@ -168,31 +255,56 @@ def on_start(data=None):
     """"Gioca" di chi ha invitato: 1v1 → partita senza rating. 2v2 (P59), con gli amici
     che hanno accettato: uno → la coppia in coda; due → il gruppo di tre in coda (coppia
     a sorte); tre → partita subito, squadre a sorte, senza rating. Gli inviti del gruppo
-    ancora in attesa si annullano."""
+    ancora in attesa si annullano.
+
+    In parole semplici:
+        data: {"invite_id": "inv_..."}.
+        Tutto sotto il lucchetto degli inviti, così un doppio clic non avvia due
+        partite. Restituisce None (la partita arriva con game:start) oppure, quando si
+        entra in coda, lo stato della coda.
+    """
     invite_id = _invite_id(data)
-    app, sid = current_app._get_current_object(), request.sid
+    app = current_app._get_current_object()
+    sid = request.sid
     with invites.lock:  # un doppio clic non avvia due partite
         invite = invites.accepted_of_sender(invite_id, current_user.id)
-        group = invites.group_of(invite.sender.user_id) if invite.mode == "2v2" else [invite]
-        accepted = [i for i in group if i.status == "accepted"]
+        # group: nel 2v2 tutti gli inviti aperti di chi invita; nel 1v1 solo questo
+        if invite.mode == "2v2":
+            group = invites.group_of(invite.sender.user_id)
+        else:
+            group = [invite]
+        # accepted: gli inviti del gruppo già accettati
+        accepted = []
+        for other in group:
+            if other.status == "accepted":
+                accepted.append(other)
+
+        # tutti devono essere ancora collegati e liberi
         for other in accepted:
             if not presence.is_online(other.recipient.user_id):
                 raise EventError("offline", f"{other.recipient.username} non è più collegato.")
         _check_free(invite.sender.user_id)
         for other in accepted:
             _check_free(other.recipient.user_id, other.recipient.username)
-        friends = [i.recipient for i in accepted]
+
+        # friends: gli amici che giocano (chi ha accettato)
+        friends = []
+        for other in accepted:
+            friends.append(other.recipient)
+
         result = None
         if invite.mode == "1v1":
-            _create([invite.sender, *friends], "1v1", invite.target_score)
+            _create([invite.sender] + friends, "1v1", invite.target_score)
         elif len(friends) == 1:
             result = matchmaker.join_pair(app, invite.sender, friends[0], invite.target_score, sid)
         elif len(friends) == 2:
             result = matchmaker.join_group(app, invite.sender, friends, invite.target_score, sid)
         else:
-            seats = [invite.sender, *friends]
+            seats = [invite.sender] + friends
             secrets.SystemRandom().shuffle(seats)  # squadre (posti 0 e 2, 1 e 3) e posti a sorte
             _create(seats, "2v2", invite.target_score)
+
+        # gli inviti accettati diventano "started", quelli ancora in attesa si annullano
         for other in group:
             if other.status == "accepted":
                 invites.mark_started(other)
@@ -202,7 +314,12 @@ def on_start(data=None):
 
 
 def _create(seats, mode, target_score):
-    """Partita tra amici, senza rating (D36; P59 per il 2v2 di quattro amici)."""
+    """Partita tra amici, senza rating (D36; P59 per il 2v2 di quattro amici).
+
+    In parole semplici:
+        _create(seats, mode, target_score)
+        seats: i giocatori in ordine di posto. Se uno è già in partita, busy.
+    """
     try:
         create_room(seats, mode, target_score, rated=False)
     except RoomError:
@@ -210,6 +327,13 @@ def _create(seats, mode, target_score):
 
 
 def register(socketio):
+    """Registra i gestori degli inviti e l'avviso agli amici a inizio e fine partita.
+
+    In parole semplici:
+        register(socketio)
+        _game_changed si aggiunge una volta sola a start_listeners e finish_listeners
+        (se create_app si chiama più volte, come nei test, non si raddoppia).
+    """
     socketio.on_event("invite:send", on_send)
     socketio.on_event("invite:accept", on_accept)
     socketio.on_event("invite:decline", on_decline)
