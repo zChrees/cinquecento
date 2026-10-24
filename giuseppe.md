@@ -22,6 +22,19 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### Commenti e niente zucchero, lotto 3b — Account, amici e chat: servizi, repository e modelli (24/10/2026)
+
+- **Branch**: feature/commenti-servizi-3b (da `dev` a `b729ebe`). Chiude il lotto 3
+- **File**: modificati `app/services/` `auth_service.py`, `friend_service.py`, `chat_service.py`, `avatars.py`; `app/repositories/` `user_repo.py`, `friend_repo.py`, `chat_repo.py`; `app/models/` `user.py`, `friendship.py`, `chat_message.py`; questo file
+- **Cosa c'è**: come nel 3a, in cima a ogni file "Cosa contiene" (con un esempio di chiamata) e "Da dove arrivano i dati" (rotte `/api/auth/...`, `/api/profile/...`, `/api/friends/...`, eventi `chat:*` e `friends_events.py`); "In parole semplici" sopra ogni funzione, classe e metodo; spiegati alla prima volta in ogni file le classi (anche `AuthError(Exception)` e `User(UserMixin, db.Model)`, che ereditano), `super().__init__`, i lock con `with`, `try/except`, `raise ... from None`, `setdefault`, `FOR UPDATE`, `flush`, `sa.case`, le colonne calcolate, `str | None`. Tolti i casi di zucchero: le due comprehension di dizionari (la pulizia di `LoginLimiter.record_failure` e di `RecentRequests.run`), quelle di liste di `overview` e `history`, gli `{**_user(u), ...}` (dizionario costruito e poi riempito, stesso ordine delle chiavi), le tre `lambda` (`send_request`, `block`: funzioni `attempt` che girano nello stesso momento, come `send` della chat; la chiave dell'ordinamento: `_presence_rank`), i cinque `a if c else b` (tre in `authenticate`, uno in `_attempts_key` e uno in `presence`), le catene `1 <= len(x) <= n` (`check_request_id`, `check_username`), l'assegnazione doppia `entry = d[k] = [...]`, gli spacchettamenti `kind, value = result` e `rows, has_more = ...` (`conversation` restituisce ancora la coppia, ora scritta con una variabile per pezzo), `dict(rows.all())` di `unread_by_sender` (ciclo, come `stats_repo`). Commenti vecchi aggiornati: `/friends/requests` → `/api/friends/requests` (dal 9c), `user.py` diceva che li legge `base.html` (oggi `GET /api/auth/session` e `FakeUser`). Nomi, messaggi, ordine dei controlli e comportamento uguali
+- **Restano**, spiegati: `*args` di `friend_service._write` (le funzioni che riceve hanno 2 o 3 parametri) e `*user_ids` di `friend_repo.lock_users` (la firma la usano friend e chat); `sa.Enum(*STATUSES)` di `friendship.py`; `for a, b in ...` sulle righe delle query (come nel 3a)
+- **Da proporre** (sezione 8 di `regole-codice.md`): `friend_repo.get_user` non la chiama nessuno (si usa `user_repo.get_by_id`), scritto nel suo commento; si può togliere
+- **Controlli**: `ruff check .` pulito, `py_compile` dei 10 file; con il runner `api` **307 PASS**, `sockets` **333 PASS**, `services` **38 PASS**, `db` **89 PASS**, `e2e` **12 PASS**; con pytest `test_chat_vera.py`, `test_spa_chat.py`, `test_spa_impostazioni.py` **14 PASS**; nessuno zucchero rimasto nei 10 file (ricerca) [T]
+- **Decisioni prese**: nessuna nuova
+- **Domande nuove**: nessuna
+- **Punti delicati**: nessuno nuovo
+- **Note per gli altri**: nessuna. Prossimo: lotto **5** (`cpu.py`), l'ultimo dei commenti nel Python
+
 ### Correzione — Carta-modal della Partita Veloce: "Gioca" sulla cornice (24/10/2026)
 
 - **Branch**: fix/carta-modal-1v1-gioca (da `dev` a `d5cf8fc`). Trovato da Giuseppe nella prova a mano del 9e, da computer (Partita Veloce 1v1); è la grafica della home (parte di Christian, permesso del 20/10): scelte di Giuseppe
