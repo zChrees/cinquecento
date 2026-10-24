@@ -22,6 +22,15 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Dove si riparte (fine sessione del 24/10/2026)
+
+- **Fatto oggi**: migrazione chiusa (prova a mano del 9e, tutto bene); commenti nel Python finiti; piano della messa online `docs/MESSA-ONLINE.md` (D21 = VPS); della **fase 0** fatti **C1** (io, `311f9ad`, rebase su C3 senza rilanciare i test, per mia scelta: i file non si toccano) e **C3** (Giuseppe, `9466576`, con via `friend_repo.get_user`)
+- **Prossimo**: **C2** (commenti di `app/blueprints/`, `app/__init__.py`, `app/errors.py`, `config.py` senza la storia), poi **C5** (`docs/MIGRAZIONE-FRONTEND.md` e `docs/DEMO.md` in `docs/archivio/`; via `scripts/pianifica_backup.ps1` e `tests/db/test_demo.py`; `README.md` e `docs/prototipo/LEGGIMI.md` riscritti, con la riga sui codici P, D e R), poi la mia parte di **C4** (test: commenti senza la storia e `test_spa_*.py` rinominati, controllando chi li importa; Giuseppe aspetta C1 e C2) e **C6** (`CLAUDE.md`: punti delicati, "Stack", "Pagine", "Dipendenze"). `DemoConfig` si toglie in **O1**, non nella fase 0
+- **Ok già dati** (24/10): per la fase 0 commit, merge e push senza chiedere ogni volta, fermandosi solo per problemi o scelte; lanciare solo i test dei file toccati
+- **Documenti condivisi da aggiornare** (chi è di turno): in `REVIEW.md` manca ancora una sezione per i punti di `docs/MESSA-ONLINE.md` (C1 e C3 fatti); la riga "Stato" di `CLAUDE.md` va portata a C1 e C3 (riepiloghi registrati fino a "Documenti: piano della messa online" in `christian.md` e "R7" in `giuseppe.md`); la nota "Resta da proporre `friend_repo.get_user`" di `REVIEW.md` è fatta (C3)
+- **Aperte**: D55 (dominio, da decidere prima di S5) e D56 (email, fase 4)
+- **File solo miei, non in git**: `cose-da-sistemare.txt`, `prova-a-mano.md` (prova fatta)
+
 ### C1 — Pulizia del frontend: commenti senza la storia della migrazione (24/10/2026)
 
 - **Branch**: feature/c1-pulizia-frontend (da `dev` a `b1d2140`)
