@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Commenti e niente zucchero, lotto 4 — config.py, run.py e scripts/ (24/10/2026)
+
+- **Branch**: feature/commenti-config-script (da `dev` a `8b686e0`)
+- **File**: modificati `config.py`, `run.py`, `scripts/backup.py`, `scripts/migrate.py`, `scripts/ripristina.py`; questo file. Non toccati `scripts/pianifica_backup.ps1` (deve restare solo ASCII, P38) e `scripts/setup_db.sql`
+- **Cosa c'è**: in cima a ogni file "Cosa contiene" e da dove arrivano i dati; "In parole semplici" sopra ogni funzione e classe; spiegati alla prima volta le classi che ereditano, `ClassVar`, `@contextmanager` con `yield`, `with` (anche con due oggetti), `try/except/finally`, `raise ... from`, `if __name__ == "__main__"`, i testi `r"..."` e `b"..."`, `1 << 16`. Tolti i casi di zucchero: la comprehension di `CONFIGS` (ora un ciclo), le catene `x or y or z` e `env.get(...) or None` di `load_config`, `1 <= int(raw) <= 65535`, gli `a if c else b` di `split_statements`, `_migrate`, `_first_line` e dei tre `main`, le comprehension di `split_statements` e `_migrate`, gli spacchettamenti (`a, b = [], []`, `fd, path = mkstemp(...)`, `backup_file, database = args`, `for v, p in ...`, `enumerate`), `*DUMP_OPTIONS` dentro l'elenco, il walrus `:=` di `_feed`, `contextlib.suppress`. Restano, perché li chiede `ruff`: `for k, v in d.items()` e i `with` con due oggetti (SIM117)
+- **Funzione nuova, piccola**: `_value(env, key, default)` in `config.py`, al posto delle sette copie di `env.get(key) or default` (stesso risultato: un valore vuoto vale come mancante)
+- **Controlli**: `ruff check .` pulito, `py_compile` dei cinque file; suite `runner` **13 PASS** (copia `config.py` in un progetto finto: resta senza import del progetto), `db` **89 PASS** (backup, ripristino, migrazioni), `e2e` **12 PASS** (avvia `python run.py`), `tests/api/test_avvio.py` **32 PASS** [T]
+- **Decisioni prese**: nessuna nuova
+- **Domande nuove**: nessuna
+- **Punti delicati**: `config.py` non deve importare niente del progetto (lo copia da solo `test_esegui_tutti.py`), scritto in cima al file
+- **Cosa devono fare gli altri**: niente
+
 ### Commenti e niente zucchero, lotto "Sito" — blueprint e file di app/ (24/10/2026)
 
 - **Branch**: feature/commenti-sito (da `dev` a `5fc1678`)
