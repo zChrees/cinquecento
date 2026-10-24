@@ -1,7 +1,6 @@
 /**
- * Pagina di accesso, /auth/login (P16, P96, P125; passo 4 della migrazione): la
- * versione React di app/templates/auth/login.html e js/pages/auth.js, con lo
- * stesso HTML e gli stessi data-* (stile in css/pages/auth.css e components/form.css).
+ * Pagina di accesso, /auth/login (P16, P96, P125; passo 4 della migrazione; stile
+ * in css/pages/auth.css e components/form.css).
  *
  * Cosa contiene:
  *   <LoginPage />

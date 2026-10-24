@@ -1,6 +1,6 @@
 /**
  * Finestra "Nessuna connessione" (P125): compare se si prova a mandare un modulo
- * senza rete, al posto dell'invio (come showOffline() di js/pages/auth.js).
+ * senza rete, al posto dell'invio.
  *
  * Cosa contiene:
  *   <OfflineModal onDone={handleDone} />

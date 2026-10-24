@@ -1,6 +1,5 @@
 /**
- * Finestra nella pagina, al posto di alert / confirm (P19): la versione React di
- * app/static/js/components/Modal.js, con lo stesso HTML e le stesse classi
+ * Finestra nella pagina, al posto di alert / confirm (P19)
  * (stile in app/static/css/components/modal.css).
  *
  * Cosa contiene:
@@ -24,7 +23,7 @@ import type { AnimationEvent, JSX, MouseEvent, RefObject, SyntheticEvent } from 
 import { reduceMotion } from '../utils/motion';
 
 // CLOSE_FALLBACK_MS: se l'animazione di uscita non parte (per esempio scheda in
-// secondo piano), la finestra si chiude comunque dopo questo tempo (come Modal.js)
+// secondo piano), la finestra si chiude comunque dopo questo tempo
 const CLOSE_FALLBACK_MS = 400;
 
 // ModalAction: un pulsante della finestra

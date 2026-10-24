@@ -15,7 +15,7 @@
  *
  * In parole semplici:
  *   reduceMotion()  →  true con "Riduci movimento" acceso: allora finestre e
- *   logo non si animano (come reduceMotion() di core/layout.js e Modal.js).
+ *   logo non si animano.
  */
 export function reduceMotion(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;

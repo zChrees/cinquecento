@@ -1,5 +1,5 @@
 /*
- * Tempo del turno (P21), creato da js/components/Timer.js: un anello attorno
+ * Tempo del turno (P21), creato da game/Timer.tsx: un anello attorno
  * all'avatar di chi deve giocare. JS scrive i secondi rimasti (--timer-left) e la
  * parte di anello ancora piena (--timer-start, da 0 a 1); da lì un'animazione
  * CSS svuota l'anello e, a 10 secondi dalla fine, lo fa diventare rosso.

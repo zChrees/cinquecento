@@ -1,9 +1,8 @@
 /**
  * Il logo della navbar (P40, P42): due carte di dorso che ogni tanto si girano e
  * mostrano Cavallo e Re di un seme, poi tornano sul dorso; al giro dopo tocca al
- * seme successivo. Con "riduci movimento" restano ferme sul dorso. È la versione
- * React di initLogo() in app/static/js/core/layout.js, con lo stesso HTML e le
- * stesse classi (stile in app/static/css/components/navbar.css).
+ * seme successivo. Con "riduci movimento" restano ferme sul dorso
+ * (stile in app/static/css/components/navbar.css).
  *
  * Cosa contiene:
  *   <Logo />
@@ -19,7 +18,7 @@ import { reduceMotion } from '../utils/motion';
 const IMG_BASE = '/static/img/cards-bg/';
 // LOGO_SUITS: i semi, nell'ordine in cui si mostrano
 const LOGO_SUITS: string[] = ['coppe', 'denari', 'spade', 'bastoni'];
-// I tempi del giro, in millisecondi (come LOGO_TIMING di layout.js):
+// I tempi del giro, in millisecondi:
 // BACK_MS sul dorso, FRONT_MS scoperte, STAGGER_MS tra la prima e la seconda
 // carta, FLIP_MS la durata della girata (deve restare uguale al CSS)
 const BACK_MS = 3000;

@@ -1,7 +1,6 @@
 /**
- * Le carte del tavolo React: nomi, confronti e indirizzi delle immagini. È la parte
- * "senza disegno" di app/static/js/components/Card.js e Trick.js (P20, P35, P70),
- * con gli stessi risultati.
+ * Le carte del tavolo React: nomi, confronti e indirizzi delle immagini, senza
+ * disegno (P20, P35, P70).
  *
  * Cosa contiene:
  *   SUITS                         ['denari', 'coppe', 'spade', 'bastoni']
@@ -20,7 +19,7 @@
 
 import type { Card, Rank, Suit } from '../types/card';
 
-// SUITS: i quattro semi, nell'ordine di Card.js
+// SUITS: i quattro semi
 export const SUITS: Suit[] = ['denari', 'coppe', 'spade', 'bastoni'];
 
 // RANK_NAMES: il nome di ogni valore, come RANK_NAMES del motore
@@ -49,7 +48,7 @@ export const FIGURE_BASE = '/static/img/cards-bg/';
  *   checkCard({ suit: 'cuori', rank: 10 })   → errore "Carta non valida."
  *   Il tipo Card dice già com'è fatta una carta, ma la vista arriva dalla rete
  *   (o, nella prova, da un evento mandato da un test): TypeScript non può
- *   controllarla mentre il programma gira. Come Card.js, una carta sbagliata si
+ *   controllarla mentre il programma gira. Una carta sbagliata si
  *   rifiuta con un errore, senza correzioni silenziose (P20).
  */
 export function checkCard(card: Card): Card {
@@ -104,8 +103,8 @@ export function sameCard(a: Card, b: Card): boolean {
  *
  * In parole semplici:
  *   throwKey({ suit: 'coppe', rank: 10 })   → 'coppe-10'
- *   È lo stesso codice del nome del file dell'immagine e della chiave dei lanci di
- *   game.js (P70). Nei componenti React fa anche da `key` delle carte: una carta
+ *   È lo stesso codice del nome del file dell'immagine e della chiave dei lanci
+ *   (P70). Nei componenti React fa anche da `key` delle carte: una carta
  *   compare una volta sola nel mazzo, quindi il codice è unico.
  */
 export function throwKey(card: Card): string {
@@ -130,7 +129,7 @@ let preloaded: Preloaded | null = null;
  * In parole semplici:
  *   preloadCardImages().then(markReady)
  *   Le 40 facce, il dorso, i quattro Assi "figura" dei canti e Cavallo e Re di ogni
- *   seme per la briscola (P108), come preloadCardImages di Card.js. Senza, con una
+ *   seme per la briscola (P108). Senza, con una
  *   rete lenta una carta mai vista restava bianca per qualche secondo quando
  *   compariva. Chiamata più volte, scarica una volta sola. "Promise" è una risposta
  *   che arriverà più tardi: decode() finisce quando l'immagine è pronta da disegnare.

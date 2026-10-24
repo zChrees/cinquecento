@@ -1,5 +1,5 @@
 /*
- * Frasi del tavolo (P56), create da js/components/TablePhrases.js: il pulsante sopra
+ * Frasi del tavolo (P56), create da game/TablePhrases.tsx: il pulsante sopra
  * la mano a destra (P71, nella riga .table__me di table.css), l'elenco che si apre
  * verso l'alto e il fumetto accanto all'avatar di chi ha parlato (a destra per chi
  * sta in alto; sopra per te e per chi sta ai lati, così non tocca il tuo nome, la
@@ -172,7 +172,7 @@
  * P112: su iPhone l'elenco compariva più in alto (sopra la tua riga) e poi scendeva.
  * Ora non si appoggia più alla griglia di .table__mine: l'altezza da cui parte,
  * --phrases-phone-top (fine della tua riga più lo spazio tra le righe), la misura
- * pages/game.js prima che la pagina si disegni; e l'entrata è solo una dissolvenza,
+ * game/GamePage.tsx prima che la pagina si disegni; e l'entrata è solo una dissolvenza,
  * senza movimento.
  */
 @media (max-width: 639px) {

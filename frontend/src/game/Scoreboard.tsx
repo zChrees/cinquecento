@@ -1,7 +1,6 @@
 /**
  * Il punteggio in alto al tavolo React (P21): i punti delle mani già finite per la
- * tua squadra e per l'altra, il punteggio per vincere e il numero della mano. È la
- * versione React di app/static/js/components/Scoreboard.js, con lo stesso HTML
+ * tua squadra e per l'altra, il punteggio per vincere e il numero della mano
  * (stile in css/components/scoreboard.css).
  *
  * Cosa contiene:
@@ -20,7 +19,7 @@ import type { Team } from '../types/common';
 import type { GameView, TeamTotal } from '../types/view';
 
 /**
- * Il nome di una squadra, come in Scoreboard.js e HandSummary.js.
+ * Il nome di una squadra.
  *
  * @param {GameView} view la vista
  * @param {Team} team la squadra, 0 o 1

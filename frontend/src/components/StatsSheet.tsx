@@ -1,7 +1,6 @@
 /**
- * Il pannello statistiche (P40, P30): si apre dall'avatar della navbar. La
- * versione React del <dialog id="stats"> di partials/navbar.html e di
- * StatsPanel.js, con lo stesso HTML (stile in css/components/stats-panel.css).
+ * Il pannello statistiche (P40, P30): si apre dall'avatar della navbar (stile
+ * in css/components/stats-panel.css).
  *
  * Cosa contiene:
  *   <StatsSheet user={...} dialogRef={...} sheet={...} />
@@ -24,7 +23,7 @@ import { Avatar } from './Avatar';
 import { Credits } from './LoginPrompt';
 import type { Sheet } from './sheet';
 
-// I messaggi al posto della griglia (come layout.js)
+// I messaggi al posto della griglia
 export const LOADING_MESSAGE = 'Caricamento…';
 const OFFLINE = 'Sei offline: le statistiche arrivano appena torna la connessione.';
 const NOT_AVAILABLE = 'Statistiche non disponibili. Riprova tra poco.';
@@ -82,7 +81,7 @@ interface StatsGridProps {
 }
 
 /**
- * La griglia delle statistiche (come StatsPanel() di StatsPanel.js).
+ * La griglia delle statistiche.
  *
  * In parole semplici:
  *   <StatsGrid stats={stats} />

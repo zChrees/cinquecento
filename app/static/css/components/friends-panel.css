@@ -1,7 +1,7 @@
 /*
  * Pannello amici (P46), dal prototipo di P52 (docs/prototipo/prototipo.css,
  * ".drawer" e seguenti): a tutto schermo su telefono, laterale da destra su
- * tablet e computer. Lo crea js/components/FriendsPanel.js; la chat dentro il
+ * tablet e computer. Lo crea components/FriendsPanel.tsx; la chat dentro il
  * pannello è in chat.css. Caricato da base.html: il pannello si apre da ogni
  * pagina con la navbar.
  */
@@ -277,7 +277,7 @@
 
 /*
  * Animazioni: il pannello entra scorrendo da destra; per la chiusura
- * FriendsPanel.js aggiunge .is-closing e chiude il dialog a fine animazione.
+ * components/sheet.ts aggiunge .is-closing e chiude il dialog a fine animazione.
  * Lo sfondo scuro è animato in modal.css (dialog[data-animated]).
  */
 .drawer[data-animated][open] {

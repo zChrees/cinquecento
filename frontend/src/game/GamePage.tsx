@@ -1,9 +1,7 @@
 /**
- * La pagina del tavolo React: /game/<codice>?ui=react (passo 8 della migrazione,
- * docs/MIGRAZIONE-FRONTEND.md, "Piano del passo 8"). È la versione React di
- * app/templates/game/table.html e della parte "disegno" di
- * app/static/js/pages/game.js, con lo stesso HTML: <main class="page page--game">,
- * il titolo nascosto e <div class="table" data-table data-game-id ...> con dentro il tavolo.
+ * La pagina del tavolo React: /game/<codice> (passo 8 della migrazione,
+ * docs/MIGRAZIONE-FRONTEND.md, "Piano del passo 8"). Disegna <main class="page
+ * page--game">, il titolo nascosto e <div class="table" data-table data-game-id ...> con dentro il tavolo.
  *
  * Cosa contiene:
  *   <GamePage />   (routes.tsx, indirizzo /game/:gameId)
@@ -49,7 +47,7 @@ import { sameCard } from './cards';
 import { DOUBLE_TAP_MS } from './animations';
 import { useTable } from './useTable';
 
-// LEAVE_ACTIONS: i pulsanti della finestra di "Esci", come confirmModal di Modal.js
+// LEAVE_ACTIONS: i pulsanti della finestra di "Esci"
 // (prima Annulla, poi la scelta rossa)
 const LEAVE_ACTIONS: ModalAction[] = [
   { label: 'Annulla', value: 'cancel', variant: 'ghost' },
@@ -91,7 +89,7 @@ function GoneNotice(): JSX.Element {
  *
  * In parole semplici:
  *   momentsOf(table, performance.now())
- *   Come l'oggetto moments di render() in game.js: presa chiusa, riepilogo, punti
+ *   I momenti del tavolo: presa chiusa, riepilogo, punti
  *   della mano appena chiusa (P72), canti, carte calate (P85), carte del compagno e
  *   consigli (P93), lanci e pescate (P70), ognuno con i millisecondi da quando si
  *   vede, e la distribuzione (P70, P118). Quando e per quanto lo decide lo store
@@ -183,7 +181,7 @@ let lastTapEnd = -Infinity;
  * un dito che arriva entro DOUBLE_TAP_MS dal precedente non lascia fare lo zoom
  * (preventDefault); così però il browser non manda nemmeno il clic, e la pagina lo
  * manda da sé al pulsante o alla carta toccata: due tocchi veloci non si perdono. Lo
- * zoom con due dita resta. Come onTouchEnd di game.js.
+ * zoom con due dita resta.
  *
  * @param {Event} event il touchend
  */
@@ -248,7 +246,7 @@ const aimed: WeakSet<HTMLElement> = new WeakSet();
  * (card-throw di trick.css) da dove parte rispetto al suo posto sul tavolo:
  * spostamento, misura, rotazione iniziale, verso in cui gira e direzione in cui si
  * stacca (verso il centro). Senza il punto di partenza restano i valori di
- * trick.css: arriva dal suo lato. Come aimThrows di game.js.
+ * trick.css: arriva dal suo lato.
  *
  * @param {HTMLElement} root l'elemento [data-table]
  *
@@ -256,8 +254,8 @@ const aimed: WeakSet<HTMLElement> = new WeakSet();
  *   aimThrows(tableRef.current)
  *   Per misurare dove si posa, toglie per un attimo l'animazione (che così riparte
  *   da capo): per questo lo fa **una volta sola** per carta, appena nata, quando
- *   l'animazione non è ancora cominciata. game.js lo faceva a ogni ridisegno perché
- *   ricreava tutte le carte; React invece le tiene.
+ *   l'animazione non è ancora cominciata (React tiene la stessa carta a ogni
+ *   ridisegno, quindi basta una volta).
  */
 function aimThrows(root: HTMLElement): void {
   const throws = getSnapshot().throws;
@@ -501,7 +499,7 @@ export function GamePage(): JSX.Element {
    * Effetto dopo ogni disegno (P112): sul telefono l'elenco delle frasi comincia
    * subito sotto la tua riga (.table__me) e non si sposta più; la misura si prende
    * qui, prima che il browser mostri la pagina (useLayoutEffect, a differenza di
-   * useEffect, gira prima di mostrarla), come placePhrasesMenu di game.js.
+   * useEffect, gira prima di mostrarla).
    */
   function placePhrasesMenu(): void {
     const element = tableRef.current;

@@ -1,9 +1,7 @@
 /**
  * Il contenuto della lista del pannello amici (P46, passo 5b della migrazione):
- * richieste ricevute, amici divisi per stato, richieste mandate, bloccati. È la
- * versione React di renderList() e delle funzioni per le righe di
- * app/static/js/components/FriendsPanel.js, con lo stesso HTML, le stesse classi e
- * gli stessi data-* (stile in css/components/friends-panel.css).
+ * richieste ricevute, amici divisi per stato, richieste mandate, bloccati (stile
+ * in css/components/friends-panel.css).
  *
  * Cosa contiene:
  *   <FriendsBody overview={...} loadError="" busy={[...]} handlers={...} />
@@ -65,7 +63,7 @@ export interface FriendsHandlers {
  *
  * In parole semplici:
  *   colorIndex('Giulia')  →  la somma dei codici delle lettere, resto della divisione per 4
- *   (come colorIndex() di FriendsPanel.js: lo stesso nome ha sempre lo stesso colore).
+ *   (lo stesso nome ha sempre lo stesso colore).
  */
 function colorIndex(name: string): number {
   let sum = 0;

@@ -1,8 +1,6 @@
 /**
  * La pagina delle impostazioni (P17, passo 6 della migrazione): /profile/settings.
- * È la versione React di app/templates/profile/settings.html e js/pages/profile.js,
- * con lo stesso HTML, le stesse classi e gli stessi data-* (stile in
- * css/pages/profile.css, più layout.css, form.css e button.css).
+ * (Stile in css/pages/profile.css, più layout.css, form.css e button.css).
  *
  * Cosa contiene:
  *   <SettingsPage />   tre parti:

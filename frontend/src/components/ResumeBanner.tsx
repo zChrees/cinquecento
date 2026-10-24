@@ -1,6 +1,5 @@
 /**
- * L'avviso "Hai una partita in corso" con "Rientra" (P22): la versione React di
- * app/static/js/components/ResumeBanner.js, con lo stesso HTML (stile in
+ * L'avviso "Hai una partita in corso" con "Rientra" (P22; stile in
  * css/pages/home.css, .resume).
  *
  * Sta nello spazio di "giocatori online" (.home__status), alto quanto quella riga:
@@ -73,7 +72,7 @@ export function ResumeBanner(props: ResumeBannerProps): JSX.Element {
   return (
     <div className="resume" role="status" data-resume={props.resume.game_id}>
       {/* discover="none": senza, React Router aggiunge l'attributo data-discover, che
-          ResumeBanner.js non ha (lo stesso HTML, lotto 8h) */}
+          qui non serve (lotto 8h) */}
       <Link className="resume__link felt-text" to={props.resume.url} data-resume-link="" discover="none">
         <span className="icon resume__icon" aria-hidden="true">playing_cards</span>
         <span className="resume__text">

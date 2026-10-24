@@ -1,5 +1,5 @@
 /*
- * Tavolo di gioco (P21), creato da js/components/Table.js. Tre fasce che
+ * Tavolo di gioco (P21), creato da game/Table.tsx. Tre fasce che
  * riempiono lo schermo senza scorrere: in alto "Esci" e il punteggio, al centro
  * gli altri giocatori attorno alla presa, in basso tu, i pulsanti "Canta" e la
  * tua mano. Le scritte sul panno sono come quelle della navbar (--relief-text).
@@ -373,7 +373,7 @@
  * bordo nel tavolo finché le carte si vedono intere e dritte (anche quello in alto),
  * un po' più aperto di quello coperto, sopra nome e avatar di quel giocatore e sopra
  * la barra in alto. Le carte ruotano attorno a un perno sotto di loro (--i su --n).
- * Il ritardo dell'entrata lo scrive Table.js, così un ridisegno non la fa ripartire.
+ * Il ritardo dell'entrata lo scrive Table.tsx, così un ridisegno non la fa ripartire.
  */
 .revealed-hand {
   --edge-card: 44px;

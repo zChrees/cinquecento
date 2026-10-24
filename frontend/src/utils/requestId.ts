@@ -1,6 +1,5 @@
 /**
- * Il codice anti-doppione delle richieste che creano qualcosa (contratto 1.3):
- * la versione TypeScript di newRequestId() di app/static/js/components/FriendsPanel.js.
+ * Il codice anti-doppione delle richieste che creano qualcosa (contratto 1.3).
  *
  * Cosa contiene:
  *   newRequestId()   un codice casuale nuovo, per esempio '3f2b8c1e-9a4d-4c7e-8b1f-2d6e0a5c9b17'

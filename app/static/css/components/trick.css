@@ -1,6 +1,6 @@
 /*
  * Presa in corso, mazzo e briscola al centro del tavolo (P21), creati da
- * js/components/Trick.js. Ogni carta della presa sta dal lato di chi l'ha
+ * game/Trick.tsx. Ogni carta della presa sta dal lato di chi l'ha
  * giocata, un po' ruotata come su un tavolo vero. P57: la presa appena chiusa.
  */
 
@@ -70,11 +70,11 @@
  * stava (la tua dal suo posto nella mano, quella di un avversario dal suo ventaglio,
  * o dalle sue carte scoperte), si stacca verso il centro (ombra più grande), vola ad
  * arco girando un po' e si posa con un piccolo assestamento. Da dove parte lo scrive
- * pages/game.js (aimThrows: --from-x, --from-y, --from-scale, --from-tilt, --from-turn,
+ * game/GamePage.tsx (aimThrows: --from-x, --from-y, --from-scale, --from-tilt, --from-turn,
  * --lift-x, --lift-y); senza, arriva dal suo lato (--throw-x, --throw-y). L'arco: in
  * orizzontale la carta si sposta prima che in verticale. Durate: 0,4 s (THROW_MS di
- * pages/game.js, uguale a THROW_SECONDS del server, P94) e 0,55 s per la tua
- * (MY_THROW_MS). Il ritardo lo scrive Trick.js. Con "riduci movimento" niente lancio
+ * game/animations.ts, uguale a THROW_SECONDS del server, P94) e 0,55 s per la tua
+ * (MY_THROW_MS). Il ritardo lo scrive Trick.tsx. Con "riduci movimento" niente lancio
  * (reset.css).
  */
 .trick__card--bottom { --throw-x: 0px; --throw-y: 150px; --throw-turn: -14deg; }
@@ -139,7 +139,7 @@
 /*
  * Presa appena chiusa (P57): la carta di chi ha preso è in risalto, al centro
  * "Prende …"; alla fine le carte scivolano verso chi ha preso (--away-x/y).
- * Il tempo lo decide pages/game.js (1,5 s): qui l'uscita comincia a 1,1 s.
+ * Il tempo lo decide game/animations.ts (LAST_TRICK_MS, 1,5 s): qui l'uscita comincia a 1,1 s.
  */
 .trick--to-bottom { --away-x: 0; --away-y: 60px; }
 .trick--to-top { --away-x: 0; --away-y: -60px; }
@@ -197,8 +197,8 @@
 
 /*
  * Mescolata a inizio mano (P70): due mezzi mazzi escono ai lati del mazzo e rientrano,
- * due volte. La durata (1,3 s, D47: quanto il suono deck-riffle) è SHUFFLE_MS di pages/game.js; il ritardo lo scrive
- * Trick.js. Con "riduci movimento" niente mescolata (reset.css).
+ * due volte. La durata (1,3 s, D47: quanto il suono deck-riffle) è SHUFFLE_MS di game/animations.ts; il ritardo lo scrive
+ * Trick.tsx. Con "riduci movimento" niente mescolata (reset.css).
  */
 .deck__half {
   position: absolute;

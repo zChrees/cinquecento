@@ -17,7 +17,8 @@
  *
  * DA DOVE ARRIVANO I DATI: GET /api/auth/session (api/client.ts, loadSession),
  * che dice l'utente collegato oppure null. La stessa risposta dà anche il codice
- * CSRF e i messaggi (FormPage.tsx): la richiesta parte una volta sola.
+ * CSRF (lo usa api/client.ts per le POST) e i messaggi (FormPage.tsx): la
+ * richiesta parte una volta sola.
  */
 
 import { createContext, useContext, useEffect, useState } from 'react';
@@ -31,12 +32,10 @@ export interface SessionInfo {
   loaded: boolean;
   // l'utente collegato, oppure null (senza login, o finché non si sa)
   user: UserRef | null;
-  // il codice CSRF, per i moduli che la pagina manda da sé (per esempio "Esci"); '' finché non si sa
-  csrfToken: string;
 }
 
 // NOT_LOADED: la sessione prima della risposta
-const NOT_LOADED: SessionInfo = { loaded: false, user: null, csrfToken: '' };
+const NOT_LOADED: SessionInfo = { loaded: false, user: null };
 
 // SessionContext: il "canale" da cui i componenti leggono la sessione
 const SessionContext: Context<SessionInfo> = createContext<SessionInfo>(NOT_LOADED);
@@ -74,9 +73,9 @@ export function SessionProvider(props: SessionProviderProps): JSX.Element {
         return;
       }
       if (answer.ok) {
-        setSession({ loaded: true, user: answer.data.user, csrfToken: answer.data.csrf_token });
+        setSession({ loaded: true, user: answer.data.user });
       } else {
-        setSession({ loaded: true, user: null, csrfToken: '' });
+        setSession({ loaded: true, user: null });
       }
     }
 
@@ -98,7 +97,7 @@ export function SessionProvider(props: SessionProviderProps): JSX.Element {
  * La sessione, letta da qualunque componente dentro <SessionProvider>.
  *
  * In parole semplici:
- *   const session = useSession();   →   { loaded, user, csrfToken }
+ *   const session = useSession();   →   { loaded, user }
  */
 export function useSession(): SessionInfo {
   return useContext(SessionContext);

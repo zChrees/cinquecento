@@ -216,7 +216,7 @@
  * - sotto: lo spessore della carta, un bordo crema pieno visibile solo in basso
  *   (--edge); sotto quel bordo non c'è nient'altro.
  * Con il mouse la carta si solleva e si inclina verso il puntatore (--rx, --ry
- * da home.js) e un riflesso di luce la segue (--gx, --gy).
+ * da pages/HomePage.tsx) e un riflesso di luce la segue (--gx, --gy).
  */
 .mode-tile {
   --tile-light: color-mix(in srgb, var(--tile) 92%, var(--on-tile));

@@ -1,8 +1,7 @@
 /**
  * La chat con un amico (P46, P48, passo 5c della migrazione): si apre dentro il
- * pannello amici, al posto della lista. È la versione React di
- * app/static/js/components/ChatWindow.js e della parte chat di FriendsPanel.js, con
- * lo stesso HTML, le stesse classi e gli stessi data-* (stile in css/components/chat.css).
+ * pannello amici, al posto della lista (stile in
+ * css/components/chat.css).
  *
  * Cosa contiene:
  *   <ChatWindow friend={...} meId={12} history={...} onBack={...} onClose={...} />

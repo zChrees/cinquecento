@@ -1,12 +1,12 @@
 /*
  * Modal della modalità (P22), dal prototipo (P52, ".modal"): una carta da gioco
  * grande al centro dello schermo. Toccando una carta-pulsante, la carta vola al
- * centro ingrandendosi e si gira (js/components/ModeModal.js): dietro
+ * centro ingrandendosi e si gira (components/ModeModal.tsx): dietro
  * (.mode-modal__back) c'è una copia della carta-pulsante, davanti
  * (.mode-modal__face) la faccia bianca con dentro tutto il modal. Chiudendo, la
  * carta si rigira e torna al suo posto.
  * Classe "mode-modal" e non "modal", per non confondersi con le finestre di
- * Modal.js (P19). Base comune dei <dialog> e animazioni dello sfondo in modal.css.
+ * Modal.tsx (P19). Base comune dei <dialog> e animazioni dello sfondo in modal.css.
  * Le proporzioni sono quelle di una carta siciliana (--card-ratio).
  */
 

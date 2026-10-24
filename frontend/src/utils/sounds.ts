@@ -1,7 +1,6 @@
 /**
- * I suoni (P103, P109, P113, P115, P118): la versione TypeScript di
- * app/static/js/core/sounds.js (passo 5c della migrazione), con gli stessi file, la
- * stessa scelta acceso/spento e lo stesso evento per i test. File dei pacchetti
+ * I suoni (P103, P109, P113, P115, P118; passo 5c della
+ * migrazione). File dei pacchetti
  * Kenney, licenza CC0: dettagli in app/static/sounds/LICENZA.md.
  *
  * Cosa contiene:
@@ -9,8 +8,8 @@
  *   playSound('message', 0)    suona subito; playSound('draw', 500) tra 500 ms
  *   soundsEnabled()            true se i suoni sono accesi
  *   setSoundsEnabled(false)    li spegne (l'interruttore delle impostazioni, passo 6)
- *   SOUNDS                     nome del suono → file (lo stesso elenco di sounds.js:
- *                              lo confronta tests/frontend2/test_spa_amici.py)
+ *   SOUNDS                     nome del suono → file (lo confronta con i file
+ *                              MP3 tests/table6/test_suoni.py)
  *
  * I file si scaricano con fetch, senza bloccare la pagina. Il contesto audio (il
  * "mixer" del browser) si crea al primo tocco o tasto, oppure subito con
@@ -20,8 +19,8 @@
  * contesto resta sospeso fino al primo tocco). Prima di allora, o senza Web Audio,
  * non suona niente e la pagina funziona lo stesso.
  *
- * La scelta acceso/spento si ricorda nel browser (localStorage, chiave SOUNDS_KEY,
- * la stessa di sounds.js): la cambia l'interruttore "Suoni" delle impostazioni e vale
+ * La scelta acceso/spento si ricorda nel browser (localStorage, chiave SOUNDS_KEY):
+ * la cambia l'interruttore "Suoni" delle impostazioni e vale
  * per tutti i suoni. Per i test: ogni suono che parte manda sul documento l'evento
  * "cinquecento:sound" con { name }, anche quando il browser non lo fa sentire.
  *

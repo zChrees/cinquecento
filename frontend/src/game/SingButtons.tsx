@@ -1,7 +1,6 @@
 /**
  * I pulsanti "Canta 40" / "Canta 20" del tavolo React (P21), e accanto "Cala le
- * carte" (P85). È la versione React di app/static/js/components/SingButtons.js,
- * con lo stesso HTML (stile in css/components/table.css).
+ * carte" (P85; stile in css/components/table.css).
  *
  * Cosa contiene:
  *   <SingButtons suits={view.legal.sing} sings={view.sings} onSing={onSing} canLayDown={false} onLayDown={null} />

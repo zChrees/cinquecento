@@ -9,8 +9,7 @@
  * useSyncExternalStore è l'hook di React per leggere dati che stanno fuori da
  * React (qui lo store): gli si danno la funzione per ascoltare i cambi
  * (subscribe) e quella che restituisce i dati di adesso (getSnapshot). È la
- * scelta del piano al posto di useReducer (Christian, 20/10/2026): lo store resta
- * quasi uguale a game.js.
+ * scelta del piano al posto di useReducer (Christian, 20/10/2026).
  *
  * DA DOVE ARRIVANO I DATI: GamePage.tsx passa il codice della partita e ?demo=,
  * presi dall'indirizzo; lo store fa il resto.

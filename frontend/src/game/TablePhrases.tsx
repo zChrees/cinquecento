@@ -1,7 +1,6 @@
 /**
  * Le frasi del tavolo React (P56, D24; contratto 3.2): il pulsante, l'elenco e il
- * fumetto. È la versione React di app/static/js/components/TablePhrases.js, con lo
- * stesso HTML (stile in css/components/table-phrases.css).
+ * fumetto (stile in css/components/table-phrases.css).
  *
  * Cosa contiene:
  *   <PhrasesButton open={false} disabled={false} onToggle={onToggle} />   il pulsante sopra la mano, a destra (P71)
@@ -14,7 +13,7 @@
  * la pagina (GamePage.tsx).
  *
  * Fuoco e scorrimento dell'elenco restano dopo un ridisegno da soli (P110): React
- * tiene gli stessi elementi, mentre game.js li ricreava e doveva rimetterli. Le
+ * tiene gli stessi elementi. Le
  * entrate di elenco e fumetto hanno il ritardo fermo (useStartDelay, lotto 8f).
  *
  * DA DOVE ARRIVANO I DATI: l'elenco da game:phrases (nella prova dall'evento

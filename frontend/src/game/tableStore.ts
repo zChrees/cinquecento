@@ -1,9 +1,8 @@
 /**
  * Lo stato del tavolo React (passo 8 della migrazione): uno "store", cioè un
  * oggetto che tiene i dati della pagina e avvisa chi lo ascolta quando cambiano.
- * È quasi una traduzione di app/static/js/pages/game.js (scelta di Christian del
- * 20/10/2026, "Piano del passo 8"): le stesse regole, negli stessi punti; React lo
- * legge con useSyncExternalStore (useTable.ts) e ridisegna a ogni cambio.
+ * Lo store è una scelta di Christian del 20/10/2026 ("Piano del passo 8"); React
+ * lo legge con useSyncExternalStore (useTable.ts) e ridisegna a ogni cambio.
  *
  * Cosa contiene:
  *   startTable('e5f6a7b8', null)     avvia il tavolo (partita vera o prova); restituisce la funzione per fermarlo
@@ -28,9 +27,9 @@
  * interrotta" e dopo GONE_HOME_MS si torna alla home. "Esci", dopo la conferma,
  * manda game:leave (partita persa per abbandono) e torna alla home. I secondi di chi
  * è scollegato scendono da soli, ogni secondo.
- * Prova (?demo=): niente server; vista finta ed eventi demo:* come in game.js.
+ * Prova (?demo=): niente server; vista finta ed eventi demo:*.
  *
- * Momenti del tavolo (lotto 8c, P57: noticeMoments di game.js), decisi confrontando
+ * Momenti del tavolo (lotto 8c, P57), decisi confrontando
  * la vista nuova con quella di prima (mai alla prima vista):
  *   - presa appena chiusa (last_trick cambiato nella stessa mano): resta al centro
  *     per LAST_TRICK_MS, o finché qualcuno gioca la prima carta della presa nuova;
@@ -92,7 +91,7 @@ const DEMO_VIEWS: Record<string, string> = {
   '2v2': '/static/dev/vista_2v2.json',
 };
 
-// I messaggi al posto del tavolo, gli stessi di table.html e game.js
+// I messaggi al posto del tavolo
 const LOADING = 'Caricamento della partita…';
 const WAITING = 'In attesa della partita…';
 const DEMO_FAILED = 'Non riesco a caricare la partita di prova.';
@@ -304,7 +303,7 @@ function initialSnapshot(gameId: string, demo: string | null): TableSnapshot {
 // --- Lo stato del modulo ---------------------------------------------------------
 
 // snapshot: la fotografia attuale. Variabili del modulo: c'è un solo tavolo per
-// scheda, come in game.js
+// scheda
 let snapshot: TableSnapshot = initialSnapshot('', null);
 // listeners: le funzioni da avvisare a ogni cambio (React, tramite useTable)
 const listeners: Set<() => void> = new Set();
@@ -484,7 +483,7 @@ function answerText(answer: OkEmpty | ErrorResponse | NoConnection): string {
  *
  * In parole semplici:
  *   viewForTable(snapshot, performance.now())
- *   Come timed() e render() di game.js: nella prova la vista finta è una
+ *   Nella prova la vista finta è una
  *   fotografia e i secondi restano fermi. Con una mossa in viaggio, dopo "Esci",
  *   senza connessione o a fine mano (P69: finché si vedono l'ultima presa della
  *   mano, le carte calate e il riepilogo) legal diventa vuoto: nessuna carta e
@@ -568,7 +567,7 @@ export function handTotals(lastHand: LastHand): TeamTotal[] {
  *
  * In parole semplici:
  *   present(lastHand.last_trick)
- *   Come "if (lastHand.last_trick)" di game.js: il contratto dice null quando un
+ *   Il contratto dice null quando un
  *   campo non c'è, ma una vista più vecchia (prima di P58, e le viste finte dei
  *   test) può non avere proprio il campo. "value is T" dice a TypeScript che,
  *   quando la risposta è true, il valore non è né null né undefined.
@@ -1176,7 +1175,7 @@ export function tablePaused(current: TableSnapshot, now: number): boolean {
 
 /**
  * Dopo ogni cambio, prima di mostrarlo: fa partire la distribuzione che aspettava,
- * se presa e riepilogo sono spariti (come render() di game.js), e ferma o fa
+ * se presa e riepilogo sono spariti, e ferma o fa
  * ripartire l'orologio del turno (P132).
  *
  * @param {TableSnapshot} d la fotografia nuova (si cambia qui)
@@ -1208,7 +1207,7 @@ function clearTicks(): void {
 
 /**
  * P103: il ticchettio degli ultimi TICK_SECONDS secondi del tuo turno (il suono di
- * "tocca a te" è stato tolto in P109), come turnSounds di game.js.
+ * "tocca a te" è stato tolto in P109).
  *
  * @param {TableSnapshot} d la fotografia nuova
  * @param {number} now performance.now() di adesso
@@ -1318,7 +1317,7 @@ function showPartnerNotice(d: TableSnapshot): void {
 }
 
 /**
- * I momenti che cominciano con la vista nuova (noticeMoments di game.js).
+ * I momenti che cominciano con la vista nuova.
  *
  * @param {GameView} previous la vista di prima
  * @param {GameView} next la vista nuova
@@ -1455,7 +1454,7 @@ export function startTable(gameId: string, demo: string | null, home: () => void
 
   // P118: i suoni e il contesto audio subito, prima della prima vista
   preloadSounds(true);
-  // P79: le immagini delle carte dopo il "load" della pagina, come game.js
+  // P79: le immagini delle carte dopo il "load" della pagina
   function loadCards(): void {
     function markReady(ok: boolean): void {
       if (ok && mine === generation) {
@@ -1553,7 +1552,7 @@ async function loadDemo(mine: number): Promise<void> {
   }
 }
 
-/** Partita vera: gli ascolti del server e il collegamento (startGame di game.js). */
+/** Partita vera: gli ascolti del server e il collegamento. */
 function startGame(): void {
   update({ message: WAITING });
   stops.push(on('game:state', onState));

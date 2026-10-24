@@ -1,8 +1,7 @@
 /**
  * Le carte in mano al tavolo React: la tua mano, le carte coperte degli altri e
- * quelle scoperte (compagno o carte calate). È la versione React di
- * app/static/js/components/Hand.js (P20, P70, P85, P93), con lo stesso HTML, le
- * stesse classi e gli stessi data-* (stile in css/components/hand.css e table.css).
+ * quelle scoperte (compagno o carte calate): P20, P70, P85, P93 (stile in
+ * css/components/hand.css e table.css).
  *
  * Cosa contiene:
  *   <Hand cards={view.hand} playable={view.legal.play} onPlay={onPlay} ... />   la tua mano
@@ -95,7 +94,7 @@ export function Hand(props: HandProps): JSX.Element {
       }
     }
 
-    // classes: le classi in più, nell'ordine di Hand.js (prima il consiglio, poi
+    // classes: le classi in più (prima il consiglio, poi
     // la distribuzione o la pescata)
     const classes: string[] = [];
     let label: string | null = null;

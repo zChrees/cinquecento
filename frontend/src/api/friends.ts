@@ -1,6 +1,5 @@
 /**
- * Le richieste HTTP del pannello amici (contratto 2.2, P45): la versione
- * TypeScript di api() e withRequestId() di app/static/js/components/FriendsPanel.js.
+ * Le richieste HTTP del pannello amici (contratto 2.2, P45).
  *
  * Cosa contiene:
  *   fetchFriends()               GET /api/friends/: la lista, le richieste, i bloccati, i contatori
@@ -39,7 +38,7 @@ const BASE = '/api/friends';
 type NoBody = Record<string, never>;
 
 // OFFLINE: la risposta che la pagina si dà da sola senza rete, senza provare a
-// mandare la richiesta (come api() di FriendsPanel.js)
+// mandare la richiesta
 const OFFLINE: NoConnection = {
   ok: false,
   error: { code: 'no_connection', message: 'Sei offline: riprova quando torna la connessione.' },

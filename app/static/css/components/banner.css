@@ -1,5 +1,5 @@
 /*
- * Avviso in cima alla pagina (P33, components/Banner.js): stato della connessione.
+ * Avviso in cima alla pagina (P33, components/ConnectionBanner.tsx): stato della connessione.
  * Sotto la navbar, al centro, con lo stesso aspetto dei messaggi brevi (layout.css).
  * Con popover sta nel "top layer": vanno annullati i valori predefiniti del browser.
  */

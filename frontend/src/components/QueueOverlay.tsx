@@ -1,7 +1,6 @@
 /**
  * La schermata di attesa in coda (P22; DECISIONI.md: "Attesa in coda a tutto
- * schermo", con il tempo trascorso, l'intervallo di rating e "Annulla"): la versione
- * React di app/static/js/components/QueueOverlay.js, con lo stesso HTML (stile in
+ * schermo", con il tempo trascorso, l'intervallo di rating e "Annulla"; stile in
  * css/components/queue-overlay.css).
  *
  * Si disegna dallo stato della coda del contratto (4, queue:status): { mode,
@@ -78,7 +77,7 @@ export function formatWait(seconds: number): string {
  * In parole semplici:
  *   queueKey(coda)
  *   Uguale se modo, punti, compagno, avversari e "c'è un intervallo" sono uguali
- *   (come queueKey di QueueOverlay.js, anche in data-queue-key). Cambiano solo i
+ *   (anche in data-queue-key). Cambiano solo i
  *   secondi e i numeri dell'intervallo: allora è la stessa coda.
  */
 export function queueKey(queue: QueueStatus): string {
@@ -151,7 +150,7 @@ interface RangeNumberProps {
  *   <RangeNumber value={1340} side="min" />
  *   → <span data-range-min="1340">1340</span>. Quando value cambia, l'attributo
  *   ha subito il valore nuovo e il testo ci arriva in mezzo secondo, rallentando
- *   alla fine (come slide di QueueOverlay.js); con "riduci movimento" subito.
+ *   alla fine; con "riduci movimento" subito.
  */
 function RangeNumber(props: RangeNumberProps): JSX.Element {
   // useState restituisce due cose: il valore attuale e la funzione per cambiarlo,

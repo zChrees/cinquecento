@@ -1,6 +1,5 @@
 /**
- * La carta-modal della modalità (P22, dal prototipo P52): la versione React di
- * app/static/js/components/ModeModal.js, con lo stesso HTML e le stesse classi
+ * La carta-modal della modalità (P22, dal prototipo P52)
  * (stile in css/components/mode-modal.css). La carta-pulsante toccata vola al
  * centro ingrandendosi e si gira; sulla faccia bianca ci sono titolo,
  * descrizione, punti per vincere (150, 300, 500), la scelta tra un giocatore e la
@@ -103,7 +102,7 @@ function acceptedLabel(name: string): string {
   return `${name} ha accettato`;
 }
 
-// INVITE_LOOKS: i tre aspetti di "Invita" (come setInviteButton di ModeModal.js)
+// INVITE_LOOKS: i tre aspetti di "Invita"
 const INVITE_LOOKS: Record<'idle' | 'pending' | 'accepted', InviteLook> = {
   idle: { icon: 'send', text: 'Invita', label: idleLabel },
   pending: { icon: 'progress_activity', text: 'In attesa…', label: pendingLabel },
@@ -286,7 +285,7 @@ interface ModeModalProps {
   // P33: false senza connessione ("Gioca" e "Invita" spenti)
   online: boolean;
   // gli amici (GET /api/friends/): si invitano quelli online. La lista si prende
-  // all'apertura e resta quella (come ModeModal.js)
+  // all'apertura e resta quella
   friends: Friend[];
   // gli inviti mandati e ancora aperti (li tiene la pagina)
   invites: InviteEntry[];
@@ -313,7 +312,7 @@ interface ModeModalProps {
  *   Appena compare apre il <dialog> (showModal) e fa il volo dalla carta-pulsante
  *   al centro; chiudendo fa il volo al contrario e poi chiama props.onClosed.
  *   Il volo si fa con element.animate (le animazioni del browser), sugli elementi
- *   veri della pagina presi con i ref, come in ModeModal.js.
+ *   veri della pagina presi con i ref.
  */
 export function ModeModal(props: ModeModalProps): JSX.Element {
   // Gli hook si chiamano sempre in cima al componente, mai dentro un if.
@@ -344,7 +343,7 @@ export function ModeModal(props: ModeModalProps): JSX.Element {
   // chiama solo al primo disegno, così il consiglio non cambia a ogni disegno
   const [tip] = useState<string>(pickTip);
   // friends: gli amici presi all'apertura (useState tiene il primo valore e non
-  // segue i cambi di props.friends: la lista resta quella, come in ModeModal.js)
+  // segue i cambi di props.friends: la lista resta quella)
   const [friends] = useState<Friend[]>(props.friends);
 
   /**
@@ -379,8 +378,8 @@ export function ModeModal(props: ModeModalProps): JSX.Element {
     busy.current = true;
     const tile = props.tile;
 
-    // Il retro: la copia della carta-pulsante. Si costruisce a mano (cloneNode,
-    // come in ModeModal.js) dentro un <div> che React disegna vuoto: React non
+    // Il retro: la copia della carta-pulsante. Si costruisce a mano (cloneNode)
+    // dentro un <div> che React disegna vuoto: React non
     // tocca figli che non ha messo lui
     const copy = document.createElement('div');
     copy.className = tile.className;
@@ -748,7 +747,7 @@ export function ModeModal(props: ModeModalProps): JSX.Element {
               <h3 className="mode-modal__section-title" id="facts-title">In breve</h3>
               <ul className="facts">{factItems}</ul>
             </section>
-            {/* Gli amici da invitare: solo con un amico (nella Partita Veloce è nascosta, come in ModeModal.js) */}
+            {/* Gli amici da invitare: solo con un amico (nella Partita Veloce è nascosta) */}
             <section className="invite" hidden={quick}>
               <h3 className="invite__title">{inviteTitle}</h3>
               <ul className="invite__list" data-invite-list="">{inviteRows}</ul>

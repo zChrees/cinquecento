@@ -1,7 +1,5 @@
 /**
- * La home (P22), passo 7 della migrazione: la versione React di
- * app/templates/main/index.html e js/pages/home.js, con lo stesso HTML, le stesse
- * classi e gli stessi data-* (stile in css/pages/home.css e
+ * La home (P22), passo 7 della migrazione (stile in css/pages/home.css e
  * css/components/card-background.css). Dal lotto 7d è la home vera, su /; la home
  * Jinja di prima resta su /vecchia-home (solo sviluppo e test) fino al passo 9.
  *
@@ -89,14 +87,14 @@ interface IncomingInvite {
   status: InviteDialogStatus;
 }
 
-// OFFLINE_MESSAGE: "Gioca" senza rete (come play di home.js)
+// OFFLINE_MESSAGE: "Gioca" senza rete
 const OFFLINE_MESSAGE = 'Sei offline: potrai giocare appena torna la connessione.';
 
 // GAME_PREFIX: game:start porta solo a una pagina del tavolo di questo sito
 const GAME_PREFIX = '/game/';
 
 // ONLINE_POLL_MS: ogni quanto chi non ha fatto il login richiede il numero degli
-// online (come ONLINE_POLL_MS di home.js, P82)
+// online (P82)
 const ONLINE_POLL_MS = 15000;
 
 // TILT_MAX: i gradi di inclinazione massima delle carte-pulsante sotto il mouse
@@ -137,7 +135,7 @@ interface ModeTileProps {
  *
  * In parole semplici:
  *   tiltAllowed()  →  true con un mouse vero e senza "riduci movimento"
- *   (sul telefono, con il dito, niente inclinazione: come initTilt di home.js)
+ *   (sul telefono, con il dito, niente inclinazione)
  */
 function tiltAllowed(): boolean {
   if (reduceMotion()) {
@@ -240,7 +238,7 @@ interface HomeListenerProps {
  *   <HomeListener onStatus={...} onQueueStatus={...} ... />
  *   È un componente a parte perché mettersi in ascolto apre il collegamento al
  *   tempo reale (on di socket/client.ts chiama connect): la home lo disegna solo
- *   con il login, così chi non ha fatto il login non si collega (come home.js).
+ *   con il login, così chi non ha fatto il login non si collega.
  */
 function HomeListener(props: HomeListenerProps): null {
   useSocketEvent('home:status', props.onStatus);

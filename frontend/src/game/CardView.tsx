@@ -1,8 +1,7 @@
 /**
  * Una carta siciliana al tavolo React (P20, P35): la faccia (l'immagine della carta
- * vera) oppure il dorso. È la versione React di Card() e CardBack() di
- * app/static/js/components/Card.js, con lo stesso HTML, le stesse classi e gli
- * stessi data-* (stile in css/components/card.css).
+ * vera) oppure il dorso (stile in
+ * css/components/card.css).
  *
  * Cosa contiene:
  *   <CardView card={{ suit: 'coppe', rank: 10 }} onPlay={null} ... />   carta da guardare
@@ -31,7 +30,7 @@ import { useStartDelay } from './useStartDelay';
  * In parole semplici:
  *   dataFlag(true)    → ''          e React scrive data-advice=""
  *   dataFlag(false)   → undefined   e React non scrive l'attributo
- *   Card.js scriveva così i "segni" della carta (data-advice, data-dealt, ...),
+ *   Così si scrivono i "segni" della carta (data-advice, data-dealt, ...),
  *   che i test cercano con [data-advice].
  */
 export function dataFlag(on: boolean): string | undefined {
@@ -75,7 +74,7 @@ interface CardViewProps {
   onPlay: ((card: Card) => void) | null;
   // con onPlay: false = pulsante spento (mossa non ammessa adesso)
   playable: boolean;
-  // classi in più dopo "card card--coppe", nell'ordine di Card.js, per esempio
+  // classi in più dopo "card card--coppe", per esempio
   // 'card--advice card--dealt-mine'; '' se nessuna
   extraClass: string;
   // l'etichetta per i lettori di schermo al posto di quella normale ("Gioca Re di

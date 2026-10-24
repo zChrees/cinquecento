@@ -1,8 +1,7 @@
 /**
- * Il tavolo di gioco React (P21), costruito tutto dalla vista (contratto 3.3). È la
- * versione React di app/static/js/components/Table.js, con lo stesso HTML, le
- * stesse classi e gli stessi data-* (stile in css/components/table.css, trick.css,
- * hand-summary.css e css/pages/game.css).
+ * Il tavolo di gioco React (P21), costruito tutto dalla vista (contratto 3.3)
+ * (stile in css/components/table.css, trick.css, hand-summary.css e
+ * css/pages/game.css).
  *
  * Tu sei sempre in basso; gli altri si dispongono nell'ordine dei posti, verso
  * destra (D11): nel 1v1 l'avversario in alto; nel 2v2 a destra chi gioca dopo di

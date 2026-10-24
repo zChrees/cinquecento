@@ -7,8 +7,8 @@
  *   <Avatar username="Giulia" avatar="re_coppe" className="avatar" />
  *
  * Come la macro, non controlla l'elenco dei codici: il server salva solo codici
- * validi (app/services/avatars.py, P17), quindi basta sapere se c'è. (Avatar.js
- * invece lo controlla, perché lo usa anche con i dati finti di app/static/dev/.)
+ * validi (app/services/avatars.py, P17), quindi basta sapere se c'è. (SeatAvatar.tsx,
+ * al tavolo, invece lo controlla, perché lo usa anche con i dati finti di app/static/dev/.)
  * L'avatar è decorativo (aria-hidden): accanto c'è sempre il nome.
  *
  * DA DOVE ARRIVANO I DATI: da chi lo usa, per esempio la navbar con l'utente

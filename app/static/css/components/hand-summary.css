@@ -1,5 +1,5 @@
 /*
- * Riepilogo di fine mano (P57), creato da js/components/HandSummary.js.
+ * Riepilogo di fine mano (P57), creato da game/HandSummary.tsx.
  * A inizio della mano nuova sta sopra il centro del tavolo (mai sopra la tua
  * mano, che resta giocabile); a fine partita sta dentro il riquadro del risultato.
  */

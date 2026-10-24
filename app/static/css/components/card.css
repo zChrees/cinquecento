@@ -1,5 +1,5 @@
 /*
- * Carta siciliana (P20, P35), creata da js/components/Card.js: la faccia è
+ * Carta siciliana (P20, P35), creata da game/CardView.tsx: la faccia è
  * l'immagine della carta vera (img/cards/), il dorso il disegno a cubi.
  * Proporzioni di una carta siciliana (--card-ratio); gli angoli arrotondati li
  * fa il bordo della carta (le scansioni hanno gli angoli del fondo dello scanner,
@@ -44,7 +44,8 @@ button.card {
  * il browser lascia ":hover" sulla carta appena toccata, e il tavolo, che si
  * ridisegna a ogni vista, la faceva abbassare e rialzare ("lampeggiare").
  * Da computer la carta sotto il mouse, ridisegnata, nasce già sollevata
- * (card--hover-kept, la mette pages/game.js) e non riparte dal basso.
+ * (card--hover-kept) e non riparte dal basso. Il tavolo React non mette più
+ * questa classe (lotto 8g: tiene la stessa carta, che resta sollevata da sola).
  */
 @media (hover: hover) {
   button.card:not(:disabled):hover,

@@ -1,7 +1,6 @@
 /**
- * La connessione in tempo reale della SPA (passo 3 della migrazione): la
- * traduzione in TypeScript di app/static/js/core/socket.js (P23, contratto 1.4),
- * con gli stessi comportamenti e in più i tipi del contratto (types/events.ts).
+ * La connessione in tempo reale della SPA (passo 3 della migrazione;
+ * P23, contratto 1.4), con i tipi del contratto (types/events.ts).
  *
  * Cosa contiene:
  *   connect()                     apre la connessione, una sola per scheda
@@ -25,7 +24,7 @@
  * Flask (vite.config.ts). Si collega solo chi ha fatto il login: il cookie della
  * sessione va con la connessione (withCredentials).
  *
- * Cosa NON c'è rispetto a core/socket.js: l'avviso in cima alla pagina
+ * Cosa NON c'è qui: l'avviso in cima alla pagina
  * ("Connessione persa: riprovo…", P33). È un pezzo dell'interfaccia: si rifà
  * come componente React con la cornice delle pagine (passo 5), leggendo lo stato
  * da useConnection.
@@ -46,7 +45,7 @@ export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'no
 // NoConnection (types/common.ts): la risposta che send dà da solo, senza chiedere
 // al server, quando la connessione manca o il server non risponde in tempo.
 
-// ANSWER_TIMEOUT_MS: quanto aspettare la risposta del server (10 secondi, come core/socket.js)
+// ANSWER_TIMEOUT_MS: quanto aspettare la risposta del server (10 secondi)
 const ANSWER_TIMEOUT_MS = 10000;
 
 // NOT_LOGGED_IN: il messaggio con cui il server rifiuta chi non ha il login (contratto 1.4)
@@ -74,8 +73,8 @@ export type StatusListener = (status: ConnectionStatus) => void;
 // i nostri elenchi non basta (prova fatta il 19/10/2026 con socket.io-client 4.8.1).
 
 // socket: la connessione di Socket.IO; null finché connect() non la apre.
-// Variabili del modulo: in tutta la scheda c'è una sola connessione, come in
-// core/socket.js, anche se la usano più componenti.
+// Variabili del modulo: in tutta la scheda c'è una sola connessione,
+// anche se la usano più componenti.
 let socket: Socket | null = null;
 // status: lo stato attuale
 let status: ConnectionStatus = 'disconnected';

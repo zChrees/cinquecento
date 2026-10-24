@@ -1,6 +1,5 @@
 /**
- * Finestra "Accedi o registrati per giocare" (P40): la versione React di
- * app/static/js/components/LoginPrompt.js. Chi non ha fatto il login e tocca
+ * Finestra "Accedi o registrati per giocare" (P40). Chi non ha fatto il login e tocca
  * un'azione riservata (avatar e amici della navbar) vede questa finestra, non un
  * errore (DECISIONI.md).
  *
@@ -18,7 +17,7 @@ import type { JSX } from 'react';
 import { Modal } from './Modal';
 import type { ModalAction } from './Modal';
 
-// Gli indirizzi delle due pagine (come LOGIN_URL e REGISTER_URL di LoginPrompt.js)
+// Gli indirizzi delle due pagine
 export const LOGIN_URL = '/auth/login';
 export const REGISTER_URL = '/auth/register';
 // LICENSE_URL: la licenza delle immagini delle carte

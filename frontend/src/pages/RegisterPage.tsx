@@ -1,7 +1,6 @@
 /**
  * Pagina di registrazione, /auth/register (P16, P61, P125; passo 4 della
- * migrazione): la versione React di app/templates/auth/register.html e
- * js/pages/auth.js, con lo stesso HTML e gli stessi data-* (stile in
+ * migrazione; stile in
  * css/pages/auth.css e components/form.css).
  *
  * Cosa contiene:

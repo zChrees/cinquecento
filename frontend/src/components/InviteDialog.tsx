@@ -1,7 +1,6 @@
 /**
  * L'invito a partita ricevuto (P47; contratto 5.3; scelta di Giuseppe: solo nella
- * home): la versione React di app/static/js/components/InviteDialog.js, con lo
- * stesso HTML (stile di Modal: css/components/modal.css). Chi invita, modalità e
+ * home; stile di Modal: css/components/modal.css). Chi invita, modalità e
  * punti, il conto alla rovescia, "Rifiuta" e "Accetta". Dopo "Accetta" aspetta che
  * chi ha invitato avvii la partita ("Rifiuta" diventa "Esci", per uscire). X ed Esc
  * valgono come "Rifiuta".

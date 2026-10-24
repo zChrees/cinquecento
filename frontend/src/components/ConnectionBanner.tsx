@@ -1,7 +1,6 @@
 /**
- * L'avviso in cima alla pagina sullo stato della connessione (P33): la versione
- * React di updateBanner() di app/static/js/core/socket.js e di Banner.js, con lo
- * stesso HTML (stile in css/components/banner.css). Va nelle pagine con il login,
+ * L'avviso in cima alla pagina sullo stato della connessione (P33; stile in
+ * css/components/banner.css). Va nelle pagine con il login,
  * che si collegano al tempo reale.
  *
  * Cosa contiene:
@@ -26,10 +25,10 @@ import { useEffect, useRef, useState } from 'react';
 import type { JSX, RefObject } from 'react';
 import { useConnection } from '../socket/hooks';
 
-// FIRST_CONNECT_MS: al primo collegamento l'avviso aspetta questo tempo (come socket.js)
+// FIRST_CONNECT_MS: al primo collegamento l'avviso aspetta questo tempo
 const FIRST_CONNECT_MS = 3000;
 
-// I testi dell'avviso (gli stessi di socket.js)
+// I testi dell'avviso
 const FIRST_CONNECT = 'Collegamento al server in corso…';
 const LOST = 'Connessione persa: riprovo a collegarmi…';
 const LOGGED_OUT = 'Non sei più collegato al tuo account: ricarica la pagina.';
@@ -166,8 +165,8 @@ export function ConnectionBanner(): JSX.Element | null {
     );
   }
 
-  // key={text}: con un testo nuovo React crea un avviso nuovo (come Banner.js, che
-  // toglieva il vecchio), così il lettore di schermo lo legge
+  // key={text}: con un testo nuovo React crea un avviso nuovo (e toglie
+  // il vecchio), così il lettore di schermo lo legge
   return (
     <div key={text} ref={bannerRef} className={`banner banner--${kind}`} role={role} data-banner={kind} popover="manual">
       {icon}

@@ -1,7 +1,6 @@
 /**
  * Aprire e chiudere una finestra <dialog> della navbar (pannello statistiche, e
- * dal passo 5b il pannello amici), con l'animazione di uscita: la versione React
- * di closeDialog() e wireDialog() di app/static/js/core/layout.js.
+ * dal passo 5b il pannello amici), con l'animazione di uscita.
  *
  * Cosa contiene:
  *   const sheet = sheetControls(dialogRef);
@@ -39,7 +38,7 @@ export interface Sheet {
  *
  * In parole semplici:
  *   const sheet = sheetControls(dialogRef);
- *   Le classi is-closing si cambiano direttamente sul <dialog> (come layout.js),
+ *   Le classi is-closing si cambiano direttamente sul <dialog>,
  *   senza ridisegnare il componente: il contenuto del pannello resta com'è.
  *   Non è un hook di React (non usa useState né useEffect): è una funzione
  *   normale, che si può chiamare dove si vuole.

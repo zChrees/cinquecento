@@ -1,6 +1,5 @@
 /**
- * Il riepilogo di fine mano del tavolo React (P57). È la versione React di
- * app/static/js/components/HandSummary.js, con lo stesso HTML (stile in
+ * Il riepilogo di fine mano del tavolo React (P57; stile in
  * css/components/hand-summary.css).
  *
  * Cosa contiene:
@@ -25,7 +24,7 @@ interface RowProps {
   // i valori delle due squadre, nell'ordine delle colonne
   values: number[];
   // la classe della riga, per esempio 'hand-summary__hand'; undefined se nessuna
-  // (niente attributo class, come el() di utils/dom.js con una classe vuota)
+  // (niente attributo class)
   className: string | undefined;
 }
 

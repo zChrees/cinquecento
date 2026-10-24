@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Dopo il 9e — via `csrfToken` e i riferimenti al codice vecchio nei commenti (24/10/2026)
+
+- **Branch**: fix/commenti-frontend-codice-vecchio (da `dev` a `d5cf8fc`)
+- **File**: `frontend/src/session/SessionContext.tsx` (via `csrfToken`); commenti di 45 file di `frontend/src/` (`api/`, `components/`, `game/`, `pages/`, `socket/`, `utils/`) e di 16 CSS di `app/static/css/` (`components/` e `pages/home.css`); questo file
+- **Cosa c'è**: (1) `csrfToken` tolto da `SessionInfo` e dalle tre righe che lo riempivano: non lo leggeva più nessuno dal 9c (il codice CSRF lo prende `sendWithCsrf` di `api/client.ts` da `loadSession`; `csrf_token` della risposta resta). (2) Nei commenti tolti i riferimenti ai file del JavaScript vecchio (`… .js`, `app/static/js/…`, "la versione React di …", "come in game.js"), scelta di Christian: si toglie il riferimento, senza dire "era X.js". Dove il commento spiegava un fatto, è riscritto con il file di oggi: nei CSS "creato da js/components/X.js" → il `.tsx` che crea gli elementi, le durate → `game/animations.ts`, `.is-closing` → `components/sheet.ts`; in `SeatAvatar.tsx` le copie dei codici sono **due** (non tre); in `sounds.ts` il test che confronta `SOUNDS` è `table6/test_suoni.py`; `GamePage.tsx` non dice più `?ui=react`. Solo commenti, tranne `csrfToken`: il comportamento non cambia
+- **Controlli**: `npx tsc --noEmit` pulito; nessun riferimento rimasto (ricerca di `.js`, `static/js`, `js/components`, `js/pages`, `js/core` in `frontend/src/` e nei CSS); con pytest `test_icone.py`, `test_avatar.py`, `test_carte.py` (con Node), `test_hover.py`, `test_base.py`, `test_tipi.py`, `test_niente_alert.py`, `test_logo.py`, `test_spa.py` (compila la SPA), `test_spa_chat.py`, `sockets/test_durate_tavolo.py`, `table6/test_suoni.py`: **144 PASS**, nessuno saltato [T]. `npm run build` non lanciato in `frontend/` per non cambiare `app/static/dist/` durante la prova a mano (i test compilano la SPA in una cartella temporanea)
+- **Decisioni prese** (Christian, 24/10): `csrfToken` tolto; nei commenti si toglie il riferimento al file vecchio
+- **Domande nuove**: nessuna
+- **Punti delicati**: `card.css` ha ancora la regola di `card--hover-kept`, che il tavolo React non mette più (8g): è un CSS non usato (rischio già scritto nel piano del passo 9, "CSS non più usati"), scritto nel commento; da togliere con un punto a parte
+- **Restano** (fuori elenco): le docstring di alcuni test citano ancora i file vecchi (per esempio `tests/frontend/test_chat_vera.py`, `tests/frontend2/test_pannello_amici.py`); le classi CSS usate solo dal JavaScript vecchio
+- **Cosa devono fare gli altri**: **Giuseppe**: niente (dopo il pull `npm run build`, come sempre quando cambia `frontend/`)
+
 ### Documenti: aggiornamento del 24/10 sera, 9d e giro del 9e, lotti dei commenti nel Python (24/10/2026)
 
 - **Branch**: docs/aggiornamento-24-10-sera (da `dev` a `620c9a7`)

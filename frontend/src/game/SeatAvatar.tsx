@@ -1,7 +1,6 @@
 /**
  * L'avatar di un giocatore al tavolo React (P43, P73): l'immagine del set,
- * l'iniziale del nome o il robot della CPU. È la versione React di
- * app/static/js/components/Avatar.js per il tavolo, con lo stesso HTML (stile in
+ * l'iniziale del nome o il robot della CPU (stile in
  * css/components/navbar.css, che vale per tutti gli avatar).
  *
  * Cosa contiene:
@@ -9,12 +8,12 @@
  *   <SeatAvatar player={player} />    l'avatar di un posto
  *
  * A differenza di components/Avatar.tsx (navbar, amici: il server salva solo
- * codici validi), al tavolo un codice fuori elenco mostra l'iniziale, come
- * Avatar.js: i giocatori arrivano anche dalle viste finte di app/static/dev/, dove
+ * codici validi), al tavolo un codice fuori elenco mostra l'iniziale:
+ * i giocatori arrivano anche dalle viste finte di app/static/dev/, dove
  * Giulia ha 'cavallo_spade', che non c'è. Per questo qui c'è una copia dell'elenco
- * (scelta del 20/10/2026, passo 8a): la terza, dopo app/services/avatars.py e
- * Avatar.js; tests/frontend/test_avatar.py controlla che siano uguali. Un codice
- * nuovo va aggiunto in tutti e tre i posti.
+ * (scelta del 20/10/2026, passo 8a): l'altra è in app/services/avatars.py;
+ * tests/frontend/test_avatar.py controlla che siano uguali. Un codice nuovo va
+ * aggiunto in tutti e due i posti.
  *
  * DA DOVE ARRIVANO I DATI: dal giocatore nella vista (players[i]: username,
  * avatar, cpu); lo passa Table.tsx.

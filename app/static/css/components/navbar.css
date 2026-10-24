@@ -235,7 +235,7 @@
 
 /*
  * .logo__card è la carta nel ventaglio (rotazione e ombra), .logo__flip gira in
- * 3D con le due facce (dorso e figura) una dietro l'altra. Ogni tanto layout.js
+ * 3D con le due facce (dorso e figura) una dietro l'altra. Ogni tanto Logo.tsx
  * aggiunge .is-front e le carte mostrano Cavallo e Re di un seme.
  */
 .logo__card {

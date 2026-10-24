@@ -1,7 +1,6 @@
 /**
  * Lo sfondo della home (P22): una cascata di carte che cade dall'alto senza
- * fermarsi. È la versione React di app/static/js/components/CardBackground.js, con
- * lo stesso HTML e gli stessi numeri (stile in css/components/card-background.css).
+ * fermarsi (stile in css/components/card-background.css).
  *
  * Carte di dorso e, di faccia, Assi, Tre (i carichi) e coppie Cavallo + Re a
  * ventaglio (cantare 40), dalle immagini di app/static/img/cards-bg/ (P40). Le
@@ -76,8 +75,7 @@ function pseudoRandom(i: number, k: number): number {
  *   Le più piccole sembrano più lontane: cadono più lente, sono più scure e
  *   passano dietro alle grandi (sono piene, non trasparenti: chi sta davanti copre
  *   chi sta dietro). Nella pagina chi viene dopo sta davanti, per questo l'elenco
- *   è ordinato dalla più lontana alla più vicina. Stessi conti di render() di
- *   CardBackground.js.
+ *   è ordinato dalla più lontana alla più vicina.
  */
 function buildCards(container: HTMLElement): BgCard[] {
   // cardW: la larghezza di una carta vicina, da --bg-card-w del CSS (60 px)
@@ -91,7 +89,7 @@ function buildCards(container: HTMLElement): BgCard[] {
   // faces: quante carte di faccia sono già uscite (per prendere la prossima di FACES)
   let faces = 0;
   for (let i = 0; i < count; i++) {
-    // rnd(k): il k-esimo numero "casuale" di questa carta (come rnd di CardBackground.js)
+    // rnd(k): il k-esimo numero "casuale" di questa carta
     function rnd(k: number): number {
       return pseudoRandom(i + 1, k + 20);
     }

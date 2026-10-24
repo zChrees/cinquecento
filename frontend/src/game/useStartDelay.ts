@@ -2,7 +2,7 @@
  * Il ritardo di un'animazione, che resta fermo finché l'animazione è la stessa
  * (lotti 8c e 8d della migrazione, "Rischi principali" del piano del passo 8).
  *
- * Perché serve: il tavolo Jinja (game.js) ricreava tutti gli elementi a ogni
+ * Perché serve: il tavolo di prima (Jinja, tolto al 9a) ricreava tutti gli elementi a ogni
  * ridisegno, quindi ogni volta dava all'animazione il tempo già passato come
  * ritardo negativo (P70, P119) e l'animazione riprendeva dal punto giusto. React
  * invece tiene lo stesso elemento tra un disegno e l'altro: l'animazione continua

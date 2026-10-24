@@ -201,8 +201,8 @@ async function sendWithCsrf<T>(method: 'POST' | 'DELETE', url: string, body: str
  *
  * In parole semplici:
  *   const answer = await getJson<Stats>('/api/stats/me');
- *   Senza rete risponde subito NO_CONNECTION, senza provarci (come fetchStats di
- *   StatsPanel.js); T è il tipo dei dati della risposta, scelto da chi chiama.
+ *   Senza rete risponde subito NO_CONNECTION, senza provarci; T è il tipo dei
+ *   dati della risposta, scelto da chi chiama.
  */
 export async function getJson<T>(url: string): Promise<Answer<T>> {
   if (!navigator.onLine) {

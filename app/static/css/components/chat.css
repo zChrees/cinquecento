@@ -2,7 +2,7 @@
  * Finestra chat (P46), dal prototipo di P52 (".chat"): si apre dentro il
  * pannello amici, che su telefono è a tutto schermo. Scorre solo l'elenco dei
  * messaggi; il campo di scrittura resta sempre visibile in fondo.
- * La crea js/components/ChatWindow.js; il testo dei messaggi è sempre testo.
+ * La crea components/ChatWindow.tsx; il testo dei messaggi è sempre testo.
  */
 
 .chat {

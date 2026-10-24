@@ -1,7 +1,7 @@
 /*
  * Cascata di carte dello sfondo della home (P22), dal prototipo (P52).
  * Carte di dorso e, di faccia, Assi, Tre (i carichi) e coppie Cavallo + Re
- * (cantare 40), da app/static/img/cards-bg/. Le crea js/components/CardBackground.js.
+ * (cantare 40), da app/static/img/cards-bg/. Le crea components/CardBackground.tsx.
  * Passano dietro a tutto, anche dietro la navbar (z-index -1: nessun contenitore
  * della pagina crea un nuovo livello). Con "riduci movimento" restano ferme
  * (reset.css spegne le animazioni) nel punto --y.

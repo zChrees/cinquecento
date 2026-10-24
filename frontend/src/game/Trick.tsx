@@ -1,9 +1,7 @@
 /**
  * Il centro del tavolo React: la presa in corso, la presa appena chiusa, il mazzo
- * e la briscola nell'angolo. È la versione React di
- * app/static/js/components/Trick.js (P21, P57, P70, P76, P102, P108), con lo stesso
- * HTML, le stesse classi e gli stessi data-* (stile in css/components/trick.css e
- * table.css).
+ * e la briscola nell'angolo: P21, P57, P70, P76, P102, P108 (stile in
+ * css/components/trick.css e table.css).
  *
  * Cosa contiene:
  *   <Trick trick={view.trick} positionOf={positionOf} thrown={{}} />          la presa in corso

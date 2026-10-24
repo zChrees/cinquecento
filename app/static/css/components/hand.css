@@ -1,5 +1,5 @@
 /*
- * Mano del giocatore (P20), creata da js/components/Hand.js: carte in fila
+ * Mano del giocatore (P20), creata da game/Hand.tsx: carte in fila
  * dritta, affiancate, larghe quanto permette lo spazio (fino a --hand-card-max).
  * A 360 px, con i margini della pagina, cinque carte sono larghe circa 60 px.
  */
@@ -28,8 +28,8 @@
 }
 
 /*
- * Pescata (P70). Le durate (0,5 s) sono DRAW_MS di pages/game.js; i ritardi li
- * scrive Hand.js (negativi: la pescata è già cominciata; positivi: tocca dopo agli
+ * Pescata (P70). Le durate (0,5 s) sono DRAW_MS di game/animations.ts; i ritardi li
+ * scrive Hand.tsx (negativi: la pescata è già cominciata; positivi: tocca dopo agli
  * altri). Con "riduci movimento" niente animazioni (reset.css).
  * - Avversario: la carta nuova arriva dal centro del tavolo (in su, nel ventaglio
  *   "in piedi" di table.css) e le altre si allargano dal ventaglio di prima.

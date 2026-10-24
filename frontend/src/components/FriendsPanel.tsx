@@ -1,8 +1,7 @@
 /**
  * Il pannello amici (P46, passi 5b e 5c della migrazione): si apre da "Amici" nella
  * navbar. Su telefono è a tutto schermo, su computer laterale (stile in
- * css/components/friends-panel.css). È la versione React di
- * app/static/js/components/FriendsPanel.js, con lo stesso HTML e gli stessi data-*.
+ * css/components/friends-panel.css).
  *
  * Cosa contiene:
  *   <FriendsPanel onBadge={setBadge} />   il pannello (un <dialog> sempre nella pagina, chiuso)
@@ -99,7 +98,7 @@ interface OpenChat {
   history: ChatHistory;
 }
 
-// I testi delle finestre e degli avvisi (gli stessi di FriendsPanel.js)
+// I testi delle finestre e degli avvisi
 const NOT_AVAILABLE = 'Amici non disponibili. Riprova tra poco.';
 const NO_NOTICE: Notice = { text: '', kind: 'ok' };
 

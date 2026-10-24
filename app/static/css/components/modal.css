@@ -1,6 +1,6 @@
 /*
  * Finestre nella pagina (P19): base comune di tutti i <dialog> e finestra di
- * conferma riutilizzabile (.dialog, creata da js/components/Modal.js) al posto di
+ * conferma riutilizzabile (.dialog, creata da components/Modal.tsx) al posto di
  * alert / confirm / prompt. Base e animazioni dal prototipo (P52).
  */
 

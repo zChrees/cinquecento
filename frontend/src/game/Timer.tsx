@@ -1,7 +1,6 @@
 /**
  * Il tempo del turno al tavolo React (P21, P132): un anello attorno all'avatar di
- * chi deve giocare, che si svuota e sotto i 10 secondi diventa rosso. È la versione
- * React di app/static/js/components/Timer.js, con lo stesso HTML (stile in
+ * chi deve giocare, che si svuota e sotto i 10 secondi diventa rosso (stile in
  * css/components/timer.css).
  *
  * Cosa contiene:

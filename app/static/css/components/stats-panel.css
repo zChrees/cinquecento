@@ -1,7 +1,7 @@
 /*
  * Pannello statistiche (P40), dal prototipo di P52 (docs/prototipo/prototipo.css,
  * ".sheet"): si apre toccando l'avatar, in alto a sinistra sotto l'avatar,
- * ingrandendosi dal suo angolo. Contenuto disegnato da js/components/StatsPanel.js.
+ * ingrandendosi dal suo angolo. Contenuto disegnato da components/StatsSheet.tsx.
  */
 
 .sheet {
@@ -146,7 +146,7 @@
 
 /*
  * Animazioni: l'apertura parte da sola quando il dialog si apre; per la chiusura
- * layout.js aggiunge .is-closing e chiude il dialog a fine animazione. Lo sfondo
+ * components/sheet.ts aggiunge .is-closing e chiude il dialog a fine animazione. Lo sfondo
  * scuro è animato in modal.css (dialog[data-animated]). Con "riduci movimento"
  * reset.css toglie le animazioni e il pannello si apre e si chiude subito.
  */

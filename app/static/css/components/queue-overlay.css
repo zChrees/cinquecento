@@ -1,6 +1,6 @@
 /*
  * Schermata di attesa in coda (P22, DECISIONI.md: "Attesa in coda a tutto
- * schermo"). La crea js/components/QueueOverlay.js: è un <dialog> che copre tutto
+ * schermo"). La crea components/QueueOverlay.tsx: è un <dialog> che copre tutto
  * lo schermo; il panno e la cascata restano visibili sotto, scuriti. Le scritte
  * sono sul panno come "giocatori online" (.felt-text); tre carte di dorso si
  * mescolano mentre si aspetta (ferme con "riduci movimento").
