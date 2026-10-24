@@ -1,7 +1,6 @@
 """P94: turno da 15 secondi, che parte dopo le pause del tavolo.
 
-- Che le pause del server siano le stesse della pagina lo controlla test_durate_tavolo.py
-  (dal lotto 9a il confronto che stava qui è tutto lì).
+- Che le pause del server siano le stesse della pagina lo controlla test_durate_tavolo.py.
 - table_pause dà la pausa giusta per ogni mossa (carta dentro la presa, presa chiusa con e
   senza pescata, mano nuova, mano finita con una calata).
 - Con il server vero, dopo una presa il conto alla rovescia parte solo a pausa finita, e

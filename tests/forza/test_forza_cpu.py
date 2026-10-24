@@ -1,5 +1,5 @@
 """Prove di forza della CPU (D43, "Fatto quando"): la strategia "simulazione" contro il
-"giocatore medio" (heuristic_move, la prima CPU del 30/09/2026), in partite intere con il
+"giocatore medio" (heuristic_move, regole fisse e senza memoria), in partite intere con il
 motore vero. P122: suite a parte, perché sono le prove più lente (nella suite engine
 l'avrebbero portata oltre i 200 s); le altre prove della CPU sono in tests/engine/test_cpu.py.
 
@@ -44,8 +44,7 @@ def play_match(players, seed, mine):
 
 
 def test_la_cpu_batte_il_giocatore_medio(monkeypatch):
-    """1v1 (P68): il 04/10/2026 con un terzo ha vinto 28 partite su 40, con il budget vero
-    81 su 100. Qui 12 partite (ne vince 9), metà da un posto e metà dall'altro."""
+    """1v1 (P68): 12 partite (ne vince 11, P127), metà da un posto e metà dall'altro."""
     third_of_the_budget(monkeypatch)
     wins = sum(play_match(2, seed, mine=seed % 2) for seed in range(12))
     assert wins >= 8, wins
@@ -53,9 +52,8 @@ def test_la_cpu_batte_il_giocatore_medio(monkeypatch):
 
 def test_nel_2v2_la_coppia_di_cpu_batte_la_coppia_media(monkeypatch):
     """2v2 (P122): due CPU in coppia contro due giocatori medi; la CPU vede le carte scoperte
-    del compagno a mazzo finito (D46). Misure del 08/10/2026: con un terzo ha vinto 30 partite
-    su 40, con il budget vero 27 su 40; una mossa dura come nel 1v1. Qui 24 partite (ne vince
-    17, circa 80 s), metà con le CPU nella squadra 0 e metà nella squadra 1."""
+    del compagno a mazzo finito (D46). 24 partite (ne vince 16, P134; circa 80 s), metà con le
+    CPU nella squadra 0 e metà nella squadra 1."""
     third_of_the_budget(monkeypatch)
     wins = sum(play_match(4, seed, mine=seed % 2) for seed in range(24))
     assert wins >= 15, wins

@@ -1,4 +1,4 @@
-"""home:refresh (contratto 5.1, dal 23/10/2026, passo 8h della migrazione).
+"""home:refresh (contratto 5.1).
 
 La home della SPA chiede lo stato quando compare con il collegamento già aperto
 (tornando dal tavolo senza ricaricare la pagina): la risposta porta gli stessi dati di

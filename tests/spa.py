@@ -1,4 +1,4 @@
-"""Il frontend React compilato per i test (passo 4 della migrazione).
+"""Il frontend React compilato per i test.
 
 Le pagine della SPA (/auth/login, /auth/register, ...) Flask le prende da
 app/static/dist/, che non è nel repository (D54) e che i test non devono toccare.
@@ -65,7 +65,7 @@ def needs_spa():
 
 
 def table_path(game_id, demo=None):
-    """L'indirizzo del tavolo React da aprire nel test (fino al lotto 9a stava in tests/table_ui.py).
+    """L'indirizzo del tavolo React da aprire nel test.
 
     In parole semplici:
         table_path("prova", demo="1v1")  →  "/game/prova?demo=1v1"

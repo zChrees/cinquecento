@@ -1,8 +1,7 @@
-"""Registrazione e login nei test, con le rotte JSON della SPA (passo 4 della migrazione).
+"""Registrazione e login nei test, con le rotte JSON della SPA.
 
-Fino al passo 4 i test leggevano il codice CSRF dentro le pagine Jinja /auth/login e
-/auth/register e mandavano il modulo; ora quelle pagine le disegna React e i dati vanno
-a /api/auth/ (app/blueprints/auth/api.py). Il codice CSRF si prende da
+Le pagine /auth/login e /auth/register le disegna React e i dati vanno a /api/auth/
+(app/blueprints/auth/api.py). Il codice CSRF si prende da
 GET /api/auth/session e va nell'intestazione X-CSRFToken, come fa la SPA.
 
 Due versioni di ogni funzione:

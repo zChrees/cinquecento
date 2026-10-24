@@ -328,7 +328,7 @@ def situation(players, seed, step):
     (2, 0, 29, {"coppe-9"}),
 ])
 def test_a_pari_merito_non_regala_carichi_ne_butta_re_e_cavalli(quick, players, seed, step, bad):
-    """Situazioni vere trovate il 10/10/2026: tra carte che valgono quasi uguale decideva il caso.
+    """Situazioni vere (P127, D50): tra carte che valgono quasi uguale decideva il caso.
 
     Dipendono dai semi fissi, come la suite forza: se cambia il modo in cui motore o giocatore
     medio usano rng, la situazione cambia (il primo assert lo segnala).
@@ -498,7 +498,7 @@ def poor_trick(hands, trick, leader, sings, last, gone):
     return view, CpuMemory(view["hand_number"], {*gone, *on_table})
 
 
-# Situazioni vere delle prove del 10/10/2026 (riepilogo di christian.md): 140 partite 2v2 con
+# Situazioni vere delle prove di D51 (P134): 140 partite 2v2 con
 # il posto 0 giocatore medio e i posti 1-3 CPU con il calcolo vero, rigiocate con il cpu.py
 # di P127 e salvate nel momento in cui la CPU giocava la carta sbagliata (ultimo campo):
 # Asso o Tre di briscola su una presa povera, o la briscola più alta. Rigiocarle con il seme

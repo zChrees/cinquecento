@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### C4 (parte di Giuseppe) — Test di motore e tempo reale: commenti senza la storia (24/10/2026)
+
+- **Branch**: feature/c4-test-motore-tempo-reale (da `dev` a `ec807e7`)
+- **File** (solo commenti e docstring): suite `engine` (`test_cala.py`, `test_cpu.py`), `sockets` (`test_durate_tavolo.py`, `test_home_refresh.py`, `test_timer_riconnessione.py`, `test_turno.py`, `test_validazione_eventi.py`), `e2e` (`helpers.py`), `forza` (`test_forza_cpu.py`), e gli aiuti comuni a tutte le suite, che non sono di nessuno: `tests/conftest.py`, `tests/accounts.py`, `tests/spa.py`, `tests/esegui_tutti.py`; questo file
+- **Divisione di C4** (proposta da me, Giuseppe ha detto di procedere): io `engine`, `sockets`, `services`, `e2e`, `forza`, `db` e gli aiuti comuni; **Christian** `api`, `frontend`, `frontend2` e le sei `table*`, compresi i 7 `test_spa_*.py` da rinominare (stanno tutti in `frontend` e `frontend2`). In `services` e `db` non c'era niente da togliere
+- **Cosa** [L]: tolti "passo N / lotto 9x della migrazione", le date ("04/10/2026", "10/10/2026", "29/09/2026", "dal 23/10/2026"), "prima era…" (P66, P138), "la home Jinja" e il `<meta name="csrf-token">`; dove serviva la frase dice com'è oggi. **Corretti due numeri sbagliati** in `test_forza_cpu.py`: le docstring dicevano "ne vince 9" (1v1) e "ne vince 17" (2v2), cioè i valori di prima di P127 e P134; ora 11 su 12 e 16 su 24, come nei riepiloghi di P127 e P134 [L]. I codici P, D e R restano
+- **Controlli**: suite `runner` con il runner **TUTTO PASS** (c'è il test che copia `conftest.py` in un progetto finto); raccolta con pytest di `engine` (704), `sockets` (339), `e2e` (12), `forza` (2) senza errori; `ruff` pulito [T]. Cambiano solo commenti
+- **Decisioni prese**: la divisione di C4 qui sopra
+- **Domande nuove**: nessuna
+- **Punti delicati**: nessuno nuovo
+- **Note per gli altri**: **Christian**: la tua parte di C4 sono `api`, `frontend`, `frontend2` e le `table*` (con i `test_spa_*.py`); gli aiuti comuni (`conftest.py`, `accounts.py`, `spa.py`, `esegui_tutti.py`) li ho già fatti io. **Chi è di turno**: C4 si spunta quando c'è anche la parte di Christian; O3 (R6) è in `dev` (`ec807e7`)
+
 ### O3 — Il salvataggio della partita riprova e non blocca la stanza (R6) (24/10/2026)
 
 - **Branch**: fix/o3-salvataggio-riprova (da `dev` a `c80939a`)

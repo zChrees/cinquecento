@@ -109,7 +109,7 @@ class User:
         response = accounts.register_http(self.session, url, username, password=PASSWORD)
         assert accounts.ok(response), f"registrazione di {username} non riuscita"
         # Dopo la registrazione si entra subito. Id e codice CSRF li dà GET /api/auth/session,
-        # come alla SPA (fino al passo 7d si leggevano dalla home Jinja, che ora è della SPA)
+        # come alla SPA
         session = self.session.get(f"{url}/api/auth/session", timeout=WAIT).json()["data"]
         self.id = session["user"]["user_id"]
         self._csrf = session["csrf_token"]

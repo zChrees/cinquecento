@@ -1,10 +1,10 @@
-"""Passo 8 della migrazione: le durate del tavolo uguali tra server e pagina.
+"""Le durate del tavolo uguali tra server e pagina (P94).
 
 Il server aspetta le pause del tavolo (P94: presa chiusa, riepilogo, lanci, pescate,
 mescolata, distribuzione, carte calate) prima di far partire il turno, e la pagina
 mostra quelle stesse animazioni: se i numeri non sono uguali, il tempo del turno
-parte prima o dopo la fine dell'animazione. Dal lotto 9a (tavolo Jinja tolto) la
-copia lato pagina è una sola, frontend/src/game/animations.ts. Questo file controlla:
+parte prima o dopo la fine dell'animazione. Le durate della pagina stanno tutte in
+frontend/src/game/animations.ts. Questo file controlla:
 - ogni pausa di app/realtime/room.py (in secondi) è uguale, in millisecondi, a
   quella di animations.ts;
 - la pausa delle frasi è uguale al limite del server (table_phrases, P55, P56);

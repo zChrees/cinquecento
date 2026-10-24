@@ -173,9 +173,9 @@ def test_esci_scollega_tutte_le_schede_ed_esce_dalla_coda(server, new_user):
     try:
         joined = tabs[0].call("queue:join", {"request_id": uuid.uuid4().hex, "mode": "1v1", "target_score": 500})
         assert joined["ok"] is True
-        # Dal passo 7d / è della SPA, senza <meta name="csrf-token">: il codice lo dà la sessione
+        # Il codice CSRF lo dà GET /api/auth/session, come alla SPA
         token = session.get(f"{server['url']}/api/auth/session", timeout=WAIT).json()["data"]["csrf_token"]
-        # Dal lotto 9c "Esci" è POST /api/auth/logout, con il codice nell'intestazione
+        # "Esci" è POST /api/auth/logout, con il codice nell'intestazione
         response = session.post(f"{server['url']}/api/auth/logout", json={},
                                 headers={"X-CSRFToken": token}, timeout=WAIT)
         assert response.json() == {"ok": True, "data": {"redirect": "/"}}
@@ -189,7 +189,7 @@ def test_esci_scollega_tutte_le_schede_ed_esce_dalla_coda(server, new_user):
 
 
 def _delete_account(session, url):
-    # Dal passo 6 della migrazione: la rotta JSON della SPA, con il codice CSRF della sessione
+    # La rotta JSON della SPA, con il codice CSRF della sessione
     token = session.get(f"{url}/api/auth/session", timeout=WAIT).json()["data"]["csrf_token"]
     return session.post(f"{url}/api/profile/delete", json={"password": PASSWORD},
                         headers={"X-CSRFToken": token}, timeout=WAIT)

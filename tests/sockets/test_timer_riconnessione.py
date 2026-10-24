@@ -237,7 +237,7 @@ def test_non_rientrato_in_tempo_partita_persa_per_abbandono(connect, new_room, u
 
 def test_chi_non_arriva_al_tavolo_perde_per_abbandono(connect, new_room, users):
     """P138 (R2 di REVIEW.md): chi non arriva mai al tavolo ha RECONNECT_SECONDS dall'inizio
-    della partita, come chi si scollega; prima non aveva limite (scelta di Antonio del 28/09)."""
+    della partita, come chi si scollega."""
     ready = [Seat(connect("Primo"))]  # collegato prima: si siede appena la stanza c'è
     room = new_room(["Primo", "Secondo"], reconnect=0.6)
     seats = sit(connect, room, ["Primo"], seats=ready)
@@ -364,7 +364,7 @@ def _moves(view):
 
 def test_nessuno_gioca_le_carte_automatiche_non_si_fermano(connect, new_room):
     """Chi chiude la presa e la vince apre la successiva: il turno resta a lui, ma è un
-    turno nuovo e il timer riparte (P66: prima si fermava lì per sempre)."""
+    turno nuovo e il timer riparte (P66)."""
     room = new_room(["Primo", "Secondo"], turn=30)
     seats = sit(connect, room, ["Primo", "Secondo"])
     start = seats[0].last
