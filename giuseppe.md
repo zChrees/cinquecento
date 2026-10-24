@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### Commenti e niente zucchero, lotto 2a — Tempo reale: i file piccoli (24/10/2026)
+
+- **Branch**: feature/commenti-realtime-2 (da `dev` a `7d22c95`). Il lotto 2 (tempo reale) è diviso in quattro: **2a** i file piccoli di `app/realtime/`, **2b** `room.py`, **2c** `matchmaking.py`, **2d** `app/sockets/`
+- **File**: modificati `app/realtime/` `__init__.py`, `events.py`, `presence.py`, `table_phrases.py`, `room_manager.py`, `invites.py`; questo file
+- **Cosa c'è**: come nei lotti 1a e 1b, commenti in cima al file e "In parole semplici" sopra ogni classe e funzione, con lucchetti (`Lock`, `RLock`), `with`, `Timer`, `@dataclass` senza `frozen`, `@functools.wraps` e il decoratore `handler` spiegati; tolti i casi di zucchero (comprehension, `next(...)` con un generatore, `any`, `a if c else b`, spacchettamento `a, b = tupla`, `message or ERRORS[code]` scritto con un `if`, `**extra` dentro un dizionario scritto con un ciclo). Nomi, ordine dei campi delle risposte e comportamento uguali. La condizione "busy" di `Invites.send` è scritta con degli `if` uno dopo l'altro (stessi casi di prima)
+- **Restano**, spiegati nei commenti: `*args, **kwargs` di `wrapper` in `handler` (servono: avvolge gestori con parametri diversi), `**exc.extra` nella chiamata a `error`, `*user_ids` di `_forget`, l'asterisco `*` di `cancel_all_of`, `for a, b in ....items()` (lo chiede `ruff`, `PLC0206`, quando si leggono anche i valori)
+- **Controlli**: suite `sockets` **333 PASS**, `api` **307 PASS**, `services` **38 PASS**, `e2e` **12 PASS**; `ruff check .` pulito; nessuno zucchero rimasto nei sei file (ricerca con `rg`) [T]
+- **Decisioni prese**: nessuna nuova
+- **Domande nuove**: nessuna
+- **Punti delicati**: `INVITE_SECONDS` di `invites.py` e `MIN_INTERVAL_SECONDS` di `table_phrases.py` restano letti **al momento dell'uso** (i test li riducono con `monkeypatch`); `RoomManager.remove` oggi la usano solo i test (R4), scritto nel suo commento
+- **Note per gli altri**: nessuna nuova. Prossimo: lotto 2b, `room.py`
+
 ### Commenti e niente zucchero, lotto 1b — Motore: partita, calata e viste (24/10/2026)
 
 - **Branch**: feature/commenti-motore-1b (da `dev` a `c61725d`). Chiude il motore tranne `cpu.py` (lotto 5)
