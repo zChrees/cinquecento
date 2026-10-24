@@ -24,7 +24,8 @@
  * pulsanti sono spenti (waiting). Senza connessione sono spenti (P33). Se la
  * partita si apre in un'altra scheda (game:replaced, D14) questa si ferma; se al
  * rientro la partita non c'è più (not_found, P95) compare "La partita è stata
- * interrotta" e dopo GONE_HOME_MS si torna alla home. "Esci", dopo la conferma,
+ * interrotta" e dopo GONE_HOME_MS si torna alla home; a partita finita invece resta il
+ * risultato (R4: il server toglie la stanza 10 minuti dopo la fine). "Esci", dopo la conferma,
  * manda game:leave (partita persa per abbandono) e torna alla home. I secondi di chi
  * è scollegato scendono da soli, ogni secondo.
  * Prova (?demo=): niente server; vista finta ed eventi demo:*.
@@ -1597,6 +1598,12 @@ async function join(): Promise<void> {
   const mine = generation;
   const answer = await send('game:join', { game_id: snapshot.gameId });
   if (mine !== generation || answer.ok) {
+    return;
+  }
+  // R4: 10 minuti dopo la fine il server toglie la stanza dalla memoria. Se a quel punto
+  // la pagina mostra ancora il risultato e si ricollega, not_found non vuol dire
+  // "interrotta": il risultato resta e si torna alla home con "Esci", come prima
+  if (snapshot.view !== null && snapshot.view.status === 'finished' && answer.error.code === 'not_found') {
     return;
   }
   if (snapshot.view !== null && answer.error.code === 'not_found') {

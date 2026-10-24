@@ -22,6 +22,20 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### R4 — Le stanze finite si tolgono dalla memoria (24/10/2026)
+
+- **Branch**: fix/r4-stanze-finite (da `dev` a `af9a16a`)
+- **File**: modificati `app/realtime/room.py`, `app/realtime/room_manager.py` (elenco di R4), `frontend/src/game/tableStore.ts` (fuori elenco, con l'ok di Giuseppe), `tests/table6/test_partita_interrotta.py`; nuovo `tests/sockets/test_stanze_finite.py`; questo file
+- **Il difetto** [L]: ogni partita finita, anche contro la CPU, restava nell'elenco delle stanze (partita, mosse, lock) finché il server non si riavviava, e `_room_of`/`rooms_of` le scorrevano tutte a ogni `create_room`, coda, home e scollegamento. Online (D21) il server resta acceso per settimane
+- **Correzione**: `create_room` dà alla stanza `on_finish` (= `RoomManager._remove_later`); `_save` di `room.py`, dove passano una volta sola tutte e due le fine partita (punteggio e abbandono, anche contro la CPU), la chiama subito dopo `_saved = True`; `_remove_later` avvia un `threading.Timer` di **`FINISHED_ROOM_SECONDS` = 600 s (10 minuti, scelta di Giuseppe)** che chiama `_remove_finished` → `rooms.remove` (nel log solo il codice della stanza). Il timer prende solo il lucchetto dell'elenco, mai quello della stanza. Le stanze fatte con `rooms.create()` (test) hanno `on_finish` None. Dopo i 10 minuti chi apre l'indirizzo della partita riceve not_found, "Questa partita non esiste o è già finita."
+- **Al tavolo** (`tableStore.ts`, `join`): il risultato resta finché non si preme "Esci"; se dopo i 10 minuti la connessione cade e si riprende, `not_found` mostrava "La partita è stata interrotta" (P95) e tornava alla home. Ora con la vista già finita `not_found` si ignora e il risultato resta
+- **Test**: `test_stanze_finite.py` (3): la stanza finita c'è subito dopo la fine e sparisce dopo l'attesa (accorciata con `monkeypatch`), poi `game:join` risponde not_found; la partita in corso resta e quella contro la CPU (che non si salva) si toglie; una stanza senza `create_room` non ha `on_finish`. `test_a_partita_finita_resta_il_risultato` in `test_partita_interrotta.py`: risultato a video, stanza tolta, collegamento caduto, la pagina si ricollega e per 3 s niente riquadro "interrotta". Senza le correzioni falliscono tutti e quattro [T]
+- **Controlli**: con il runner `sockets` **336 PASS** (333 + 3), `table6` **24 PASS** (23 + 1), `table5` **37 PASS**, `e2e` **12 PASS**; `ruff` pulito, `npx tsc --noEmit` pulito; `npm run build` fatto [T]
+- **Decisioni prese** (Giuseppe, 24/10): la stanza finita si toglie dopo 10 minuti; a partita finita il tavolo non mostra "interrotta"
+- **Domande nuove**: nessuna
+- **Punti delicati**: (1) **`room.on_finish`** la chiama `_save`: un modo nuovo di finire una partita deve passare da `_save` (come oggi `_apply` e `abandon`), altrimenti la stanza non si toglie più; (2) `FINISHED_ROOM_SECONDS` di `room_manager.py` si legge quando la partita finisce (i test lo accorciano con `monkeypatch`); (3) un test che vuole la stanza finita ancora in elenco deve finire entro i 10 minuti (oggi nessuno ci arriva); (4) `rooms_of` dà le stanze finite solo per 10 minuti
+- **Note per gli altri**: **Christian**: tocco a `tableStore.ts` (3 righe in `join` e il commento in cima), approvato da Giuseppe. **Chi è di turno**: R4 e R15(b) si possono spuntare in `REVIEW.md`; i punti delicati qui sopra vanno in "Tempo reale (P23)" o "Stanze (P24)"
+
 ### Commenti e niente zucchero, lotto 5 — app/game/engine/cpu.py (24/10/2026). Chiude i commenti nel Python
 
 - **Branch**: feature/commenti-cpu-5 (da `dev` a `56b85b7`)

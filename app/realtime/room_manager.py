@@ -16,7 +16,15 @@ P88: create_room legge una volta sola il rating di ogni giocatore vero nella mod
 della partita (gli stessi numeri del pannello statistiche, stats_service.stats_of) e
 la stanza lo mette nella vista; serve il contesto di Flask, come per il salvataggio (P26).
 
+R4 (REVIEW.md, 24/10/2026): una stanza finita si toglie dall'elenco FINISHED_ROOM_SECONDS
+(10 minuti, scelta di Giuseppe) dopo la fine della partita: il tempo di guardare il
+risultato, ricaricare la pagina o rientrare. Prima restava in memoria finché il server non
+si riavviava, e ogni ricerca (create_room, la coda, la home, gli scollegamenti) scorreva
+anche tutte le partite finite. Dopo, chi apre il suo indirizzo riceve not_found
+("Questa partita non esiste o è già finita.").
+
 Cosa contiene:
+    FINISHED_ROOM_SECONDS      dopo quanti secondi dalla fine si toglie una stanza (600)
     RoomError                  l'errore di create_room, per esempio RoomError("Già in partita: Mario.")
     RoomManager                l'elenco delle stanze, con il suo lucchetto
     rooms                      l'unico elenco del programma
@@ -46,6 +54,10 @@ from app.services import stats_service
 
 log = logging.getLogger(__name__)
 
+# FINISHED_ROOM_SECONDS (R4): si legge quando la partita finisce, così i test lo
+# accorciano con monkeypatch
+FINISHED_ROOM_SECONDS = 600
+
 
 # RoomError eredita da ValueError: chi la prende con "except ValueError" la prende lo stesso
 class RoomError(ValueError):
@@ -58,7 +70,7 @@ class RoomManager:
     In parole semplici:
         rooms.create_room(giocatori, "1v1", 300)   crea e avvia una partita
         rooms.get("abc")                           la stanza con quel codice, o None
-        rooms.rooms_of(7)                          le stanze dell'utente 7, anche finite
+        rooms.rooms_of(7)                          le stanze dell'utente 7, anche finite da meno di 10 minuti (R4)
     """
 
     def __init__(self):
@@ -155,6 +167,7 @@ class RoomManager:
                 raise RoomError(f"Già in partita: {', '.join(busy)}.")
 
             room = Room(self._new_id())
+            room.on_finish = self._remove_later  # R4: a fine partita, via dalla memoria dopo un po'
             try:
                 room.start(players, target_score, rated=rated, rng=rng, cpu_seats=cpu_seats, ratings=ratings)
             except EngineError as exc:
@@ -213,15 +226,43 @@ class RoomManager:
 
         In parole semplici:
             remove("abc")
-            Nota: oggi la chiamano solo i test; le stanze finite restano in memoria
-            finché il server non si riavvia (R4 di REVIEW.md).
+            La chiama _remove_finished, FINISHED_ROOM_SECONDS dopo la fine della partita
+            (R4); la usano anche i test.
         """
         with self._lock:
             # pop: toglie la chiave e restituisce il valore; None se la chiave non c'è
             return self._rooms.pop(room_id, None)
 
+    def _remove_later(self, room):
+        """R4: programma la stanza finita da togliere dopo FINISHED_ROOM_SECONDS.
+
+        In parole semplici:
+            _remove_later(room)
+            room: la stanza appena finita. La chiama _save di room.py (attraverso
+            room.on_finish), una volta sola, sotto il lucchetto della stanza: qui si
+            avvia solo un timer (threading.Timer, un thread che aspetta e poi chiama
+            _remove_finished), che non prende mai il lucchetto della stanza.
+            daemon = True: il timer non impedisce al programma di chiudersi.
+        """
+        timer = threading.Timer(FINISHED_ROOM_SECONDS, self._remove_finished, args=(room.id,))
+        timer.daemon = True
+        timer.start()
+
+    def _remove_finished(self, room_id):
+        """R4: toglie la stanza finita dall'elenco (la chiama il timer di _remove_later).
+
+        In parole semplici:
+            _remove_finished("abc")
+            Dopo, rooms.get("abc") restituisce None e game:join risponde not_found.
+            Nel log solo il codice della stanza.
+        """
+        if self.remove(room_id) is not None:
+            log.info("Stanza %s finita tolta dalla memoria", room_id)
+
     def rooms_of(self, user_id):
         """Tutte le stanze di cui l'utente è giocatore, anche finite.
+
+        Le finite ci sono finché non le toglie _remove_finished (R4: 10 minuti dopo la fine).
 
         In parole semplici:
             rooms_of(7)

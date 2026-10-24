@@ -333,6 +333,10 @@ class Room:
         self._started_at = None
         self._moves = []  # MoveRecord, nell'ordine della partita
         self._saved = False
+        # R4: la funzione da chiamare a fine partita, con la stanza: la mette create_room di
+        # room_manager.py, che toglie la stanza dalla memoria qualche minuto dopo; None per
+        # le stanze fatte senza create_room (i test). In C sarebbe un puntatore a funzione
+        self.on_finish = None
 
         # CPU (P68): timer della prossima mossa, memoria delle carte uscite (D43), rng suo
         self._cpu_timer = None
@@ -894,10 +898,14 @@ class Room:
             Avvisa finish_listeners (home e amici), poi salva con match_service.save_match
             dentro l'applicazione Flask. Non salva la partita contro la CPU (D43) né una
             stanza creata fuori da Flask (lo scrive nel log).
+            R4: prima ancora chiama on_finish (se c'è), che programma la stanza da togliere
+            dalla memoria: vale per ogni partita finita, anche quelle che non si salvano.
         """
         if self._saved:
             return
         self._saved = True
+        if self.on_finish is not None:
+            self.on_finish(self)
         notify(finish_listeners, self.human_ids, self._app)
         if len(self.cpu_seats) > 0:
             log.info("Partita contro la CPU nella stanza %s: non si salva (D43)", self.id)
