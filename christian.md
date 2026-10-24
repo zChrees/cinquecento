@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### Documenti: aggiornamento del 24/10 notte, migrazione chiusa e commenti nel Python finiti (24/10/2026)
+
+- **Branch**: docs/aggiornamento-24-10-notte (da `dev` a `40f2cc0`)
+- **File**: modificati `CLAUDE.md`, `REVIEW.md`, `DECISIONI.md`, `docs/MIGRAZIONE-FRONTEND.md`; questo file
+- **Riepiloghi letti**: `christian.md` da "Dopo il 9e — via `csrfToken`" a "Pulizie" (cinque); `giuseppe.md` "Correzione — Carta-modal", "lotto 3b", "lotto 5", "R4", "R7"; `antonio.md` niente di nuovo
+- **Prova a mano** (Christian, 24/10): tutta la lista di `prova-a-mano.md` (passo 9 e novità del 24/10), **tutto bene**; approvata la correzione della carta-modal di Giuseppe
+- **Cosa c'è**: in `REVIEW.md` 9e e passo 9 chiusi, lotti dei commenti tutti spuntati (3b, 5, Sito con le rotte della migrazione, 4), R4, R7 e R15 fatti, la correzione della carta-modal e le pulizie; resta aperta la riscrittura dei punti delicati e degli altri documenti. In `DECISIONI.md` le pulizie, la carta-modal, R4 (10 minuti) e la chiusura del passo 9. In `CLAUDE.md` riga "Stato", punti delicati "Stanze (P24)" (R4), "Coda (P28, P29)" e "Inviti (P47)" (R7), "CPU (P68…)" (ordine di `rng`, impronta delle mosse, `sum()` compensata), "Home (P22)" (carta-modal), "Accesso (P16)" (`user_loader`), "Runner (P6)" (`config.py` senza import del progetto). In `MIGRAZIONE-FRONTEND.md` la migrazione finita
+- **Controlli**: nessun test (solo documenti)
+- **Decisioni prese**: la carta-modal di Giuseppe va bene
+- **Domande nuove**: nessuna
+- **Cosa devono fare gli altri**: **Giuseppe**: niente; R6 resta l'unico finding "dopo la consegna" del codice tra i tuoi
+
 ### Pulizie: via `load_user`, `card--hover-kept` e i file vecchi nei commenti dei test (24/10/2026)
 
 - **Branch**: fix/pulizie-codice-vecchio (da `dev` a `71fa9d6`)

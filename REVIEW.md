@@ -175,10 +175,10 @@ Si spunta solo dopo l'ok dell'utente, il commit e il merge in `dev`, come nella 
 - [x] R1 — username ed email senza a-capo finale — *P137, 11/10 (commit `fefbab7`)*
 - [x] R2 — chi non arriva al tavolo ha 60 secondi — *P138, 11/10 (commit `e626987`; riaperta la scelta del 28/09)*
 - [x] R3 — suite dei test più corte (16 suite) — *P139, 11/10 (commit `704713d`)*
-- [ ] R4 — stanze finite tolte dalla memoria — dopo la consegna (limite noto)
+- [x] R4 — stanze finite tolte dalla memoria — *Giuseppe, 24/10 (commit `71fa9d6`): tolte 10 minuti dopo la fine (`FINISHED_ROOM_SECONDS`); a partita finita il tavolo non mostra "interrotta"*
 - [ ] R5 — `legal.lay_down` — rischio residuo (regola di D45): da citare nella relazione
 - [ ] R6 — secondo tentativo del salvataggio — dopo la consegna (limite noto)
-- [ ] R7 — coda, CPU e inviti sotto lo stesso lock — dopo la consegna (limite noto)
+- [x] R7 — coda, CPU e inviti sotto lo stesso lock — *Giuseppe, 24/10 (commit `40f2cc0`): `queue:join` sotto `invites.lock`, `busy` con un invito aperto, `queue:left` a chi non torna in coda*
 - [ ] R8 — cookie `Secure` con ngrok — dopo la consegna (va legato a una variabile del `.env`, altrimenti con la Wi-Fi il login non funziona)
 - [ ] R9 — sessione revocabile — dopo la consegna (serve una colonna nuova)
 - [ ] R10 — blocco del login di un altro — rischio residuo (P16, P96): da citare nella relazione
@@ -186,7 +186,7 @@ Si spunta solo dopo l'ok dell'utente, il commit e il merge in `dev`, come nella 
 - [ ] R12 — server di sviluppo nella demo — rischio residuo: da riprendere con D21
 - [x] R13 — avviso sul debugger in rete — *P140, 11/10 (commit `7bf7863`)*
 - [x] R14 — avviso sui dati personali nei backup — *P140, 11/10 (commit `7bf7863`)*
-- [ ] R15 — test mancanti: (a) fatto con P137; (b) resta con R4
+- [x] R15 — test mancanti: (a) fatto con P137; (b) fatto con R4 (`tests/sockets/test_stanze_finite.py`, 24/10)
 - [ ] R16 — piccole copie nel codice — dopo la consegna
 
 ### Punti della scaletta non chiusi (copiati da `docs/archivio/SCALETTA-2026-09.md`, P37)
@@ -235,7 +235,7 @@ Un passo per branch, nell'ordine del piano (sezione 4). **Christian** fa il fron
   - [x] **8g** — doppio tocco (Giuseppe, commit `889aa2b`); suite del tavolo intere con `TABLE_UI=react`, **242 PASS in 6 suite**, e prova a mano su iPhone e Android (Christian, commit `db1624a`)
   - [x] **8h** — `/game/<id>` è il tavolo React (quello Jinja su `?ui=jinja` fino al passo 9); dalla home al tavolo e ritorno senza ricaricare; evento nuovo `home:refresh` (contratto 5.1); `TABLE_UI` predefinito `react` — *commit `5a1f5c8`*
   - Correzione a parte (Giuseppe, 22/10): `test_spa_impostazioni.py::test_cancellazione_con_la_password` instabile dal 7d — *commit `1e0781c`*
-- [ ] **Passo 9** — tolti i file JS vecchi e i loro test (rifatti sul codice nuovo)
+- [x] **Passo 9** — tolti i file JS vecchi e i loro test (rifatti sul codice nuovo) — *chiuso il 24/10 con la prova a mano di Christian*
   - *Piano* (23/10, preparato da Claude per Christian): cinque lotti in fila, **9a** tavolo vecchio, **9b** home e cornice vecchie, **9c** rotte JSON sotto `/api/`, **9d** regola unica della SPA, **9e** giro completo; in `docs/MIGRAZIONE-FRONTEND.md`, "Piano del passo 9".
   - *Scelte confermate da Christian* (23/10): le otto del piano come raccomandato (test vecchi portati o cancellati con una tabella; confronti del DOM tolti; `Card.js`/`Avatar.js` letti come testo; vecchi indirizzi JSON 404 e `POST /api/auth/logout`; regola unica con la pagina React "non trovata"; errori Jinja con `base.html` ridotto; rotte dove sono), **tranne la 8: tutti i lotti del passo 9 li fa Christian**, anche 9c, 9d e 9e. Nel 9a `?ui=` si ignora; il 9b diviso in 9b-1 e 9b-2; la pagina di prova delle carte cancellata.
   - [x] **9a** — via il tavolo Jinja (`game/table.html`, `pages/game.js` e sette componenti), `?ui=` ignorato, `TABLE_UI` e `tests/table_ui.py` tolti (`table_path` in `tests/spa.py`), durate solo in `animations.ts` (confronti tutti in `test_durate_tavolo.py`) — Christian — *23/10 (commit `4233f91`)*
@@ -244,10 +244,12 @@ Un passo per branch, nell'ordine del piano (sezione 4). **Christian** fa il fron
   - [x] *Test a parte*: `checkCard` e `cardName` di `cards.ts` eseguiti con Node (tornano gli 11 controlli persi nel 9b-2) — Christian — *23/10 (commit `f737d85`)*
   - [x] **9c** — rotte JSON sotto `/api/` (`/api/online`, `/api/stats/me`, `/api/friends/...`, `POST /api/auth/logout` in JSON; vecchi indirizzi 404; `JSON_PREFIXES` solo `/api/`), contratto (1.5 riscritta, 2, 2.3, 5.1, 5.2), esempi e chiamate della SPA; "Esci" ricarica la home — Christian — *24/10 (commit `d1e32bf`)*
   - [x] **9d** — regola unica della SPA nel gestore del 404 (GET e HEAD fuori da `/api/`, `/static/`, `/socket.io`), pagina React "non trovata" con la navbar, `/` in fondo rimandata (302), `caseSensitive` in React; via `SPA_PATHS` e `GAME_TABLE` (al loro posto `NOT_SPA` e `FLASK_PATHS`) — Christian — *24/10 (commit `0cce805`)*
-  - [ ] **9e** — giro completo delle suite (con le sei `table*`), `ruff`, `tsc`, build, prova a mano
+  - [x] **9e** — giro completo delle suite (con le sei `table*`), `ruff`, `tsc`, build, prova a mano
     - [x] giro completo: **1983 PASS in 16 suite**; corretti due test di `runner` rotti dal passo 4 (import di `tests.spa` in `conftest.py` dopo i rifiuti) — Giuseppe, con l'ok di Christian — *24/10 (commit `d1cca95`)*
-    - [ ] prova a mano su telefono e computer (accesso, home, coda, CPU, inviti, tavolo, chat, impostazioni, "Esci", pagina "non trovata") — **Christian** (24/10: la fa lui, non Giuseppe)
-  - [ ] *Dopo il 9e*: riscrittura dei punti delicati di `CLAUDE.md` che citano il codice vecchio; i commenti del frontend e dei CSS che citano file tolti (`FriendsPanel.js`, `js/components/…`) e `csrfToken` di `SessionContext.tsx` non usato — Christian
+    - [x] prova a mano su telefono e computer (accesso, home, coda, CPU, inviti, tavolo, chat, impostazioni, "Esci", pagina "non trovata", più le novità del 24/10: carta-modal, R4, CPU, script) — **Christian** — *24/10, tutto bene*
+  - [x] *Dopo il 9e*: i commenti del frontend e dei CSS che citano file tolti e `csrfToken` di `SessionContext.tsx` non usato — Christian — *24/10 (commit `5fc1678`)*; poi via `load_user`, la regola `card--hover-kept` e i file vecchi nei commenti dei test — *24/10 (commit `98f5764`)*
+  - [ ] *Dopo il 9e*: riscrittura dei punti delicati di `CLAUDE.md` che citano il codice vecchio, e degli altri documenti ("Stack", "Pagine", "Dipendenze" di `CLAUDE.md`, `docs/prototipo/LEGGIMI.md`, `README.md`) — chi è di turno sui documenti
+  - [x] *Correzione* (Giuseppe, trovata nella sua prova a mano): carta-modal della Partita Veloce, "Gioca" sulla cornice a certe misure; spazi più stretti sotto i 760 px di carta, soglie in rem — *24/10 (commit `b729ebe`), approvata da Christian*
 
 ### Commenti e niente zucchero nel Python (`regole-codice.md`, dal 24/10/2026)
 
@@ -259,9 +261,10 @@ Proposto da Giuseppe il 24/10; divisione confermata da Christian il 24/10: ognun
 - [x] **2b** — `app/realtime/room.py` — Giuseppe — *24/10 (commit `400116e`)*
 - [x] **2c** — `app/realtime/matchmaking.py` — Giuseppe — *24/10 (commit `088fcd9`)*
 - [x] **2d** — `app/sockets/` (7 file) — Giuseppe — *24/10 (commit `620c9a7`)*
-- [ ] **3** — `app/services/`, `app/repositories/`, `app/models/` — Giuseppe, in due:
+- [x] **3** — `app/services/`, `app/repositories/`, `app/models/` — Giuseppe, in due:
   - [x] **3a** — rating e partite (`glicko2.py`, `rating_service.py`, `match_service.py`, `stats_service.py`, `rating_repo.py`, `match_repo.py`, `stats_repo.py`, `models/match.py`, `models/rating.py`, gli `__init__.py`) — *24/10 (commit `0695aab`)*
-  - [ ] **3b** — account, amici e chat (`auth_service`, `friend_service`, `chat_service`, `avatars`, `user_repo`, `friend_repo`, `chat_repo`, `models/user.py`, `friendship.py`, `chat_message.py`)
-- [ ] **Sito** — `app/blueprints/` che mancano (`auth/forms.py`, `friends/routes.py`, `stats/routes.py`, gli `__init__.py`); `app/__init__.py`, `app/errors.py`, `app/extensions.py`, `app/checks.py`, `app/logging_config.py` — Christian
-- [ ] **4** — `config.py`, `run.py`, `scripts/` (`backup.py`, `migrate.py`, `ripristina.py`) — Christian
-- [ ] **5** — `app/game/engine/cpu.py`, per ultimo — Giuseppe
+  - [x] **3b** — account, amici e chat (`auth_service`, `friend_service`, `chat_service`, `avatars`, `user_repo`, `friend_repo`, `chat_repo`, `models/user.py`, `friendship.py`, `chat_message.py`) — *24/10 (commit `56b85b7`)*
+- [x] **Sito** — `app/blueprints/` che mancano (`auth/forms.py`, `friends/routes.py`, `stats/routes.py`, gli `__init__.py`); `app/__init__.py`, `app/errors.py`, `app/extensions.py`, `app/checks.py`, `app/logging_config.py` — Christian — *24/10 (commit `8b686e0`); in più le rotte fatte con la migrazione (`auth/api.py`, `auth/routes.py`, `profile/`, `main/`, `game/routes.py`), commit `b9d16f7`*
+- [x] **4** — `config.py`, `run.py`, `scripts/` (`backup.py`, `migrate.py`, `ripristina.py`) — Christian — *24/10 (commit `6ccb9d9`)*
+- [x] **5** — `app/game/engine/cpu.py`, per ultimo — Giuseppe — *24/10 (commit `af9a16a`; stesse mosse di prima, controllate con un'impronta a semi fissi)*
+- Resta da proporre: `friend_repo.get_user` non lo chiama nessuno (Giuseppe)
