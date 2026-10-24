@@ -253,7 +253,7 @@ I comandi qui sotto sono per **PowerShell**, lanciati dalla cartella del progett
    copy .env.example .env
    python -c "import secrets; print(secrets.token_hex(32))"
    ```
-   Apri `.env` con un editor di testo e incolla dopo `SECRET_KEY=` la riga stampata dal secondo comando. Gli altri valori vanno bene così; la password del database arriva al passo 7. Con `HOST=127.0.0.1` il sito si apre solo da questo PC: per aprirlo da altri dispositivi (`HOST=0.0.0.0`) usa `APP_ENV=demo`, mai `development`, che accende il debugger di Werkzeug (dalla rete permetterebbe di eseguire comandi sul PC, protetto solo da un PIN). Il file `.env` contiene segreti: non va mai su git (è già in `.gitignore`), e conviene tenerne una copia fuori dal progetto.
+   Apri `.env` con un editor di testo e incolla dopo `SECRET_KEY=` la riga stampata dal secondo comando. Gli altri valori vanno bene così; la password del database arriva al passo 7. Con `HOST=127.0.0.1` il sito si apre solo da questo PC: per aprirlo da altri dispositivi (`HOST=0.0.0.0`) usa `APP_ENV=production` con `SESSION_COOKIE_SECURE=false` (senza https il browser non manderebbe il cookie e il login non funzionerebbe), mai `development`, che accende il debugger di Werkzeug (dalla rete permetterebbe di eseguire comandi sul PC, protetto solo da un PIN). Il file `.env` contiene segreti: non va mai su git (è già in `.gitignore`), e conviene tenerne una copia fuori dal progetto.
 7. **Prepara il database** (una volta sola). Il comando chiede la password di `root`:
    ```
    & "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p --table -e "source scripts/setup_db.sql"

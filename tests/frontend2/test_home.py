@@ -77,8 +77,8 @@ def test_rientro_finto_solo_in_sviluppo_e_nei_test(app, server, monkeypatch):
     # /prova-home non è una rotta (un indirizzo senza rotta dà la SPA, dove React dice
     # "Pagina non trovata")
     assert "/prova-home" not in {rule.rule for rule in app.url_map.iter_rules()}
-    # Nella demo e in produzione la home c'è, ma senza ?demo=
-    monkeypatch.setitem(app.config, "ENV_NAME", "demo")
+    # In produzione la home c'è, ma senza ?demo=
+    monkeypatch.setitem(app.config, "ENV_NAME", "production")
     assert client.get(PAGE).status_code == 200
     assert client.get(f"{PAGE}?demo=rientro").status_code == 404
 

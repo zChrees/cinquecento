@@ -19,6 +19,7 @@ arriva da config.py e dal file .env.
 """
 
 from flask import Flask
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from app.checks import check_python
 from app.errors import register_error_handlers
@@ -29,7 +30,7 @@ from config import load_config
 
 
 def create_app(config_name=None):
-    """Crea l'applicazione con la configurazione `config_name` (development, testing, demo).
+    """Crea l'applicazione con la configurazione `config_name` (development, testing, production).
 
     In parole semplici:
         app = create_app()            con la configurazione di APP_ENV (o development)
@@ -37,7 +38,7 @@ def create_app(config_name=None):
         Prima controlla la versione di Python (si ferma con StartupCheckError se è
         sbagliata), poi collega all'applicazione gli oggetti di extensions.py e
         registra pagine di errore, blueprint, eventi del tempo reale e intestazioni
-        di sicurezza.
+        di sicurezza. Con un proxy davanti (TRUSTED_PROXIES più di 0) mette ProxyFix.
         Attenzione (punto delicato P24): mai due create_app() nello stesso processo
         con il tempo reale acceso, perché socketio è un oggetto unico e si ricollega
         all'ultima applicazione creata.
@@ -57,6 +58,17 @@ def create_app(config_name=None):
     login_manager.init_app(app)
     csrf.init_app(app)
     socketio.init_app(app)
+
+    # ProxyFix (O1): dietro un proxy (Caddy) chi si collega parla con il proxy, e il proxy
+    # con Flask; il proxy scrive nelle intestazioni X-Forwarded-For, -Proto e -Host
+    # l'indirizzo vero, se era https e il nome del sito, e ProxyFix li dà a Flask
+    # (request.remote_addr, request.scheme). Si fida solo degli ultimi TRUSTED_PROXIES
+    # passaggi: senza proxy (0) non si mette, altrimenti chiunque potrebbe scriverle.
+    # Va messo dopo socketio.init_app, che "avvolge" anche lui wsgi_app: così ProxyFix
+    # è il primo a ricevere ogni richiesta, anche quelle del tempo reale
+    proxies = app.config["TRUSTED_PROXIES"]
+    if proxies > 0:
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=proxies, x_proto=proxies, x_host=proxies)
 
     register_error_handlers(app)
     _register_blueprints(app)

@@ -100,7 +100,7 @@ def test_tavolo_e_la_pagina_della_spa(client, fake_spa, path):
 def test_tavolo_ovunque_ma_viste_finte_solo_in_sviluppo_e_test(fake_spa):
     # Il tavolo c'è in tutti gli ambienti
     app = _app()
-    app.config["ENV_NAME"] = "demo"
+    app.config["ENV_NAME"] = "production"
     assert app.test_client().get("/game/prova").status_code == 200
     assert app.test_client().get("/game/prova?ui=jinja").status_code == 200
     assert app.test_client().get("/game/prova?demo=1v1").status_code == 404

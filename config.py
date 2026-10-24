@@ -1,4 +1,4 @@
-"""Configurazioni dell'applicazione: sviluppo, test e demo.
+"""Configurazioni dell'applicazione: sviluppo, test e produzione (il sito online).
 
 I valori che cambiano da un PC all'altro (segreti, database, indirizzo) arrivano
 dal file .env (modello in .env.example); tutto il resto è qui.
@@ -15,12 +15,14 @@ Cosa contiene:
     BaseConfig               i valori uguali per tutti, per esempio TURN_SECONDS = 15
     DevelopmentConfig        sviluppo (DEBUG acceso)
     TestingConfig            test (database cinquecento_test, porta 5099)
-    DemoConfig               demo
+    ProductionConfig         il sito online (DEBUG spento, cookie di sessione solo in https)
     CONFIGS                  nome → classe, per esempio "testing" → TestingConfig
     load_config("testing")   la configurazione scelta, completata con il .env
     _value(env, "HOST", "127.0.0.1")   una variabile del .env, o il valore predefinito
     _required(env, "SECRET_KEY")       una variabile del .env che deve esserci
     _port(env, "PORT", 5000)           una porta del .env, controllata
+    _flag(env, "SESSION_COOKIE_SECURE", True)   un sì o no del .env (true o false)
+    _proxies(env)                      quanti proxy ci sono davanti al sito (TRUSTED_PROXIES)
 
 DA DOVE ARRIVANO I DATI: dal file .env (letto qui sotto con load_dotenv) e dalle
 variabili d'ambiente del sistema. load_config la chiamano create_app()
@@ -43,6 +45,8 @@ load_dotenv(BASE_DIR / ".env")
 
 SECRET_KEY_MIN_LENGTH = 32
 LOG_LEVELS = ("DEBUG", "INFO", "WARNING", "ERROR")
+FLAGS = {"true": True, "false": False}  # i valori ammessi per un sì o no del .env
+MAX_PROXIES = 5  # TRUSTED_PROXIES: un numero da 0 a 5 (con Caddy davanti è 1)
 
 
 # Una classe di errore nuova che "eredita" da Exception: è un'eccezione con un nome
@@ -57,7 +61,7 @@ class ConfigError(Exception):
 
 
 class BaseConfig:
-    """I valori della configurazione uguali in sviluppo, test e demo.
+    """I valori della configurazione uguali in sviluppo, test e produzione.
 
     In parole semplici:
         BaseConfig.TURN_SECONDS   →  15
@@ -80,9 +84,16 @@ class BaseConfig:
     # fuori da un terminale solo con questa opzione.
     ALLOW_UNSAFE_WERKZEUG = True
 
-    # Cookie di sessione
+    # Cookie di sessione. SESSION_COOKIE_SECURE (R8, O1): con True il browser manda il
+    # cookie solo in https; lo può cambiare il .env (load_config), tranne nei test
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
+    SESSION_COOKIE_SECURE = False
+
+    # Proxy davanti al sito (O1): quanti ce ne sono (con Caddy 1). Con più di 0
+    # create_app mette ProxyFix, così Flask vede l'indirizzo vero di chi si collega e
+    # se è arrivato in https; lo dice il .env (TRUSTED_PROXIES)
+    TRUSTED_PROXIES = 0
 
     # Database: controlla la connessione prima di usarla e la rinnova prima che
     # MySQL la chiuda per inattività. ClassVar[dict] dice (a ruff e all'editor) che
@@ -158,37 +169,41 @@ class TestingConfig(BaseConfig):
     TESTING = True
 
 
-class DemoConfig(BaseConfig):
-    """La demo: come BaseConfig. Non la usa più nessuno; la sostituisce production (O1)."""
+class ProductionConfig(BaseConfig):
+    """Il sito online (O1): DEBUG spento e, se il .env non dice altro, il cookie di
+    sessione solo in https (SESSION_COOKIE_SECURE)."""
 
-    ENV_NAME = "demo"
+    ENV_NAME = "production"
+    SESSION_COOKIE_SECURE = True
 
 
 # CONFIGS: il nome (quello di APP_ENV) → la classe, per esempio "testing" → TestingConfig.
 # _config_class ha il trattino basso davanti: è solo la variabile del ciclo, non un nome
 # da importare.
 CONFIGS = {}
-for _config_class in (DevelopmentConfig, TestingConfig, DemoConfig):
+for _config_class in (DevelopmentConfig, TestingConfig, ProductionConfig):
     CONFIGS[_config_class.ENV_NAME] = _config_class
 
 
 def load_config(name=None, environ=None):
     """Restituisce la configurazione scelta, completata con i valori del .env.
 
-    `name` è development, testing o demo (se manca: APP_ENV, poi development).
+    `name` è development, testing o production (se manca: APP_ENV, poi development).
     Un valore mancante o non valido ferma l'avvio con ConfigError.
 
     In parole semplici:
         load_config(name, environ)
-        name:    facoltativo, "development", "testing" o "demo"; se manca (o è vuoto)
+        name:    facoltativo, "development", "testing" o "production"; se manca (o è vuoto)
                  si usa APP_ENV, e se manca anche quello "development".
         environ: facoltativo, le variabili da leggere al posto di quelle del sistema
-                 (un dizionario, per esempio {"APP_ENV": "demo", "SECRET_KEY": ...});
+                 (un dizionario, per esempio {"APP_ENV": "production", "SECRET_KEY": ...});
                  lo passano i test. Se manca: os.environ, con dentro anche il .env.
         Crea un oggetto della classe scelta e ci aggiunge segreto, indirizzo e
-        porta, l'indirizzo del database (SQLALCHEMY_DATABASE_URI) e il livello dei
-        log. Nei test segreto, indirizzo, porta e database sono quelli dei test, e
-        un database che non finisce con "_test" ferma tutto.
+        porta, il cookie solo in https (SESSION_COOKIE_SECURE), i proxy davanti al
+        sito (TRUSTED_PROXIES), l'indirizzo del database (SQLALCHEMY_DATABASE_URI) e il
+        livello dei log. Nei test segreto, indirizzo, porta e database sono quelli dei
+        test, il cookie va anche in http, e un database che non finisce con "_test"
+        ferma tutto.
 
         Restituisce: l'oggetto della configurazione, che create_app passa a Flask.
     """
@@ -225,7 +240,11 @@ def load_config(name=None, environ=None):
             )
         config.HOST = _value(env, "HOST", "127.0.0.1")
         config.PORT = _port(env, "PORT", 5000)
+        # Se il .env non lo dice, quello della classe: True in produzione, False in sviluppo
+        config.SESSION_COOKIE_SECURE = _flag(env, "SESSION_COOKIE_SECURE", config.SESSION_COOKIE_SECURE)
         db_name = _required(env, "DB_NAME")
+
+    config.TRUSTED_PROXIES = _proxies(env)
 
     config.DB_NAME = db_name
     # URL.create: l'indirizzo del database nella forma di SQLAlchemy
@@ -289,4 +308,41 @@ def _port(env, key, default):
         return default
     if not raw.isdigit() or int(raw) < 1 or int(raw) > 65535:
         raise ConfigError(f'{key}="{raw}" non è una porta valida (un numero da 1 a 65535).')
+    return int(raw)
+
+
+def _flag(env, key, default):
+    """Un sì o no del .env: "true" o "false" (maiuscole o minuscole), oppure `default` se manca.
+
+    In parole semplici:
+        _flag(env, key, default)
+        Per esempio _flag(env, "SESSION_COOKIE_SECURE", True) è False con
+        SESSION_COOKIE_SECURE=false, True se manca; con "si" o "1" lancia ConfigError
+        (un valore non valido si rifiuta, non si indovina). La usa load_config.
+    """
+    raw = env.get(key)
+    if not raw:
+        return default
+    # FLAGS.get: True o False per "true" e "false", None per tutto il resto
+    value = FLAGS.get(raw.strip().lower())
+    if value is None:
+        raise ConfigError(f'{key}="{raw}" non valido: usa true oppure false.')
+    return value
+
+
+def _proxies(env):
+    """TRUSTED_PROXIES del .env: quanti proxy ci sono davanti al sito, da 0 a MAX_PROXIES.
+
+    In parole semplici:
+        _proxies(env)
+        Per esempio 1 con TRUSTED_PROXIES=1 (Caddy davanti al sito), 0 se manca; con
+        TRUSTED_PROXIES=abc o 9 lancia ConfigError. Più del vero sarebbe un rischio:
+        chi si collega potrebbe dire di avere un altro indirizzo. La usa load_config.
+    """
+    raw = env.get("TRUSTED_PROXIES")
+    if not raw:
+        return 0
+    if not raw.isdigit() or int(raw) > MAX_PROXIES:
+        raise ConfigError(f'TRUSTED_PROXIES="{raw}" non valido: un numero da 0 a {MAX_PROXIES} '
+                          "(quanti proxy ci sono davanti al sito; con Caddy 1).")
     return int(raw)

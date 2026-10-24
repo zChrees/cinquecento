@@ -1,10 +1,14 @@
 """P4: l'applicazione si avvia, risponde con la pagina "ok" e rifiuta configurazioni e versioni sbagliate.
 
+O1: la configurazione production (DEBUG spento, cookie di sessione solo in https se il
+.env non dice altro, R8) e ProxyFix con TRUSTED_PROXIES.
+
 Non serve MySQL: create_app() non si collega al database (il controllo di MySQL lo fa run.py).
 Comando (finché P6 non aggiunge il runner): python -m pytest tests/api/test_avvio.py
 """
 
 import pytest
+from flask import request
 
 from app import create_app
 from app.checks import StartupCheckError, check_mysql, check_mysql_version, check_python
@@ -130,3 +134,82 @@ def test_controllo_mysql_si_collega_senza_database(monkeypatch):
     # Il resto dell'indirizzo resta quello del .env.
     assert (received[0].username, received[0].password, received[0].host) == ("u", "p@ss", url.host)
     assert (received[0].port, received[0].query) == (url.port, url.query)
+
+
+# --- O1: produzione, cookie solo in https, proxy davanti ---------------------------------
+
+PRODUCTION_ENV = {"SECRET_KEY": SECRET, "DB_NAME": "cinquecento"}
+
+
+def test_produzione_senza_debug_e_con_il_cookie_solo_in_https():
+    config = load_config("production", environ=PRODUCTION_ENV)
+    assert (config.ENV_NAME, config.DEBUG, config.TESTING) == ("production", False, False)
+    assert config.SESSION_COOKIE_SECURE is True
+    assert config.TRUSTED_PROXIES == 0
+
+
+def test_demo_non_esiste_piu():
+    with pytest.raises(ConfigError, match="APP_ENV"):
+        load_config(environ={**PRODUCTION_ENV, "APP_ENV": "demo"})
+
+
+@pytest.mark.parametrize(("name", "value", "expected"), [
+    ("production", "false", False),
+    ("production", "FALSE", False),
+    ("production", "", True),
+    ("development", None, False),
+    ("development", "true", True),
+])
+def test_cookie_solo_in_https_dal_env(name, value, expected):
+    env = dict(PRODUCTION_ENV)
+    if value is not None:
+        env["SESSION_COOKIE_SECURE"] = value
+    assert load_config(name, environ=env).SESSION_COOKIE_SECURE is expected
+
+
+@pytest.mark.parametrize("value", ["si", "1", "yes", "vero"])
+def test_cookie_solo_in_https_non_valido(value):
+    with pytest.raises(ConfigError, match="SESSION_COOKIE_SECURE"):
+        load_config("production", environ={**PRODUCTION_ENV, "SESSION_COOKIE_SECURE": value})
+
+
+def test_nei_test_il_cookie_va_anche_in_http():
+    config = load_config("testing", environ={"SESSION_COOKIE_SECURE": "true"})
+    assert config.SESSION_COOKIE_SECURE is False
+
+
+@pytest.mark.parametrize(("value", "expected"), [("", 0), ("0", 0), ("1", 1), ("5", 5)])
+def test_proxy_davanti_dal_env(value, expected):
+    config = load_config("production", environ={**PRODUCTION_ENV, "TRUSTED_PROXIES": value})
+    assert config.TRUSTED_PROXIES == expected
+
+
+@pytest.mark.parametrize("value", ["abc", "-1", "6", "1.5"])
+def test_proxy_davanti_non_valido(value):
+    with pytest.raises(ConfigError, match="TRUSTED_PROXIES"):
+        load_config("production", environ={**PRODUCTION_ENV, "TRUSTED_PROXIES": value})
+
+
+def _who_is_calling(app):
+    """Una rotta di prova che risponde con quello che Flask vede: schema, indirizzo e nome."""
+
+    def who():
+        return f"{request.scheme} {request.remote_addr} {request.host}"
+
+    app.add_url_rule("/prova-proxy", "prova_proxy", who)
+    forwarded = {"X-Forwarded-For": "203.0.113.5", "X-Forwarded-Proto": "https",
+                 "X-Forwarded-Host": "cinquecento.esempio.it"}
+    return app.test_client().get("/prova-proxy", headers=forwarded).get_data(as_text=True)
+
+
+def test_con_un_proxy_flask_vede_chi_si_collega(monkeypatch):
+    monkeypatch.setenv("TRUSTED_PROXIES", "1")
+    app = create_app("testing")
+    assert _who_is_calling(app) == "https 203.0.113.5 cinquecento.esempio.it"
+
+
+def test_senza_proxy_le_intestazioni_si_ignorano(monkeypatch):
+    # Senza un proxy davanti, X-Forwarded-... le può scrivere chiunque: non contano
+    monkeypatch.delenv("TRUSTED_PROXIES", raising=False)
+    app = create_app("testing")
+    assert _who_is_calling(app) == "http 127.0.0.1 localhost"

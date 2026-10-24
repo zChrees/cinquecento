@@ -22,6 +22,22 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### O1 — Configurazione production, cookie solo in https (R8), ProxyFix (punto di Christian) (24/10/2026)
+
+- **Branch**: feature/o1-config-production (da `dev` a `0120642`)
+- **File**: modificati `config.py`, `app/__init__.py`, `.env.example`, `tests/api/test_avvio.py` (elenco di O1 in `docs/MESSA-ONLINE.md`); in più `tests/api/test_pagina_tavolo.py` e `tests/frontend2/test_home.py` (simulavano il sito online con `ENV_NAME = "demo"`, ora `"production"`); questo file. Punto di Christian, fatto da Giuseppe con il permesso del 20/10 (serve a O2)
+- **Cosa**:
+  - **`APP_ENV=production`** (`ProductionConfig`) al posto di `demo`: `DemoConfig` tolta, `APP_ENV=demo` ora ferma l'avvio con "non valido". DEBUG spento (come prima `demo`); `ALLOW_UNSAFE_WERKZEUG` resta finché O2 non porta gunicorn;
+  - **`SESSION_COOKIE_SECURE`** (R8) dal `.env`: `true` o `false` (maiuscole o minuscole), altro → `ConfigError`; se manca, `true` in production e `false` in development; nei test sempre `false` (il server dei test è in http);
+  - **`TRUSTED_PROXIES`** dal `.env`: quanti proxy ci sono davanti al sito, da 0 a 5 (con Caddy 1); se manca 0. Con più di 0 `create_app` mette `ProxyFix(x_for, x_proto, x_host)` **dopo** `socketio.init_app`, così vale anche per le richieste del tempo reale; con 0 non si mette, perché senza proxy le intestazioni `X-Forwarded-...` le può scrivere chiunque;
+  - `.env.example`: `production` al posto di `demo` e le due variabili nuove, spiegate.
+- **Test** (22 nuovi in `test_avvio.py`): production senza DEBUG e con il cookie solo in https; `demo` rifiutato; `SESSION_COOKIE_SECURE` letto dal `.env` (5 casi) e rifiutato se non valido (4); nei test sempre in http; `TRUSTED_PROXIES` letto (4) e rifiutato (4); con `TRUSTED_PROXIES=1` una rotta di prova vede `https 203.0.113.5 cinquecento.esempio.it` dalle intestazioni `X-Forwarded-...`, senza le ignora
+- **Controlli**: con il runner `runner` **13 PASS** e `api` **329 PASS** (307 + 22); con pytest `test_home.py` di `frontend2`; `ruff` pulito [T]. **Non verificato** [N]: il websocket dietro un proxy vero in https (engineio confronta l'origine con `X-Forwarded-Proto` e `-Host`): si prova con O2 o sul server (S5)
+- **Decisioni prese** (Claude, nel lotto, da confermare): i nomi `SESSION_COOKIE_SECURE` e `TRUSTED_PROXIES`; i valori predefiniti (cookie Secure sì in production, proxy 0); `demo` tolto del tutto invece di tenerlo come sinonimo
+- **Domande nuove**: nessuna
+- **Punti delicati**: `ProxyFix` va messo **dopo** `socketio.init_app` (che avvolge anche lui `wsgi_app`); `TRUSTED_PROXIES` mai più alto dei proxy veri; con `APP_ENV=production` in rete locale senza https serve `SESSION_COOKIE_SECURE=false`, altrimenti il login non funziona
+- **Note per gli altri**: **Christian**: ho cambiato anche una riga del tuo `README.md` (fuori dall'elenco di O1, con l'ok di Giuseppe): per `HOST=0.0.0.0` diceva `APP_ENV=demo`, ora `APP_ENV=production` con `SESSION_COOKIE_SECURE=false`. Per S5: nel `.env` del server `APP_ENV=production` e `TRUSTED_PROXIES=1`. **Chi è di turno**: O1 si spunta; R8 fatto
+
 ### C4 (parte di Giuseppe) — Test di motore e tempo reale: commenti senza la storia (24/10/2026)
 
 - **Branch**: feature/c4-test-motore-tempo-reale (da `dev` a `ec807e7`)
