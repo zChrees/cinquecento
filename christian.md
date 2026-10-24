@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### C5 (resto) — Archivio, via la demo su Windows, commenti di `frontend/index.html` (24/10/2026)
+
+- **Branch**: docs/c5-archivio (da `dev` a `122781d`)
+- **File**: spostati `docs/MIGRAZIONE-FRONTEND.md` → `docs/archivio/MIGRAZIONE-FRONTEND-2026-10.md` e `docs/DEMO.md` → `docs/archivio/DEMO-2026-10.md` (nomi come `SCALETTA-2026-09.md`, contenuto uguale); cancellati `scripts/pianifica_backup.ps1` e `tests/db/test_demo.py`; commenti di `frontend/index.html`, `frontend/tsconfig.json`, `frontend/vite.config.ts`, `app/templates/base.html`, `app/templates/errors/404.html`, `scripts/backup.py` (rimando allo script tolto); rimandi in `docs/MESSA-ONLINE.md` e `regole-codice.md`; questo file. **Fuori dall'elenco di C5**, con il tuo ok del 24/10 a "correggere il difetto da C1": `tsconfig.json`, `vite.config.ts`, i due template e `backup.py`
+- **Cosa c'è**: il difetto di C1, cioè il commento in cima a `frontend/index.html` che raccontava i passi della migrazione (ora dice quali CSS carica e perché ognuno ha solo classi sue), più i rimandi a `docs/MIGRAZIONE-FRONTEND.md` in `tsconfig.json` e `vite.config.ts` e la storia nei commenti dei template di errore (non erano né in C1 né in C2). Restano le docstring di `tests/frontend/test_spa.py` e `test_tipi.py` che citano il vecchio percorso: sono di C4
+- **Controlli**: suite `db` con il runner **84 PASS** (89 meno i 5 di `test_demo.py`); con pytest `test_base.py`, `test_icone.py`, `test_logo.py`, `test_spa.py` (compila la SPA), `test_gira_telefono.py`, `test_errori.py` **105 PASS**; `ruff check .` e `npx tsc --noEmit` puliti [T]
+- **Decisioni prese**: nessuna nuova (C5 del piano)
+- **Domande nuove**: nessuna
+- **Punti delicati**: il punto delicato "Demo (P38)" di `CLAUDE.md` (script solo ASCII e il suo test) non vale più
+- **Cosa devono fare gli altri**: **Giuseppe**: niente (dopo il pull `npm run build` non serve: cambiano solo commenti, ma non fa male)
+
 ### C5 (in parte) — README e LEGGIMI sul frontend React (24/10/2026)
 
 - **Branch**: docs/c5-readme-leggimi (da `dev` a `c80939a`)

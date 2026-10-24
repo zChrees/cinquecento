@@ -6,7 +6,7 @@ Ogni punto si fa come sempre: un branch da `dev` per lotto, solo i file elencati
 
 ## 1. Da dove partiamo
 
-- Il sito è un **solo processo** Python (Flask + Flask-SocketIO in modalità `threading`) con **MySQL 8.0** accanto. Le partite in corso stanno **in memoria**: un riavvio del server le perde (sezione 8 di `docs/MIGRAZIONE-FRONTEND.md`).
+- Il sito è un **solo processo** Python (Flask + Flask-SocketIO in modalità `threading`) con **MySQL 8.0** accanto. Le partite in corso stanno **in memoria**: un riavvio del server le perde (sezione 8 di `docs/archivio/MIGRAZIONE-FRONTEND-2026-10.md`).
 - Oggi gira il **server di sviluppo** di Werkzeug (`ALLOW_UNSAFE_WERKZEUG`, R12), senza HTTPS, con il cookie di sessione non `Secure` (R8).
 - Il frontend è una SPA React compilata da Vite in `app/static/dist/`, che non è nel repository (D54): sul server va compilata con Node 24.
 - `main`, il branch di produzione, è ancora "Cinquecento v1.0.3" con il JavaScript vecchio.
@@ -94,5 +94,5 @@ Niente cambia per chi gioca: si toglie solo quello che non serve più e si riscr
 - **D55 — nome di dominio** (in `DA-DECIDERE.md`): quale comprare. Serve prima di S5.
 - **D56 — servizio per mandare le email** (solo per la fase 4).
 - La fase 0 si fa prima delle altre (Christian, 24/10); in C4 i test si rinominano.
-- Questo file non va in `main` (come `docs/MIGRAZIONE-FRONTEND.md`).
+- Questo file non va in `main` (come `docs/archivio/`).
 - I codici P, D e R nei commenti **restano**; il `README.md` spiega cosa sono (C5; scelta di Christian del 24/10, opzione c).

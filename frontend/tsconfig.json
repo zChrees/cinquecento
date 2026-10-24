@@ -1,4 +1,4 @@
-// Impostazioni di TypeScript per il frontend (docs/MIGRAZIONE-FRONTEND.md, passo 1).
+// Impostazioni di TypeScript per il frontend.
 //
 // In parole semplici: dice a tsc (il controllore dei tipi) quali file guardare e
 // quanto essere severo. tsc qui NON produce file: controlla soltanto

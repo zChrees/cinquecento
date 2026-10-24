@@ -1,5 +1,5 @@
 /**
- * Configurazione di Vite (docs/MIGRAZIONE-FRONTEND.md, sezione 6).
+ * Configurazione di Vite.
  *
  * Vite fa due lavori:
  *

@@ -1,6 +1,6 @@
 <!doctype html>
 <!--
-  L'unica pagina HTML della SPA (docs/MIGRAZIONE-FRONTEND.md).
+  L'unica pagina HTML della SPA.
   React disegna tutto dentro <div id="root"> (src/main.tsx).
   In sviluppo la serve Vite (npm run dev); dopo npm run build la copia tradotta
   sta in app/static/dist/index.html e la serve Flask (app/blueprints/spa/).
@@ -9,20 +9,16 @@
   La parte <head> è quella di tutte le pagine del sito (P19, P42, D40): icona della
   scheda, font del testo da Google Fonts (le sole risorse esterne, elencate in
   docs/prototipo/LEGGIMI.md e permesse dalla CSP), font delle icone del progetto e i
-  CSS, presi da /static/ così come sono (Vite non li tocca). Fino al lotto 9b-2 era una
-  copia di app/templates/base.html, che ora serve solo alle pagine di errore (con
-  icona, font e avviso "Gira il telefono" uguali a questi: se cambiano qui, vanno
-  cambiati anche lì).
-  I CSS delle pagine (css/pages/) sono quelli delle pagine già nella SPA: accesso e
-  registrazione (auth.css, che dal passo 6 tocca .page--form solo se contiene
-  .auth), impostazioni (profile.css, solo classi sue) e home (home.css, dal
-  passo 7: solo classi sue, .home e le sue parti, con lo sfondo di
-  card-background.css, la carta-modal di mode-modal.css e la coda di
-  queue-overlay.css, dal 7b).
-  Dal passo 8 anche i CSS del tavolo (game/table.html): carte, mano, tavolo, presa,
-  punteggio, anello del tempo, riepilogo, frasi e game.css. Hanno solo classi loro
-  (.card, .hand, .table__..., .seat, ...); le regole generiche (button.card, img, *)
-  valgono solo dentro .page--game, che c'è solo al tavolo.
+  CSS, presi da /static/ così come sono (Vite non li tocca). Le pagine di errore
+  (app/templates/base.html) hanno icona, font e avviso "Gira il telefono" uguali a
+  questi: se cambiano qui, vanno cambiati anche lì.
+  Si caricano i CSS di tutte le pagine, quindi ognuno ha solo classi sue: accesso e
+  registrazione (auth.css, che tocca .page--form solo se contiene .auth),
+  impostazioni (profile.css), home (home.css, con lo sfondo di card-background.css,
+  la carta-modal di mode-modal.css e la coda di queue-overlay.css) e tavolo (carte,
+  mano, tavolo, presa, punteggio, anello del tempo, riepilogo, frasi e game.css:
+  .card, .hand, .table__..., .seat, ...; le regole generiche, come button.card, img
+  e *, valgono solo dentro .page--game, che c'è solo al tavolo).
 -->
 <html lang="it">
 <head>
@@ -71,8 +67,8 @@
 <body>
   <div id="root"></div>
 
-  <!-- P116: avviso "Gira il telefono in verticale" (come partials/rotate_notice.html):
-       quando si vede lo decide css/components/rotate-notice.css -->
+  <!-- P116: avviso "Gira il telefono in verticale" (lo stesso di
+       app/templates/base.html): quando si vede lo decide css/components/rotate-notice.css -->
   <div class="rotate-notice" data-rotate-notice>
     <span class="icon rotate-notice__icon" aria-hidden="true">screen_rotation</span>
     <p class="rotate-notice__title">Gira il telefono in verticale</p>

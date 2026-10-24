@@ -1,9 +1,9 @@
 <!doctype html>
 {#
-  Struttura delle pagine di errore (errors/404.html e errors/500.html, P7). Dal lotto
-  9b-2 della migrazione tutte le altre pagine sono della SPA, con la loro <head> in
-  frontend/index.html: qui restano solo le parti che servono a una pagina d'errore,
-  senza navbar, script né messaggi (scelta 6 del passo 9), ma con l'avviso "Gira il
+  Struttura delle pagine di errore (errors/404.html e errors/500.html, P7). Tutte le
+  altre pagine sono della SPA, con la loro <head> in frontend/index.html: qui ci
+  sono solo le parti che servono a una pagina d'errore, senza navbar, script né
+  messaggi, ma con l'avviso "Gira il
   telefono" di P116, che vale su ogni pagina. Una pagina la estende e riempie:
   - title: titolo della scheda (predefinito "Cinquecento");
   - styles: i CSS della pagina (<link rel="stylesheet">);
@@ -44,8 +44,8 @@
     {% block content %}{% endblock %}
   </main>
 
-  {# P116: avviso "Gira il telefono in verticale", lo stesso di frontend/index.html (fino al
-     lotto 9b-2 in partials/rotate_notice.html): quando si vede lo decide rotate-notice.css #}
+  {# P116: avviso "Gira il telefono in verticale", lo stesso di frontend/index.html:
+     quando si vede lo decide rotate-notice.css #}
   <div class="rotate-notice" data-rotate-notice>
     <span class="icon rotate-notice__icon" aria-hidden="true">screen_rotation</span>
     <p class="rotate-notice__title">Gira il telefono in verticale</p>

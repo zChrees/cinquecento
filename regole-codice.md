@@ -142,7 +142,7 @@ Restano, spiegati con un commento (lotti 1a–2d di Giuseppe, 24/10/2026): `*arg
 
 ## 6. React e TypeScript
 
-Il frontend nuovo (`frontend/`, piano in `docs/MIGRAZIONE-FRONTEND.md`) si scrive in **"stile esplicito"**: React e TypeScript normali, ma senza le forme compatte che li rendono difficili da leggere. Valgono tutte le regole sopra (sezioni 1-5): commenti in italiano, blocco "In parole semplici" sopra ogni componente e ogni funzione, da dove arriva ogni dato.
+Il frontend (`frontend/`; il piano della migrazione è in `docs/archivio/MIGRAZIONE-FRONTEND-2026-10.md`) si scrive in **"stile esplicito"**: React e TypeScript normali, ma senza le forme compatte che li rendono difficili da leggere. Valgono tutte le regole sopra (sezioni 1-5): commenti in italiano, blocco "In parole semplici" sopra ogni componente e ogni funzione, da dove arriva ogni dato.
 
 Esempio di riferimento:
 

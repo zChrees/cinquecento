@@ -28,8 +28,7 @@ Cosa contiene:
 
 DA DOVE ARRIVANO I DATI: l'indirizzo del database, BACKUP_DIR e
 BACKUP_RETENTION_DAYS da load_config (config.py e .env). scripts/ripristina.py usa
-BackupError, check_database_name, find_program, options_file e program_errors; il
-backup pianificato (scripts/pianifica_backup.ps1, P38) lancia questo script.
+BackupError, check_database_name, find_program, options_file e program_errors.
 """
 
 import gzip
