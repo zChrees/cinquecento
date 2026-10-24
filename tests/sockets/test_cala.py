@@ -184,6 +184,7 @@ def test_la_calata_chiude_la_partita_e_si_salva(connect, players, server):
         view = seats[1].wait_version(version + 1)
         assert view["status"] == "finished" and view["result"]["winner_team"] == 0
         assert view["last_hand"]["laid_down"]["seat"] == 0
+        assert room.wait_saved(5)  # O3: il salvataggio gira in un altro thread
         with engine.connect() as conn:
             row = conn.execute(sa.text(
                 "SELECT m.tipo, m.dettagli FROM mosse_partita m JOIN partite p ON p.id = m.partita_id "

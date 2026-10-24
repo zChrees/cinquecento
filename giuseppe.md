@@ -22,6 +22,24 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### O3 — Il salvataggio della partita riprova e non blocca la stanza (R6) (24/10/2026)
+
+- **Branch**: fix/o3-salvataggio-riprova (da `dev` a `c80939a`)
+- **File**: modificati `app/realtime/room.py`, `app/services/match_service.py`, `tests/services/test_match_service.py` (elenco di O3 in `docs/MESSA-ONLINE.md`); in più `tests/sockets/test_cala.py` e `tests/e2e/helpers.py`, che leggevano il database subito dopo la fine della partita; questo file
+- **Il difetto** (R6) [L]: `_save` salvava sotto il lock della stanza, una volta sola: se MySQL non rispondeva, partita, mosse e rating si perdevano (restava solo la riga nel log), e finché MySQL non rispondeva la stanza non rispondeva a nessuno
+- **Correzione**:
+  - `_save` (sotto il lock) prepara solo il `MatchRecord` e fa partire `_save_in_background` in un thread a parte (`socketio.start_background_task`, come gli avvisi di fine partita);
+  - lì `_try_save` prova `save_match` e risponde `"saved"`, `"retry"` o `"failed"`: `"retry"` per gli errori di `match_service.TEMPORARY_ERRORS` (`OperationalError`, `InterfaceError` di SQLAlchemy: MySQL spento o in riavvio, connessione caduta, deadlock); gli altri errori (dati sbagliati) non si riprovano;
+  - con `"retry"` aspetta i secondi di `SAVE_RETRY_SECONDS` = `(2, 5, 15, 30, 60)` (6 tentativi, circa due minuti) e riprova. Ogni tentativo non riuscito fa rollback, quindi niente resta a metà. Se non riesce mai: ERROR "non salvata dopo 6 tentativi";
+  - **gli avvisi di fine partita** (`finish_listeners`: home e amici) partono **dopo il primo tentativo**, riuscito o no: così, quando la home vede "niente rientro", la partita di solito è già salvata e le statistiche la contano. Per la CPU e per le stanze fuori da Flask partono subito, come prima;
+  - `room.wait_saved(timeout)` aspetta la fine del salvataggio (un `threading.Event`, `_save_done`); la usano i test.
+- **Test** (4 nuovi in `test_match_service.py`): MySQL giù al primo tentativo → secondo tentativo, una partita sola nel database; MySQL sempre giù → 3 tentativi (con `SAVE_RETRY_SECONDS` di due numeri), niente nel database, ERROR nel log; errore dei dati → un tentativo solo; con "MySQL" fermo `abandon` torna subito, il lucchetto è libero, la vista dice "finished" e l'avviso di fine partita aspetta il primo tentativo (poi vede la partita salvata). Con il codice di prima falliscono tutti e quattro [T]. I test che leggono il database dopo la fine della partita aspettano `wait_saved` (`play_moves`, abbandoni, `test_la_calata_chiude_la_partita_e_si_salva`); `stats_after` degli e2e richiede le statistiche finché la partita non c'è (al massimo `WAIT`)
+- **Controlli**: con il runner `services` **42 PASS** (38 + 4), `sockets` **339 PASS**, `e2e` **12 PASS**, `table6` **24 PASS**; `ruff` pulito [T]
+- **Decisioni prese** (Claude, nel lotto, da confermare): `SAVE_RETRY_SECONDS` = (2, 5, 15, 30, 60); quali errori si riprovano (`OperationalError`, `InterfaceError`); avvisi di fine partita dopo il primo tentativo
+- **Domande nuove**: nessuna
+- **Punti delicati** (per "Salvataggio (P26)" in `CLAUDE.md`, che oggi dice "sotto il lock della stanza"): (1) il salvataggio **non** è più sotto il lock: lo prepara `_save` sotto il lock (`_match_record` legge la stanza), lo scrive un thread a parte; (2) un test che legge `partite`, `mosse_partita` o il rating dopo la fine di una partita deve prima chiamare `room.wait_saved(...)` (o, da fuori, aspettare `home:status` senza `resume`); (3) **rischio residuo** [D]: se MySQL conferma il commit e la connessione cade prima della risposta, il secondo tentativo scrive la partita una seconda volta. È raro, e per evitarlo servirebbe una chiave unica della partita nel database (migrazione nuova): non fatto; (4) i thread del salvataggio non fermano lo spegnimento del server: una partita che sta ancora riprovando quando il server si spegne si perde. Serve allo spegnimento ordinato (O4)
+- **Note per gli altri**: **Chi è di turno**: R6 si può spuntare in `REVIEW.md` (O3 di `docs/MESSA-ONLINE.md`), con le tre scelte qui sopra in `DECISIONI.md` se il gruppo le conferma
+
 ### C3 — Motore e tempo reale: commenti senza la storia (24/10/2026)
 
 - **Branch**: feature/c3-commenti-senza-storia (da `dev` a `b1d2140`)

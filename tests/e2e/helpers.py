@@ -245,10 +245,18 @@ def outcome(result, team):
 
 
 def stats_after(user, result, team, mode, rated):
-    """Le statistiche di `user` dopo la sua prima partita: una partita, con l'esito giusto."""
-    answer = user.api("GET", "/api/stats/me")
-    assert answer["ok"] is True, answer
-    stats = answer["data"]
+    """Le statistiche di `user` dopo la sua prima partita: una partita, con l'esito giusto.
+
+    Il server salva la partita in un altro thread (O3): se non c'è ancora, si richiede.
+    """
+    deadline = time.monotonic() + WAIT
+    while True:
+        answer = user.api("GET", "/api/stats/me")
+        assert answer["ok"] is True, answer
+        stats = answer["data"]
+        if stats["games"] > 0 or time.monotonic() > deadline:
+            break
+        time.sleep(0.05)
     counts = {"win": 0, "loss": 0, "draw": 0}
     counts[outcome(result, team)] = 1
     assert stats["games"] == 1

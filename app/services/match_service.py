@@ -22,13 +22,17 @@ Cosa contiene:
     result_of(team, winner_team)            il risultato di una squadra, per esempio "vittoria"
     check(record)                           controlla il MatchRecord prima di scrivere
     save_match(record)                      salva la partita, per esempio save_match(record) = 42
+    TEMPORARY_ERRORS                        gli errori per cui riprovare (MySQL non risponde, O3)
 
-DA DOVE ARRIVANO I DATI: _save di room.py chiama save_match con il MatchRecord
-costruito da _match_record, dentro l'applicazione Flask.
+DA DOVE ARRIVANO I DATI: _try_save di room.py chiama save_match con il MatchRecord
+costruito da _match_record, dentro l'applicazione Flask, e con TEMPORARY_ERRORS
+decide se riprovare.
 """
 
 import logging
 from dataclasses import dataclass
+
+from sqlalchemy.exc import InterfaceError, OperationalError
 
 from app.extensions import db
 from app.models.match import END_REASONS, MODES
@@ -39,6 +43,13 @@ log = logging.getLogger(__name__)
 
 MOVE_KINDS = ("gioca_carta", "canta", "mossa_automatica", "abbandono", "cala_carte")
 TEAMS = (0, 1)
+
+# O3 (R6): gli errori di save_match per cui riprovare più tardi può servire. SQLAlchemy li
+# lancia quando la connessione con MySQL manca o cade (MySQL spento o in riavvio, rete) o
+# quando MySQL ferma la transazione per un blocco (deadlock). Gli altri (un dato non valido,
+# un utente che non c'è) darebbero lo stesso errore anche la volta dopo.
+# È una tupla di classi: `except TEMPORARY_ERRORS:` prende un errore di una qualsiasi delle due
+TEMPORARY_ERRORS = (OperationalError, InterfaceError)
 
 
 # @dataclass(frozen=True): costruttore automatico e campi che non si cambiano più

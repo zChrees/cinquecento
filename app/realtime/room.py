@@ -16,8 +16,8 @@ P25:
 - Scollegamento: quando la scheda al tavolo di un posto si scollega, il posto risulta
   scollegato e ha RECONNECT_SECONDS per rientrare con game:join; oltre, la partita è
   persa per abbandono. P138 (R2 di REVIEW.md): anche chi non è ancora arrivato al
-  tavolo ha RECONNECT_SECONDS, contati
-  dall'inizio della partita; intanto la mossa automatica gioca per lui.
+  tavolo ha RECONNECT_SECONDS, contati dall'inizio della partita; intanto la mossa
+  automatica gioca per lui.
 - Abbandono (game:leave, o rientro fuori tempo): la partita finisce subito; nel 2v2
   perde tutta la squadra di chi ha abbandonato (D13). Il motore non conosce
   l'abbandono: il risultato lo scrive la stanza nella vista (reason "abandon").
@@ -32,6 +32,11 @@ si ricorda l'applicazione Flask quando la partita parte. Senza applicazione (per
 esempio una stanza creata dai test fuori da Flask) non si salva e lo si scrive nel
 log. Se il salvataggio fallisce i giocatori vedono comunque il risultato; l'errore
 va nel log.
+
+O3 (R6 di REVIEW.md): il salvataggio gira in un thread a parte, fuori dal lock, così se
+MySQL è lento o spento la stanza continua a rispondere (frasi, vista finale). Se MySQL
+non risponde riprova dopo i secondi di SAVE_RETRY_SECONDS; ogni tentativo non riuscito
+annulla tutto (rollback), quindi la partita si scrive al massimo una volta.
 
 P55: la stanza tiene solo l'ora dell'ultima frase del tavolo di ogni posto
 (phrase_times, per il limite di table_phrases.py); le frasi non si salvano.
@@ -123,6 +128,11 @@ PAUSE_SCALE = 1  # i test dei timer la mettono a 0, per non aspettare le pause
 # P68: attesa della CPU prima di giocare, dopo la pausa del tavolo
 CPU_SECONDS = 1.2  # per un numero a caso di CPU_JITTER (D43); poi la CPU pensa (0,1-0,3 s): circa 1-2 s
 CPU_JITTER = (0.6, 1.4)
+
+# O3 (R6): se MySQL non risponde a fine partita, il salvataggio riprova dopo questi secondi,
+# un numero per ogni tentativo in più (in tutto circa due minuti, il tempo di un riavvio di
+# MySQL); si leggono quando la partita finisce: i test li accorciano
+SAVE_RETRY_SECONDS = (2, 5, 15, 30, 60)
 
 # P44, P47: funzioni chiamate con (user_id dei giocatori, app) a inizio e fine partita,
 # in un thread a parte (fuori dal lock)
@@ -333,6 +343,9 @@ class Room:
         self._started_at = None
         self._moves = []  # MoveRecord, nell'ordine della partita
         self._saved = False
+        # O3: un "evento" di threading, che si accende quando il salvataggio è finito (riuscito
+        # o no) o quando la partita non si salva; wait_saved lo aspetta
+        self._save_done = threading.Event()
         # R4: la funzione da chiamare a fine partita, con la stanza: la mette create_room di
         # room_manager.py, che toglie la stanza dalla memoria qualche minuto dopo; None per
         # le stanze fatte senza create_room (i test). In C sarebbe un puntatore a funzione
@@ -432,6 +445,7 @@ class Room:
             self._started_at = utc_now()
             self._moves = []
             self._saved = False
+            self._save_done.clear()
             self._advice = {}
             # una memoria delle carte uscite per ogni posto della CPU (D43)
             self._cpu_memory = {}
@@ -891,35 +905,112 @@ class Room:
     # --- Salvataggio a fine partita (P26) ---
 
     def _save(self):
-        """Salva la partita finita, una volta sola (sotto il lock). Un errore va nel log.
+        """Fine partita, una volta sola (sotto il lock): fa partire il salvataggio fuori dal lock.
 
         In parole semplici:
             _save()
-            Avvisa finish_listeners (home e amici), poi salva con match_service.save_match
-            dentro l'applicazione Flask. Non salva la partita contro la CPU (D43) né una
-            stanza creata fuori da Flask (lo scrive nel log).
-            R4: prima ancora chiama on_finish (se c'è), che programma la stanza da togliere
+            R4: per prima cosa chiama on_finish (se c'è), che programma la stanza da togliere
             dalla memoria: vale per ogni partita finita, anche quelle che non si salvano.
+            Non salva la partita contro la CPU (D43) né una stanza creata fuori da Flask
+            (lo scrive nel log): lì avvisa subito finish_listeners (home e amici).
+            Le altre: qui prepara solo il MatchRecord, che legge i dati della stanza e va
+            fatto sotto il lock; il salvataggio vero lo fa _save_in_background, in un
+            thread a parte (O3).
         """
         if self._saved:
             return
         self._saved = True
         if self.on_finish is not None:
             self.on_finish(self)
-        notify(finish_listeners, self.human_ids, self._app)
+        record = None
         if len(self.cpu_seats) > 0:
             log.info("Partita contro la CPU nella stanza %s: non si salva (D43)", self.id)
-            return
-        if self._app is None:
+        elif self._app is None:
             log.warning("Partita della stanza %s non salvata: nessuna applicazione Flask", self.id)
+        else:
+            record = self._match_record()
+        if record is None:
+            notify(finish_listeners, self.human_ids, self._app)
+            self._save_done.set()
             return
+        socketio.start_background_task(self._save_in_background, record, self._app)
+
+    def _save_in_background(self, record, app):
+        """Salva la partita finita, fuori dal lock; se MySQL non risponde riprova (O3, R6).
+
+        In parole semplici:
+            _save_in_background(record, app)
+            record: il MatchRecord preparato da _save; app: l'applicazione Flask.
+            Gira in un thread a parte (lo fa partire _save). Il primo tentativo è subito;
+            se MySQL non risponde (_try_save dice "retry") aspetta i secondi di
+            SAVE_RETRY_SECONDS e riprova, un tentativo per numero. Un altro errore (per
+            esempio un dato sbagliato) darebbe lo stesso errore anche dopo: non si riprova.
+            Dopo il primo tentativo, riuscito o no, avvisa finish_listeners: così quando
+            la home e gli amici lo sanno la partita, di solito, è già salvata (e le
+            statistiche la contano). Alla fine accende _save_done, che wait_saved aspetta.
+        """
+        retries = SAVE_RETRY_SECONDS  # letto adesso: i test lo accorciano
+        attempt = 0
+        try:
+            while True:
+                attempt += 1
+                outcome = self._try_save(record, app)
+                if attempt == 1:
+                    notify(finish_listeners, self.human_ids, app)
+                if outcome == "saved":
+                    if attempt > 1:
+                        log.info("Partita della stanza %s salvata al tentativo %s", self.id, attempt)
+                    return
+                if outcome == "failed":
+                    return
+                if attempt > len(retries):
+                    log.error("Partita della stanza %s non salvata dopo %s tentativi: MySQL non risponde",
+                              self.id, attempt)
+                    return
+                wait = retries[attempt - 1]
+                log.info("Salvataggio della partita della stanza %s: si riprova tra %s s", self.id, wait)
+                time.sleep(wait)
+        finally:
+            # finally: si accende sempre, anche se il ciclo finisce con un errore inatteso
+            self._save_done.set()
+
+    def _try_save(self, record, app):
+        """Un tentativo di salvataggio: "saved" (riuscito), "retry" (MySQL non risponde) o "failed".
+
+        In parole semplici:
+            _try_save(record, app)
+            Chiama match_service.save_match dentro l'applicazione Flask. Se non riesce,
+            save_match ha già annullato le scritture (rollback): niente resta a metà, e
+            l'errore va nel log con il punto in cui è nato. "retry" per gli errori di
+            match_service.TEMPORARY_ERRORS, "failed" per tutti gli altri.
+            La chiama _save_in_background, una volta per tentativo.
+        """
         try:
             # app_context: "entra" nell'applicazione Flask, così il database funziona
-            # anche dentro un timer
-            with self._app.app_context():
-                match_service.save_match(self._match_record())
+            # anche fuori da una richiesta (in questo thread)
+            with app.app_context():
+                match_service.save_match(record)
+        except match_service.TEMPORARY_ERRORS:
+            # exc_info=True: scrive nel log anche dove è nato l'errore (il "traceback")
+            log.warning("Salvataggio della partita della stanza %s non riuscito: MySQL non risponde",
+                        self.id, exc_info=True)
+            return "retry"
         except Exception:
             log.exception("Salvataggio della partita della stanza %s non riuscito", self.id)
+            return "failed"
+        return "saved"
+
+    def wait_saved(self, timeout=None):
+        """Aspetta che il salvataggio sia finito (riuscito o no): True se è finito entro `timeout`.
+
+        In parole semplici:
+            room.wait_saved(5)
+            timeout: i secondi massimi da aspettare; None = senza limite.
+            Restituisce True subito per una partita finita che non si salva (CPU, fuori
+            da Flask); False se la partita non è finita o il salvataggio non è finito in
+            tempo. La usano i test, che leggono il database dopo la fine della partita.
+        """
+        return self._save_done.wait(timeout)
 
     def _match_record(self):
         """La partita nella forma che salva match_service (MatchRecord).

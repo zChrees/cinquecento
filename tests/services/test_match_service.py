@@ -108,6 +108,8 @@ def play_moves(room, limit=10_000):
             card = legal["play"][0]
             room.play(seat, card_of(card))
             done.append(("gioca_carta", seat, {"seme": card["suit"], "valore": card["rank"]}))
+    if room.finished:
+        assert room.wait_saved(WAIT)  # O3: il salvataggio gira in un altro thread
     return done
 
 
@@ -226,6 +228,7 @@ def test_abbandono_con_esci(app):
     thread = threading.Thread(target=room.abandon, args=(1,))  # fuori da Flask, come un timer
     thread.start()
     thread.join(WAIT)
+    assert room.wait_saved(WAIT)
 
     (match,) = matches(app)
     assert (match["motivo_fine"], match["squadra_vincente"]) == ("abbandono", 0)
@@ -240,6 +243,7 @@ def test_abbandono_con_esci(app):
 def test_abbandono_nel_2v2_perde_la_squadra(app):
     room = new_room(app, "2v2", seed=4)
     room.abandon(2)
+    assert room.wait_saved(WAIT)
     (match,) = matches(app)
     assert match["squadra_vincente"] == 1
     assert [(p["posto"], p["risultato"], p["ha_abbandonato"]) for p in players_of(app, match["id"])] == [
@@ -265,6 +269,7 @@ def test_mossa_automatica_salvata(app):
     seat = room.game.hand.turn_seat
     room._turn_expired(room._turn_token)  # il tempo del turno è scaduto
     room.abandon(seat)
+    assert room.wait_saved(WAIT)
     (match,) = matches(app)
     first = moves_of(app, match["id"])[0]
     assert (first["tipo"], first["posto"]) == ("mossa_automatica", seat)
@@ -291,6 +296,7 @@ def test_si_salva_una_volta_sola(app):
 def test_senza_applicazione_flask_non_si_salva(app, caplog):
     room = new_room(app, in_app=False)
     room.abandon(0)
+    assert room.wait_saved(0)  # niente da salvare: è già finito
     assert matches(app) == []
     assert "non salvata: nessuna applicazione Flask" in caplog.text
 
@@ -322,3 +328,99 @@ def test_log_senza_nomi(app, caplog):
     play_moves(room)
     assert "Partita salvata" in caplog.text
     assert not any(name in caplog.text for name in NAMES)
+
+
+# --- O3 (R6): il salvataggio fuori dal lock, e di nuovo se MySQL non risponde ---
+
+
+def mysql_down():
+    """L'errore che SQLAlchemy lancia quando la connessione con MySQL cade."""
+    return sa.exc.OperationalError("INSERT INTO partite", None, Exception("Lost connection to MySQL server"))
+
+
+def test_se_mysql_non_risponde_si_riprova(app, monkeypatch, caplog):
+    caplog.set_level("INFO")
+    monkeypatch.setattr(room_module, "SAVE_RETRY_SECONDS", (0.05, 0.05))
+    real = match_repo.add_match
+    calls = []
+
+    def down_once(**fields):
+        calls.append(1)
+        if len(calls) == 1:
+            raise mysql_down()
+        return real(**fields)
+
+    monkeypatch.setattr(match_repo, "add_match", down_once)
+    room = new_room(app)
+    play_moves(room)
+    assert len(calls) == 2
+    assert len(matches(app)) == 1  # il primo tentativo non ha lasciato niente
+    assert "non riuscito: MySQL non risponde" in caplog.text
+    assert "si riprova tra 0.05 s" in caplog.text
+    assert "salvata al tentativo 2" in caplog.text
+
+
+def test_dopo_tutti_i_tentativi_si_arrende(app, monkeypatch, caplog):
+    monkeypatch.setattr(room_module, "SAVE_RETRY_SECONDS", (0.01, 0.01))
+    calls = []
+
+    def always_down(**_fields):
+        calls.append(1)
+        raise mysql_down()
+
+    monkeypatch.setattr(match_repo, "add_match", always_down)
+    room = new_room(app)
+    play_moves(room)
+    assert len(calls) == 3  # il primo e uno per ogni numero di SAVE_RETRY_SECONDS
+    assert matches(app) == []
+    assert "non salvata dopo 3 tentativi: MySQL non risponde" in caplog.text
+
+
+def test_un_errore_dei_dati_non_si_riprova(app, monkeypatch):
+    monkeypatch.setattr(room_module, "SAVE_RETRY_SECONDS", (0.01,))
+    calls = []
+
+    def broken(_match_id, _moves):
+        calls.append(1)
+        raise RuntimeError("errore di prova")
+
+    monkeypatch.setattr(match_repo, "add_moves", broken)
+    room = new_room(app)
+    play_moves(room)
+    assert calls == [1]
+    assert matches(app) == []
+
+
+def test_mentre_salva_la_stanza_risponde(app, monkeypatch):
+    started, release, notified = threading.Event(), threading.Event(), threading.Event()
+    seen = []
+    real = match_service.save_match
+
+    def slow_mysql(record):
+        started.set()
+        assert release.wait(WAIT)
+        return real(record)
+
+    def listener(_user_ids, _app):
+        seen.append(len(matches(app)))  # quante partite salvate quando arriva l'avviso
+        notified.set()
+
+    monkeypatch.setattr(match_service, "save_match", slow_mysql)
+    monkeypatch.setattr(room_module, "finish_listeners", [listener])
+    room = new_room(app)
+    thread = threading.Thread(target=room.abandon, args=(0,))
+    try:
+        thread.start()
+        assert started.wait(WAIT)  # il salvataggio è cominciato e "MySQL" non risponde
+        thread.join(WAIT)
+        assert not thread.is_alive()  # abandon non ha aspettato il salvataggio
+        assert room.lock.acquire(timeout=1)  # il lucchetto della stanza è libero
+        room.lock.release()
+        assert room.view_for(1)["status"] == "finished"
+        assert not room.wait_saved(0.1)
+        assert seen == []  # l'avviso di fine partita aspetta il primo tentativo
+    finally:
+        release.set()
+    assert room.wait_saved(WAIT)
+    assert notified.wait(WAIT)
+    assert seen == [1]
