@@ -1,13 +1,13 @@
 """Pagine e risposte di errore (P7).
 
-- 404: dal lotto 9d della migrazione vale la regola unica della SPA (spa_fallback di
+- 404: vale la regola unica della SPA (spa_fallback di
   app/blueprints/spa/routes.py): un GET a un indirizzo senza rotta, fuori da /api/,
   /static/ e /socket.io, riceve la SPA, e la pagina "non trovata" la disegna React.
   La pagina di errore Jinja resta per il resto: file statici che mancano, 404 decisi
   da una rotta (per esempio ?demo= sbagliato) e richieste che non sono GET.
 - 404 e 500: pagina in italiano basata su base.html, senza navbar (le pagine di errore
   non hanno uno script di pagina, e senza la navbar non si apre). Le richieste JSON
-  (tutte sotto /api/: dal lotto 9c della migrazione anche amici e statistiche) ricevono invece
+  (tutte sotto /api/) ricevono invece
   la risposta del contratto (1.2):
   {"ok": false, "error": {"code": "not_found" o "server_error", "message"}}.
 - 500: nessun dettaglio tecnico nella risposta. L'errore con il traceback va nel log
@@ -92,14 +92,14 @@ def _not_found(_exc):
         _not_found(_exc)
         _exc è l'errore 404 di Flask: non serve (il trattino basso davanti lo dice).
         Sotto /api/ risponde not_found in JSON; altrimenti la SPA, se spa_fallback
-        dice che l'indirizzo è suo (regola unica, lotto 9d); altrimenti la pagina
+        dice che l'indirizzo è suo (regola unica); altrimenti la pagina
         errors/404.html.
 
         Restituisce: la risposta e, tranne per la SPA, il codice 404.
     """
     if _wants_json():
         return error("not_found"), 404
-    # page: la SPA, se l'indirizzo è una sua pagina (regola unica, lotto 9d); altrimenti None
+    # page: la SPA, se l'indirizzo è una sua pagina (regola unica); altrimenti None
     page = spa_fallback()
     if page is not None:
         return page
@@ -108,7 +108,7 @@ def _not_found(_exc):
 
 def _csrf_error(exc):
     """Codice CSRF mancante o scaduto: le rotte /api/ rispondono in JSON (la SPA lo
-    mostra), le altre con il 400 di Flask-WTF di sempre (contratto 2.2).
+    mostra), le altre con il 400 di Flask-WTF (contratto 2.2).
 
     In parole semplici:
         _csrf_error(exc)

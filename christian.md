@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### C2 — Sito: commenti senza la storia (24/10/2026)
+
+- **Branch**: feature/c2-commenti-sito (da `dev` a `10c1026`)
+- **File**: i commenti di `app/__init__.py`, `app/errors.py`, `config.py` e di 14 file di `app/blueprints/` (`auth/__init__.py`, `auth/api.py`, `auth/routes.py`, `friends/__init__.py`, `friends/routes.py`, `game/routes.py`, `main/routes.py`, `profile/__init__.py`, `profile/api.py`, `profile/routes.py`, `spa/__init__.py`, `spa/routes.py`, `stats/__init__.py`, `stats/routes.py`); questo file
+- **Cosa c'è** (fase 0 di `docs/MESSA-ONLINE.md`): tolti "passo N della migrazione", "lotto 9c/9d", "come prima", "di sempre", "le pagine Jinja di prima", i vecchi indirizzi che rispondono 404 (`/stats/me`, `/online`, `/friends/...`, `POST /auth/logout`, `/vecchia-home`, `?ui=`), le date e la "scelta 5 del passo 9"; tolti anche i rimandi a `docs/MIGRAZIONE-FRONTEND.md`, che con C5 va in archivio. In `config.py` il commento del matchmaking ora dice i valori di oggi (±150, +100 ogni 5 s fino a ±400, chiunque dopo 30 s) invece di quelli vecchi; `DemoConfig` dice che la sostituisce `production` (O1). I codici P, D e R restano. Solo commenti: il comportamento non cambia
+- **Controlli**: `ruff check .` pulito; con il runner `runner` **13 PASS** e `api` **307 PASS** [T]
+- **Decisioni prese**: nessuna
+- **Domande nuove**: nessuna
+- **Punti delicati**: per **C5**: `docs/MIGRAZIONE-FRONTEND.md` è citato ancora nel commento in cima a `frontend/index.html` (fuori da C2): quando il file va in `docs/archivio/` va cambiato anche lì
+- **Cosa devono fare gli altri**: **Giuseppe**: C1 e C2 sono in `dev`, puoi fare la tua parte di C4
+
 ### Dove si riparte (fine sessione del 24/10/2026)
 
 - **Fatto oggi**: migrazione chiusa (prova a mano del 9e, tutto bene); commenti nel Python finiti; piano della messa online `docs/MESSA-ONLINE.md` (D21 = VPS); della **fase 0** fatti **C1** (io, `311f9ad`, rebase su C3 senza rilanciare i test, per mia scelta: i file non si toccano) e **C3** (Giuseppe, `9466576`, con via `friend_repo.get_user`)

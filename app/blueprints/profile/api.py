@@ -1,8 +1,8 @@
-"""Rotte JSON delle impostazioni per la SPA (passo 6 della migrazione).
+"""Rotte JSON delle impostazioni per la SPA.
 
 La pagina /profile/settings la disegna React (frontend/src/pages/SettingsPage.tsx);
-qui ci sono le rotte che chiama, sotto /api/ come tutte le rotte di dati nuove
-(DECISIONI.md, 19/10/2026). Rispondono nella forma del contratto (1.2).
+qui ci sono le rotte che chiama, sotto /api/ come tutte le rotte di dati.
+Rispondono nella forma del contratto (1.2).
 
 Cosa contiene:
     GET  /api/profile/avatars   gli avatar che si possono scegliere: [{"code", "name"}]
@@ -10,14 +10,14 @@ Cosa contiene:
     POST /api/profile/delete    {"password"} → {"redirect"} (e l'utente esce)
 
 Tutte vogliono il login: senza, not_logged_in (401), non il rimando alla pagina di
-accesso. Le regole sono quelle di sempre, perché passano dallo stesso servizio
-(auth_service: set_avatar, delete_account con i tentativi contati come al login,
-P17 e P96, e la chiusura delle schede prima di cancellare, P32). Errori:
+accesso. Le regole stanno nel servizio (auth_service: set_avatar, delete_account
+con i tentativi contati come al login, P17 e P96, e la chiusura delle schede prima
+di cancellare, P32). Errori:
     invalid_data (400)  avatar fuori elenco, password mancante o sbagliata
                         (error.fields dice quale campo)
     not_allowed (403)   troppi tentativi, oppure una partita in corso
 
-Come prima, dopo "Salva l'avatar" e dopo la cancellazione la pagina si ricarica con
+Dopo "Salva l'avatar" e dopo la cancellazione la pagina si ricarica con
 un messaggio (flash), letto poi da GET /api/auth/session o dalla home.
 
 DA DOVE ARRIVANO I DATI: dalla SPA (frontend/src/api/profile.ts), in JSON; il codice
@@ -105,7 +105,7 @@ def avatar():
 
     In parole semplici:
         Se va bene lascia "Avatar salvato." per la pagina (flash) e risponde con
-        l'indirizzo delle impostazioni, che la pagina ricarica (come prima).
+        l'indirizzo delle impostazioni, che la pagina ricarica.
         Un codice fuori elenco, o un valore che non è un testo, si rifiuta.
     """
     try:

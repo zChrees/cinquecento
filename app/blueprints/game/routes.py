@@ -2,11 +2,8 @@
 
 /game/<game_id> è l'indirizzo che il server manda con game:start (contratto 3.2).
 La pagina si collega alla stanza con i socket (P24); in sviluppo e nei test, con
-?demo=1v1 o ?demo=2v2 disegna una vista finta di app/static/dev/.
-
-Dal passo 8 della migrazione (docs/MIGRAZIONE-FRONTEND.md) il tavolo è della SPA
-(frontend/src/game/); dal lotto 9a (23/10/2026) il tavolo Jinja non c'è più, e ?ui=
-è un parametro qualsiasi, che si ignora come gli altri (scelta di Christian).
+?demo=1v1 o ?demo=2v2 disegna una vista finta di app/static/dev/. Il tavolo lo
+disegna la SPA (frontend/src/game/); gli altri parametri si ignorano.
 
 Cosa contiene:
     GAME_ID      il codice ammesso di una stanza: lettere, numeri, _ e -, al massimo 64

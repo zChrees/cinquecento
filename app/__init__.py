@@ -1,7 +1,7 @@
 """create_app(): monta tutte le parti dell'applicazione.
 
-Tutti i collegamenti sono qui dall'inizio (P4): i punti successivi riempiono i
-propri file e non toccano questo (docs/archivio/SCALETTA-2026-09.md, sezione 3).
+Tutti i collegamenti tra le parti sono qui (P4): ogni parte riempie i propri
+file e non tocca questo.
 Questo file è anche il "pacchetto" app: `from app import create_app` legge da qui.
 
 Cosa contiene:

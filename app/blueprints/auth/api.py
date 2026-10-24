@@ -1,10 +1,9 @@
-"""Rotte JSON di accesso e registrazione per la SPA (passo 4 della migrazione).
+"""Rotte JSON di accesso e registrazione per la SPA.
 
 Le pagine /auth/login e /auth/register le disegna React (frontend/src/pages/);
-qui ci sono le rotte che quelle pagine chiamano (e, dal lotto 9c, il logout del
-pannello statistiche), sotto /api/ come tutte le rotte
-di dati nuove (DECISIONI.md, 19/10/2026). Rispondono nella forma del contratto
-(1.2): {"ok": true, "data": ...} oppure {"ok": false, "error": {...}}.
+qui ci sono le rotte che quelle pagine chiamano (e il logout del pannello
+statistiche), sotto /api/ come tutte le rotte di dati. Rispondono nella forma
+del contratto (1.2): {"ok": true, "data": ...} oppure {"ok": false, "error": {...}}.
 
 Cosa contiene:
     GET  /api/auth/session    codice CSRF, utente collegato (o null) e messaggi da mostrare
@@ -12,11 +11,10 @@ Cosa contiene:
     POST /api/auth/register   {"username", "email", "password", "confirm"} → {"redirect"}
     POST /api/auth/logout     nessun corpo → {"redirect"} (la home)
 
-Le regole sono quelle di sempre, perché passano dagli stessi moduli
-(forms.py: LoginForm, RegisterForm, con \\Z di P137) e dallo stesso servizio
-(auth_service: tentativi contati per account, P96). Errori:
+Le regole stanno nei moduli (forms.py: LoginForm, RegisterForm, con \\Z di P137)
+e nel servizio (auth_service: tentativi contati per account, P96). Errori:
     invalid_data (400)  un campo non valido; error.fields dice quale, con i messaggi
-                        sotto ogni campo, come le pagine Jinja di prima
+                        da mostrare sotto ogni campo
     not_allowed (403)   credenziali sbagliate o troppi tentativi (il messaggio lo dice)
 
 Il codice CSRF lo controlla CSRFProtect (app/extensions.py) per ogni POST,

@@ -3,10 +3,9 @@
 Un "blueprint" di Flask è un gruppo di rotte con un nome e un prefisso comune
 all'indirizzo: create_app() (app/__init__.py) lo registra, e da lì Flask conosce
 tutte le sue rotte. Qui ce ne sono due nello stesso pacchetto:
-- bp (/auth/...): le pagine /auth/login e /auth/register (dal passo 4 della
-  migrazione le disegna la SPA);
+- bp (/auth/...): le pagine /auth/login e /auth/register (le disegna la SPA);
 - api_bp (/api/auth/...): le rotte JSON che chiamano le pagine della SPA (api.py),
-  dal lotto 9c anche il logout (POST /api/auth/logout).
+  compreso il logout (POST /api/auth/logout).
 
 Cosa contiene:
     bp       il blueprint delle pagine, per esempio bp.get("/login") in routes.py

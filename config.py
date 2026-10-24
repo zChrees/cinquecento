@@ -91,13 +91,12 @@ class BaseConfig:
 
     # Partita
     TARGET_SCORES = (150, 300, 500)
-    TURN_SECONDS = 15  # P94: dal 04/10/2026, e il conto parte dopo le pause del tavolo (room.py)
+    TURN_SECONDS = 15  # P94: il conto parte dopo le pause del tavolo (room.py)
     RECONNECT_SECONDS = 60
     TABLE_PHRASE_MIN_INTERVAL_SECONDS = 3  # frasi del tavolo: una ogni 3 secondi per giocatore (D24, P55)
 
-    # Matchmaking (deciso, D16): intervallo di rating che si allarga col tempo.
-    # P111 (05/10/2026, ok di Christian e Giuseppe): più veloce, prima era ±100, +50 ogni
-    # 10 s, chiunque dopo 120 s (con 200 punti di differenza si aspettavano 20 s)
+    # Matchmaking (D16, P111): intervallo di rating che si allarga col tempo:
+    # ±150 all'inizio, +100 ogni 5 s fino a ±400, chiunque dopo 30 s
     MATCH_RANGE_START = 150
     MATCH_RANGE_STEP = 100
     MATCH_RANGE_STEP_SECONDS = 5
@@ -137,7 +136,7 @@ class BaseConfig:
     BACKUP_DIR = BASE_DIR / "backups"
     BACKUP_RETENTION_DAYS = 14
 
-    # Frontend React compilato (passo 1 della migrazione): None = app/static/dist.
+    # Frontend React compilato: None = app/static/dist.
     # Solo nei test si legge da SPA_DIST_DIR, la cartella fuori dal progetto dove
     # tests/conftest.py compila il frontend (app/blueprints/spa/routes.py, dist_dir).
     SPA_DIST_DIR = None
@@ -160,7 +159,7 @@ class TestingConfig(BaseConfig):
 
 
 class DemoConfig(BaseConfig):
-    """La demo (dal 19/10/2026 non c'è più, la configurazione resta): come BaseConfig."""
+    """La demo: come BaseConfig. Non la usa più nessuno; la sostituisce production (O1)."""
 
     ENV_NAME = "demo"
 

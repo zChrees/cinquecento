@@ -1,4 +1,4 @@
-"""Blueprint spa: le pagine del frontend React (docs/MIGRAZIONE-FRONTEND.md, sezione 6).
+"""Blueprint spa: le pagine del frontend React.
 
 Un "blueprint" di Flask è un gruppo di rotte con un nome e un prefisso comune
 all'indirizzo (la spiegazione completa è in app/blueprints/auth/__init__.py);

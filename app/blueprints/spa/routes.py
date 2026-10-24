@@ -1,4 +1,4 @@
-"""Rotte della SPA (passo 1 della migrazione, docs/MIGRAZIONE-FRONTEND.md, sezione 6).
+"""Rotte della SPA (il frontend React).
 
 Il frontend React è una sola pagina HTML, app/static/dist/index.html, scritta da
 `npm run build` in frontend/ (la cartella dist/ non è nel repository, D54). Per
@@ -6,7 +6,7 @@ ogni indirizzo della SPA Flask restituisce sempre quella pagina; poi è React
 Router, nel browser, a scegliere cosa disegnare. I file JavaScript della SPA
 (/static/dist/assets/...) li serve Flask come ogni altro file statico.
 
-Regola unica (lotto 9d della migrazione, scelta 5 del passo 9): ogni indirizzo
+Regola unica: ogni indirizzo
 chiesto con GET che non ha una rotta Flask ed è fuori da /api/, /static/ e
 /socket.io riceve la SPA; se React non conosce l'indirizzo, disegna "Pagina non
 trovata" (NotFoundPage.tsx). Hanno una rotta Flask apposta solo le pagine dove il
@@ -21,7 +21,7 @@ Cosa contiene:
     spa_page()       la risposta con index.html (o l'errore se il build manca); la
                      usano anche le rotte di altri blueprint che sono pagine della
                      SPA (per esempio /auth/login in app/blueprints/auth/routes.py e la home /
-                     in app/blueprints/main/routes.py, dal passo 7d)
+                     in app/blueprints/main/routes.py)
     spa_fallback()   la regola unica: la SPA per un indirizzo senza rotta, o None
     asset(...)       GET /static/dist/<file>, i file JavaScript della SPA
 
@@ -79,7 +79,7 @@ def spa_page():
         Se il build c'è, manda index.html. Il browser deve richiederla ogni
         volta (max_age=0, cioè "Cache-Control: no-cache"): dopo un build nuovo
         index.html punta a file con un nome nuovo (index-3f9a1c.js), e una copia
-        vecchia caricherebbe i file di prima.
+        rimasta nel browser caricherebbe quelli del build precedente.
         Se il build manca, risponde 503 ("servizio non disponibile") con un
         messaggio che dice cosa fare, e lo scrive nel log come anomalia.
 
@@ -106,11 +106,11 @@ def spa_fallback():
           - la richiesta è un GET (o HEAD);
           - l'indirizzo non comincia con un pezzo di NOT_SPA (/api, /static,
             /socket.io).
-        Un indirizzo con la / in fondo (/profile/settings/) prima si rimanda a
+        Un indirizzo con la / in fondo (/profile/settings/) invece si rimanda a
         quello senza (/profile/settings), con gli stessi parametri: così valgono i
         controlli della sua rotta Flask (login, ?demo=), che React non farebbe.
         La pagina React "non trovata" risponde 200, non 404: lo stato lo sa solo il
-        server, e qui il server non sa quali indirizzi conosce React (scelta 5).
+        server, e qui il server non sa quali indirizzi conosce React.
 
         Esempi:
             GET /pagina-a-caso        ->  la SPA (React: "Pagina non trovata")
@@ -118,7 +118,7 @@ def spa_fallback():
             GET /api/niente           ->  None (404 in JSON)
             POST /pagina-a-caso       ->  None (404)
 
-        Restituisce: la risposta di Flask, oppure None (resta il 404 di sempre).
+        Restituisce: la risposta di Flask, oppure None (resta la risposta 404).
     """
     if request.url_rule is not None or request.method not in SPA_METHODS:
         return None

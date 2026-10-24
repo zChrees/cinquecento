@@ -1,12 +1,10 @@
-"""Rotte: pagine di accesso e registrazione (P16; dal passo 4 della migrazione).
+"""Rotte: pagine di accesso e registrazione (P16).
 
-Indirizzi decisi con P40: /auth/login e /auth/register. Il logout era qui
-(POST /auth/logout, un modulo): dal lotto 9c della migrazione è POST /api/auth/logout,
-in JSON, in api.py; il vecchio indirizzo risponde 404. Dal 19/10/2026 le
-due pagine le disegna la SPA (frontend/src/pages/LoginPage.tsx e RegisterPage.tsx):
-qui Flask manda la pagina della SPA, e i dati arrivano alle rotte JSON di api.py.
-Gli indirizzi e i nomi delle rotte (auth.login, auth.register) restano quelli di
-prima, così Flask-Login (login_view) e i link delle altre pagine non cambiano.
+Indirizzi decisi con P40: /auth/login e /auth/register. Le due pagine le disegna
+la SPA (frontend/src/pages/LoginPage.tsx e RegisterPage.tsx): qui Flask manda la
+pagina della SPA, e i dati arrivano alle rotte JSON di api.py (anche il logout,
+POST /api/auth/logout). I nomi delle rotte (auth.login, auth.register) li usano
+Flask-Login (login_view) e url_for.
 
 Cosa contiene:
     GET /auth/login            login: la pagina di accesso (SPA)

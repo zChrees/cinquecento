@@ -1,4 +1,4 @@
-"""Blueprint friends: richieste di amicizia e lista amici, sotto /api/friends/ (lotto 9c).
+"""Blueprint friends: richieste di amicizia e lista amici, sotto /api/friends/.
 
 Un "blueprint" di Flask è un gruppo di rotte con un nome e un prefisso comune
 all'indirizzo (la spiegazione completa è in app/blueprints/auth/__init__.py).
