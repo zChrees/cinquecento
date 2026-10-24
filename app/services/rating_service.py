@@ -12,6 +12,16 @@ nella stessa transazione (o tutti e due o niente).
   della partita, poi si scrive.
 - Abbandono nel 2v2 (D13): perde tutta la squadra, ma il rating scende solo a chi
   ha abbandonato; il compagno resta com'era. Gli avversari guadagnano normalmente.
+
+Cosa contiene:
+    score_of(team, winner_team)   il risultato per Glicko-2, per esempio 1.0 per chi ha vinto
+    apply_match(record)           aggiorna il rating dei giocatori di una partita finita
+
+Una "transazione" è un gruppo di scritture sul database che vale tutto insieme: o
+vanno a buon fine tutte (commit) o non ne resta nessuna (rollback).
+
+DA DOVE ARRIVANO I DATI: match_service.save_match passa il MatchRecord preparato dalla
+stanza (app/realtime/room.py); i rating di prima si leggono con rating_repo.
 """
 
 import logging
@@ -25,34 +35,82 @@ log = logging.getLogger(__name__)
 
 
 def score_of(team, winner_team):
+    """Il risultato di una squadra per Glicko-2.
+
+    In parole semplici:
+        score_of(team, winner_team)
+        team: la squadra (0 o 1). winner_team: la squadra che ha vinto, o None per un
+        pareggio. Restituisce 1.0 (vittoria), 0.5 (pareggio) o 0.0 (sconfitta).
+    """
     if winner_team is None:
         return 0.5
-    return 1.0 if team == winner_team else 0.0
+    if team == winner_team:
+        return 1.0
+    return 0.0
 
 
 def _stored(row):
-    # Le colonne DOUBLE arrivano da SQLAlchemy come Decimal (DOUBLE di MySQL, asdecimal):
-    # il calcolo di Glicko-2 lavora con i float.
+    """Una riga della tabella rating come Rating di glicko2.
+
+    In parole semplici:
+        _stored(row)
+        Le colonne DOUBLE arrivano da SQLAlchemy come Decimal (DOUBLE di MySQL,
+        asdecimal): il calcolo di Glicko-2 lavora con i float, quindi si convertono.
+    """
     return glicko2.Rating(float(row.value), float(row.deviation), float(row.volatility))
 
 
 def apply_match(record):
-    """Aggiorna il rating dei giocatori di una partita finita; restituisce {user_id: nuovo Rating}."""
+    """Aggiorna il rating dei giocatori di una partita finita; restituisce {user_id: nuovo Rating}.
+
+    In parole semplici:
+        apply_match(record)
+        record: il MatchRecord della partita (match_service.py). Arriva da save_match.
+        1. una partita che non conta non cambia niente ({});
+        2. si leggono (e si bloccano fino al commit) le righe dei giocatori;
+        3. per ognuno si calcola il rating nuovo dai rating di PRIMA della partita;
+        4. si scrivono: la riga esistente si aggiorna, quella che manca si crea.
+        Qui non si fa commit: lo fa save_match.
+    """
     if not record.rated:
         return {}
     config = current_app.config
     initial = glicko2.Rating(config["RATING_INITIAL"], config["RATING_RD_INITIAL"],
                              config["RATING_VOLATILITY_INITIAL"])
-    rows = rating_repo.get_for_update([p.user_id for p in record.players], record.mode)
-    before = {p.user_id: _stored(rows[p.user_id]) if p.user_id in rows else initial for p in record.players}
-    abandoned_teams = {p.team for p in record.players if p.abandoned}
+
+    user_ids = []
+    for player in record.players:
+        user_ids.append(player.user_id)
+    rows = rating_repo.get_for_update(user_ids, record.mode)
+
+    # before: il rating di ognuno prima della partita (initial per chi non ha ancora la riga)
+    before = {}
+    for player in record.players:
+        if player.user_id in rows:
+            before[player.user_id] = _stored(rows[player.user_id])
+        else:
+            before[player.user_id] = initial
+
+    # abandoned_teams: le squadre in cui qualcuno ha abbandonato
+    abandoned_teams = set()
+    for player in record.players:
+        if player.abandoned:
+            abandoned_teams.add(player.team)
 
     after = {}
     for player in record.players:
         if player.team in abandoned_teams and not player.abandoned:
             continue  # compagno di chi ha abbandonato: il rating non cambia (D13)
-        opponents = [before[p.user_id] for p in record.players if p.team != player.team]
-        opponent = opponents[0] if len(opponents) == 1 else glicko2.team_opponent(opponents)
+        # opponents: i rating di prima dei giocatori dell'altra squadra
+        opponents = []
+        for other in record.players:
+            if other.team != player.team:
+                opponents.append(before[other.user_id])
+        # nel 1v1 l'avversario è uno; nel 2v2 la squadra diventa un solo avversario
+        if len(opponents) == 1:
+            opponent = opponents[0]
+        else:
+            opponent = glicko2.team_opponent(opponents)
         result = glicko2.Result(opponent, score_of(player.team, record.winner_team))
         after[player.user_id] = glicko2.update(before[player.user_id], [result], config["GLICKO_TAU"])
 

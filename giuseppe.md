@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### Commenti e niente zucchero, lotto 3a — Rating e partite: servizi, repository e modelli (24/10/2026)
+
+- **Branch**: feature/commenti-servizi-3a (da `dev` a `620c9a7`). Il lotto 3 è diviso in due: **3a** rating e partite, **3b** account, amici e chat
+- **File**: modificati `app/services/` `__init__.py`, `glicko2.py`, `rating_service.py`, `match_service.py`, `stats_service.py`; `app/repositories/` `__init__.py`, `rating_repo.py`, `match_repo.py`, `stats_repo.py`; `app/models/` `__init__.py`, `match.py`, `rating.py`; questo file
+- **Cosa c'è**: "Cosa contiene" e da dove arrivano i dati in cima; "In parole semplici" sopra ogni funzione e classe, con transazione, `flush`, `SELECT ... FOR UPDATE`, `aliased`, `EXISTS`, `Mapped`/`mapped_column`, `ForeignKey` con `CASCADE` e `SET NULL` spiegati; tolti i casi di zucchero (comprehension, generatori in `sum`, `a if c else b`, `(*TEAMS, None)`, gli assegnamenti doppi del metodo di Illinois, `MatchPlayer(**player)` scritto campo per campo). In `glicko2.update` la somma g·(s−E), che prima si calcolava due volte uguale, si calcola una volta (`improvement`): stesso numero. Le somme seguono lo stesso ordine di `sum`, quindi i rating calcolati sono identici
+- **Resta**, spiegato: `add_match(**columns)` di `match_repo.py` (passa i campi al modello; toglierlo vorrebbe dire cambiare la firma)
+- **Controlli**: suite `services` **38 PASS** (con l'esempio numerico di Glickman), `db` **89 PASS**, `api` **307 PASS**, `sockets` **333 PASS**, `e2e` **12 PASS**; `ruff check .` pulito; nessuno zucchero rimasto nei 12 file (ricerca con `rg`) [T]
+- **Decisioni prese**: nessuna nuova
+- **Domande nuove**: nessuna
+- **Punti delicati**: nessuno nuovo
+- **Note per gli altri**: nessuna. Prossimo: lotto 3b (`auth_service`, `friend_service`, `chat_service`, `avatars`, `user_repo`, `friend_repo`, `chat_repo`, `models/user.py`, `friendship.py`, `chat_message.py`)
+
 ### Commenti e niente zucchero, lotto 2d — app/sockets/ (24/10/2026). Chiude il lotto 2
 
 - **Branch**: feature/commenti-sockets-2d (da `dev` a `088fcd9`)

@@ -16,6 +16,15 @@ Mosse salvate (mosse_partita.tipo, nomi in italiano come le altre colonne, D38):
                                          e i 20 aggiunti per il compagno ({"posto", "seme", "punti"})
 Date e ore in UTC. Nei log solo numeri, mai nomi degli utenti.
 P27: nella stessa transazione si aggiorna il rating (rating_service.apply_match).
+
+Cosa contiene:
+    PlayerRecord, MoveRecord, MatchRecord   i dati della partita da salvare
+    result_of(team, winner_team)            il risultato di una squadra, per esempio "vittoria"
+    check(record)                           controlla il MatchRecord prima di scrivere
+    save_match(record)                      salva la partita, per esempio save_match(record) = 42
+
+DA DOVE ARRIVANO I DATI: _save di room.py chiama save_match con il MatchRecord
+costruito da _match_record, dentro l'applicazione Flask.
 """
 
 import logging
@@ -32,19 +41,37 @@ MOVE_KINDS = ("gioca_carta", "canta", "mossa_automatica", "abbandono", "cala_car
 TEAMS = (0, 1)
 
 
+# @dataclass(frozen=True): costruttore automatico e campi che non si cambiano più
+# (vedi il commento in app/game/engine/cards.py)
 @dataclass(frozen=True)
 class PlayerRecord:
+    """Un giocatore della partita da salvare.
+
+    In parole semplici:
+        PlayerRecord(seat=0, user_id=7, abandoned=False)
+        abandoned: facoltativo (se manca False), True per chi ha abbandonato.
+    """
+
     seat: int
     user_id: int
     abandoned: bool = False
 
+    # @property: si legge come un campo (record.team, senza parentesi)
     @property
     def team(self):
+        """La squadra del giocatore: 0 o 1."""
         return self.seat % 2  # la squadra di un posto è posto % 2 (contratto 3.1)
 
 
 @dataclass(frozen=True)
 class MoveRecord:
+    """Una mossa della partita da salvare.
+
+    In parole semplici:
+        MoveRecord(hand=1, seat=0, kind="gioca_carta", details={"seme": "coppe", "valore": 1}, at=ora)
+        seat: None per gli eventi del server senza un giocatore.
+    """
+
     hand: int
     seat: int | None
     kind: str
@@ -54,6 +81,8 @@ class MoveRecord:
 
 @dataclass(frozen=True)
 class MatchRecord:
+    """La partita finita, con tutto quello che si salva."""
+
     mode: str
     target_score: int
     rated: bool
@@ -67,22 +96,43 @@ class MatchRecord:
 
 
 def result_of(team, winner_team):
+    """Il risultato di una squadra come si salva in giocatori_partita.risultato.
+
+    In parole semplici:
+        result_of(team, winner_team)
+        Restituisce "vittoria", "sconfitta" o, con winner_team None, "pareggio".
+    """
     if winner_team is None:
         return "pareggio"
-    return "vittoria" if team == winner_team else "sconfitta"
+    if team == winner_team:
+        return "vittoria"
+    return "sconfitta"
 
 
 def check(record):
-    """Controlla il MatchRecord prima di scrivere: un dato sbagliato non si salva a metà."""
+    """Controlla il MatchRecord prima di scrivere: un dato sbagliato non si salva a metà.
+
+    In parole semplici:
+        check(record)
+        Modalità, motivo, squadra vincente, punteggi, posti in ordine (0, 1 nel 1v1;
+        0, 1, 2, 3 nel 2v2) e tipi di mossa. Un dato sbagliato lancia ValueError.
+        "!r" dentro la f-string scrive il valore con le virgolette, per esempio '3v3'.
+    """
     if record.mode not in MODES:
         raise ValueError(f"Modalità non valida: {record.mode!r}")
     if record.reason not in END_REASONS:
         raise ValueError(f"Motivo di fine non valido: {record.reason!r}")
-    if record.winner_team not in (*TEAMS, None):
+    # una squadra vincente valida: 0, 1 oppure None (pareggio)
+    if record.winner_team not in TEAMS + (None,):
         raise ValueError(f"Squadra vincente non valida: {record.winner_team!r}")
     if len(record.scores) != len(TEAMS):
         raise ValueError("Servono i punti delle due squadre.")
-    if [p.seat for p in record.players] != list(range(int(record.mode[0]) * 2)):
+    # seats: i posti dei giocatori in ordine; devono essere 0, 1, ... fino al numero di
+    # giocatori (int(record.mode[0]) è il primo carattere della modalità: 1 o 2)
+    seats = []
+    for player in record.players:
+        seats.append(player.seat)
+    if seats != list(range(int(record.mode[0]) * 2)):
         raise ValueError("I giocatori devono essere uno per posto, in ordine.")
     for move in record.moves:
         if move.kind not in MOVE_KINDS:
@@ -90,7 +140,16 @@ def check(record):
 
 
 def save_match(record):
-    """Salva la partita finita in una sola transazione e restituisce il suo numero (partite.id)."""
+    """Salva la partita finita in una sola transazione e restituisce il suo numero (partite.id).
+
+    In parole semplici:
+        save_match(record)
+        1. check(record);
+        2. la riga in partite, i giocatori, le mosse (numerate da 1) e il rating;
+        3. commit: tutto insieme. Se qualcosa va storto, rollback (non resta niente) e
+           l'errore va avanti a chi l'ha chiamata (raise), che lo scrive nel log.
+        Restituisce il numero della partita, per esempio 42.
+    """
     check(record)
     try:
         match = match_repo.add_match(
@@ -105,31 +164,37 @@ def save_match(record):
             team1_score=record.scores[1],
         )
         match_id = match.id
-        match_repo.add_players(match_id, [
-            {
-                "seat": p.seat,
-                "team": p.team,
-                "user_id": p.user_id,
-                "result": result_of(p.team, record.winner_team),
-                "abandoned": p.abandoned,
-            }
-            for p in record.players
-        ])
-        match_repo.add_moves(match_id, [
-            {
-                "number": number,
+
+        players = []
+        for player in record.players:
+            players.append({
+                "seat": player.seat,
+                "team": player.team,
+                "user_id": player.user_id,
+                "result": result_of(player.team, record.winner_team),
+                "abandoned": player.abandoned,
+            })
+        match_repo.add_players(match_id, players)
+
+        # le mosse numerate da 1, nell'ordine della partita
+        moves = []
+        for index in range(len(record.moves)):
+            move = record.moves[index]
+            moves.append({
+                "number": index + 1,
                 "hand": move.hand,
                 "seat": move.seat,
                 "kind": move.kind,
                 "details": move.details,
                 "created_at": move.at,
-            }
-            for number, move in enumerate(record.moves, start=1)
-        ])
+            })
+        match_repo.add_moves(match_id, moves)
+
         rating_service.apply_match(record)  # P27: nella stessa transazione della partita
         db.session.commit()
     except Exception:
         db.session.rollback()
+        # raise da solo: rilancia lo stesso errore, dopo aver annullato le scritture
         raise
     log.info("Partita salvata (numero %s, %s mosse)", match_id, len(record.moves))
     return match_id
