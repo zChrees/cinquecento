@@ -22,6 +22,21 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### Commenti e niente zucchero, lotto 2b — Tempo reale: room.py; divisione dei lotti che restano (24/10/2026)
+
+- **Branch**: feature/commenti-realtime-2b (da `dev` a `44f684a`)
+- **File**: modificati `app/realtime/room.py`; questo file
+- **Cosa c'è**: il commento in cima resta (spiega già la stanza) con in più "Cosa contiene", i timer e da dove arrivano i dati; "In parole semplici" sopra ogni funzione; tolti i casi di zucchero (comprehension, `next(...)`, `any`, `a if c else b`, `**view` dentro un dizionario, `uniform(*CPU_JITTER)`, `.update(chiave=...)` su vista e giocatori, la `lambda` di `sing` diventata la funzione interna `sing_details`, gli spacchettamenti `a, b = ...`). Ordine dei campi della vista, numeri casuali usati (CPU compresa) e comportamento uguali; tempi e pause restano variabili del modulo lette al momento (i test le cambiano); `run(*args, **kwargs)` resta, spiegato
+- **Controlli**: suite `sockets` **333 PASS**, `services` **38 PASS**, `e2e` **12 PASS**, `table5` **37 PASS**, `table6` **23 PASS** (partite vere nel browser); `ruff check .` pulito; nessuno zucchero rimasto (ricerca con `rg`) [T]
+- **Decisioni prese**: nessuna nuova
+- **Domande nuove**: nessuna
+- **Punti delicati**: nessuno nuovo (quelli di P25, P68, P94 e P118 valgono come prima)
+- **Divisione dei lotti che restano** (proposta di Giuseppe del 24/10, **da confermare con Christian**): ognuno la sua parte del progetto, così nessuno tocca i file dell'altro.
+  - **Giuseppe** (motore e tempo reale, più la parte di Antonio): **2c** `app/realtime/matchmaking.py`; **2d** `app/sockets/` (7 file); **3** `app/services/`, `app/repositories/`, `app/models/`; **5** `app/game/engine/cpu.py`, per ultimo
+  - **Christian** (il sito: pagine, avvio, configurazione): `app/blueprints/` che mancano (`auth/forms.py`, `friends/routes.py`, `stats/routes.py` e gli `__init__.py`); `app/__init__.py`, `app/errors.py`, `app/extensions.py`, `app/checks.py`, `app/logging_config.py`; **4** `config.py`, `run.py`, `scripts/` (`backup.py`, `migrate.py`, `ripristina.py`)
+  - Già fatti: tutto `app/game/engine/` tranne `cpu.py` (1a, 1b), `app/realtime/` tranne `matchmaking.py` (2a, 2b), le rotte toccate dalla migrazione (`blueprints/*/routes.py`, `auth/api.py`, `profile/api.py`, `sockets/home_events.py`). Come si fa: `regole-codice.md` e, come esempio Python, uno dei file già fatti (per esempio `app/realtime/invites.py`)
+- **Note per gli altri**: **Christian**: guarda la divisione qui sopra e dimmi se ti va bene. **Chi è di turno sui documenti**: il punto del tracker per questo lavoro, con la divisione
+
 ### Commenti e niente zucchero, lotto 2a — Tempo reale: i file piccoli (24/10/2026)
 
 - **Branch**: feature/commenti-realtime-2 (da `dev` a `7d22c95`). Il lotto 2 (tempo reale) è diviso in quattro: **2a** i file piccoli di `app/realtime/`, **2b** `room.py`, **2c** `matchmaking.py`, **2d** `app/sockets/`
