@@ -1,6 +1,6 @@
 """P115: suoni del menu per richiesta di amicizia, messaggio e invito.
 
-Controlla il "Fatto quando" di SCALETTA.md (P115): ognuno dei tre avvisi ha il suo suono,
+Controlla il "Fatto quando" di P115: ognuno dei tre avvisi ha il suo suono,
 diverso dagli altri (frontend/src/utils/sounds.ts), e parte quando arriva l'avviso: friends:changed con
 "request_received" (non con gli altri motivi), chat:message di un amico (non i propri
 messaggi mandati da un'altra scheda), invite:received nella home; con l'interruttore

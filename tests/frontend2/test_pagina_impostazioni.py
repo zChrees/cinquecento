@@ -1,4 +1,4 @@
-"""Passo 6 della migrazione: la pagina delle impostazioni in React (frontend/src/pages/SettingsPage.tsx).
+"""P17: la pagina delle impostazioni (frontend/src/pages/SettingsPage.tsx).
 
 Nel browser (Chrome o Edge senza finestra), con il server vero e il database dei test,
 svuotato e ricreato qui con migrate.py (come test_chat_pannello.py): ogni prova
@@ -157,7 +157,7 @@ def test_cancellazione_con_la_password(browser, server, app):
     browser.send("Input.dispatchKeyEvent", type="keyDown", key="Enter", code="Enter", windowsVirtualKeyCode=13, text="\r")
     browser.send("Input.dispatchKeyEvent", type="keyUp", key="Enter", code="Enter", windowsVirtualKeyCode=13)
     browser.wait_js("location.pathname === '/' && document.readyState === 'complete'", "home dopo la cancellazione", 30)
-    # Dal passo 7d la home è React: il messaggio arriva un attimo dopo, con la risposta di
+    # Nella home il messaggio arriva un attimo dopo, con la risposta di
     # /api/auth/session, quindi si aspetta che compaia invece di cercarlo subito
     browser.wait_js("(document.querySelector('[data-flash]')?.textContent ?? '').includes('Account cancellato')",
                     "messaggio dell'account cancellato", 10)

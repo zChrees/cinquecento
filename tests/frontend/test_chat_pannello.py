@@ -2,13 +2,13 @@
 
 I controlli della chat (campo visibile a 360 px e limiti,
 non letti azzerati, fuoco dopo "Invia", doppio clic, "indietro", pochi messaggi in
-fondo, trascinamento) li fa ora tests/frontend/test_spa_chat.py sulla chat React. Qui
-resta, sulla home React (/), quello che lì non c'è: con molti messaggi l'elenco scorre
+fondo, trascinamento) li fa tests/frontend/test_finestra_chat.py. Qui c'è, sulla
+home (/), quello che lì non c'è: con molti messaggi l'elenco scorre
 fino al primo (lo spazio vuoto in alto di P128 non li rende irraggiungibili).
 Nel browser (Chrome o Edge senza finestra, tests/browser.py), con il server vero e il
 database dei test, svuotato e ricreato qui con migrate.py: Mario e Giulia sono amici,
-Giulia ha mandato 3 messaggi non letti. _migrate la usano anche test_spa_chat.py,
-test_spa_home_coda.py e test_spa_impostazioni.py.
+Giulia ha mandato 3 messaggi non letti. _migrate la usano anche test_finestra_chat.py,
+test_home_coda.py e test_pagina_impostazioni.py.
 Se né Chrome né Edge sono installati, o manca il build della SPA, i controlli si saltano.
 """
 

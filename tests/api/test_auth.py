@@ -1,8 +1,8 @@
 """P16: registrazione, login e logout.
 
-Dal passo 4 della migrazione le pagine /auth/login e /auth/register sono della SPA e i
-dati vanno alle rotte JSON /api/auth/ (app/blueprints/auth/api.py): i controlli sono
-quelli di prima, sulle risposte JSON. L'aspetto delle pagine lo controlla
+Le pagine /auth/login e /auth/register sono della SPA e i dati vanno alle rotte JSON
+/api/auth/ (app/blueprints/auth/api.py): i controlli guardano le risposte JSON.
+L'aspetto delle pagine lo controlla
 tests/frontend/test_pagine_accesso.py.
 
 Serve MySQL con scripts/setup_db.sql già lanciato: si usa SOLO il database dei
@@ -125,7 +125,7 @@ def test_registrazione_ok_entra_e_torna_alla_home(app, client):
     response = register(client)
     assert redirect_of(response) == "/"
     assert logged_in(client)
-    # Il messaggio la home React lo legge da GET /api/auth/session (dal lotto 9b-1)
+    # Il messaggio la home lo legge da GET /api/auth/session
     flashes = client.get("/api/auth/session").get_json()["data"]["flashes"]
     assert [flash["message"] for flash in flashes] == ["Benvenuto, Mario!"]
     [user] = users(app)
@@ -298,7 +298,7 @@ def test_logout_solo_con_post(client):
     assert logged_in(client)
 
 
-# Lotto 9c: il logout è una rotta JSON sotto /api/, come le altre della SPA
+# Il logout è una rotta JSON sotto /api/, come le altre della SPA
 def test_logout_risponde_in_json_e_toglie_il_login(client):
     register(client)
     response = client.post("/api/auth/logout", json={})
@@ -456,7 +456,7 @@ def test_richieste_senza_codice_csrf_rifiutate():
     assert login(client).status_code == 403
 
 
-# --- Rotte JSON della SPA (passo 4 della migrazione) ---
+# --- Rotte JSON della SPA ---
 
 
 def test_le_pagine_di_prima_non_accettano_piu_moduli(client):

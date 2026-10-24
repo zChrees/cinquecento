@@ -1,12 +1,11 @@
 """P43: immagini degli avatar.
 
-Controlla il "Fatto quando" di SCALETTA.md (P43): ogni avatar di
+Controlla il "Fatto quando" di P43: ogni avatar di
 app/services/avatars.py ha la sua immagine (app/static/img/avatars/<codice>.svg);
 chi non ne ha scelto uno vede l'iniziale; il peso totale è sotto 300 KB.
-Controlla anche che frontend/src/game/SeatAvatar.tsx (l'avatar al tavolo React, dal
-passo 8a) conosca gli stessi codici del server, che i componenti usino Avatar.tsx o
+Controlla anche che frontend/src/game/SeatAvatar.tsx (l'avatar al tavolo) conosca gli stessi codici del server, che i componenti usino Avatar.tsx o
 SeatAvatar.tsx invece di calcolare l'iniziale da sé, che navbar e pannello statistiche
-della home React mostrino l'immagine o l'iniziale, e che al tavolo di prova
+della home mostrino l'immagine o l'iniziale, e che al tavolo di prova
 (/game/prova?demo=2v2) le immagini si carichino e un codice fuori elenco mostri
 l'iniziale. Nel browser: Chrome o Edge senza finestra (tests/browser.py); senza
 browser, o senza il build della SPA, quei controlli si saltano.
@@ -78,8 +77,8 @@ def test_immagini_servite(app):
 
 
 def test_seat_avatar_tsx_conosce_gli_stessi_codici_del_server():
-    # Passo 8a: la terza copia dell'elenco, per l'avatar al tavolo React (codice fuori
-    # elenco → iniziale); si legge come testo, senza Node
+    # La seconda copia dell'elenco, per l'avatar al tavolo (codice fuori elenco →
+    # iniziale); si legge come testo, senza Node
     code = SEAT_AVATAR_TSX.read_text(encoding="utf-8")
     found = re.search(r"export const AVATAR_CODES: readonly string\[\] = \[(.*?)\];", code, flags=re.DOTALL)
     assert found, "AVATAR_CODES non trovato in SeatAvatar.tsx"
@@ -88,7 +87,7 @@ def test_seat_avatar_tsx_conosce_gli_stessi_codici_del_server():
 
 def test_componenti_usano_avatar_tsx():
     # Un solo posto decide immagine o iniziale: nessun componente la ricalcola da sé.
-    # Dal lotto 9b-2 i componenti React: Avatar.tsx fuori dal tavolo, SeatAvatar.tsx al tavolo
+    # Avatar.tsx fuori dal tavolo, SeatAvatar.tsx al tavolo
     components = ROOT / "frontend" / "src" / "components"
     for name in ("FriendRows.tsx", "ModeModal.tsx", "QueueOverlay.tsx", "Navbar.tsx", "StatsSheet.tsx"):
         code = (components / name).read_text(encoding="utf-8")
@@ -143,8 +142,8 @@ def test_senza_avatar_resta_l_iniziale(tmp_path):
     assert stats == {"cls": "avatar avatar--big", "code": None, "aria": "true", "text": "M", "img": None}
 
 def test_impostazioni_ricevono_tutti_gli_avatar(app):
-    # Dal passo 6 della migrazione la pagina è della SPA: l'elenco lo dà GET /api/profile/avatars
-    # (un'immagine per scelta la controlla tests/frontend2/test_spa_impostazioni.py nel browser)
+    # La pagina è della SPA: l'elenco lo dà GET /api/profile/avatars
+    # (un'immagine per scelta la controlla tests/frontend2/test_pagina_impostazioni.py nel browser)
     with app.test_request_context("/api/profile/avatars"):
         login_user(BrowserUser("Mario"))
         body = app.view_functions["profile_api.avatars"]()

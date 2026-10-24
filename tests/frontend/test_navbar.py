@@ -1,14 +1,13 @@
 """P40: navbar, pannello statistiche, finestra "Accedi o registrati", immagini delle carte.
 
-Controlla il "Fatto quando" di SCALETTA.md (P40): la navbar ha avatar, nome del
+Controlla il "Fatto quando" di P40: la navbar ha avatar, nome del
 gioco e pulsante amici; ogni pulsante con sola icona ha un'etichetta accessibile;
 il pannello statistiche ha Impostazioni, Esci e i crediti delle immagini (D37), che
 ci sono anche nella finestra "Accedi o registrati" (D39). Controlla anche che le
 immagini di app/static/img/cards-bg/ siano quelle del prototipo.
-Dal lotto 9b-2 della migrazione la navbar è quella React (Navbar.tsx, StatsSheet.tsx,
-LoginPrompt.tsx): la pagina la disegna la SPA nel browser (Chrome o Edge senza
-finestra, tests/browser.py), e i controlli guardano l'HTML che ne esce, lo stesso di
-prima (fino al 9b-2 si leggeva il template della home Jinja). Senza browser, o senza
+La navbar (Navbar.tsx, StatsSheet.tsx, LoginPrompt.tsx) la disegna la SPA nel
+browser (Chrome o Edge senza finestra, tests/browser.py), e i controlli guardano
+l'HTML che ne esce. Senza browser, o senza
 il build della SPA, quei controlli si saltano.
 Non serve MySQL: l'utente con il login è finto (running_server con FakeUser).
 """
@@ -149,9 +148,9 @@ def test_pannello_statistiche_con_impostazioni_esci_e_crediti(user_home):
     assert "data-animated" in sheet and "data-stats-body" in sheet
     assert 'href="/profile/settings"' in sheet and "Impostazioni" in sheet
     # Esci: un pulsante di un modulo, non un link (un altro sito non può far uscire
-    # l'utente). Dal lotto 9c il modulo non va al server da solo: niente action né
+    # l'utente). Il modulo non va al server da solo: niente action né
     # campo csrf_token, la richiesta POST /api/auth/logout la manda la pagina
-    # (provata in test_spa.py, test_esci_manda_la_richiesta_e_ricarica_la_home)
+    # (provata in test_frontend_servito.py, test_esci_manda_la_richiesta_e_ricarica_la_home)
     logout = re.search(r'<form class="sheet__logout">.*?</form>', sheet, flags=re.DOTALL)
     assert logout, "Esci deve essere un modulo"
     assert "<input" not in logout.group(0)

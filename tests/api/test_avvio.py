@@ -20,8 +20,7 @@ def app():
 
 
 def test_l_applicazione_risponde(app):
-    # Fino al lotto 9b-1 la home Jinja con data-stato="ok"; ora la rotta che la SPA
-    # chiama per prima, che non vuole né il build né MySQL
+    # La rotta che la SPA chiama per prima, che non vuole né il build né MySQL
     response = app.test_client().get("/api/auth/session")
     assert response.status_code == 200
     assert response.get_json()["ok"] is True

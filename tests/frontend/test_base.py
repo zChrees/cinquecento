@@ -1,14 +1,13 @@
 """P19: base grafica comune (la pagina della SPA, base.html delle pagine di errore, CSS di base).
 
-Controlla le regole di SCALETTA.md (P19) e di CLAUDE.md ("Pagine web"):
+Controlla le regole di P19 e di CLAUDE.md ("Pagine web"):
 meta viewport, un solo script, risorse esterne solo da Google Fonts (elenco in
 docs/prototipo/LEGGIMI.md), colori scritti a mano solo in variables.css e uguali al
 prototipo, testo mai inserito come HTML, niente alert / confirm / prompt.
-Dal lotto 9b-2 della migrazione le pagine sono della SPA: la <head> comune è
-frontend/index.html, il codice è in frontend/src/, e base.html resta solo per le
-pagine di errore (errors/404.html e 500.html). I messaggi del server (flash) li
-disegna FlashList.tsx: li provano test_auth.py (forma) e test_pagine_accesso.py
-(nel browser, con il ruolo giusto); fino al 9b-2 qui c'era partials/flash.html.
+Le pagine sono della SPA: la <head> comune è frontend/index.html, il codice è in
+frontend/src/, e base.html serve solo alle pagine di errore (errors/404.html e
+500.html). I messaggi del server (flash) li disegna FlashList.tsx: li provano
+test_auth.py (forma) e test_pagine_accesso.py (nel browser, con il ruolo giusto).
 Non serve MySQL.
 """
 

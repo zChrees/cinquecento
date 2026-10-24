@@ -1,12 +1,11 @@
 """P20, P35: le carte (nomi, semi, immagini).
 
-Controlla il "Fatto quando" di SCALETTA.md (P20): ogni carta ha data-suit e data-rank
+Controlla il "Fatto quando" di P20: ogni carta ha data-suit e data-rank
 stabili; i semi e i nomi delle carte sono quelli del motore (app/game/engine/cards.py)
 e del contratto ({"suit", "rank"}, rank da 1 a 10); e (P35) le 40 immagini delle carte
 vere, leggere e con la licenza.
-Dal lotto 9b-2 della migrazione le carte sono quelle del tavolo React:
-frontend/src/game/cards.ts (nomi, semi, indirizzi) e CardView.tsx (il disegno). Le
-costanti si leggono come testo (scelta 3 del passo 9), senza Node. I controlli sul
+Le carte sono quelle del tavolo: frontend/src/game/cards.ts (nomi, semi, indirizzi)
+e CardView.tsx (il disegno). Le costanti si leggono come testo, senza Node. I controlli sul
 comportamento di checkCard (una carta fuori elenco si rifiuta, le 40 si accettano) e
 di cardName eseguono cards.ts con Node, che dalla versione 24 toglie da solo i tipi
 di TypeScript (cards.ts ha solo "import type", quindi non serve compilarlo); senza

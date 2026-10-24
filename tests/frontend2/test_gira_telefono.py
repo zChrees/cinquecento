@@ -1,6 +1,6 @@
 """P116: sul telefono in orizzontale l'avviso "Gira il telefono in verticale".
 
-Controlla il "Fatto quando" di SCALETTA.md (P116): a misure di telefono in orizzontale
+Controlla il "Fatto quando" di P116: a misure di telefono in orizzontale
 (844×390, 667×375, 640×360) l'avviso copre tutta la pagina, su ogni pagina (home,
 tavolo, impostazioni, accesso, registrazione, pagina che non esiste), anche sopra una
 finestra aperta (pannello amici); in verticale, sul tablet e da computer non c'è.

@@ -1,4 +1,4 @@
-"""P48: la chat vera nel pannello amici (dal lotto 9b-1 quella React, ChatWindow.tsx).
+"""P48: la chat vera nel pannello amici (ChatWindow.tsx).
 
 Nel browser (Chrome o Edge senza finestra, tests/browser.py), con il server vero e il
 database dei test (svuotato e ricreato qui con migrate.py, come nella suite sockets):

@@ -1,4 +1,4 @@
-"""Passo 2 della migrazione (docs/MIGRAZIONE-FRONTEND.md): i tipi TypeScript del contratto.
+"""I tipi TypeScript del contratto (frontend/src/types/).
 
 I tipi in frontend/src/types/ copiano docs/CONTRATTO-SOCKET.md. Qui si controlla che
 gli esempi del contratto (app/static/dev/*.json) li rispettino davvero: ogni esempio
@@ -144,7 +144,7 @@ def test_un_campo_mancante_o_in_piu_si_vede(tmp_path):
     assert "version" in output and "streak" in output, output
 
 
-# --- Passo 3: on() e send() usano i tipi -------------------------------------------
+# --- on() e send() di socket/client.ts usano i tipi --------------------------------
 
 # client.ts si importa dal progetto con il percorso completo: così trova socket.io-client
 # in frontend/node_modules, mentre il file di prova resta nella cartella temporanea

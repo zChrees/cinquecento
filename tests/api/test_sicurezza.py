@@ -75,7 +75,7 @@ def test_nessuno_script_scritto_nella_pagina(client, path):
 def test_richieste_json_senza_csrf_rifiutate(client, method, path, body):
     response = getattr(client, method)(path, json=body)
     assert response.status_code == 400, path
-    # dal lotto 9c sono tutte sotto /api/: il rifiuto arriva in JSON (contratto 2.2)
+    # sono tutte sotto /api/: il rifiuto arriva in JSON (contratto 2.2)
     assert response.get_json()["error"]["code"] == "invalid_data", path
 
 

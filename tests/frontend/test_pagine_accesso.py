@@ -1,9 +1,8 @@
-"""P125, P126 e passo 4 della migrazione: le pagine di accesso e registrazione (SPA).
+"""P16, P125, P126: le pagine di accesso e registrazione.
 
-Dal passo 4 le due pagine le disegna React (frontend/src/pages/LoginPage.tsx e
-RegisterPage.tsx) e i dati vanno a /api/auth/login e /api/auth/register. Qui si
-controlla, in Chrome o Edge senza finestra (tests/browser.py, saltato se nessuno dei
-due è installato), che si comportino come le pagine Jinja di prima:
+Le due pagine le disegna React (frontend/src/pages/LoginPage.tsx e RegisterPage.tsx)
+e i dati vanno a /api/auth/login e /api/auth/register. Qui si controlla, in Chrome o
+Edge senza finestra (tests/browser.py, saltato se nessuno dei due è installato):
 - "Accedi" e "Amici" aprono la finestra "Accedi o registrati per giocare";
 - un doppio clic (due clic a 0,15 s) manda una sola richiesta;
 - senza connessione il modulo non parte e compare "Nessuna connessione";

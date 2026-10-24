@@ -30,7 +30,7 @@ import { newRequestId } from '../utils/requestId';
 import { PRESENCE_LABEL } from './FriendRows';
 
 // MAX_LENGTH: il massimo di caratteri di un messaggio (D26), come CHAT_MAX_LENGTH di
-// config.py (lo controlla tests/frontend/test_spa_chat.py)
+// config.py (lo controlla tests/frontend/test_finestra_chat.py)
 export const MAX_LENGTH = 1000;
 
 // CHAT_CLOSED: perché non si può più scrivere (cannot_write di chat:history) → la

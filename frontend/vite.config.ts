@@ -30,7 +30,7 @@ const FLASK = 'http://localhost:5000';
 // immagini, font, suoni) e il tempo reale (/socket.io). Tutto il resto è una pagina
 // della SPA e lo serve Vite, anche un indirizzo che non esiste (React disegna
 // "Pagina non trovata"), come fa Flask in produzione. Deve restare uguale a NOT_SPA
-// di app/blueprints/spa/routes.py (lo controlla tests/frontend/test_spa.py).
+// di app/blueprints/spa/routes.py (lo controlla tests/frontend/test_frontend_servito.py).
 // La / dopo api e static serve perché Vite confronta solo l'inizio: senza,
 // anche /apice andrebbe a Flask.
 const FLASK_PATHS: string[] = ['/api/', '/static/', '/socket.io'];

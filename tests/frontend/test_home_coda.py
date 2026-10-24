@@ -1,5 +1,4 @@
-"""Passo 7b della migrazione: carta-modal, coda e CPU nella home React (dal passo 7d su /;
-prima /prova-home).
+"""P22, P28, P73: carta-modal, coda e CPU nella home (frontend/src/pages/HomePage.tsx).
 
 Nel browser (Chrome o Edge senza finestra), con il server vero e il database dei test,
 svuotato e ricreato qui con migrate.py (come test_chat_pannello.py: la suite frontend
@@ -17,7 +16,7 @@ Controlla:
 - con "CPU" (1v1 e 2v2) si va subito al tavolo, senza coda;
 - connessione persa (P33): la schermata di coda si chiude, si esce dalla coda e "Gioca"
   è spento finché la connessione non torna.
-Gli inviti ("Gioca con un amico", 7c) stanno in tests/frontend2/test_spa_home_inviti.py.
+Gli inviti ("Gioca con un amico") stanno in tests/frontend2/test_home_inviti.py.
 Senza browser, o senza il build della SPA, i controlli si saltano.
 """
 
@@ -46,7 +45,7 @@ from tests.browser import (
 from tests.frontend.test_chat_pannello import _migrate
 from tests.spa import needs_spa
 
-PAGE = "/"  # dal passo 7d (fino al 7c era /prova-home)
+PAGE = "/"
 PASSWORD = "Password-di-prova-7b"
 SOCKET_ROUTE = "*/socket.io/*"
 # Come test_csp.py: registra ogni risorsa bloccata dalla CSP
@@ -150,10 +149,6 @@ def _join(browser, mode="1v1", target=150):
 # --- Carta-modal ---------------------------------------------------------------
 
 
-# Fino al lotto 9b-1 i due test qui sotto confrontavano anche la carta-modal, elemento per
-# elemento, con quella della home Jinja: tolto con la home Jinja (scelta 2 del passo 9).
-
-
 @pytest.mark.parametrize("mode", ["1v1", "2v2"])
 def test_carta_modal_della_partita_veloce(browser, server, mode):
     browser.open(f"{server}{PAGE}", 390, 844, READY, timeout=60)
@@ -167,13 +162,12 @@ def test_carta_modal_della_partita_veloce(browser, server, mode):
 
 @pytest.mark.parametrize("mode", ["1v1", "2v2"])
 def test_carta_modal_con_un_amico(browser, server, mode):
-    # 7c: "Gioca con un amico" (Mario non ha amici: "Nessun amico online in questo momento.")
+    # "Gioca con un amico" (Mario non ha amici: "Nessun amico online in questo momento.")
     browser.open(f"{server}{PAGE}", 390, 844, READY, timeout=60)
     _click(browser, f'[data-tile][data-kind="amico"][data-mode="{mode}"]')
     browser.wait_js(f"{MODAL_OPEN} && document.querySelector('.invite__empty') !== null", "carta-modal con un amico")
     assert browser.js("document.querySelector('[data-play]').disabled") is True
-    # P73: la scelta "Avversario" (Giocatore o CPU) c'è solo nella Partita Veloce (fino al
-    # lotto 9b-1 lo controllava per la home Jinja test_pagina_home.py)
+    # P73: la scelta "Avversario" (Giocatore o CPU) c'è solo nella Partita Veloce
     assert browser.js("document.querySelector('[data-mode-modal] fieldset[data-opponent]').hidden") is True
     assert browser.js("window.__csp") == []
 

@@ -1,10 +1,10 @@
 """P22: home (carte-pulsante, carta-modal, online, sfondo): i controlli rimasti qui.
 
-Quasi tutti i controlli della home li fanno, sulla home React (/), i file
-tests/frontend2/test_spa_home.py (pagina, ?demo=, senza e con il login, rientro),
-tests/frontend/test_spa_home_misure.py (la home non scorre, sfondo, carta-modal che
-contiene tutto) e tests/frontend/test_spa_home_coda.py (coda, CPU, connessione persa).
-Qui restano, sulla home React:
+Quasi tutti i controlli della home (/) li fanno i file
+tests/frontend2/test_home.py (pagina, ?demo=, senza e con il login, rientro),
+tests/frontend/test_home_misure.py (la home non scorre, sfondo, carta-modal che
+contiene tutto) e tests/frontend/test_home_coda.py (coda, CPU, connessione persa).
+Qui ci sono:
 - i CSS della home caricati dalla SPA, che esistono, e le immagini che usano;
 - "Lo sapevi?" con i termini del regolamento (cantare 40 / 20, mai "matrimonio");
 - la scelta dell'avversario solo nella Partita Veloce, con le parole del 1v1 e del 2v2
@@ -57,7 +57,6 @@ def test_immagini_usate_dai_css_esistono():
 
 def test_consigli_del_modal_dal_regolamento():
     # "Lo sapevi?" usa i termini del regolamento: cantare 40 / 20, mai "matrimonio"
-    # (dal lotto 9b-1 nella carta-modal React)
     code = (ROOT / "frontend" / "src" / "components" / "ModeModal.tsx").read_text(encoding="utf-8")
     assert "matrimonio" not in code.lower()
     rules = (ROOT / "docs" / "REGOLE-GIOCO.md").read_text(encoding="utf-8")
@@ -151,7 +150,7 @@ def test_scelta_dell_avversario_solo_nella_partita_veloce(logged_in, server):
 def test_contro_la_cpu_nel_2v2_i_testi(logged_in, server):
     # P123 (D49): con "Gioca con: CPU" cambiano descrizione e "In breve" e sparisce la frase
     # dei punti; tornando a "Giocatori" torna tutto. Che "Gioca" porti al tavolo 2v2 con le
-    # tre CPU lo controlla test_spa_home_coda.py (test_contro_la_cpu_si_va_subito_al_tavolo)
+    # tre CPU lo controlla test_home_coda.py (test_contro_la_cpu_si_va_subito_al_tavolo)
     logged_in.open(f"{server}/", 1440, 900, HOME_READY)
     _open_modal(logged_in, "veloce", "2v2")
     _click(logged_in, 'input[name="opponent"][value="cpu"]')

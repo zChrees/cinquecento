@@ -1,23 +1,22 @@
-"""Passo 1 della migrazione (docs/MIGRAZIONE-FRONTEND.md): la SPA servita da Flask.
+"""Il frontend React (la SPA) servito da Flask.
 
 Controlla:
-- regola unica (lotto 9d): Flask manda la SPA per ogni GET a un indirizzo senza rotta
+- regola unica: Flask manda la SPA per ogni GET a un indirizzo senza rotta
   fuori da /api/, /static/ e /socket.io; un indirizzo con la / in fondo si rimanda a
   quello senza; i prefissi che restano a Flask sono gli stessi in Flask (NOT_SPA) e
   in Vite (FLASK_PATHS); in React ogni pagina distingue le maiuscole e c'è la pagina
   "non trovata", che nel browser ha la navbar e riporta alla home;
 - Flask manda index.html del build, da richiedere ogni volta (no-cache), con la CSP;
   senza build risponde 503 con un messaggio chiaro; la pagina di prova /prova-react
-  non c'è più (tolta con il passo 6);
+  non deve tornare;
 - con Node e frontend/node_modules: TypeScript non trova errori, il build vero
   (in una cartella temporanea, fuori dal progetto) non ha script né stili scritti
   dentro la pagina, e nel browser React disegna la pagina di accesso e la CSP non
   blocca niente. Senza Node o senza `npm ci` questi si saltano;
-- passo 3 (frontend/src/socket/): senza login la pagina non si collega al tempo
-  reale; con il login (le impostazioni, dal passo 6) si collega. Il controllo su
-  home:status della pagina di prova è tornato con la home (7a, test_spa_home.py);
-  quello su queue:leave torna con la coda (7b);
-- passo 5a (la cornice con il login): la navbar ha nome e avatar, il pannello
+- tempo reale (frontend/src/socket/): senza login la pagina non si collega; con il
+  login (le impostazioni) si collega. home:status lo controlla test_home.py, la coda
+  test_home_coda.py;
+- la cornice con il login: la navbar ha nome e avatar, il pannello
   statistiche si apre con i numeri e si chiude, "Esci" porta il codice CSRF; scollegati
   dal server compare l'avviso "Sei stato scollegato" con "Ricarica".
 """
@@ -61,7 +60,7 @@ def fake_dist(monkeypatch, tmp_path):
     return tmp_path
 
 
-# --- Indirizzi (regola unica, lotto 9d) ---------------------------------------
+# --- Indirizzi (regola unica) -------------------------------------------------
 
 # INDEX: un index.html finto, riconoscibile dal suo <div id="root">
 INDEX = '<!doctype html><div id="root"></div>'
@@ -74,7 +73,7 @@ def test_stessi_prefissi_in_flask_e_in_vite():
     assert found, "FLASK_PATHS non trovato in vite.config.ts"
     paths = re.findall(r"'([^']+)'", found.group(1))
     assert [path.strip("/") for path in paths] == list(routes.NOT_SPA)
-    # Niente più elenchi delle pagine (fino al lotto 9d SPA_PATHS, GAME_TABLE, flaskPattern)
+    # Nessun elenco delle pagine: SPA_PATHS, GAME_TABLE e flaskPattern non devono tornare
     for name in ("SPA_PATHS", "GAME_TABLE", "flaskPattern"):
         assert name not in code, name
     assert not hasattr(routes, "SPA_PATHS")
@@ -114,10 +113,10 @@ def test_regola_unica_manda_la_spa(app, fake_dist, url):
 
 
 @pytest.mark.parametrize(("method", "url", "status", "kind"), [
-    # /api/: 404 in JSON (contratto 1.2); /api senza / come prima, pagina di errore
+    # /api/: 404 in JSON (contratto 1.2); /api senza / è la pagina di errore
     ("get", "/api/non-esiste", 404, "json"),
     ("get", "/api", 404, "html"),
-    # file statici che mancano: la pagina di errore Jinja
+    # file statici che mancano: la pagina di errore (base.html)
     ("get", "/static/non-esiste.css", 404, "html"),
     ("get", "/static", 404, "html"),
     # un 404 deciso da una rotta resta 404 (?demo= sbagliato sulla home)
@@ -125,7 +124,7 @@ def test_regola_unica_manda_la_spa(app, fake_dist, url):
     # solo GET: un POST o un DELETE a un indirizzo che non esiste resta 404
     ("post", "/pagina-a-caso", 404, "html"),
     ("delete", "/pagina-a-caso", 404, "html"),
-    # metodo sbagliato su una rotta che esiste: 405 come prima
+    # metodo sbagliato su una rotta che esiste: 405
     ("post", "/auth/login", 405, None),
     ("get", "/api/auth/logout", 405, None),
 ])
@@ -189,8 +188,8 @@ def test_senza_build_errore_chiaro(app, fake_dist):
 
 
 def test_pagina_di_prova_tolta(app):
-    # Passo 6: /prova-react serviva finché non c'era una pagina vera con il login.
-    # Dal lotto 9d risponde la SPA come ogni indirizzo senza rotta (React: "non trovata")
+    # /prova-react non è una rotta: risponde la SPA come ogni indirizzo senza rotta
+    # (React: "non trovata")
     assert "/prova-react" not in {rule.rule for rule in app.url_map.iter_rules()}
     assert "prova-react" not in ROUTES_TSX.read_text(encoding="utf-8")
     assert not (FRONTEND / "src" / "pages" / "TestPage.tsx").exists()
@@ -241,7 +240,7 @@ def spa_app(monkeypatch, build):
 
     @app.before_request
     def fake_stats():
-        # Passo 5a: le statistiche finte, così il test non ha bisogno del database
+        # Le statistiche finte, così il test non ha bisogno del database
         from flask import request
         if request.path == "/api/stats/me":
             return {"ok": True, "data": STATS_EXAMPLE}
@@ -265,7 +264,7 @@ def test_nel_browser_react_disegna_e_la_csp_non_blocca(spa_server, tmp_path):
         browser.open(f"{spa_server}/auth/login", 390, 844, ready="document.querySelector('h1') !== null")
         assert browser.js("document.querySelector('h1').textContent") == "Accedi"
         assert browser.js("window.__csp") == []
-        # Passo 3: senza login la pagina non apre il collegamento al tempo reale
+        # Senza login la pagina non apre il collegamento al tempo reale
         browser.js("new Promise((r) => setTimeout(r, 500))")
         requests = browser.js("performance.getEntriesByType('resource').map((e) => e.name)")
         assert not [name for name in requests if "/socket.io/" in name], requests
@@ -275,7 +274,7 @@ def test_nel_browser_react_disegna_e_la_csp_non_blocca(spa_server, tmp_path):
 
 @pytest.mark.parametrize("path", ["/pagina-a-caso", "/Profile/Settings", "/game/prova/altro"])
 def test_nel_browser_pagina_non_trovata(spa_server, tmp_path, path):
-    # Lotto 9d: React disegna "Pagina non trovata" con la navbar, e "Torna alla home"
+    # React disegna "Pagina non trovata" con la navbar, e "Torna alla home"
     # porta alla home senza ricaricare; la CSP non blocca niente
     browser = Browser(find_browser(), tmp_path)
     try:
@@ -301,7 +300,7 @@ def test_nel_browser_pagina_non_trovata(spa_server, tmp_path, path):
 
 
 def test_nel_browser_tempo_reale_con_il_login(spa_server, tmp_path):
-    # Passo 3 (frontend/src/socket/), dal passo 6 sulle impostazioni: con il login la pagina si collega
+    # frontend/src/socket/, sulle impostazioni: con il login la pagina si collega
     browser = Browser(find_browser(), tmp_path)
     try:
         browser.send("Network.setCookie", name=TEST_COOKIE[0], value=TEST_COOKIE[1], url=spa_server)
@@ -315,7 +314,7 @@ def test_nel_browser_tempo_reale_con_il_login(spa_server, tmp_path):
 
 
 def test_esci_manda_la_richiesta_e_ricarica_la_home(spa_server, tmp_path):
-    # Lotto 9c: "Esci" manda POST /api/auth/logout con il codice CSRF nell'intestazione.
+    # "Esci" manda POST /api/auth/logout con il codice CSRF nell'intestazione.
     # La risposta la dà il browser (routes), perché con l'utente finto di running_server
     # il logout vero non cambierebbe niente: la prima volta un errore del server (il
     # pulsante si riaccende e si resta nella pagina), la seconda ok (si ricarica la home)
@@ -349,7 +348,7 @@ def test_esci_manda_la_richiesta_e_ricarica_la_home(spa_server, tmp_path):
     assert all(call["csrf"] for call in calls), calls
 
 
-# CONNECTED: la pagina è collegata al tempo reale (lo dice il pannello amici, dal passo 6)
+# CONNECTED: la pagina è collegata al tempo reale (lo dice il pannello amici)
 CONNECTED = "document.querySelector('[data-friends-panel]')?.dataset.connection === 'connected'"
 # STATS_OPEN: il pannello statistiche è aperto e mostra le partite giocate
 STATS_OPEN = "document.getElementById('stats').open && document.querySelector('[data-stat=\"Partite\"] dd')?.textContent"
@@ -373,8 +372,8 @@ def test_cornice_con_il_login(spa_server, spa_app, tmp_path):
         browser.wait_js(f"{STATS_OPEN} === '{STATS_EXAMPLE['games']}'", "statistiche nel pannello")
         assert browser.js("document.getElementById('stats-title').textContent") == "Mario"
         assert browser.js("document.querySelector('[data-stat=\"Vittorie\"] dd').textContent") == "55%"
-        # Lotto 9c: Esci non è più un modulo che va al server da solo (niente action
-        # né csrf_token): la richiesta la manda la pagina (test qui sotto)
+        # Esci è un modulo che non va al server da solo (niente action né csrf_token):
+        # la richiesta la manda la pagina (test qui sotto)
         logout = browser.js("""(() => { const f = document.querySelector('.sheet__logout');
           return { action: f.getAttribute('action'), inputs: f.querySelectorAll('input').length,
                    button: f.querySelector('[data-logout]') !== null }; })()""")

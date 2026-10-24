@@ -1,16 +1,15 @@
 """P21: pagina del tavolo di gioco con le viste finte (?demo=1v1, ?demo=2v2).
 
-Controlla il "Fatto quando" di SCALETTA.md (P21): la pagina risponde e contiene i
+Controlla il "Fatto quando" di P21: la pagina risponde e contiene i
 marcatori data-*; con le viste finte il tavolo si disegna e le carte non giocabili
 sono disattivate. Il disegno vero si controlla aprendo la pagina con Chrome o Edge
 senza finestra (--dump-dom), su un server di prova alla porta 5099; se nessuno dei
 due è installato quei controlli si saltano. Non serve MySQL: il login è spento
 (LOGIN_DISABLED) tranne nel controllo che lo richiede.
-Passo 8 della migrazione: dal lotto 8h l'indirizzo dà la pagina della SPA (il tavolo
-React), in tutti gli ambienti, con le stesse regole di ?demo=. Dal lotto 9a il
-template Jinja non c'è più: ?ui= si ignora come ogni altro parametro (scelta di
-Christian), la SPA carica i CSS che caricava il template, nello stesso ordine, e i
-controlli nel browser aprono il tavolo React (senza il build della SPA si saltano).
+L'indirizzo dà la pagina della SPA (il tavolo React), in tutti gli ambienti, con le
+regole di ?demo=; ?ui= si ignora come ogni altro parametro; la SPA carica i CSS del
+tavolo nell'ordine giusto, e i controlli nel browser aprono il tavolo React (senza
+il build della SPA si saltano).
 """
 
 import json
@@ -32,8 +31,7 @@ from tests.spa import table_path
 ROOT = Path(__file__).resolve().parents[2]
 DEV = ROOT / "app" / "static" / "dev"
 PORT = 5099
-# TABLE_CSS: i CSS del tavolo, nell'ordine in cui li caricava game/table.html (il
-# template tolto al lotto 9a); la SPA li deve caricare nello stesso ordine
+# TABLE_CSS: i CSS del tavolo, nell'ordine in cui la SPA li deve caricare
 TABLE_CSS = [
     "css/components/card.css", "css/components/hand.css", "css/components/table.css",
     "css/components/trick.css", "css/components/scoreboard.css", "css/components/timer.css",
@@ -75,7 +73,7 @@ def test_senza_login_rimanda_all_accesso():
 
 @pytest.fixture
 def fake_spa(monkeypatch, tmp_path):
-    # Una pagina della SPA finta, così non serve il build (come test_spa.py)
+    # Una pagina della SPA finta, così non serve il build (come test_frontend_servito.py)
     from app.blueprints.spa import routes as spa_routes
     (tmp_path / "index.html").write_text('<!doctype html><div id="root"></div>', encoding="utf-8")
     monkeypatch.setattr(spa_routes, "dist_dir", lambda: tmp_path)
@@ -87,8 +85,8 @@ def test_indirizzi_non_validi(client, fake_spa, path):
     assert client.get(path).status_code == 404
 
 
-# Dal lotto 9a ?ui= non vuol dire più niente: con qualsiasi valore è un parametro in
-# più, che si ignora (scelta di Christian), come ?pippo=1
+# ?ui= non vuol dire niente: con qualsiasi valore è un parametro in più, che si
+# ignora, come ?pippo=1
 @pytest.mark.parametrize("path", ["/game/prova", "/game/prova?demo=1v1", "/game/a1b2c3d4?demo=2v2",
                                   "/game/prova?ui=react", "/game/prova?ui=jinja", "/game/prova?ui=jinjax",
                                   "/game/prova?ui=", "/game/a1b2c3d4?ui=jinja&demo=2v2", "/game/prova?pippo=1"])
@@ -100,7 +98,7 @@ def test_tavolo_e_la_pagina_della_spa(client, fake_spa, path):
 
 
 def test_tavolo_ovunque_ma_viste_finte_solo_in_sviluppo_e_test(fake_spa):
-    # Scelta del 20/10: il tavolo React in tutti gli ambienti
+    # Il tavolo c'è in tutti gli ambienti
     app = _app()
     app.config["ENV_NAME"] = "demo"
     assert app.test_client().get("/game/prova").status_code == 200
@@ -109,8 +107,8 @@ def test_tavolo_ovunque_ma_viste_finte_solo_in_sviluppo_e_test(fake_spa):
 
 
 def test_la_spa_carica_i_css_del_tavolo_nello_stesso_ordine(client):
-    # frontend/index.html (la <head> della SPA) deve avere i CSS del tavolo, nello
-    # stesso ordine del template di prima, e ognuno deve esistere
+    # frontend/index.html (la <head> della SPA) deve avere i CSS del tavolo, nell'ordine
+    # di TABLE_CSS, e ognuno deve esistere
     spa = (ROOT / "frontend" / "index.html").read_text(encoding="utf-8")
     loaded = re.findall(r'href="/static/(css/[^"]+)"', spa)
     assert [name for name in loaded if name in TABLE_CSS] == TABLE_CSS

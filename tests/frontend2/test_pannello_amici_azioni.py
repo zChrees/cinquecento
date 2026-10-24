@@ -1,9 +1,8 @@
-"""Passi 5b e 5c della migrazione: il pannello amici in React (frontend/src/components/FriendsPanel.tsx).
+"""P46, P47, P115: il pannello amici (frontend/src/components/FriendsPanel.tsx).
 
-Gli stessi controlli di test_pannello_amici.py (P46, P47) e test_suoni_menu.py (P115),
-sulla pagina della SPA con il login (/profile/settings, dal passo 6):
-- il contatore sull'icona e la lista divisa in gruppi, con lo stesso HTML e gli
-  stessi data-* del pannello di oggi; ogni pulsante con sola icona ha l'etichetta;
+Sulla pagina delle impostazioni (/profile/settings, una pagina con il login):
+- il contatore sull'icona e la lista divisa in gruppi, con i loro data-*; ogni
+  pulsante con sola icona ha l'etichetta;
 - richiesta di amicizia (campo vuoto, errore del server, riuscita) con X-CSRFToken e
   request_id; accetta, rimuovi con la conferma;
 - la lista si rilegge da sola con friends:changed e con un messaggio di un amico, e
@@ -13,9 +12,7 @@ sulla pagina della SPA con il login (/profile/settings, dal passo 6):
   riapre da solo e "indietro" lo chiude ancora (P34).
 
 Le richieste /api/friends/... le intercetta il browser e risponde FakeFriendsServer, qui
-sotto (dati di app/static/dev/amici_esempio.json; fino al lotto 9b-1 stava in
-test_pannello_amici.py), così non serve
-MySQL; la sessione (/api/auth/session) e il tempo reale sono quelli veri del server
+sotto (dati di app/static/dev/amici_esempio.json), così non serve MySQL; la sessione (/api/auth/session) e il tempo reale sono quelli veri del server
 dei test. Senza Chrome o Edge, o senza il build della SPA, i controlli si saltano.
 """
 
@@ -72,7 +69,7 @@ class FakeFriendsServer:
             return 200, {"ok": True, "data": None}
         return 404, {"ok": False, "error": {"code": "not_found", "message": "Non trovato."}}
 
-# PAGE: una pagina della SPA con il login (le impostazioni, dal passo 6)
+# PAGE: una pagina della SPA con il login (le impostazioni)
 PAGE = "/profile/settings"
 # Come test_suoni_menu.py: registra i suoni partiti (anche quelli che il browser non fa sentire)
 RECORD_SOUNDS = (
@@ -156,7 +153,7 @@ def test_contatore_lista_e_azioni(browser, server, friends):
     assert browser.js("document.querySelector('[data-friends-button]').getAttribute('aria-label')") == \
         f"Amici: {total} novità (richieste e messaggi)"
 
-    # La lista, con gli stessi gruppi e gli stessi data-* del pannello di oggi
+    # La lista, con i suoi gruppi e i loro data-*
     _open_panel(browser)
     assert _texts(browser, "[data-requests-in] .friend__name") == ["Toto"]
     assert _texts(browser, "[data-friends-group='online'] .friend__name") == ["Giulia", "Salvo"]

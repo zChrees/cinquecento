@@ -1,6 +1,6 @@
 """P89: rating dei giocatori al tavolo, da computer.
 
-Controlla il "Fatto quando" di SCALETTA.md (P89): a 1280×720 e 1440×900 (e da
+Controlla il "Fatto quando" di P89: a 1280×720 e 1440×900 (e da
 1024 px) ogni giocatore umano ha il suo rating accanto al nome, preso dal campo
 rating della vista (P88); il rating provvisorio ha la pillola tratteggiata, e i
 lettori di schermo sentono "provvisorio"; senza rating (CPU, null) niente pillola;
@@ -10,8 +10,8 @@ che misura le etichette dei giocatori con il rating dentro.
 
 Il tavolo si apre nella prova (/game/prova?demo=1v1 o 2v2) in Chrome o Edge senza
 finestra (tests/browser.py), con le viste di app/static/dev/ mandate con l'evento
-del browser "demo:state". Non serve MySQL. Dal lotto 9a c'è solo il tavolo React
-(senza il build della SPA i test si saltano: table_path di tests/spa.py).
+del browser "demo:state". Non serve MySQL. Senza il build della SPA i test si
+saltano (table_path di tests/spa.py).
 """
 
 import copy

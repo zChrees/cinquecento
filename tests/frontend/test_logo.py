@@ -1,11 +1,10 @@
 """P42: logo nella navbar e icona della scheda del browser.
 
-Controlla il "Fatto quando" di SCALETTA.md (P42): il logo si vede nitido attorno
+Controlla il "Fatto quando" di P42: il logo si vede nitido attorno
 ai 40 px di altezza su telefono e computer e il tocco porta alla home; in più
 l'icona della scheda (SVG, con le copie PNG) è collegata nella pagina della SPA
 (frontend/index.html) e in quelle di errore (base.html), è un SVG valido e usa solo i
-colori della palette. Dal lotto 9b-2 il logo è quello React (Logo.tsx), controllato
-nella pagina di accesso; fino ad allora anche nel template della home Jinja.
+colori della palette. Il logo (Logo.tsx) si controlla nella pagina di accesso.
 I controlli nel browser (Chrome o Edge senza finestra, tests/browser.py) si saltano
 se nessuno dei due è installato o se manca il build della SPA.
 """
@@ -39,7 +38,7 @@ def app():
 
 def _heads(app):
     """Le due <head> del sito: quella della SPA e quella delle pagine di errore (base.html)."""
-    # dal lotto 9d un indirizzo a caso dà la SPA: la 404 Jinja resta per i file statici
+    # un indirizzo a caso dà la SPA: la pagina 404 di base.html c'è per i file statici
     response = app.test_client().get("/static/non-esiste.css")
     error_page = response.get_data(as_text=True)
     response.close()

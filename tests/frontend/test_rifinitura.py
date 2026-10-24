@@ -5,9 +5,8 @@ Controlla le correzioni trovate con un controllo di accessibilità di tutte le p
 - ogni pagina ha un solo titolo principale (<h1>), anche dove si vede solo il logo;
 - le icone dei canti accanto al nome hanno un ruolo, così l'etichetta si legge;
 - al tavolo si gioca una carta con la sola tastiera (Tab e Invio).
-"Indietro" dopo un ricaricamento con il pannello amici aperto lo controllava qui il
-pannello del JS vecchio; dal lotto 9b-1 lo controlla, per quello React,
-tests/frontend2/test_spa_amici.py (test_dopo_un_ricaricamento_non_si_riapre).
+"Indietro" dopo un ricaricamento con il pannello amici aperto lo controlla
+tests/frontend2/test_pannello_amici_azioni.py (test_dopo_un_ricaricamento_non_si_riapre).
 
 Le pagine si aprono in Chrome o Edge senza finestra (tests/browser.py), con un utente
 di prova collegato e senza MySQL. Se né Chrome né Edge sono installati i controlli

@@ -117,8 +117,8 @@ def test_nessuna_icona_in_piu():
 def test_le_pagine_precaricano_il_font_senza_google():
     app = create_app("testing")
     client = app.test_client()
-    # base.html, pagine di errore: dal lotto 9d un indirizzo a caso dà la SPA, la 404
-    # Jinja resta per i file statici che mancano
+    # base.html, pagine di errore: un indirizzo a caso dà la SPA, la pagina 404 di
+    # base.html c'è per i file statici che mancano
     response = client.get("/static/non-esiste.css")
     error_page = response.get_data(as_text=True)
     response.close()

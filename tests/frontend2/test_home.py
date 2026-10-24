@@ -1,12 +1,10 @@
-"""Passo 7a della migrazione: la home React (frontend/src/pages/HomePage.tsx), dal passo 7d su /.
+"""P22: la home (/, frontend/src/pages/HomePage.tsx).
 
 Controlla:
 - / c'è ovunque e accetta solo ?demo=rientro, che vale solo in sviluppo e nei test
   (altrove 404);
 - nel browser, a 390×844 e 1280×720, anche con ?demo=rientro (l'avviso "Hai una
-  partita in corso"), la cascata di carte dello sfondo e la CSP che non blocca niente
-  (fino al lotto 9b-1 qui c'era anche il confronto, elemento per elemento, con la home
-  Jinja: tolto con la home Jinja, scelta 2 del passo 9);
+  partita in corso"), la cascata di carte dello sfondo e la CSP che non blocca niente;
 - senza login: il numero degli online da GET /api/online, nessun collegamento al tempo
   reale, una carta-pulsante apre "Accedi o registrati", la CSP non blocca niente;
 - con il login: il numero da home:status ("1 giocatore online", al singolare), una
@@ -25,7 +23,7 @@ from app.realtime.presence import presence
 from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_server
 from tests.spa import needs_spa
 
-PAGE = "/"  # dal passo 7d (fino al 7c era /prova-home)
+PAGE = "/"
 # Come test_csp.py: registra ogni risorsa bloccata dalla CSP
 RECORD = (
     "window.__csp = [];"
@@ -73,12 +71,11 @@ def test_rientro_finto_solo_in_sviluppo_e_nei_test(app, server, monkeypatch):
     client = app.test_client()
     assert client.get(PAGE).status_code == 200
     assert client.get(f"{PAGE}?demo=rientro").status_code == 200
-    # P22: un ?demo= diverso da rientro è un indirizzo sbagliato (fino al lotto 9b-1 lo
-    # controllava per la home Jinja anche test_pagina_home.py, con coda e vuoto)
+    # P22: un ?demo= diverso da rientro è un indirizzo sbagliato
     for query in ("?demo=altro", "?demo=coda", "?demo=", "?demo=RIENTRO"):
         assert client.get(f"{PAGE}{query}").status_code == 404, query
-    # /prova-home non è più una rotta (dal lotto 9d un indirizzo senza rotta dà la SPA,
-    # dove React dice "Pagina non trovata": non più 404)
+    # /prova-home non è una rotta (un indirizzo senza rotta dà la SPA, dove React dice
+    # "Pagina non trovata")
     assert "/prova-home" not in {rule.rule for rule in app.url_map.iter_rules()}
     # Nella demo e in produzione la home c'è, ma senza ?demo=
     monkeypatch.setitem(app.config, "ENV_NAME", "demo")
@@ -113,7 +110,7 @@ def test_senza_login(browser, server):
     requests = browser.js("performance.getEntriesByType('resource').map((e) => e.name)")
     assert [name for name in requests if name.endswith("/api/online")], requests
     assert not [name for name in requests if "/socket.io/" in name], requests
-    # Una carta-pulsante apre "Accedi o registrati" (P40), non l'avviso del 7a
+    # Una carta-pulsante apre "Accedi o registrati" (P40)
     browser.click("[data-tile][data-kind='amico'][data-mode='2v2']")
     browser.wait_js("document.querySelector('dialog.dialog[open]') !== null", "finestra Accedi o registrati")
     assert browser.js("document.querySelector('dialog.dialog[open] h2').textContent") == "Accedi o registrati per giocare"
@@ -129,7 +126,7 @@ def test_con_il_login(browser, server):
     assert browser.js("document.querySelector('[data-online-label]').textContent") == "giocatore online"
     assert browser.js("document.querySelector('[data-open-stats] .navbar__label').textContent") == "Mario"
     # Con il login una carta-pulsante apre la carta-modal, non "Accedi o registrati"
-    # (carta-modal, coda e inviti: test_spa_home_coda.py e test_spa_home_inviti.py)
+    # (carta-modal, coda e inviti: test_home_coda.py e test_home_inviti.py)
     browser.click("[data-tile][data-kind='amico'][data-mode='2v2']")
     browser.wait_js("document.querySelector('[data-mode-modal]')?.open === true", "carta-modal")
     assert browser.js("document.querySelector('dialog.dialog[open]')") is None

@@ -1,6 +1,6 @@
 """P30: pannello statistiche con i dati veri (GET /api/stats/me, contratto 2.1).
 
-Controlla il "Fatto quando" di SCALETTA.md (P30): dopo partite simulate note, le
+Controlla il "Fatto quando" di P30: dopo partite simulate note, le
 cifre coincidono con quelle attese; un utente vede solo le proprie statistiche; il
 pannello si legge bene a 360 px. Le partite si salvano con match_service.save_match
 (P26), come a fine partita: così anche il rating è calcolato davvero (P27).
@@ -235,7 +235,7 @@ def test_pannello_a_360_px_con_i_dati_veri(app, players, tmp_path):
     _save(app, "1v1", (mario, turi), 0, number=3)
     expected = mario.stats()
 
-    needs_spa()  # dal lotto 9b-1 il pannello della home React (StatsSheet.tsx)
+    needs_spa()  # il pannello della home (StatsSheet.tsx) è della SPA
     with running_server(app, FakeUser("Mario", mario.id)) as url:
         browser = Browser(find_browser(), tmp_path / "chrome")
         try:

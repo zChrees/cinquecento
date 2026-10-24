@@ -1,6 +1,6 @@
 """P17: impostazioni: avatar e cancellazione dell'account.
 
-Dal passo 6 della migrazione la pagina /profile/settings la disegna la SPA e i dati
+La pagina /profile/settings la disegna la SPA e i dati
 passano dalle rotte JSON /api/profile/ (app/blueprints/profile/api.py).
 
 Serve MySQL con scripts/setup_db.sql già lanciato: si usa SOLO il database dei
@@ -123,7 +123,7 @@ def test_is_valid_rifiuta_i_valori_fuori_elenco(value):
     assert not avatars.is_valid(value)
 
 
-# Pagina (dal passo 6 della migrazione la disegna la SPA)
+# Pagina (la disegna la SPA)
 
 
 def test_pagina_solo_con_il_login(client):

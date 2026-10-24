@@ -59,7 +59,7 @@ def app(log_dir):
     def broken():
         raise RuntimeError(SECRET_DETAIL)
 
-    @app.route("/api/_prova/rotta")  # dal lotto 9c le rotte JSON sono solo sotto /api/
+    @app.route("/api/_prova/rotta")  # le rotte JSON sono solo sotto /api/
     def broken_json():
         raise RuntimeError(SECRET_DETAIL)
 
@@ -80,8 +80,8 @@ def log_text(log_dir):
 # Pagine 404
 
 
-# Dal lotto 9d (regola unica) un GET a un indirizzo senza rotta riceve la SPA, e la
-# pagina "non trovata" la disegna React (test_spa.py); la 404 Jinja resta per i file
+# Con la regola unica un GET a un indirizzo senza rotta riceve la SPA, e la pagina "non
+# trovata" la disegna React (test_frontend_servito.py); la 404 di base.html c'è per i file
 # statici che mancano, i 404 decisi da una rotta e le richieste che non sono GET
 @pytest.mark.parametrize(("method", "path"), [
     ("get", "/static/non-esiste.css"), ("get", "/?demo=altro"), ("post", "/pagina-che-non-esiste"),
@@ -105,10 +105,10 @@ def test_404_json_nella_forma_del_contratto(client):
         assert body["error"]["message"]
 
 
-# Lotto 9c (scelta 4 del passo 9): le rotte di dati sono tutte sotto /api/; i vecchi
-# indirizzi non rispondono più in JSON, e senza rimandi: quelli che non sono GET con
-# la 404, quelli GET (dal lotto 9d, regola unica) con la SPA, dove React dice
-# "Pagina non trovata" (503 se manca il build, come ogni pagina della SPA)
+# Le rotte di dati sono tutte sotto /api/: gli stessi indirizzi senza /api/ non
+# rispondono in JSON, e senza rimandi: quelli che non sono GET con la 404, quelli GET
+# (regola unica) con la SPA, dove React dice "Pagina non trovata" (503 se manca il
+# build, come ogni pagina della SPA)
 @pytest.mark.parametrize(("method", "path"), [
     ("post", "/friends/requests"), ("post", "/friends/requests/1/accept"),
     ("post", "/friends/requests/1/decline"), ("delete", "/friends/requests/1"),
@@ -123,7 +123,7 @@ def test_vecchi_indirizzi_json_rispondono_404(client, method, path):
 
 @pytest.mark.parametrize("path", ["/online", "/stats/me", "/friends/"])
 def test_vecchi_indirizzi_get_ricevono_la_spa(client, path):
-    # follow_redirects: /friends/ prima si rimanda a /friends (la / in fondo, lotto 9d)
+    # follow_redirects: /friends/ si rimanda prima a /friends (la / in fondo)
     response = client.get(path, follow_redirects=True)
     assert response.status_code in (200, 503), path
     assert response.mimetype != "application/json", path
@@ -134,7 +134,7 @@ def test_vecchi_indirizzi_get_ricevono_la_spa(client, path):
 def test_pagine_di_errore_senza_navbar(client):
     page = client.get("/static/non-esiste.css").get_data(as_text=True)
     assert 'data-part="navbar"' not in page and "<script" not in page
-    # La struttura è quella di base.html, che dal lotto 9b-2 serve solo alle pagine di errore
+    # La struttura è quella di base.html, che serve solo alle pagine di errore
     assert 'data-page="error"' in page and "data-rotate-notice" in page
 
 

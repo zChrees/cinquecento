@@ -42,7 +42,7 @@ log = logging.getLogger(__name__)
 # NOT_SPA: il primo pezzo degli indirizzi che non sono mai pagine della SPA (dati,
 # file statici, tempo reale). Deve restare uguale a FLASK_PATHS di
 # frontend/vite.config.ts, che in sviluppo li gira a Flask (lo controlla
-# tests/frontend/test_spa.py).
+# tests/frontend/test_frontend_servito.py).
 NOT_SPA = ("api", "static", "socket.io")
 # SPA_METHODS: la SPA si manda solo a chi chiede una pagina (HEAD è un GET senza
 # contenuto); un POST a un indirizzo che non esiste resta 404

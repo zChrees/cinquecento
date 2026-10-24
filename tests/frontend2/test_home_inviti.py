@@ -1,5 +1,4 @@
-"""Passo 7c della migrazione: gli inviti a partita nella home React (dal passo 7d su /;
-prima /prova-home).
+"""P47, P59, P65, P83: gli inviti a partita nella home (/).
 
 Gli inviti (P47, P59, P65, P83) nella carta "Gioca con un amico" (ModeModal.tsx) e
 nell'invito ricevuto (InviteDialog.tsx).
@@ -60,7 +59,7 @@ from tests.browser import (
 from tests.spa import needs_spa
 
 ROOT = Path(__file__).resolve().parents[2]
-PAGE = "/"  # dal passo 7d (fino al 7c era /prova-home)
+PAGE = "/"
 PASSWORD = "Password-di-prova-7c"
 FRIENDS = ("Giulia", "Salvo", "Rosa")
 WAIT = 10
@@ -252,7 +251,7 @@ def _wait_card_open(browser):
 
 
 def _close_card(browser):
-    """Esc chiude la carta: nella home React la carta chiusa non c'è più nella pagina."""
+    """Esc chiude la carta: la carta chiusa non c'è nella pagina."""
     browser.key("Escape", "Escape", 27)
     browser.wait_js(f"{MODAL} === null", "carta chiusa")
 
@@ -409,8 +408,8 @@ def _friends_reads(browser):
 
 def _wait_friends_reads_quiet(browser, at_least):
     """Aspetta almeno `at_least` letture di GET /api/friends/ finite e poi nessuna lettura
-    nuova per un secondo. La home Jinja contava 6 letture esatte (home e pannello): nella
-    home React il numero dipende da chi rilegge la lista, quindi si aspetta la calma."""
+    nuova per un secondo. Il numero esatto dipende da chi rilegge la lista (home e
+    pannello), quindi si aspetta la calma."""
     browser.wait_js(f"performance.getEntriesByType('resource')"
                     f".filter((e) => new URL(e.name).pathname === '/api/friends/').length >= {at_least}",
                     "letture della lista dopo gli avvisi")

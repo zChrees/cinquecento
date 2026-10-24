@@ -1,7 +1,6 @@
-"""Passo 5c della migrazione: la chat in React (frontend/src/components/ChatWindow.tsx).
+"""P46, P48, P81, P128: la finestra della chat (frontend/src/components/ChatWindow.tsx).
 
-Gli stessi controlli di test_chat_pannello.py (P46, P48, P81, P128), sulla pagina
-della SPA con il login (/profile/settings, dal passo 6): aprire la chat azzera i non
+Sulla pagina delle impostazioni (/profile/settings, una pagina con il login): aprire la chat azzera i non
 letti; a 360×640 la casella si vede, accetta al massimo 1000 caratteri (come
 CHAT_MAX_LENGTH di config.py) e un messaggio di soli spazi si rifiuta; dopo "Invia" la
 casella tiene il fuoco e un doppio clic manda un solo messaggio; un messaggio

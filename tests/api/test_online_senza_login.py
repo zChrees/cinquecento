@@ -1,6 +1,6 @@
 """P82: giocatori online veri nella home anche senza login (contratto 5.1).
 
-- GET /api/online (fino al lotto 9c /online) risponde a tutti, anche senza login, con il solo numero degli utenti
+- GET /api/online risponde a tutti, anche senza login, con il solo numero degli utenti
   collegati (lo stesso di home:status) e senza cache.
 - Nel browser, senza login: la home mostra il numero vero (anche 0), mai quello finto
   dei dati di prova (24); il numero si aggiorna quando qualcuno entra o esce; con la

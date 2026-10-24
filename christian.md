@@ -22,6 +22,18 @@
 
 <!-- Il più recente in cima. I riepiloghi di P3, P52, P8 e P19 li ha ricostruiti Christian il 28/09/2026 dalle note di SCALETTA.md. -->
 
+### C4 (la mia parte) — Test senza la storia, `test_spa_*.py` rinominati (24/10/2026)
+
+- **Branch**: feature/c4-test-christian (da `dev` a `1077fd1`)
+- **Scelte mie** (24/10): divisione **per area**: a me `frontend`, `frontend2`, `api`, `e2e`, `db`, `runner` e i file comuni di `tests/` (`conftest.py`, `spa.py`, `accounts.py`, `esegui_tutti.py`); a **Giuseppe** `engine`, `services`, `sockets`, `forza`, `table`…`table6`. Nomi nuovi (senza doppioni in altre cartelle, che bloccherebbero pytest): `frontend/test_spa.py` → `test_frontend_servito.py`, `test_spa_chat.py` → `test_finestra_chat.py`, `test_spa_home_coda.py` → `test_home_coda.py`, `test_spa_home_misure.py` → `test_home_misure.py`; `frontend2/test_spa_home.py` → `test_home.py`, `test_spa_home_inviti.py` → `test_home_inviti.py`, `test_spa_impostazioni.py` → `test_pagina_impostazioni.py`, `test_spa_amici.py` → `test_pannello_amici_azioni.py`
+- **File**: gli otto rinominati (con `git mv`, la storia resta); commenti e docstring di 34 file delle mie suite (compresi gli otto rinominati; `e2e/helpers.py` l'ha sistemato Giuseppe con la sua parte di C4, uguale); i nomi nuovi anche nei commenti di `app/blueprints/spa/routes.py`, `frontend/src/components/ChatWindow.tsx` e `frontend/vite.config.ts` (fuori da `tests/`, solo il nome del file di test); questo file. Nessun test importava i file rinominati (gli aiuti passano da `test_chat_pannello.py`)
+- **Cosa c'è**: tolti "passo N / lotto N della migrazione", "come le pagine Jinja di prima", "fino al lotto 9b-1 qui c'era…", "dal passo 6", le date delle scelte e "scelta N del passo 9"; "il Fatto quando di SCALETTA.md (P43)" diventa "di P43" (la scaletta è in archivio). Le docstring dicono cosa controlla il file oggi, con i codici P. **Restano**, perché vere: le spiegazioni del difetto che un test protegge (per esempio `test_server_dei_test.py`, `test_avvio_browser.py`, le misure di `test_home_misure.py`); i test che controllano che gli indirizzi e gli elenchi tolti non tornino (`/auth/logout`, `/friends/...`, `?ui=jinja`, `SPA_PATHS`), con il commento al presente; le password dei test (`Password-di-prova-7b`, `-7c`), che sono dati. **Rebase** (con il tuo ok): nel frattempo Giuseppe aveva portato in `dev` la sua parte di C4, con gli stessi cambi nei file comuni (`conftest.py`, `spa.py`, `accounts.py`, `esegui_tutti.py`) e in `e2e/helpers.py`; lì vale la sua versione (anche il commento di `SUITE_TIMEOUT`), e il mio commit non li tocca più
+- **Controlli**: `ruff check .` pulito; raccolta senza errori di `frontend` (243), `frontend2` (46), `api` (307), `e2e` (12), `db` (84), `runner` (13); con il runner `runner` **13 PASS**, `api` **307 PASS**, `e2e` **12 PASS** [T]. Le suite `frontend` e `frontend2` non lanciate intere (lì solo commenti e nomi dei file; la tua regola del 19/10)
+- **Decisioni prese**: divisione per area e nomi nuovi (sopra)
+- **Domande nuove**: nessuna
+- **Punti delicati**: in `CLAUDE.md` i nomi dei file di test cambiano (lo aggiorna chi è di turno: oggi io)
+- **Cosa devono fare gli altri**: **Giuseppe**: niente (la tua parte di C4 era già in `dev`: abbiamo cambiato nello stesso modo i file comuni); i file rinominati sono tutti nelle mie suite
+
 ### Documenti: aggiornamento del 24/10 notte, fase 0 (24/10/2026)
 
 - **Branch**: docs/aggiornamento-24-10-fase0 (da `dev` a `8528f5e`); di turno sui documenti: io
