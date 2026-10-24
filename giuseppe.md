@@ -22,6 +22,17 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### Commenti e niente zucchero, lotto 1a — Motore: i file piccoli (24/10/2026)
+
+- **Branch**: feature/commenti-motore-1a (da `dev` a `d1cca95`). Primo lotto del lavoro "il Python secondo `regole-codice.md`" (proposto da Giuseppe il 24/10; nel tracker non c'è ancora un punto)
+- **File**: modificati `app/game/engine/` `__init__.py`, `actions.py`, `auto_move.py`, `cards.py`, `deck.py`, `errors.py`, `rules.py`, `singing.py`, `state.py`, `trick.py` (lista confermata da Giuseppe); questo file
+- **Cosa c'è**: in cima a ogni file cosa fa, cosa contiene e da dove arrivano i dati; sopra ogni classe e funzione "In parole semplici"; tolti gli 11 casi di zucchero (comprehension, generatori in `all`/`min`/`tuple`, `a if c else b`, `a, b = x, y`); nomi, ordine e comportamento uguali. In `trick.py` e `auto_move.py` le funzioni interne restano interne (nessun cambio di struttura); la ricerca del massimo in `winning_position` usa `>` per tenere la prima carta a parità, come `max`; in `auto_move` le candidate restano nell'ordine di `legal.play`, così `rng.choice` con un seme fisso sceglie la stessa carta
+- **Controlli**: suite `engine` **704 PASS**, suite `forza` **2 PASS**; `ruff check .` pulito; nessuno zucchero rimasto nei 10 file (ricerca con `rg`) [T]
+- **Decisioni prese** (Giuseppe, 24/10): **i decoratori restano** (`@dataclass(frozen=True)`, `@property`, `@classmethod`, e nei lotti dopo la cache di `lay_down.py` e `@handler`), purché ognuno sia spiegato con un commento la prima volta che compare in un file; vale anche per classi e `try/except` (sezione 10 di `regole-codice.md`). Scelte mie nel lotto: l'asterisco `*` nei parametri di `singable_suits` e `sing` resta (obbliga a passare i parametri con il nome) ed è spiegato; i valori predefiniti dei parametri in Python (`rules=MARIANNA`, `rng=None`) restano, perché la tabella Python della sezione 5 non li toglie
+- **Domande nuove**: nessuna
+- **Punti delicati**: (1) `ruff` segnala `PLR1730` (un `if` che si può scrivere con `min`/`max`) e `PERF402` (una lista copiata con `append`): al posto dello zucchero si usano `min(a, b)` con due valori e `lista.extend(tupla)`, non un `# noqa`; (2) in `cards.py` le variabili dei cicli a livello del file hanno il trattino basso davanti (`_suit`, `_card`, …), per non sembrare nomi da importare; (3) `Card.from_code` oggi la usano solo i test: è scritto nel suo commento
+- **Note per gli altri**: **Christian (chi è di turno sui documenti)**: (a) dopo il **9e** (riepilogo qui sotto) vanno aggiornati `REVIEW.md` e `docs/MIGRAZIONE-FRONTEND.md` (9e fatto tranne la prova a mano), `CLAUDE.md` (riga "Stato", Testing con **1983 PASS in 16 suite**, punto delicato "Runner (P6)") e la riscrittura dei punti delicati prevista dopo il 9e; (b) `regole-codice.md` cita ancora come esempio `Hand.js` e `hasValue` di `app/static/js/utils/dom.js`, tolti al 9b-2: come esempio Python va bene `app/blueprints/auth/api.py` (o i file di questo lotto), e nella sezione 10 va scritta la decisione sui decoratori; (c) nel tracker serve un punto per questo lavoro (lotti: 1a e 1b motore, 2 tempo reale, 3 servizi e repository, 4 script e configurazione, 5 `cpu.py` per ultimo)
+
 ### Migrazione, passo 9e — Giro completo delle suite dopo il passo 9 (24/10/2026)
 
 - **Branch**: feature/passo-9e-giro (da `dev` a `0cce805`, dopo il 9d). Lotto di Christian (scelta del 23/10) fatto da Giuseppe, con il suo ok
