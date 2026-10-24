@@ -77,7 +77,9 @@ def test_rientro_finto_solo_in_sviluppo_e_nei_test(app, server, monkeypatch):
     # controllava per la home Jinja anche test_pagina_home.py, con coda e vuoto)
     for query in ("?demo=altro", "?demo=coda", "?demo=", "?demo=RIENTRO"):
         assert client.get(f"{PAGE}{query}").status_code == 404, query
-    assert client.get("/prova-home").status_code == 404
+    # /prova-home non è più una rotta (dal lotto 9d un indirizzo senza rotta dà la SPA,
+    # dove React dice "Pagina non trovata": non più 404)
+    assert "/prova-home" not in {rule.rule for rule in app.url_map.iter_rules()}
     # Nella demo e in produzione la home c'è, ma senza ?demo=
     monkeypatch.setitem(app.config, "ENV_NAME", "demo")
     assert client.get(PAGE).status_code == 200

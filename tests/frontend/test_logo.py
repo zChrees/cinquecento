@@ -39,7 +39,8 @@ def app():
 
 def _heads(app):
     """Le due <head> del sito: quella della SPA e quella delle pagine di errore (base.html)."""
-    response = app.test_client().get("/pagina-che-non-esiste")
+    # dal lotto 9d un indirizzo a caso dà la SPA: la 404 Jinja resta per i file statici
+    response = app.test_client().get("/static/non-esiste.css")
     error_page = response.get_data(as_text=True)
     response.close()
     return {"frontend/index.html": (ROOT / "frontend" / "index.html").read_text(encoding="utf-8"),

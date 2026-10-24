@@ -80,8 +80,14 @@ def log_text(log_dir):
 # Pagine 404
 
 
-def test_pagina_inesistente_404(client):
-    response = client.get("/pagina-che-non-esiste")
+# Dal lotto 9d (regola unica) un GET a un indirizzo senza rotta riceve la SPA, e la
+# pagina "non trovata" la disegna React (test_spa.py); la 404 Jinja resta per i file
+# statici che mancano, i 404 decisi da una rotta e le richieste che non sono GET
+@pytest.mark.parametrize(("method", "path"), [
+    ("get", "/static/non-esiste.css"), ("get", "/?demo=altro"), ("post", "/pagina-che-non-esiste"),
+])
+def test_pagina_inesistente_404(client, method, path):
+    response = getattr(client, method)(path)
     assert response.status_code == 404
     page = response.get_data(as_text=True)
     assert 'data-error="404"' in page
@@ -100,9 +106,10 @@ def test_404_json_nella_forma_del_contratto(client):
 
 
 # Lotto 9c (scelta 4 del passo 9): le rotte di dati sono tutte sotto /api/; i vecchi
-# indirizzi rispondono 404 con la pagina di errore, non più in JSON, e senza rimandi
+# indirizzi non rispondono più in JSON, e senza rimandi: quelli che non sono GET con
+# la 404, quelli GET (dal lotto 9d, regola unica) con la SPA, dove React dice
+# "Pagina non trovata" (503 se manca il build, come ogni pagina della SPA)
 @pytest.mark.parametrize(("method", "path"), [
-    ("get", "/online"), ("get", "/stats/me"), ("get", "/friends/"),
     ("post", "/friends/requests"), ("post", "/friends/requests/1/accept"),
     ("post", "/friends/requests/1/decline"), ("delete", "/friends/requests/1"),
     ("delete", "/friends/1"), ("post", "/friends/blocks"), ("delete", "/friends/blocks/1"),
@@ -114,8 +121,18 @@ def test_vecchi_indirizzi_json_rispondono_404(client, method, path):
     assert 'data-error="404"' in response.get_data(as_text=True), path
 
 
+@pytest.mark.parametrize("path", ["/online", "/stats/me", "/friends/"])
+def test_vecchi_indirizzi_get_ricevono_la_spa(client, path):
+    # follow_redirects: /friends/ prima si rimanda a /friends (la / in fondo, lotto 9d)
+    response = client.get(path, follow_redirects=True)
+    assert response.status_code in (200, 503), path
+    assert response.mimetype != "application/json", path
+    assert 'data-error="404"' not in response.get_data(as_text=True), path
+    response.close()
+
+
 def test_pagine_di_errore_senza_navbar(client):
-    page = client.get("/pagina-che-non-esiste").get_data(as_text=True)
+    page = client.get("/static/non-esiste.css").get_data(as_text=True)
     assert 'data-part="navbar"' not in page and "<script" not in page
     # La struttura è quella di base.html, che dal lotto 9b-2 serve solo alle pagine di errore
     assert 'data-page="error"' in page and "data-rotate-notice" in page

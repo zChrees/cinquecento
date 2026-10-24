@@ -1,8 +1,11 @@
 """Passo 1 della migrazione (docs/MIGRAZIONE-FRONTEND.md): la SPA servita da Flask.
 
 Controlla:
-- gli indirizzi della SPA sono gli stessi in Flask (app/blueprints/spa/routes.py) e
-  in Vite (frontend/vite.config.ts), e ognuno ha la sua rotta;
+- regola unica (lotto 9d): Flask manda la SPA per ogni GET a un indirizzo senza rotta
+  fuori da /api/, /static/ e /socket.io; un indirizzo con la / in fondo si rimanda a
+  quello senza; i prefissi che restano a Flask sono gli stessi in Flask (NOT_SPA) e
+  in Vite (FLASK_PATHS); in React ogni pagina distingue le maiuscole e c'è la pagina
+  "non trovata", che nel browser ha la navbar e riporta alla home;
 - Flask manda index.html del build, da richiedere ogni volta (no-cache), con la CSP;
   senza build risponde 503 con un messaggio chiaro; la pagina di prova /prova-react
   non c'è più (tolta con il passo 6);
@@ -35,6 +38,7 @@ from tests.browser import TEST_COOKIE, Browser, FakeUser, find_browser, running_
 ROOT = Path(__file__).resolve().parents[2]
 FRONTEND = ROOT / "frontend"
 VITE_CONFIG = FRONTEND / "vite.config.ts"
+ROUTES_TSX = FRONTEND / "src" / "routes.tsx"
 NODE_MODULES = FRONTEND / "node_modules"
 STATS_EXAMPLE = {k: v for k, v in json.loads(
     (ROOT / "app" / "static" / "dev" / "statistiche_esempio.json").read_text(encoding="utf-8")).items() if k != "_nota"}
@@ -57,45 +61,111 @@ def fake_dist(monkeypatch, tmp_path):
     return tmp_path
 
 
-# --- Indirizzi ---------------------------------------------------------------
+# --- Indirizzi (regola unica, lotto 9d) ---------------------------------------
+
+# INDEX: un index.html finto, riconoscibile dal suo <div id="root">
+INDEX = '<!doctype html><div id="root"></div>'
 
 
-def test_stessi_indirizzi_in_flask_e_in_vite(app):
+def test_stessi_prefissi_in_flask_e_in_vite():
+    # In sviluppo Vite gira a Flask solo quello che non è mai una pagina della SPA
     code = VITE_CONFIG.read_text(encoding="utf-8")
-    found = re.search(r"const SPA_PATHS: string\[\] = \[(.*?)\];", code, flags=re.DOTALL)
-    assert found, "SPA_PATHS non trovato in vite.config.ts"
-    assert tuple(re.findall(r"'([^']+)'", found.group(1))) == routes.SPA_PATHS
-    # Ogni indirizzo ha una rotta GET (nel blueprint spa o in quello del suo argomento)
-    rules = {rule.rule for rule in app.url_map.iter_rules() if "GET" in rule.methods}
-    assert set(routes.SPA_PATHS) <= rules
+    found = re.search(r"const FLASK_PATHS: string\[\] = \[(.*?)\];", code, flags=re.DOTALL)
+    assert found, "FLASK_PATHS non trovato in vite.config.ts"
+    paths = re.findall(r"'([^']+)'", found.group(1))
+    assert [path.strip("/") for path in paths] == list(routes.NOT_SPA)
+    # Niente più elenchi delle pagine (fino al lotto 9d SPA_PATHS, GAME_TABLE, flaskPattern)
+    for name in ("SPA_PATHS", "GAME_TABLE", "flaskPattern"):
+        assert name not in code, name
+    assert not hasattr(routes, "SPA_PATHS")
 
 
-@pytest.mark.parametrize(("url", "react"), [
-    ("/game/prova", True),
-    ("/game/prova?demo=1v1", True),
-    ("/game/e5f6a7b8#qualcosa", True),
-    ("/game/prova?ui=react", True),
-    ("/game/prova?demo=1v1&ui=react", True),
-    ("/game/e5f6a7b8?ui=react&demo=2v2", True),
-    ("/game/prova?ui=jinjax", True),
-    ("/game/prova?xui=jinja", True),
-    ("/game/prova?ui=jinja", True),
-    ("/game/prova?demo=1v1&ui=jinja", True),
-    ("/game/e5f6a7b8?ui=jinja&demo=2v2", True),
-    ("/game/prova/altro", False),
-    ("/game/", False),
-    ("/gamex/prova", False),
+def test_in_react_maiuscole_e_pagina_non_trovata():
+    # Ogni pagina di routes.tsx ha caseSensitive (come le rotte di Flask: senza,
+    # /Profile/Settings aprirebbe le impostazioni senza il controllo del login), e
+    # l'ultima voce è '*', la pagina "non trovata"
+    code = ROUTES_TSX.read_text(encoding="utf-8")
+    entries = re.findall(r"^  \{ path: '([^']+)', element: <(\w+) />(, caseSensitive: true)? \},\r?$",
+                         code, flags=re.MULTILINE)
+    assert [path for path, _page, _case in entries] == [
+        "/", "/auth/login", "/auth/register", "/profile/settings", "/game/:gameId", "*"]
+    for path, _page, case in entries[:-1]:
+        assert case, path
+    assert entries[-1][1] == "NotFoundPage"
+
+
+@pytest.mark.parametrize("url", [
+    "/pagina-a-caso", "/game/prova/altro", "/Profile/Settings", "/AUTH/LOGIN",
+    "/online", "/stats/me", "/friends/requests/1/accept", "/prova-react",
+    "/apice", "/staticx", "/socket.iox",
 ])
-def test_vite_tiene_il_tavolo_react(url, react):
-    # Passo 8: in sviluppo Vite serve il tavolo React (GAME_TABLE di vite.config.ts,
-    # dentro l'espressione di flaskPattern): ogni /game/<codice>, con qualsiasi
-    # parametro (dal lotto 9a anche ?ui=jinja: il tavolo Jinja non c'è più)
-    code = VITE_CONFIG.read_text(encoding="utf-8")
-    found = re.search(r"const GAME_TABLE: string = '([^']+)';", code)
-    assert found, "GAME_TABLE non trovato in vite.config.ts"
-    pattern = found.group(1).replace("\\\\", "\\")  # nel testo di JavaScript la \ è scritta \\
-    to_flask = re.compile(f"^/(?!{pattern})")
-    assert (to_flask.match(url) is None) is react
+def test_regola_unica_manda_la_spa(app, fake_dist, url):
+    (fake_dist / "index.html").write_text(INDEX, encoding="utf-8")
+    client = app.test_client()
+    response = client.get(url)
+    assert response.status_code == 200, url
+    assert '<div id="root">' in response.get_data(as_text=True), url
+    assert "no-cache" in response.headers["Cache-Control"]
+    assert "script-src 'self'" in response.headers["Content-Security-Policy"]
+    response.close()
+    head = client.head(url)
+    assert head.status_code == 200, url
+    head.close()
+
+
+@pytest.mark.parametrize(("method", "url", "status", "kind"), [
+    # /api/: 404 in JSON (contratto 1.2); /api senza / come prima, pagina di errore
+    ("get", "/api/non-esiste", 404, "json"),
+    ("get", "/api", 404, "html"),
+    # file statici che mancano: la pagina di errore Jinja
+    ("get", "/static/non-esiste.css", 404, "html"),
+    ("get", "/static", 404, "html"),
+    # un 404 deciso da una rotta resta 404 (?demo= sbagliato sulla home)
+    ("get", "/?demo=altro", 404, "html"),
+    # solo GET: un POST o un DELETE a un indirizzo che non esiste resta 404
+    ("post", "/pagina-a-caso", 404, "html"),
+    ("delete", "/pagina-a-caso", 404, "html"),
+    # metodo sbagliato su una rotta che esiste: 405 come prima
+    ("post", "/auth/login", 405, None),
+    ("get", "/api/auth/logout", 405, None),
+])
+def test_regola_unica_non_tocca_il_resto(app, fake_dist, method, url, status, kind):
+    (fake_dist / "index.html").write_text(INDEX, encoding="utf-8")
+    response = getattr(app.test_client(), method)(url)
+    assert response.status_code == status, url
+    body = response.get_data(as_text=True)
+    assert '<div id="root">' not in body, url
+    if kind == "json":
+        assert response.get_json()["error"]["code"] == "not_found"
+    if kind == "html":
+        assert 'data-error="404"' in body, url
+    response.close()
+
+
+@pytest.mark.parametrize(("path", "query", "target"), [
+    ("/profile/settings/", "", "/profile/settings"),
+    ("/game/prova/", "demo=1v1", "/game/prova?demo=1v1"),
+    ("/auth/login//", "next=%2Fprofile%2Fsettings", "/auth/login?next=%2Fprofile%2Fsettings"),
+    ("/pagina-a-caso/", "", "/pagina-a-caso"),
+    # due / davanti: il rimando ne tiene una sola, altrimenti il browser andrebbe su altro.it
+    ("//altro.it/", "", "/altro.it"),
+])
+def test_la_barra_in_fondo_si_rimanda(app, fake_dist, path, query, target):
+    # PATH_INFO scritto a mano: il client dei test leggerebbe //altro.it come un altro sito
+    (fake_dist / "index.html").write_text(INDEX, encoding="utf-8")
+    response = app.test_client().get("/", environ_overrides={"PATH_INFO": path, "QUERY_STRING": query})
+    assert response.status_code == 302, path
+    assert response.headers["Location"] == target
+    response.close()
+
+
+def test_la_barra_in_fondo_poi_passa_dal_controllo_del_login(app, fake_dist):
+    # Il motivo del rimando: /profile/settings/ arriva alla rotta Flask, che vuole il login
+    (fake_dist / "index.html").write_text(INDEX, encoding="utf-8")
+    response = app.test_client().get("/profile/settings/", follow_redirects=True)
+    assert [step.request.path for step in response.history] == ["/profile/settings/", "/profile/settings"]
+    assert response.request.path == "/auth/login"
+    response.close()
 
 
 # --- Flask -------------------------------------------------------------------
@@ -118,11 +188,11 @@ def test_senza_build_errore_chiaro(app, fake_dist):
     assert response.get_data(as_text=True) == routes.NOT_BUILT
 
 
-def test_pagina_di_prova_tolta(app, fake_dist):
-    # Passo 6: /prova-react serviva finché non c'era una pagina vera con il login
-    (fake_dist / "index.html").write_text("<!doctype html>", encoding="utf-8")
-    assert app.test_client().get("/prova-react").status_code == 404
-    assert "/prova-react" not in routes.SPA_PATHS
+def test_pagina_di_prova_tolta(app):
+    # Passo 6: /prova-react serviva finché non c'era una pagina vera con il login.
+    # Dal lotto 9d risponde la SPA come ogni indirizzo senza rotta (React: "non trovata")
+    assert "/prova-react" not in {rule.rule for rule in app.url_map.iter_rules()}
+    assert "prova-react" not in ROUTES_TSX.read_text(encoding="utf-8")
     assert not (FRONTEND / "src" / "pages" / "TestPage.tsx").exists()
 
 
@@ -199,6 +269,33 @@ def test_nel_browser_react_disegna_e_la_csp_non_blocca(spa_server, tmp_path):
         browser.js("new Promise((r) => setTimeout(r, 500))")
         requests = browser.js("performance.getEntriesByType('resource').map((e) => e.name)")
         assert not [name for name in requests if "/socket.io/" in name], requests
+    finally:
+        browser.close()
+
+
+@pytest.mark.parametrize("path", ["/pagina-a-caso", "/Profile/Settings", "/game/prova/altro"])
+def test_nel_browser_pagina_non_trovata(spa_server, tmp_path, path):
+    # Lotto 9d: React disegna "Pagina non trovata" con la navbar, e "Torna alla home"
+    # porta alla home senza ricaricare; la CSP non blocca niente
+    browser = Browser(find_browser(), tmp_path)
+    try:
+        browser.send("Page.enable")
+        browser.send("Page.addScriptToEvaluateOnNewDocument", source=RECORD)
+        browser.open(f"{spa_server}{path}", 390, 844, ready="document.querySelector('h1') !== null")
+        page = browser.js("""(() => { const main = document.querySelector('main');
+          return { page: main.dataset.page, form: main.classList.contains('page--form'),
+                   error: document.querySelector('[data-error]')?.dataset.error,
+                   h1: document.querySelector('h1').textContent, title: document.title,
+                   navbar: document.querySelector('[data-part="navbar"]') !== null,
+                   home: document.querySelector('[data-error] a').getAttribute('href') }; })()""")
+        assert page == {"page": "error", "form": True, "error": "404", "h1": "Pagina non trovata",
+                        "title": "Pagina non trovata · Cinquecento", "navbar": True, "home": "/"}
+        assert browser.js("window.__csp") == []
+        # __samePage: resta solo se si cambia pagina senza ricaricare
+        browser.js("window.__samePage = true")
+        browser.click("[data-error] a")
+        browser.wait_js("location.pathname === '/' && document.querySelector('[data-error]') === null", "home")
+        assert browser.js("window.__samePage") is True
     finally:
         browser.close()
 

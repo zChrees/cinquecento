@@ -1,5 +1,10 @@
 """Pagine e risposte di errore (P7).
 
+- 404: dal lotto 9d della migrazione vale la regola unica della SPA (spa_fallback di
+  app/blueprints/spa/routes.py): un GET a un indirizzo senza rotta, fuori da /api/,
+  /static/ e /socket.io, riceve la SPA, e la pagina "non trovata" la disegna React.
+  La pagina di errore Jinja resta per il resto: file statici che mancano, 404 decisi
+  da una rotta (per esempio ?demo= sbagliato) e richieste che non sono GET.
 - 404 e 500: pagina in italiano basata su base.html, senza navbar (le pagine di errore
   non hanno uno script di pagina, e senza la navbar non si apre). Le richieste JSON
   (tutte sotto /api/: dal lotto 9c della migrazione anche amici e statistiche) ricevono invece
@@ -19,6 +24,7 @@ import logging
 from flask import render_template, request
 from flask_wtf.csrf import CSRFError
 
+from app.blueprints.spa.routes import spa_fallback
 from app.extensions import db, socketio
 from app.realtime.events import error
 
@@ -50,6 +56,10 @@ def _wants_json():
 def _not_found(_exc):
     if _wants_json():
         return error("not_found"), 404
+    # page: la SPA, se l'indirizzo è una sua pagina (regola unica, lotto 9d); altrimenti None
+    page = spa_fallback()
+    if page is not None:
+        return page
     return render_template("errors/404.html"), 404
 
 
