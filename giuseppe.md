@@ -22,6 +22,19 @@
 
 <!-- Il più recente in cima. I riepiloghi di P10–P13 li ha copiati Christian il 28/09/2026 dai messaggi di Giuseppe, senza cambiarli. -->
 
+### Commenti e niente zucchero, lotto 1b — Motore: partita, calata e viste (24/10/2026)
+
+- **Branch**: feature/commenti-motore-1b (da `dev` a `c61725d`). Chiude il motore tranne `cpu.py` (lotto 5)
+- **File**: modificati `app/game/engine/game.py`, `lay_down.py`, `views.py`; questo file
+- **Cosa c'è**: come nel lotto 1a, commenti in cima al file e "In parole semplici" sopra ogni funzione (anche le funzioni interne di `team_wins_all`, con la spiegazione delle maschere di bit), e tolti i 38 casi di zucchero; in più tolti gli spacchettamenti `(*a, b)` delle tuple, scritti come somma di tuple (`state.sings + (done,)`), e le catene `0 <= x < n`, scritte con due confronti. Nomi, ordine delle chiavi della vista e comportamento uguali; le carte prese restano aggiunte **in fondo** a `captured` (lo vuole `_step_gain` della CPU, P127)
+- **Due funzioni nuove, piccole** (al posto di `lambda` e di cinque copie dello stesso ciclo): `_card_code` in `lay_down.py` (la chiave per ordinare le carte per codice, al posto di `lambda card: card.code`) e `_cards_to_dicts` in `views.py` (un elenco di carte nella forma del contratto, usata cinque volte). La `lambda` di `sorted(..., reverse=True)` è diventata la funzione interna `strong_first`: `sorted` tiene l'ordine delle carte con la stessa chiave anche con `reverse=True`, quindi l'ordine dei bit non cambia. Se il gruppo preferisce i cicli scritti ogni volta al posto di `_cards_to_dicts`, si tolgono
+- **Velocità della calata**: misurata prima e dopo con 40 situazioni del 2v2 con 5 carte a testa (script fuori dal progetto): stesse risposte, **0,204 s prima, 0,135 s dopo** (i cicli `for` costano meno di `tuple(...)` con un generatore); `tests/engine/test_cala.py` 21,1 s prima, 18,5 s dopo [T]
+- **Controlli**: suite `engine` **704 PASS**, `sockets` **333 PASS**, `forza` **2 PASS**; `ruff check .` pulito; nessuno zucchero rimasto nei tre file (ricerca con `rg`) [T]
+- **Decisioni prese**: nessuna nuova (decoratori come nel lotto 1a; `lru_cache` spiegato)
+- **Domande nuove**: nessuna
+- **Punti delicati**: (1) `state.sings + (done,)` e `taken + tuple(...)` vogliono **tuple**: chi crea un `HandState` (la CPU in `_worlds`, i test) deve passare tuple, non liste, come fa già (prima `(*a, b)` accettava anche una lista); (2) in `team_wins_all` il "massimo con `default=-1`" ora parte da `later = -1`: va bene perché `strongest` non scende mai sotto -1
+- **Note per gli altri**: **chi è di turno sui documenti**: come nel lotto 1a (punto del tracker per questo lavoro). Prossimo: lotto 2, il tempo reale (`app/realtime/`, `app/sockets/`)
+
 ### Commenti e niente zucchero, lotto 1a — Motore: i file piccoli (24/10/2026)
 
 - **Branch**: feature/commenti-motore-1a (da `dev` a `d1cca95`). Primo lotto del lavoro "il Python secondo `regole-codice.md`" (proposto da Giuseppe il 24/10; nel tracker non c'è ancora un punto)
